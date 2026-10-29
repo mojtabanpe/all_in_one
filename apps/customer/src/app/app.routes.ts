@@ -26,6 +26,13 @@ export const appRoutes: Route[] = [
             (m) => m.plannerRoutes,
           ),
       },
+      {
+        path: 'english',
+        loadChildren: () =>
+          import('@all-in-one/applets/english-learning/web').then(
+            (m) => m.englishLearningRoutes,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
