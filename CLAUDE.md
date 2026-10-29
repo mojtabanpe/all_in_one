@@ -34,7 +34,8 @@
 - Tags: `scope:api`, `scope:web`, `scope:shared`; `@nx/enforce-module-boundaries` blocks api <-> web imports.
 - UI wrappers (`@all-in-one/ui`, `libs/shared/packages/ui`):
   - `src/lib/spartan/*` is GENERATED from spartan Helm directives by `node tools/scripts/generate-ui-wrappers.mjs`
-    (re-run after adding spartan components). `AioX extends HlmX`, selector `hlm…` → `aio…`
+    (re-run after adding spartan components). `AioX extends HlmX` (inherits inputs, host bindings, host
+    directives; Angular does NOT inherit `providers`, so the generator copies them), selector `hlm…` → `aio…`
     (`<button aioBtn variant="outline">`, `<section aioCard>`). Inputs named after a Helm selector keep it
     (`aioTooltip` + `[hlmTooltip]="text"`).
   - `src/lib/components/*` are hand-written wrappers for Helm _components_ (checkbox, switch, native-select,

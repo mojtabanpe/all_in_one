@@ -1,1 +1,2 @@
-export * from './lib/planner-web/planner-web';
+export * from './lib/planner.routes';
+export * from './lib/planner-api';

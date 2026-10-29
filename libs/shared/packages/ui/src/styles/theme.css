@@ -184,6 +184,20 @@
   }
 }
 
+/* No bottom nav from md up (the sidebar takes over). */
+@media (min-width: 768px) {
+  :root {
+    --bottom-nav-space: 0px;
+  }
+}
+
+/* Sonner pins toasts 20px from the bottom on small screens; keep them above the bottom nav. */
+@media (max-width: 600px) {
+  [data-sonner-toaster][data-y-position='bottom'] {
+    bottom: calc(var(--bottom-nav-space) + 0.5rem) !important;
+  }
+}
+
 /* Users who ask for less transparency get solid surfaces. */
 @media (prefers-reduced-transparency: reduce) {
   :root {

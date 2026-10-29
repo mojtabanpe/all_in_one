@@ -3,13 +3,12 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { HlmSidebarImports } from '@spartan-ng/helm/sidebar';
 import { AioBottomNav, type AioNavItem } from './bottom-nav';
 import { AioConfirmHost } from './dialog';
-import { AioToaster } from './feedback';
 import { AioIcon } from './icon';
 
 /**
  * App layout: spartan sidebar (start side, floating, collapsible to icons) on
- * tablets/desktop, floating bottom nav on phones, plus the toaster and the
- * confirmation host. Project page content; project header actions with
+ * tablets/desktop, floating bottom nav on phones, plus the confirmation host.
+ * Put `<aio-toaster />` once in the app root (toasts also show outside the shell). Project page content; project header actions with
  * `aioShellActions`.
  */
 @Component({
@@ -18,7 +17,6 @@ import { AioIcon } from './icon';
     AioBottomNav,
     AioConfirmHost,
     AioIcon,
-    AioToaster,
     HlmSidebarImports,
     RouterLink,
     RouterLinkActive,
@@ -81,7 +79,6 @@ import { AioIcon } from './icon';
     </div>
 
     <aio-bottom-nav [items]="navItems()" />
-    <aio-toaster />
     <aio-confirm-host />
   `,
 })

@@ -11,6 +11,7 @@ import {
   AioConfirm,
   AioDialog,
   AioDialogBody,
+  AioToggleGroupDirectives,
   AioTooltip,
   provideIcons,
 } from '../index';
@@ -60,6 +61,36 @@ describe('generated spartan wrappers', () => {
     expect(el.querySelector('[aioCard]')!.getAttribute('data-slot')).toBe(
       'card',
     );
+  });
+});
+
+@Component({
+  imports: [AioToggleGroupDirectives],
+  template: `
+    <div
+      aioToggleGroup
+      type="single"
+      [value]="value()"
+      (valueChange)="value.set($any($event))"
+    >
+      <button aioToggleGroupItem value="a">a</button>
+      <button aioToggleGroupItem value="b">b</button>
+    </div>
+  `,
+})
+class ToggleHost {
+  readonly value = signal<string>('a');
+}
+
+describe('generated wrappers that provide themselves to children', () => {
+  it('toggle group items find their AioToggleGroup (providers are copied)', async () => {
+    const fixture = TestBed.createComponent(ToggleHost);
+    await fixture.whenStable();
+    const [a, b] = fixture.nativeElement.querySelectorAll('button');
+    expect(a.getAttribute('data-state')).toBe('on');
+    b.click();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.value()).toBe('b');
   });
 });
 
