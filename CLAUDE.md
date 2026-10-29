@@ -21,3 +21,15 @@
 - The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
 
 <!-- nx configuration end-->
+
+# Project conventions
+
+- Apps: `api` (NestJS 12 + Prisma 7), `public` (Angular 22 SSR, no login), `admin`, `customer` (Angular 22). See README.md.
+- Use Node 24 (`.nvmrc`). Angular 22 refuses Node < 22.22.3.
+- Backend: follow the `nestjs` skill (v12 APIs). Validate input with Zod schemas from `@all-in-one/shared/schemas` via `@Body({ schema })`.
+- Frontend: follow `angular-developer` and `spartan` skills. Signals, `httpResource`, Signal Forms, spartan Helm components from `@spartan-ng/helm/*`; add components with `pnpm nx g @spartan-ng/cli:ui --name=<name>`.
+- Shared schemas use `import * as z from 'zod/mini'` (named `{ z }` imports defeat tree-shaking in the browser).
+- Database: edit `apps/api/prisma/schema.prisma`, then `pnpm nx run api:prisma-migrate --name=<change>`. Never edit applied migrations.
+- The api reads `API_PORT`, not `PORT`: Nx loads the root `.env` into every task, and `PORT` would leak into the Angular dev servers.
+- Tags: `scope:api`, `scope:web`, `scope:shared`; `@nx/enforce-module-boundaries` blocks api <-> web imports.
+- Before pushing: `pnpm nx run-many -t lint test build typecheck`.

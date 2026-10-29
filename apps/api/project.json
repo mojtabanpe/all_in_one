@@ -3,15 +3,10 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/api/src",
   "projectType": "application",
-  "tags": [
-    "scope:api",
-    "type:app"
-  ],
+  "tags": ["scope:api", "type:app"],
   "targets": {
     "prune-lockfile": {
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "cache": true,
       "executor": "@nx/js:prune-lockfile",
       "inputs": [
@@ -35,32 +30,23 @@
       }
     },
     "copy-workspace-modules": {
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "cache": true,
-      "outputs": [
-        "{workspaceRoot}/dist/apps/api/workspace_modules"
-      ],
+      "outputs": ["{workspaceRoot}/dist/apps/api/workspace_modules"],
       "executor": "@nx/js:copy-workspace-modules",
       "options": {
         "buildTarget": "build"
       }
     },
     "prune": {
-      "dependsOn": [
-        "prune-lockfile",
-        "copy-workspace-modules"
-      ],
+      "dependsOn": ["prune-lockfile", "copy-workspace-modules"],
       "executor": "nx:noop"
     },
     "serve": {
       "continuous": true,
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
-      "dependsOn": [
-        "build"
-      ],
+      "dependsOn": ["build"],
       "readyWhen": {
         "signal": true
       },
@@ -78,25 +64,16 @@
       }
     },
     "build": {
-      "dependsOn": [
-        "prisma-generate",
-        "^build"
-      ]
+      "dependsOn": ["prisma-generate", "^build"]
     },
     "test": {
-      "dependsOn": [
-        "prisma-generate"
-      ]
+      "dependsOn": ["prisma-generate"]
     },
     "lint": {
-      "dependsOn": [
-        "prisma-generate"
-      ]
+      "dependsOn": ["prisma-generate"]
     },
     "typecheck": {
-      "dependsOn": [
-        "prisma-generate"
-      ]
+      "dependsOn": ["prisma-generate"]
     },
     "prisma-generate": {
       "command": "prisma generate --config apps/api/prisma.config.ts",
@@ -105,9 +82,7 @@
         "{projectRoot}/prisma/schema.prisma",
         "{projectRoot}/prisma.config.ts"
       ],
-      "outputs": [
-        "{projectRoot}/src/generated/prisma"
-      ]
+      "outputs": ["{projectRoot}/src/generated/prisma"]
     },
     "prisma-migrate": {
       "command": "prisma migrate dev --config apps/api/prisma.config.ts"

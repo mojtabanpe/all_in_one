@@ -1,2 +1,25 @@
-<public-nx-welcome></public-nx-welcome>
-<router-outlet></router-outlet>
+<main class="mx-auto flex max-w-5xl flex-col gap-12 p-6">
+  <section class="flex flex-col items-start gap-4 py-12">
+    <h1 class="text-4xl font-bold tracking-tight">All in One</h1>
+    <p class="max-w-xl text-lg text-muted-foreground">
+      The public site. Anyone can visit it without signing in.
+    </p>
+    <div class="flex gap-2">
+      <a hlmBtn href="#features">Learn more</a>
+      <a hlmBtn variant="outline" href="#features">Contact</a>
+    </div>
+  </section>
+
+  <section id="features" class="grid gap-4 sm:grid-cols-3">
+    @for (feature of features; track feature.title) {
+    <article hlmCard>
+      <div hlmCardHeader>
+        <h2 hlmCardTitle>{{ feature.title }}</h2>
+        <p hlmCardDescription>{{ feature.description }}</p>
+      </div>
+    </article>
+    }
+  </section>
+
+  <router-outlet />
+</main>

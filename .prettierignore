@@ -6,3 +6,5 @@
 .angular
 
 .nx/self-healing
+/.claude
+/apps/api/src/generated

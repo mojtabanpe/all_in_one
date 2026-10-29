@@ -1,13 +1,10 @@
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
-import { NxWelcome } from './nx-welcome';
+import { RouterOutlet } from '@angular/router';
+import { ApiStatus } from '@all-in-one/web/shared';
 
 @Component({
-  imports: [NxWelcome, RouterModule],
+  imports: [ApiStatus, RouterOutlet],
   selector: 'customer-root',
   templateUrl: './app.html',
-  styleUrl: './app.css',
 })
-export class App {
-  protected title = 'customer';
-}
+export class App {}

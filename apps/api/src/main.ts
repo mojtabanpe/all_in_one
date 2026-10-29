@@ -3,7 +3,7 @@
  * This is only a minimal backend to get started.
  */
 
-import { Logger } from '@nestjs/common';
+import { Logger, StandardSchemaValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 
@@ -11,9 +11,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useSecurityHeaders();
   app.enableShutdownHooks();
+  // Validates any @Body/@Query/@Param that declares a `schema` (Zod from @all-in-one/shared/schemas).
+  app.useGlobalPipes(new StandardSchemaValidationPipe());
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
-  const port = process.env.PORT || 3333;
+  const port = process.env.API_PORT || 3333;
   await app.listen(port);
   // Set when Nx waits for this server to be ready
   if (process.env.NX_READY_SIGNAL_SOCKET) {

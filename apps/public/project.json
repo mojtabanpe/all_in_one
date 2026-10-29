@@ -27,7 +27,7 @@
         },
         "outputMode": "server",
         "security": {
-          "allowedHosts": []
+          "allowedHosts": ["localhost"]
         }
       },
       "configurations": {

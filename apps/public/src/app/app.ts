@@ -1,13 +1,23 @@
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
-import { NxWelcome } from './nx-welcome';
+import { RouterOutlet } from '@angular/router';
+import { HlmButtonImports } from '@spartan-ng/helm/button';
+import { HlmCardImports } from '@spartan-ng/helm/card';
 
 @Component({
-  imports: [NxWelcome, RouterModule],
+  imports: [HlmButtonImports, HlmCardImports, RouterOutlet],
   selector: 'public-root',
   templateUrl: './app.html',
-  styleUrl: './app.css',
 })
 export class App {
-  protected title = 'public';
+  protected readonly features = [
+    {
+      title: 'Fast',
+      description: 'Server-side rendered for quick first paint and SEO.',
+    },
+    { title: 'Open', description: 'No account needed to browse.' },
+    {
+      title: 'Accessible',
+      description: 'Built on spartan/ui accessible primitives.',
+    },
+  ];
 }
