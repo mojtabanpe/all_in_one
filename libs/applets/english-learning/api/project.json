@@ -1,0 +1,37 @@
+{
+  "name": "english-learning-api",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/applets/english-learning/api/src",
+  "projectType": "library",
+  "tags": ["scope:api", "type:applet"],
+  "// targets": "to see all targets run: nx show project english-learning-api --web",
+  "targets": {
+    "lint": {
+      "dependsOn": [
+        {
+          "projects": ["api-db"],
+          "target": "prisma-generate"
+        }
+      ]
+    },
+    "typecheck": {
+      "dependsOn": [
+        {
+          "projects": ["api-db"],
+          "target": "prisma-generate"
+        }
+      ]
+    },
+    "test": {
+      "dependsOn": [
+        {
+          "projects": ["api-db"],
+          "target": "prisma-generate"
+        }
+      ],
+      "options": {
+        "passWithNoTests": true
+      }
+    }
+  }
+}

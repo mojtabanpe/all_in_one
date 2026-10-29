@@ -1,0 +1,192 @@
+// Applet: health (libs/applets/health): fitness + nutrition
+
+enum Sex {
+  FEMALE
+  MALE
+}
+
+enum ActivityLevel {
+  SEDENTARY
+  LIGHT
+  MODERATE
+  ACTIVE
+  VERY_ACTIVE
+}
+
+enum HealthGoal {
+  LOSE
+  MAINTAIN
+  GAIN
+}
+
+/// How the user wants to handle nutrition.
+enum DietMode {
+  /// No diet: just evaluate meals against a balanced diet
+  NONE
+  /// User follows their own diet (described in ownDietNotes)
+  OWN
+  /// User picked a diet the app knows
+  APP_DIET
+  /// The app plans the user's meals (with recipes)
+  APP_PLAN
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+}
+
+enum Intensity {
+  LOW
+  MODERATE
+  HIGH
+}
+
+model HealthProfile {
+  userId        String        @id @db.Uuid
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sex           Sex?
+  birthYear     Int?
+  heightCm      Int?
+  weightKg      Float?
+  activityLevel ActivityLevel @default(LIGHT)
+  goal          HealthGoal    @default(MAINTAIN)
+  dietMode      DietMode      @default(NONE)
+  dietSlug      String?       @db.VarChar(64)
+  diet          Diet?         @relation(fields: [dietSlug], references: [slug])
+  ownDietNotes  String?       @db.VarChar(2000)
+  updatedAt     DateTime      @updatedAt
+
+  @@map("health_profiles")
+}
+
+// ---------- fitness ----------
+
+model ActivityType {
+  slug      String           @id @db.VarChar(32)
+  name      String           @db.VarChar(60)
+  /// gym | trx | cardio | home | sport | mind
+  category  String           @db.VarChar(16)
+  /// Metabolic equivalent, for calorie estimates
+  met       Float
+  icon      String           @db.VarChar(40)
+  sortOrder Int              @default(0)
+  programs  WorkoutProgram[]
+  logs      WorkoutLog[]
+
+  @@map("activity_types")
+}
+
+model WorkoutProgram {
+  slug            String       @id @db.VarChar(64)
+  title           String       @db.VarChar(120)
+  activitySlug    String       @db.VarChar(32)
+  activity        ActivityType @relation(fields: [activitySlug], references: [slug])
+  /// beginner | intermediate | advanced
+  level           String       @db.VarChar(16)
+  description     String       @db.VarChar(1000)
+  sessionsPerWeek Int
+  minutes         Int
+  /// [{ name, sets?, reps?, seconds?, restSeconds?, note? }]
+  exercises       Json
+  sortOrder       Int          @default(0)
+
+  @@map("workout_programs")
+}
+
+model WorkoutLog {
+  id           String       @id @default(uuid(7)) @db.Uuid
+  userId       String       @db.Uuid
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activitySlug String       @db.VarChar(32)
+  activity     ActivityType @relation(fields: [activitySlug], references: [slug])
+  programSlug  String?      @db.VarChar(64)
+  date         DateTime     @db.Date
+  durationMin  Int
+  intensity    Intensity    @default(MODERATE)
+  distanceKm   Float?
+  steps        Int?
+  calories     Int?
+  notes        String?      @db.VarChar(1000)
+  createdAt    DateTime     @default(now())
+
+  @@index([userId, date])
+  @@map("workout_logs")
+}
+
+// ---------- nutrition ----------
+
+model Diet {
+  slug        String          @id @db.VarChar(64)
+  name        String          @db.VarChar(80)
+  summary     String          @db.VarChar(300)
+  description String          @db.VarChar(2000)
+  carbsPct    Int
+  proteinPct  Int
+  fatPct      Int
+  encourage   String[]
+  limit       String[]
+  /// Meal-evaluation rules (see health contracts: DietRules)
+  rules       Json
+  sortOrder   Int             @default(0)
+  profiles    HealthProfile[]
+
+  @@map("diets")
+}
+
+model Recipe {
+  slug        String   @id @db.VarChar(64)
+  title       String   @db.VarChar(120)
+  mealType    MealType
+  /// Diet slugs this recipe fits
+  diets       String[]
+  calories    Int
+  proteinG    Int
+  carbsG      Int
+  fatG        Int
+  prepMinutes Int
+  /// [{ item, amount }]
+  ingredients Json
+  /// string[]
+  steps       Json
+  tags        String[]
+
+  @@map("recipes")
+}
+
+model MealLog {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  userId      String   @db.Uuid
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date        DateTime @db.Date
+  mealType    MealType
+  description String   @db.VarChar(500)
+  /// Food-group servings (see health contracts: MealPortions)
+  portions    Json
+  calories    Int?
+  score       Int
+  /// string[] (Persian feedback)
+  feedback    Json
+  recipeSlug  String?  @db.VarChar(64)
+  createdAt   DateTime @default(now())
+
+  @@index([userId, date])
+  @@map("meal_logs")
+}
+
+model MealPlan {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  userId        String   @db.Uuid
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startDate     DateTime @db.Date
+  dietSlug      String   @db.VarChar(64)
+  calorieTarget Int
+  /// [{ date, meals: [{ mealType, recipeSlug }] }]
+  days          Json
+  createdAt     DateTime @default(now())
+
+  @@index([userId, startDate])
+  @@map("meal_plans")
+}

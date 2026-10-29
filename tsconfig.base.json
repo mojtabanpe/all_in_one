@@ -100,7 +100,34 @@
       ],
       "@all-in-one/ui": ["./libs/shared/packages/ui/src/index.ts"],
       "@all-in-one/api/db": ["./libs/api/db/src/index.ts"],
-      "@all-in-one/api/auth": ["./libs/api/auth/src/index.ts"]
+      "@all-in-one/api/auth": ["./libs/api/auth/src/index.ts"],
+      "@all-in-one/applets/planner/contracts": [
+        "./libs/applets/planner/contracts/src/index.ts"
+      ],
+      "@all-in-one/applets/planner/api": [
+        "./libs/applets/planner/api/src/index.ts"
+      ],
+      "@all-in-one/applets/planner/web": [
+        "./libs/applets/planner/web/src/index.ts"
+      ],
+      "@all-in-one/applets/english-learning/contracts": [
+        "./libs/applets/english-learning/contracts/src/index.ts"
+      ],
+      "@all-in-one/applets/english-learning/api": [
+        "./libs/applets/english-learning/api/src/index.ts"
+      ],
+      "@all-in-one/applets/english-learning/web": [
+        "./libs/applets/english-learning/web/src/index.ts"
+      ],
+      "@all-in-one/applets/health/contracts": [
+        "./libs/applets/health/contracts/src/index.ts"
+      ],
+      "@all-in-one/applets/health/api": [
+        "./libs/applets/health/api/src/index.ts"
+      ],
+      "@all-in-one/applets/health/web": [
+        "./libs/applets/health/web/src/index.ts"
+      ]
     }
   },
   "exclude": ["node_modules", "tmp"]

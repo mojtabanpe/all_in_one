@@ -1,0 +1,10 @@
+{
+  "name": "planner-web",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/applets/planner/web/src",
+  "prefix": "planner",
+  "projectType": "library",
+  "tags": ["scope:web", "type:applet"],
+  "// targets": "to see all targets run: nx show project planner-web --web",
+  "targets": {}
+}

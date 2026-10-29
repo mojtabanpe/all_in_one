@@ -25,5 +25,15 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // Applets (each applet's models live in its own schema file)
+  plannerTasks    PlannerTask[]
+  englishWords    EnglishWord[]
+  englishProgress EnglishWordProgress[]
+  englishDays     EnglishReviewDay[]
+  healthProfile   HealthProfile?
+  workoutLogs     WorkoutLog[]
+  mealLogs        MealLog[]
+  mealPlans       MealPlan[]
+
   @@map("users")
 }

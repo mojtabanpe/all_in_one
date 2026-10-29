@@ -1,0 +1,33 @@
+// Applet: planner (libs/applets/planner)
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TaskStatus {
+  TODO
+  DONE
+}
+
+model PlannerTask {
+  id          String       @id @default(uuid(7)) @db.Uuid
+  userId      String       @db.Uuid
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String       @db.VarChar(200)
+  notes       String?      @db.VarChar(2000)
+  date        DateTime     @db.Date
+  /// "HH:mm", optional
+  time        String?      @db.VarChar(5)
+  priority    TaskPriority @default(MEDIUM)
+  status      TaskStatus   @default(TODO)
+  /// personal | work | health | learning | home
+  area        String       @default("personal") @db.VarChar(32)
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([userId, date])
+  @@map("planner_tasks")
+}

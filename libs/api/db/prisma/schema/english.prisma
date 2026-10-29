@@ -1,0 +1,70 @@
+// Applet: english-learning (libs/applets/english-learning)
+
+enum CefrLevel {
+  A1
+  A2
+  B1
+  B2
+  C1
+}
+
+model EnglishDeck {
+  id          String        @id @default(uuid(7)) @db.Uuid
+  slug        String        @unique @db.VarChar(64)
+  title       String        @db.VarChar(120)
+  description String        @db.VarChar(500)
+  level       CefrLevel
+  sortOrder   Int           @default(0)
+  words       EnglishWord[]
+
+  @@map("english_decks")
+}
+
+model EnglishWord {
+  id           String                @id @default(uuid(7)) @db.Uuid
+  /// Catalog words belong to a deck; a user's own words have an owner instead.
+  deckId       String?               @db.Uuid
+  deck         EnglishDeck?          @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  ownerId      String?               @db.Uuid
+  owner        User?                 @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  term         String                @db.VarChar(80)
+  phonetic     String?               @db.VarChar(80)
+  partOfSpeech String?               @db.VarChar(20)
+  meaningFa    String                @db.VarChar(200)
+  example      String?               @db.VarChar(300)
+  exampleFa    String?               @db.VarChar(300)
+  progress     EnglishWordProgress[]
+
+  @@unique([deckId, term])
+  @@index([ownerId])
+  @@map("english_words")
+}
+
+/// Leitner box per user and word.
+model EnglishWordProgress {
+  userId         String      @db.Uuid
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wordId         String      @db.Uuid
+  word           EnglishWord @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  box            Int         @default(1)
+  dueAt          DateTime    @default(now())
+  reviews        Int         @default(0)
+  lapses         Int         @default(0)
+  lastReviewedAt DateTime?
+  createdAt      DateTime    @default(now())
+
+  @@id([userId, wordId])
+  @@index([userId, dueAt])
+  @@map("english_word_progress")
+}
+
+/// Reviews per day, for streaks and history.
+model EnglishReviewDay {
+  userId  String   @db.Uuid
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date    DateTime @db.Date
+  reviews Int      @default(0)
+
+  @@id([userId, date])
+  @@map("english_review_days")
+}

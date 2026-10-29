@@ -1,0 +1,37 @@
+{
+  "name": "planner-api",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/applets/planner/api/src",
+  "projectType": "library",
+  "tags": ["scope:api", "type:applet"],
+  "// targets": "to see all targets run: nx show project planner-api --web",
+  "targets": {
+    "lint": {
+      "dependsOn": [
+        {
+          "projects": ["api-db"],
+          "target": "prisma-generate"
+        }
+      ]
+    },
+    "typecheck": {
+      "dependsOn": [
+        {
+          "projects": ["api-db"],
+          "target": "prisma-generate"
+        }
+      ]
+    },
+    "test": {
+      "dependsOn": [
+        {
+          "projects": ["api-db"],
+          "target": "prisma-generate"
+        }
+      ],
+      "options": {
+        "passWithNoTests": true
+      }
+    }
+  }
+}

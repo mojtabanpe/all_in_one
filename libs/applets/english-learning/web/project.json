@@ -1,0 +1,10 @@
+{
+  "name": "english-learning-web",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/applets/english-learning/web/src",
+  "prefix": "english-learning",
+  "projectType": "library",
+  "tags": ["scope:web", "type:applet"],
+  "// targets": "to see all targets run: nx show project english-learning-web --web",
+  "targets": {}
+}

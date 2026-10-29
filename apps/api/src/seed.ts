@@ -2,6 +2,8 @@ import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { hashPassword } from '@all-in-one/api/auth';
 import { PrismaClient } from '@all-in-one/api/db';
+import { seedEnglish } from '@all-in-one/applets/english-learning/api';
+import { seedHealth } from '@all-in-one/applets/health/api';
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env['DATABASE_URL'] }),
@@ -18,6 +20,9 @@ async function main() {
       passwordHash: await hashPassword('change-me-admin'),
     },
   });
+  // Applet catalogs (idempotent)
+  await seedEnglish(prisma);
+  await seedHealth(prisma);
 }
 
 main()

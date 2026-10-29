@@ -1,0 +1,10 @@
+{
+  "name": "health-web",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/applets/health/web/src",
+  "prefix": "health",
+  "projectType": "library",
+  "tags": ["scope:web", "type:applet"],
+  "// targets": "to see all targets run: nx show project health-web --web",
+  "targets": {}
+}
