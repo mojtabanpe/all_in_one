@@ -68,10 +68,19 @@ When the owner gives a new instruction, add it to this list in the same change.
       - *Nutrition*: evaluate each meal; ask whether the user follows a specific diet; offer diets
         the app knows for the user to pick; or have the app plan the user's meals and give the recipes.
 
+## Decisions (2026-10-29)
+
+12. **Language: Persian, RTL.** The whole UI is Persian (`lang="fa" dir="rtl"`, Vazirmatn font).
+    English-learning content stays English where it is the subject being learned.
+13. **Toasts:** short, transient toasts use spartan `sonner` (bottom position, above the bottom nav).
+    Dialogs, alerts and confirmations on phones are bottom sheets (spartan drawer/sheet), never modals.
+14. **Applets ship as MVP + backend:** auth first, then Prisma tables and api endpoints per applet.
+
 ## Memory (2026-10-29)
 
 11. Keep every owner instruction in project memory (this file). Do not drop or weaken existing ones.
 
 ## Approved custom components
 
-(none yet)
+- **BottomNav** (2026-10-29): floating bottom navigation for phone sizes, in `libs/shared/packages`,
+  assembled from spartan pieces (`hlmBtn`, ng-icons) inside a glass container.
