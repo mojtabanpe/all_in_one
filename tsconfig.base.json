@@ -98,7 +98,9 @@
       "@spartan-ng/helm/alert-dialog": [
         "./libs/shared/spartan/alert-dialog/src/index.ts"
       ],
-      "@all-in-one/ui": ["./libs/shared/packages/ui/src/index.ts"]
+      "@all-in-one/ui": ["./libs/shared/packages/ui/src/index.ts"],
+      "@all-in-one/api/db": ["./libs/api/db/src/index.ts"],
+      "@all-in-one/api/auth": ["./libs/api/auth/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

@@ -64,38 +64,37 @@
       }
     },
     "build": {
-      "dependsOn": ["prisma-generate", "^build"]
+      "dependsOn": [
+        {
+          "projects": ["api-db"],
+          "target": "prisma-generate"
+        },
+        "^build"
+      ]
     },
     "test": {
-      "dependsOn": ["prisma-generate"]
+      "dependsOn": [
+        {
+          "projects": ["api-db"],
+          "target": "prisma-generate"
+        }
+      ]
     },
     "lint": {
-      "dependsOn": ["prisma-generate"]
+      "dependsOn": [
+        {
+          "projects": ["api-db"],
+          "target": "prisma-generate"
+        }
+      ]
     },
     "typecheck": {
-      "dependsOn": ["prisma-generate"]
-    },
-    "prisma-generate": {
-      "command": "prisma generate --config apps/api/prisma.config.ts",
-      "cache": true,
-      "inputs": [
-        "{projectRoot}/prisma/schema.prisma",
-        "{projectRoot}/prisma.config.ts"
-      ],
-      "outputs": ["{projectRoot}/src/generated/prisma"]
-    },
-    "prisma-migrate": {
-      "command": "prisma migrate dev --config apps/api/prisma.config.ts"
-    },
-    "prisma-deploy": {
-      "command": "prisma migrate deploy --config apps/api/prisma.config.ts"
-    },
-    "prisma-seed": {
-      "command": "prisma db seed --config apps/api/prisma.config.ts"
-    },
-    "prisma-studio": {
-      "command": "prisma studio --config apps/api/prisma.config.ts",
-      "continuous": true
+      "dependsOn": [
+        {
+          "projects": ["api-db"],
+          "target": "prisma-generate"
+        }
+      ]
     }
   }
 }

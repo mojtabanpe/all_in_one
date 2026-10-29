@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
-import type { Role } from '../generated/prisma/client';
+import type { Role } from '@all-in-one/api/db';
 import { type AuthUser, IS_PUBLIC, ROLES } from './auth.decorators';
 
 export const SESSION_COOKIE = 'aio_session';

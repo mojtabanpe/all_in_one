@@ -63,5 +63,5 @@ vitest.config.*.timestamp*
 .agents
 
 __screenshots__/
-apps/api/src/generated
+libs/api/db/src/generated
 .vitest

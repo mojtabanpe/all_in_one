@@ -7,5 +7,5 @@
 
 .nx/self-healing
 /.claude
-/apps/api/src/generated
+/libs/api/db/src/generated
 /libs/shared/packages/ui/src/lib/spartan

@@ -1,0 +1,38 @@
+{
+  "name": "api-db",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/api/db/src",
+  "projectType": "library",
+  "tags": ["scope:api", "type:data-access"],
+  "// targets": "to see all targets run: nx show project api-db --web",
+  "targets": {
+    "prisma-generate": {
+      "command": "prisma generate --config libs/api/db/prisma.config.ts",
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/prisma/schema/*.prisma",
+        "{projectRoot}/prisma.config.ts"
+      ],
+      "outputs": ["{projectRoot}/src/generated/prisma"]
+    },
+    "prisma-migrate": {
+      "command": "prisma migrate dev --config libs/api/db/prisma.config.ts"
+    },
+    "prisma-deploy": {
+      "command": "prisma migrate deploy --config libs/api/db/prisma.config.ts"
+    },
+    "prisma-seed": {
+      "command": "prisma db seed --config libs/api/db/prisma.config.ts"
+    },
+    "prisma-studio": {
+      "command": "prisma studio --config libs/api/db/prisma.config.ts",
+      "continuous": true
+    },
+    "lint": {
+      "dependsOn": ["prisma-generate"]
+    },
+    "typecheck": {
+      "dependsOn": ["prisma-generate"]
+    }
+  }
+}

@@ -9,10 +9,10 @@
     "lint": "nx run-many -t lint",
     "typecheck": "nx run-many -t typecheck",
     "db:up": "docker compose up -d postgres",
-    "db:migrate": "nx run api:prisma-migrate",
-    "db:deploy": "nx run api:prisma-deploy",
-    "db:seed": "nx run api:prisma-seed",
-    "db:studio": "nx run api:prisma-studio"
+    "db:migrate": "nx run api-db:prisma-migrate",
+    "db:deploy": "nx run api-db:prisma-deploy",
+    "db:seed": "nx run api-db:prisma-seed",
+    "db:studio": "nx run api-db:prisma-studio"
   },
   "private": true,
   "dependencies": {

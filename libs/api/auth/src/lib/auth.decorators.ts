@@ -3,7 +3,7 @@ import {
   type ExecutionContext,
   SetMetadata,
 } from '@nestjs/common';
-import type { Role } from '../generated/prisma/client';
+import type { Role } from '@all-in-one/api/db';
 
 export const IS_PUBLIC = 'auth:isPublic';
 export const ROLES = 'auth:roles';

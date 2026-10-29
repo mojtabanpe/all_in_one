@@ -1,9 +1,9 @@
-// Prisma schema for the api. After changing it run:
-//   pnpm nx run api:prisma-migrate   (creates and applies a migration)
+// Prisma schema (multi-file: every *.prisma in this folder). After a change run:
+//   pnpm nx run api-db:prisma-migrate --name=<change>
 
 generator client {
   provider     = "prisma-client"
-  output       = "../src/generated/prisma"
+  output       = "../../src/generated/prisma"
   moduleFormat = "cjs"
 }
 

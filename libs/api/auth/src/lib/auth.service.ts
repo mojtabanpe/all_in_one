@@ -9,8 +9,7 @@ import type {
   RegisterInput,
   User,
 } from '@all-in-one/shared/schemas';
-import type { User as DbUser } from '../generated/prisma/client';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService, type User as DbUser } from '@all-in-one/api/db';
 import { hashPassword, verifyPassword } from './password';
 
 export function toUser(user: DbUser): User {

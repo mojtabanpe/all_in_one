@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { hashPassword } from '../src/auth/password';
-import { PrismaClient } from '../src/generated/prisma/client';
+import { hashPassword } from '@all-in-one/api/auth';
+import { PrismaClient } from '@all-in-one/api/db';
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env['DATABASE_URL'] }),

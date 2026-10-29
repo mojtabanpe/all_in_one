@@ -17,8 +17,7 @@ import {
   registerSchema,
   type User,
 } from '@all-in-one/shared/schemas';
-import type { Env } from '../config/env';
-import type { User as DbUser } from '../generated/prisma/client';
+import type { User as DbUser } from '@all-in-one/api/db';
 import { type AuthUser, CurrentUser, Public } from './auth.decorators';
 import { SESSION_COOKIE } from './auth.guard';
 import { AuthService, toUser } from './auth.service';
@@ -30,7 +29,7 @@ export class AuthController {
   constructor(
     private readonly auth: AuthService,
     private readonly adapterHost: HttpAdapterHost,
-    private readonly config: ConfigService<Env, true>,
+    private readonly config: ConfigService,
   ) {}
 
   @Public()
@@ -81,7 +80,7 @@ export class AuthController {
       await this.auth.sign(user),
       {
         httpOnly: true,
-        secure: this.config.get('NODE_ENV', { infer: true }) === 'production',
+        secure: this.config.get<string>('NODE_ENV') === 'production',
         sameSite: 'lax',
         path: '/',
         maxAge: SESSION_SECONDS, // seconds in Nest 12
