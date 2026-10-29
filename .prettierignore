@@ -8,3 +8,4 @@
 .nx/self-healing
 /.claude
 /apps/api/src/generated
+/libs/shared/packages/ui/src/lib/spartan

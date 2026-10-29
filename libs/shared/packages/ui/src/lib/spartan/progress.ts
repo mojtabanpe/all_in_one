@@ -16,7 +16,4 @@ export class AioProgressIndicator extends HlmProgressIndicator {}
 })
 export class AioProgress extends HlmProgress {}
 
-export const AioProgressDirectives = [
-  AioProgressIndicator,
-  AioProgress,
-] as const;
+export const AioProgressDirectives = [AioProgressIndicator, AioProgress] as const;
