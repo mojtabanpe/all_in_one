@@ -29,7 +29,19 @@
 - Backend: follow the `nestjs` skill (v12 APIs). Validate input with Zod schemas from `@all-in-one/shared/schemas` via `@Body({ schema })`.
 - Frontend: follow `angular-developer` and `spartan` skills. Signals, `httpResource`, Signal Forms. Apps, applets and feature code use the wrapper components from `libs/shared/packages`, never `@spartan-ng/helm/*` directly (see "User directives").
 - Shared schemas use `import * as z from 'zod/mini'` (named `{ z }` imports defeat tree-shaking in the browser).
-- Database: edit `apps/api/prisma/schema.prisma`, then `pnpm nx run api:prisma-migrate --name=<change>`. Never edit applied migrations.
+- Applets: `libs/applets/<name>/{contracts,api,web}` (tags `scope:shared|api|web`, `type:applet|contracts`).
+  `contracts` = Zod schemas, types, pure logic used by both sides; `api` = Nest module + seed function (the api app
+  imports the module and `apps/api/src/seed.ts` calls the seed); `web` = exported routes, using only `@all-in-one/ui`
+  and `@all-in-one/web/shared`. An applet never imports another applet or an app.
+- Database: Prisma schema folder `libs/api/db/prisma/schema/` (`base.prisma` + `<applet>.prisma`; add back-relations on
+  `User` in `base.prisma`). Then `pnpm nx run api-db:prisma-migrate --name=<change>`. Never edit applied migrations.
+- Auth: global `AuthGuard` (cookie `aio_session`, JWT); mark open routes `@Public()`, restrict with `@Roles('ADMIN')`,
+  read the user with `@CurrentUser()` (`@all-in-one/api/auth`). Frontend: `authGuard(role?)`, `guestGuard`,
+  `authInterceptor`, `LoginPage` (route data `{ appName, allowRegister }`) from `@all-in-one/web/shared`.
+- Angular gotchas seen here: never call `inject()` inside an `httpResource`/`computed` callback (use a field);
+  `withComponentInputBinding()` sets unbound inputs to `undefined` (don't rely on input defaults in routed components);
+  a `@for` variable shadows a component method of the same name.
+- Scripted edits: Prettier reformats files, so `str.replace` patches can silently miss — assert the match or use the Edit tool.
 - The api reads `API_PORT`, not `PORT`: Nx loads the root `.env` into every task, and `PORT` would leak into the Angular dev servers.
 - Tags: `scope:api`, `scope:web`, `scope:shared`; `@nx/enforce-module-boundaries` blocks api <-> web imports.
 - UI wrappers (`@all-in-one/ui`, `libs/shared/packages/ui`):

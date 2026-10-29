@@ -1,19 +1,52 @@
 # All in One
 
-Nx monorepo with one NestJS api, three Angular apps and a PostgreSQL database (Prisma).
+Nx monorepo: a NestJS api, three Angular apps and self-contained **applets** (planner,
+English learning, health), on PostgreSQL with Prisma. Persian (RTL) UI with a glassmorphism
+design built only from spartan/ui (through the project's own wrappers).
 
-| Project          | Path                  | Stack                            | Dev URL                   |
-| ---------------- | --------------------- | -------------------------------- | ------------------------- |
-| `api`            | `apps/api`            | NestJS 12, Prisma 7              | http://localhost:3333/api |
-| `public`         | `apps/public`         | Angular 22, SSR, no login        | http://localhost:4200     |
-| `admin`          | `apps/admin`          | Angular 22                       | http://localhost:4300     |
-| `customer`       | `apps/customer`       | Angular 22                       | http://localhost:4400     |
-| `ui-helm`        | `libs/shared/spartan` | spartan/ui (Helm) components     | -                         |
-| `web-shared`     | `libs/web/shared`     | Angular code shared by the apps  | -                         |
-| `shared-schemas` | `libs/shared/schemas` | Zod schemas used by api and apps | -                         |
+## Layout
 
-The Angular dev servers proxy `/api` to the api (`apps/*/proxy.conf.json`), so the apps call
-relative URLs like `/api/health`.
+```
+apps/
+  api/        NestJS 12 — composes auth + applet modules              → localhost:3333/api
+  public/     Angular 22 SSR, no login (landing, applets, about)      → localhost:4200
+  customer/   Angular 22 — signed-in users, hosts the applets         → localhost:4400
+  admin/      Angular 22 — admins only (dashboard, users, content)    → localhost:4300
+libs/
+  applets/<name>/{contracts,api,web}   planner · english-learning · health
+  api/db           Prisma schema (one file per applet), client, PrismaService
+  api/auth         cookie/JWT auth, guards (@Public, @Roles, @CurrentUser)
+  shared/spartan   spartan/ui Helm code (Nx project `ui-helm`)
+  shared/packages/ui   @all-in-one/ui — wrappers over spartan + theme (the only UI apps may use)
+  shared/schemas   Zod (zod/mini) schemas and shared types
+  web/shared       API_BASE_URL, auth store/guards, login page, Persian formatting
+design-system/all-in-one/MASTER.md       design decisions (ui-ux-pro-max)
+tools/scripts/generate-ui-wrappers.mjs   regenerates the spartan wrappers
+```
+
+### Applets
+
+Each applet is independent and can be mounted in any app:
+
+- `contracts`: Zod schemas, types and pure logic shared by both sides (Leitner scheduling,
+  meal scoring, calorie target, meal planning).
+- `api`: a Nest module (`PlannerApiModule`, `EnglishApiModule`, `HealthApiModule`) plus seed data.
+- `web`: Angular routes (`plannerRoutes`, `englishLearningRoutes`, `healthRoutes`).
+
+| Applet           | What it does                                                                                                                                                                                       |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| planner          | Week strip (Solar Hijri), tasks with time, priority and area, done toggle                                                                                                                          |
+| english-learning | CEFR decks, Leitner spaced repetition, pronunciation, own words, streaks                                                                                                                           |
+| health           | Fitness (TRX, gym, walking, running, sports, home workouts, yoga; programs; weekly WHO goal) and nutrition (diet question, 8 diets, diet-aware meal scoring, 7-day meal plans, 21 Persian recipes) |
+
+## UI rules
+
+- Only spartan/ui components, used through `@all-in-one/ui` (`aioBtn`, `aioCard`, `aio-dialog`, …).
+  ESLint blocks `@spartan-ng/*` imports elsewhere. Custom components need the owner's approval
+  (see CLAUDE.md); approved so far: the floating bottom nav.
+- Phones: floating bottom nav; dialogs and confirmations open as bottom sheets.
+- Add a spartan component: `pnpm nx g @spartan-ng/cli:ui --name=<name>`, then
+  `node tools/scripts/generate-ui-wrappers.mjs`.
 
 ## Requirements
 
@@ -25,57 +58,33 @@ relative URLs like `/api/health`.
 
 ```bash
 pnpm install
-cp .env.example .env
-pnpm db:up          # Postgres 17 in Docker
-pnpm db:migrate     # apply migrations
-pnpm db:seed        # admin@example.com / change-me-admin
-pnpm dev            # api + all three apps
+cp .env.example .env      # set JWT_SECRET
+pnpm db:up                # Postgres 17 in Docker
+pnpm db:migrate           # apply migrations
+pnpm db:seed              # admin@example.com / change-me-admin + applet catalogs
+pnpm dev                  # api + all apps
 ```
 
-Run one project: `pnpm nx serve admin`, `pnpm nx serve api`, …
+## Database
 
-## Database (Prisma)
-
-- Schema: `apps/api/prisma/schema.prisma`, config: `apps/api/prisma.config.ts`
-- The client is generated into `apps/api/src/generated/prisma` (git-ignored). `prisma-generate`
-  runs automatically before the api's build, test, lint and typecheck.
-- Change the schema, then `pnpm db:migrate --name <change>` to create and apply a migration.
-- Production: `pnpm db:deploy`.
-- Inject `PrismaService` anywhere in the api; `PrismaModule` is global.
-
-## Shared schemas
-
-`libs/shared/schemas` holds Zod schemas (`@all-in-one/shared/schemas`) used on both sides:
-
-- api: `@Body({ schema: loginSchema })`, validated by the global `StandardSchemaValidationPipe`
-- Angular: `httpResource(() => '/api/health', { parse: (v) => healthSchema.parse(v) })`
-
-It uses `zod/mini` with `import * as z from 'zod/mini'`; the full `zod` build or a named
-`{ z }` import adds ~400 kB to every browser bundle.
-
-## UI components
-
-spartan/ui Helm components live in `libs/shared/spartan` and are imported as `@spartan-ng/helm/<name>`.
-Add more with:
-
-```bash
-pnpm nx g @spartan-ng/cli:ui --name=select
-```
+- Schema folder: `libs/api/db/prisma/schema/` (`base.prisma` + one file per applet).
+- After a change: `pnpm db:migrate --name=<change>`. Production: `pnpm db:deploy`.
+- The client is generated into `libs/api/db/src/generated` (git-ignored) before every api build/test.
 
 ## Common commands
 
 ```bash
-pnpm build          # build everything
-pnpm test           # Vitest everywhere
-pnpm lint
-pnpm typecheck
-pnpm nx affected -t lint test build   # only what changed
-pnpm nx graph                         # dependency graph
+pnpm build | pnpm test | pnpm lint | pnpm typecheck
+pnpm nx affected -t lint test build typecheck
+pnpm nx graph
 ```
 
 ## Production notes
 
-- `public` SSR server: `node dist/apps/public/server/server.mjs` (env `PORT`, default 4000).
-  Add your real domains to `allowedHosts` in `apps/public/project.json` or set
-  `NG_ALLOWED_HOSTS`; other hosts get a 400 (SSRF protection).
-- api: `node dist/apps/api/main.js` with `DATABASE_URL` and `API_PORT`.
+- `public` SSR server: `node dist/apps/public/server/server.mjs` (`PORT`, default 4000). Add real
+  domains to `allowedHosts` in `apps/public/project.json` or set `NG_ALLOWED_HOSTS`.
+  "Start" buttons point at `CUSTOMER_APP_URL` (`/app` in production).
+- api: `node dist/apps/api/main.js` with `DATABASE_URL`, `JWT_SECRET`, `API_PORT`.
+  Serve the apps and the api on the same site so the session cookie (`SameSite=Lax`) and
+  CSRF protection work.
+- Health suggestions are general guidance, not medical advice (stated in the UI).

@@ -2,18 +2,18 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
 
-describe('App', () => {
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
+describe('public App', () => {
+  it('shows the floating bottom nav with the public pages', async () => {
+    TestBed.configureTestingModule({
       imports: [App],
       providers: [provideRouter([])],
-    }).compileComponents();
-  });
-
-  it('should render title', async () => {
+    });
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('All in One');
+    const nav = fixture.nativeElement.querySelector(
+      'aio-bottom-nav nav',
+    ) as HTMLElement;
+    expect(nav.textContent).toContain('اپلت‌ها');
+    expect(nav.textContent).toContain('درباره');
   });
 });

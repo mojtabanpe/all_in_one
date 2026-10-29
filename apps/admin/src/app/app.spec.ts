@@ -1,32 +1,26 @@
-import { provideHttpClient } from '@angular/common/http';
-import {
-  HttpTestingController,
-  provideHttpClientTesting,
-} from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { App } from './app';
+import { appRoutes } from './app.routes';
 
-describe('App', () => {
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
+describe('admin App', () => {
+  it('renders the router outlet and the toaster', async () => {
+    TestBed.configureTestingModule({
       imports: [App],
-      providers: [
-        provideRouter([]),
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
-    }).compileComponents();
+      providers: [provideRouter([])],
+    });
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('aio-toaster')).not.toBeNull();
   });
 
-  it('should render title', async () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-    TestBed.inject(HttpTestingController)
-      .expectOne('/api/health')
-      .flush({ status: 'ok', database: 'up' });
-    await fixture.whenStable();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Admin panel');
+  it('only lets admins in and hides sign-up', () => {
+    TestBed.configureTestingModule({ providers: [provideRouter(appRoutes)] });
+    const routes = TestBed.inject(Router).config;
+    expect(routes.find((r) => r.path === 'login')?.data).toEqual({
+      appName: 'پنل مدیریت',
+      allowRegister: false,
+    });
+    expect(routes.find((r) => r.path === '')?.canActivate?.length).toBe(1);
   });
 });

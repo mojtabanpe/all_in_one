@@ -1,23 +1,36 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { HlmButtonImports } from '@spartan-ng/helm/button';
-import { HlmCardImports } from '@spartan-ng/helm/card';
+import {
+  AioAppShell,
+  type AioNavItem,
+  AioToaster,
+  provideIcons,
+} from '@all-in-one/ui';
+import {
+  lucideHouse,
+  lucideInfo,
+  lucideLayoutGrid,
+  lucideSparkles,
+} from '@ng-icons/lucide';
 
+/** Public site (no login): same shell, so phones get the floating bottom nav too. */
 @Component({
-  imports: [HlmButtonImports, HlmCardImports, RouterOutlet],
+  imports: [AioAppShell, AioToaster, RouterOutlet],
+  providers: [
+    provideIcons({ lucideHouse, lucideInfo, lucideLayoutGrid, lucideSparkles }),
+  ],
   selector: 'public-root',
-  templateUrl: './app.html',
+  template: `
+    <aio-app-shell appName="همه در یک" [navItems]="nav">
+      <router-outlet />
+    </aio-app-shell>
+    <aio-toaster />
+  `,
 })
 export class App {
-  protected readonly features = [
-    {
-      title: 'Fast',
-      description: 'Server-side rendered for quick first paint and SEO.',
-    },
-    { title: 'Open', description: 'No account needed to browse.' },
-    {
-      title: 'Accessible',
-      description: 'Built on spartan/ui accessible primitives.',
-    },
+  protected readonly nav: readonly AioNavItem[] = [
+    { label: 'خانه', icon: 'lucideHouse', link: '/', exact: true },
+    { label: 'اپلت‌ها', icon: 'lucideLayoutGrid', link: '/applets' },
+    { label: 'درباره', icon: 'lucideInfo', link: '/about' },
   ];
 }

@@ -6,6 +6,7 @@ import { EnglishApiModule } from '@all-in-one/applets/english-learning/api';
 import { HealthApiModule } from '@all-in-one/applets/health/api';
 import { PlannerApiModule } from '@all-in-one/applets/planner/api';
 import { envSchema } from '../config/env';
+import { AdminController } from '../admin/admin.controller';
 import { HealthController } from '../health/health.controller';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -20,7 +21,7 @@ import { AppService } from './app.service';
     EnglishApiModule,
     HealthApiModule,
   ],
-  controllers: [AppController, HealthController],
+  controllers: [AppController, HealthController, AdminController],
   providers: [AppService],
 })
 export class AppModule {}

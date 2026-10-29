@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { ApiStatus } from '@all-in-one/web/shared';
+import { AioToaster } from '@all-in-one/ui';
 
 @Component({
-  imports: [ApiStatus, RouterOutlet],
+  imports: [AioToaster, RouterOutlet],
   selector: 'admin-root',
-  templateUrl: './app.html',
+  template: `<router-outlet /><aio-toaster />`,
 })
 export class App {}
