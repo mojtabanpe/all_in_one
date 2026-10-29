@@ -22,8 +22,8 @@ describe('ApiStatus', () => {
     const { fixture, http } = setup();
     http.expectOne('/api/health').flush({ status: 'ok', database: 'up' });
     await fixture.whenStable();
-    expect(fixture.nativeElement.textContent).toContain('API up');
-    expect(fixture.nativeElement.textContent).toContain('database up');
+    expect(fixture.nativeElement.textContent).toContain('سرور فعال است');
+    expect(fixture.nativeElement.textContent).toContain('پایگاه داده: فعال');
   });
 
   it('shows the api as down when the request fails', async () => {
@@ -32,6 +32,6 @@ describe('ApiStatus', () => {
       .expectOne('/api/health')
       .flush(null, { status: 503, statusText: 'Service Unavailable' });
     await fixture.whenStable();
-    expect(fixture.nativeElement.textContent).toContain('API down');
+    expect(fixture.nativeElement.textContent).toContain('سرور در دسترس نیست');
   });
 });

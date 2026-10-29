@@ -1,0 +1,170 @@
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  Component,
+  computed,
+  contentChild,
+  Directive,
+  inject,
+  Injectable,
+  input,
+  model,
+  signal,
+  TemplateRef,
+} from '@angular/core';
+import { HlmButton } from '@spartan-ng/helm/button';
+import { HlmDialogImports } from '@spartan-ng/helm/dialog';
+import { HlmDrawerImports } from '@spartan-ng/helm/drawer';
+import { injectIsMobile } from './media';
+
+/** Marks the body of an `aio-dialog`: `<ng-template aioDialogBody>…</ng-template>`. */
+@Directive({ selector: 'ng-template[aioDialogBody]' })
+export class AioDialogBody {
+  readonly template = inject(TemplateRef);
+}
+
+/** Marks the actions (footer) of an `aio-dialog`. */
+@Directive({ selector: 'ng-template[aioDialogActions]' })
+export class AioDialogActions {
+  readonly template = inject(TemplateRef);
+}
+
+/**
+ * Responsive dialog (directive 7): a spartan dialog on tablets/desktop and a
+ * spartan bottom drawer (bottom sheet) on phones. Never a modal on phones.
+ *
+ * ```html
+ * <aio-dialog [(open)]="editing" title="ویرایش">
+ *   <ng-template aioDialogBody>…</ng-template>
+ *   <ng-template aioDialogActions><button aioBtn (click)="save()">ذخیره</button></ng-template>
+ * </aio-dialog>
+ * ```
+ */
+@Component({
+  selector: 'aio-dialog',
+  imports: [HlmDialogImports, HlmDrawerImports, NgTemplateOutlet],
+  template: `
+    @if (isMobile()) {
+      <hlm-drawer
+        direction="bottom"
+        [state]="state()"
+        (closed)="open.set(false)"
+      >
+        <hlm-drawer-content
+          *hlmDrawerPortal="let ctx"
+          class="pb-[env(safe-area-inset-bottom)]"
+        >
+          <hlm-drawer-header>
+            <h2 hlmDrawerTitle>{{ title() }}</h2>
+            @if (description()) {
+              <p hlmDrawerDescription>{{ description() }}</p>
+            }
+          </hlm-drawer-header>
+          @if (body(); as b) {
+            <div class="overflow-y-auto px-4 pb-2">
+              <ng-container [ngTemplateOutlet]="b.template" />
+            </div>
+          }
+          @if (footer(); as f) {
+            <hlm-drawer-footer>
+              <ng-container [ngTemplateOutlet]="f.template" />
+            </hlm-drawer-footer>
+          }
+        </hlm-drawer-content>
+      </hlm-drawer>
+    } @else {
+      <hlm-dialog [state]="state()" (closed)="open.set(false)">
+        <hlm-dialog-content *hlmDialogPortal="let ctx" [class]="contentClass()">
+          <hlm-dialog-header>
+            <h2 hlmDialogTitle>{{ title() }}</h2>
+            @if (description()) {
+              <p hlmDialogDescription>{{ description() }}</p>
+            }
+          </hlm-dialog-header>
+          @if (body(); as b) {
+            <ng-container [ngTemplateOutlet]="b.template" />
+          }
+          @if (footer(); as f) {
+            <hlm-dialog-footer>
+              <ng-container [ngTemplateOutlet]="f.template" />
+            </hlm-dialog-footer>
+          }
+        </hlm-dialog-content>
+      </hlm-dialog>
+    }
+  `,
+})
+export class AioDialog {
+  readonly open = model(false);
+  readonly title = input.required<string>();
+  readonly description = input<string>();
+  readonly contentClass = input('');
+
+  protected readonly isMobile = injectIsMobile();
+  protected readonly state = computed(() => (this.open() ? 'open' : 'closed'));
+  protected readonly body = contentChild(AioDialogBody);
+  protected readonly footer = contentChild(AioDialogActions);
+}
+
+export interface AioConfirmOptions {
+  title: string;
+  description?: string;
+  confirmText?: string;
+  cancelText?: string;
+  destructive?: boolean;
+}
+
+interface PendingConfirm extends AioConfirmOptions {
+  resolve: (confirmed: boolean) => void;
+}
+
+/**
+ * Confirmation prompts: `await confirm.ask({ title: 'حذف شود؟' })`.
+ * Rendered by `aio-confirm-host` (included in `aio-app-shell`) as a bottom
+ * sheet on phones and a dialog elsewhere.
+ */
+@Injectable({ providedIn: 'root' })
+export class AioConfirm {
+  readonly pending = signal<PendingConfirm | null>(null);
+
+  ask(options: AioConfirmOptions): Promise<boolean> {
+    this.pending()?.resolve(false);
+    return new Promise((resolve) => this.pending.set({ ...options, resolve }));
+  }
+
+  settle(confirmed: boolean): void {
+    const pending = this.pending();
+    if (!pending) return;
+    this.pending.set(null);
+    pending.resolve(confirmed);
+  }
+}
+
+@Component({
+  selector: 'aio-confirm-host',
+  imports: [AioDialog, AioDialogActions, HlmButton],
+  template: `
+    @let request = confirm.pending();
+    <aio-dialog
+      [open]="!!request"
+      (openChange)="!$event && confirm.settle(false)"
+      [title]="request?.title ?? ''"
+      [description]="request?.description"
+    >
+      <ng-template aioDialogActions>
+        <button hlmBtn variant="outline" (click)="confirm.settle(false)">
+          {{ request?.cancelText ?? 'انصراف' }}
+        </button>
+        <button
+          hlmBtn
+          [variant]="request?.destructive ? 'destructive' : 'default'"
+          (click)="confirm.settle(true)"
+        >
+          {{ request?.confirmText ?? 'تأیید' }}
+        </button>
+      </ng-template>
+    </aio-dialog>
+  `,
+})
+export class AioConfirmHost {
+  protected readonly confirm = inject(AioConfirm);
+}

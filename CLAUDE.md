@@ -32,6 +32,19 @@
 - Database: edit `apps/api/prisma/schema.prisma`, then `pnpm nx run api:prisma-migrate --name=<change>`. Never edit applied migrations.
 - The api reads `API_PORT`, not `PORT`: Nx loads the root `.env` into every task, and `PORT` would leak into the Angular dev servers.
 - Tags: `scope:api`, `scope:web`, `scope:shared`; `@nx/enforce-module-boundaries` blocks api <-> web imports.
+- UI wrappers (`@all-in-one/ui`, `libs/shared/packages/ui`):
+  - `src/lib/spartan/*` is GENERATED from spartan Helm directives by `node tools/scripts/generate-ui-wrappers.mjs`
+    (re-run after adding spartan components). `AioX extends HlmX`, selector `hlm…` → `aio…`
+    (`<button aioBtn variant="outline">`, `<section aioCard>`). Inputs named after a Helm selector keep it
+    (`aioTooltip` + `[hlmTooltip]="text"`).
+  - `src/lib/components/*` are hand-written wrappers for Helm _components_ (checkbox, switch, native-select,
+    spinner, field-error, toaster, accordion trigger/content), plus `aio-dialog` (dialog ↔ bottom drawer),
+    `AioConfirm`, `aioToast`, `aio-bottom-nav`, `aio-app-shell`, `aio-icon` + `provideIcons`.
+  - ESLint `no-restricted-imports` blocks `@spartan-ng/*` outside `libs/shared/spartan` and `libs/shared/packages`.
+  - `libs/shared/packages/ui/package.json` and `libs/shared/spartan/package.json` declare `sideEffects` so
+    unused wrappers are tree-shaken (subclasses are otherwise kept).
+- Design system: `design-system/all-in-one/MASTER.md`; tokens in `libs/shared/packages/ui/src/styles/theme.css`.
+  Each app's `styles.css` only imports that theme.
 - Before pushing: `pnpm nx run-many -t lint test build typecheck`.
 
 # User directives (binding — given by the project owner)
@@ -65,8 +78,8 @@ When the owner gives a new instruction, add it to this list in the same change.
     - **planner**
     - **english-learning**
     - **health**, made of many sub-areas:
-      - *Fitness*: TRX, gym, walking, a specific sport, home workouts, and more.
-      - *Nutrition*: evaluate each meal; ask whether the user follows a specific diet; offer diets
+      - _Fitness_: TRX, gym, walking, a specific sport, home workouts, and more.
+      - _Nutrition_: evaluate each meal; ask whether the user follows a specific diet; offer diets
         the app knows for the user to pick; or have the app plan the user's meals and give the recipes.
 
 ## Decisions (2026-10-29)

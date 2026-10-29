@@ -3,13 +3,13 @@ import { BrnDrawerTitle } from '@spartan-ng/brain/drawer';
 import { classes } from '@spartan-ng/helm/utils';
 
 @Directive({
-	selector: '[hlmDrawerTitle]',
-	exportAs: 'hlmDrawerTitle',
-	hostDirectives: [BrnDrawerTitle],
-	host: { 'data-slot': 'drawer-title' },
+  selector: '[hlmDrawerTitle]',
+  exportAs: 'hlmDrawerTitle',
+  hostDirectives: [BrnDrawerTitle],
+  host: { 'data-slot': 'drawer-title' },
 })
 export class HlmDrawerTitle {
-	constructor() {
-		classes(() => 'text-foreground font-medium');
-	}
+  constructor() {
+    classes(() => 'text-foreground font-medium');
+  }
 }

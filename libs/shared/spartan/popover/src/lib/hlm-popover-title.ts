@@ -2,12 +2,12 @@ import { Directive } from '@angular/core';
 import { classes } from '@spartan-ng/helm/utils';
 
 @Directive({
-	selector: '[hlmPopoverTitle]',
-	exportAs: 'hlmPopoverTitle',
-	host: { 'data-slot': 'popover-title' },
+  selector: '[hlmPopoverTitle]',
+  exportAs: 'hlmPopoverTitle',
+  host: { 'data-slot': 'popover-title' },
 })
 export class HlmPopoverTitle {
-	constructor() {
-		classes(() => 'font-medium');
-	}
+  constructor() {
+    classes(() => 'font-medium');
+  }
 }

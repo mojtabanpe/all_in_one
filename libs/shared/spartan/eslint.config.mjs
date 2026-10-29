@@ -54,4 +54,9 @@ export default [
       '@angular-eslint/template/click-events-have-key-events': 'off',
     },
   },
+  {
+    // This library wraps/owns spartan, so it may import it (CLAUDE.md directive 4).
+    files: ['**/*.ts'],
+    rules: { 'no-restricted-imports': 'off' },
+  },
 ];

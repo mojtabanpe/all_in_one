@@ -3,13 +3,18 @@ import { BrnProgress } from '@spartan-ng/brain/progress';
 import { classes } from '@spartan-ng/helm/utils';
 
 @Directive({
-	selector: 'hlm-progress,[hlmProgress]',
-	exportAs: 'hlmProgress',
-	hostDirectives: [{ directive: BrnProgress, inputs: ['value', 'max', 'getValueLabel'] }],
-	host: { 'data-slot': 'progress' },
+  selector: 'hlm-progress,[hlmProgress]',
+  exportAs: 'hlmProgress',
+  hostDirectives: [
+    { directive: BrnProgress, inputs: ['value', 'max', 'getValueLabel'] },
+  ],
+  host: { 'data-slot': 'progress' },
 })
 export class HlmProgress {
-	constructor() {
-		classes(() => 'bg-muted h-1.5 rounded-full relative inline-flex w-full overflow-hidden');
-	}
+  constructor() {
+    classes(
+      () =>
+        'bg-muted h-1.5 rounded-full relative inline-flex w-full overflow-hidden',
+    );
+  }
 }

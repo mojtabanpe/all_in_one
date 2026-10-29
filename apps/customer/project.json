@@ -20,15 +20,18 @@
             "input": "apps/customer/public"
           }
         ],
-        "styles": ["apps/customer/src/styles.css"]
+        "styles": [
+          "node_modules/@fontsource-variable/vazirmatn/index.css",
+          "apps/customer/src/styles.css"
+        ]
       },
       "configurations": {
         "production": {
           "budgets": [
             {
               "type": "initial",
-              "maximumWarning": "500kb",
-              "maximumError": "1mb"
+              "maximumWarning": "800kb",
+              "maximumError": "1.2mb"
             },
             {
               "type": "anyComponentStyle",

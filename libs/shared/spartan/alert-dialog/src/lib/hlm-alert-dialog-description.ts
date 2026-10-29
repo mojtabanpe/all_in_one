@@ -3,13 +3,16 @@ import { BrnAlertDialogDescription } from '@spartan-ng/brain/alert-dialog';
 import { classes } from '@spartan-ng/helm/utils';
 
 @Directive({
-	selector: '[hlmAlertDialogDescription]',
-	exportAs: 'hlmAlertDialogDescription',
-	hostDirectives: [BrnAlertDialogDescription],
-	host: { 'data-slot': 'alert-dialog-description' },
+  selector: '[hlmAlertDialogDescription]',
+  exportAs: 'hlmAlertDialogDescription',
+  hostDirectives: [BrnAlertDialogDescription],
+  host: { 'data-slot': 'alert-dialog-description' },
 })
 export class HlmAlertDialogDescription {
-	constructor() {
-		classes(() => 'text-muted-foreground *:[a]:hover:text-foreground text-sm text-balance md:text-pretty *:[a]:underline *:[a]:underline-offset-3');
-	}
+  constructor() {
+    classes(
+      () =>
+        'text-muted-foreground *:[a]:hover:text-foreground text-sm text-balance md:text-pretty *:[a]:underline *:[a]:underline-offset-3',
+    );
+  }
 }

@@ -1,0 +1,208 @@
+/*
+ * All in One design system: glassmorphism on spartan/ui, Persian RTL.
+ * Source of truth for tokens: design-system/all-in-one/MASTER.md.
+ *
+ * Every app's styles.css imports only this file. Spartan components get the
+ * glass look through the semantic CSS variables below and the data-slot rules
+ * in the `glass` section, so Helm code stays unmodified.
+ */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss/utilities.css';
+
+@import '@spartan-ng/brain/hlm-tailwind-preset.css';
+
+/* Tailwind only scans files under the working directory by default; be explicit
+   so classes in libs/ are always picked up. */
+@source '../../../../../../apps';
+@source '../../../../../../libs';
+
+@theme inline {
+  --font-sans: 'Vazirmatn Variable', 'Vazirmatn', system-ui, sans-serif;
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-glass: var(--glass);
+  --color-glass-border: var(--glass-border);
+}
+
+:root {
+  color-scheme: light;
+
+  --radius: 1rem;
+
+  /* Lavender violet primary + wellness green (ui-ux-pro-max: wellness palette). */
+  --background: oklch(0.965 0.018 292);
+  --foreground: oklch(0.25 0.06 292);
+  --card: oklch(1 0 0 / 0.55);
+  --card-foreground: oklch(0.25 0.06 292);
+  --popover: oklch(1 0 0 / 0.78);
+  --popover-foreground: oklch(0.25 0.06 292);
+  --primary: oklch(0.52 0.22 292);
+  --primary-foreground: oklch(0.99 0.005 292);
+  --secondary: oklch(1 0 0 / 0.6);
+  --secondary-foreground: oklch(0.3 0.07 292);
+  --muted: oklch(0.93 0.02 292 / 0.6);
+  --muted-foreground: oklch(0.45 0.05 292);
+  --accent: oklch(0.92 0.05 292 / 0.65);
+  --accent-foreground: oklch(0.3 0.09 292);
+  --destructive: oklch(0.56 0.22 27);
+  --border: oklch(0.45 0.08 292 / 0.16);
+  --input: oklch(0.45 0.08 292 / 0.22);
+  --ring: oklch(0.52 0.22 292);
+  --success: oklch(0.53 0.12 163);
+  --success-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.7 0.16 70);
+
+  --chart-1: oklch(0.52 0.22 292);
+  --chart-2: oklch(0.6 0.13 163);
+  --chart-3: oklch(0.7 0.16 70);
+  --chart-4: oklch(0.65 0.2 350);
+  --chart-5: oklch(0.6 0.15 230);
+
+  --sidebar: oklch(1 0 0 / 0.45);
+  --sidebar-foreground: oklch(0.25 0.06 292);
+  --sidebar-primary: oklch(0.52 0.22 292);
+  --sidebar-primary-foreground: oklch(0.99 0.005 292);
+  --sidebar-accent: oklch(0.92 0.05 292 / 0.65);
+  --sidebar-accent-foreground: oklch(0.3 0.09 292);
+  --sidebar-border: oklch(1 0 0 / 0.5);
+  --sidebar-ring: oklch(0.52 0.22 292);
+
+  /* Glass material */
+  --glass: oklch(1 0 0 / 0.55);
+  --glass-strong: oklch(1 0 0 / 0.78);
+  --glass-border: oklch(1 0 0 / 0.65);
+  --glass-blur: 18px;
+  --glass-shadow: 0 8px 32px oklch(0.3 0.1 292 / 0.12);
+
+  /* Ambient background blobs behind the glass */
+  --blob-1: oklch(0.78 0.14 292 / 0.55);
+  --blob-2: oklch(0.82 0.12 163 / 0.45);
+  --blob-3: oklch(0.85 0.1 350 / 0.4);
+
+  /* Height reserved for the floating bottom nav on phones */
+  --bottom-nav-space: calc(5.5rem + env(safe-area-inset-bottom));
+}
+
+:root.dark {
+  color-scheme: dark;
+
+  --background: oklch(0.17 0.035 285);
+  --foreground: oklch(0.96 0.01 292);
+  --card: oklch(0.3 0.04 285 / 0.42);
+  --card-foreground: oklch(0.96 0.01 292);
+  --popover: oklch(0.24 0.04 285 / 0.85);
+  --popover-foreground: oklch(0.96 0.01 292);
+  --primary: oklch(0.7 0.17 292);
+  --primary-foreground: oklch(0.18 0.04 285);
+  --secondary: oklch(1 0 0 / 0.08);
+  --secondary-foreground: oklch(0.96 0.01 292);
+  --muted: oklch(1 0 0 / 0.06);
+  --muted-foreground: oklch(0.75 0.03 292);
+  --accent: oklch(1 0 0 / 0.1);
+  --accent-foreground: oklch(0.96 0.01 292);
+  --destructive: oklch(0.68 0.19 22);
+  --border: oklch(1 0 0 / 0.12);
+  --input: oklch(1 0 0 / 0.16);
+  --ring: oklch(0.7 0.17 292);
+  --success: oklch(0.72 0.14 163);
+  --success-foreground: oklch(0.18 0.04 285);
+  --warning: oklch(0.8 0.15 75);
+
+  --sidebar: oklch(0.3 0.04 285 / 0.35);
+  --sidebar-foreground: oklch(0.96 0.01 292);
+  --sidebar-primary: oklch(0.7 0.17 292);
+  --sidebar-primary-foreground: oklch(0.18 0.04 285);
+  --sidebar-accent: oklch(1 0 0 / 0.1);
+  --sidebar-accent-foreground: oklch(0.96 0.01 292);
+  --sidebar-border: oklch(1 0 0 / 0.1);
+  --sidebar-ring: oklch(0.7 0.17 292);
+
+  --glass: oklch(0.3 0.04 285 / 0.42);
+  --glass-strong: oklch(0.24 0.04 285 / 0.85);
+  --glass-border: oklch(1 0 0 / 0.12);
+  --glass-shadow: 0 8px 32px oklch(0 0 0 / 0.35);
+
+  --blob-1: oklch(0.45 0.18 292 / 0.55);
+  --blob-2: oklch(0.45 0.12 163 / 0.4);
+  --blob-3: oklch(0.4 0.14 350 / 0.35);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    min-height: 100dvh;
+    background-image:
+      radial-gradient(40rem 40rem at 85% -10%, var(--blob-1), transparent 60%),
+      radial-gradient(36rem 36rem at -10% 40%, var(--blob-2), transparent 60%),
+      radial-gradient(30rem 30rem at 70% 110%, var(--blob-3), transparent 60%);
+    background-attachment: fixed;
+  }
+}
+
+/* ---------- glass: applied to spartan surfaces by data-slot ---------- */
+@layer components {
+  .glass,
+  [data-slot='card'],
+  [data-slot='sidebar-inner'],
+  [data-slot='popover-content'],
+  [data-slot='dialog-content'],
+  [data-slot='alert-dialog-content'],
+  [data-slot='drawer-content'],
+  [data-slot='sheet-content'] {
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+    backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  }
+
+  .glass {
+    background-color: var(--glass);
+  }
+
+  /* Overlays need more opacity to keep text readable over busy content. */
+  [data-slot='popover-content'],
+  [data-slot='dialog-content'],
+  [data-slot='alert-dialog-content'],
+  [data-slot='drawer-content'],
+  [data-slot='sheet-content'] {
+    background-color: var(--glass-strong);
+  }
+
+  .glass-strong {
+    background-color: var(--glass-strong);
+  }
+}
+
+/* Users who ask for less transparency get solid surfaces. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --card: oklch(1 0 0);
+    --glass: oklch(1 0 0);
+    --glass-strong: oklch(1 0 0);
+    --popover: oklch(1 0 0);
+  }
+
+  :root.dark {
+    --card: oklch(0.24 0.04 285);
+    --glass: oklch(0.24 0.04 285);
+    --glass-strong: oklch(0.24 0.04 285);
+    --popover: oklch(0.24 0.04 285);
+  }
+
+  .glass,
+  [data-slot] {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}

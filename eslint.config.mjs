@@ -38,6 +38,30 @@ export default [
     },
   },
   {
+    // CLAUDE.md directive 4: only libs/shared/spartan and libs/shared/packages
+    // may use spartan directly; everything else uses the @all-in-one/ui wrappers.
+    files: ['**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                '@spartan-ng/helm',
+                '@spartan-ng/helm/*',
+                '@spartan-ng/brain',
+                '@spartan-ng/brain/*',
+              ],
+              message:
+                'Use the wrapper components from @all-in-one/ui (CLAUDE.md directive 4).',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: [
       '**/*.ts',
       '**/*.tsx',

@@ -1,0 +1,7 @@
+{
+  "name": "@spartan-ng/helm",
+  "private": true,
+  "sideEffects": [
+    "*.css"
+  ]
+}
