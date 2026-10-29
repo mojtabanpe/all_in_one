@@ -1,1 +1,2 @@
-export * from './lib/health-web/health-web';
+export * from './lib/health.routes';
+export * from './lib/health-api';

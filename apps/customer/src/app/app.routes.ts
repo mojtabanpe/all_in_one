@@ -33,6 +33,11 @@ export const appRoutes: Route[] = [
             (m) => m.englishLearningRoutes,
           ),
       },
+      {
+        path: 'health',
+        loadChildren: () =>
+          import('@all-in-one/applets/health/web').then((m) => m.healthRoutes),
+      },
     ],
   },
   { path: '**', redirectTo: '' },
