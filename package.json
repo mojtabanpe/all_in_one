@@ -38,6 +38,7 @@
     "clsx": "^2.1.1",
     "dotenv": "^18.0.9",
     "express": "^4.21.2",
+    "ngx-scrollbar": "^19.1.5",
     "pg": "^8.23.1",
     "reflect-metadata": "^0.2.0",
     "rxjs": "~7.8.0",

@@ -47,6 +47,7 @@ When the owner gives a new instruction, add it to this list in the same change.
    building a custom component. Never build one silently. Record each approval below under
    "Approved custom components".
 3. **Spartan lives in `libs/shared/spartan`.** The copied Helm code (spartan CLI `componentsPath`) is there.
+   Its Nx project must stay named `ui-helm`: the spartan `ui` generator looks it up by that name.
 4. **Wrappers are mandatory.** All spartan components are wrapped by the project's own components in
    `libs/shared/packages`. Apps and applets import only the wrappers, never spartan directly.
 5. **Glassmorphism.** The whole design is glass style (translucent surfaces, backdrop blur, soft borders).

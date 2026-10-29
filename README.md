@@ -8,7 +8,7 @@ Nx monorepo with one NestJS api, three Angular apps and a PostgreSQL database (P
 | `public`         | `apps/public`         | Angular 22, SSR, no login        | http://localhost:4200     |
 | `admin`          | `apps/admin`          | Angular 22                       | http://localhost:4300     |
 | `customer`       | `apps/customer`       | Angular 22                       | http://localhost:4400     |
-| `ui-helm`        | `libs/ui`             | spartan/ui (Helm) components     | -                         |
+| `ui-helm`        | `libs/shared/spartan` | spartan/ui (Helm) components     | -                         |
 | `web-shared`     | `libs/web/shared`     | Angular code shared by the apps  | -                         |
 | `shared-schemas` | `libs/shared/schemas` | Zod schemas used by api and apps | -                         |
 
@@ -55,7 +55,7 @@ It uses `zod/mini` with `import * as z from 'zod/mini'`; the full `zod` build or
 
 ## UI components
 
-spartan/ui Helm components live in `libs/ui` and are imported as `@spartan-ng/helm/<name>`.
+spartan/ui Helm components live in `libs/shared/spartan` and are imported as `@spartan-ng/helm/<name>`.
 Add more with:
 
 ```bash
