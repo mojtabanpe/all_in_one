@@ -5,11 +5,17 @@
 
 import { Logger, StandardSchemaValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { config as zodConfig, locales } from 'zod/mini';
 import { AppModule } from './app/app.module';
+
+// Persian validation messages (users see them in the RTL apps).
+zodConfig(locales.fa());
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useSecurityHeaders();
+  // Session cookie auth: reject cross-site state-changing requests.
+  app.enableCsrfProtection();
   app.enableShutdownHooks();
   // Validates any @Body/@Query/@Param that declares a `schema` (Zod from @all-in-one/shared/schemas).
   app.useGlobalPipes(new StandardSchemaValidationPipe());
