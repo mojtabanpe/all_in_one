@@ -6,6 +6,7 @@ import type {
 import { HlmCheckbox } from '@spartan-ng/helm/checkbox';
 import { HlmNativeSelect } from '@spartan-ng/helm/native-select';
 import { HlmSwitch } from '@spartan-ng/helm/switch';
+import { NATIVE_SELECT_MATERIAL } from '../material';
 
 /** Wraps spartan `hlm-checkbox`. Works with Signal Forms `[formField]` and `[(checked)]`. */
 @Component({
@@ -77,6 +78,7 @@ let nextSelectId = 0;
       [forceInvalid]="invalid()"
       [selectId]="selectId()"
       [size]="size()"
+      [selectClass]="material"
     >
       <ng-content />
     </hlm-native-select>
@@ -88,4 +90,5 @@ export class AioNativeSelect implements FormValueControl<string> {
   readonly invalid = input(false, { transform: booleanAttribute });
   readonly selectId = input<string>(`aio-native-select-${nextSelectId++}`);
   readonly size = input<'sm' | 'default'>('default');
+  protected readonly material = NATIVE_SELECT_MATERIAL;
 }

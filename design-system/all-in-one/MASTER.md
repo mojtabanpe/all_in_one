@@ -1,7 +1,8 @@
 # All in One — Design System (MASTER)
 
 Source of truth for visual decisions. Tokens: `libs/shared/packages/ui/src/styles/theme.css`.
-Material (button, input, card classes): the Helm code in `libs/shared/spartan`.
+Material (button, input, card classes): the wrappers, `libs/shared/packages/ui/src/lib/material.ts`
+(spartan Helm code stays untouched, directive 19).
 Living style guide: admin app → **طراحی** (`/design`), rendered from the real tokens and wrappers.
 
 ## Basis

@@ -6,7 +6,8 @@
  *
  * Every app's styles.css imports only this file. Spartan components take the
  * look from the semantic variables below; the material (pillow buttons, inset
- * inputs) lives in the Helm classes in libs/shared/spartan. Light theme only.
+ * inputs, card surface) is added by the wrappers (src/lib/material.ts). spartan
+ * Helm code is never edited for design (directive 19). Light theme only.
  */
 @layer theme, base, components, utilities;
 @import 'tailwindcss/theme.css' layer(theme);

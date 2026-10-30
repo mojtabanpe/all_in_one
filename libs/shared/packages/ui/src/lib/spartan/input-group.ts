@@ -2,6 +2,7 @@
 import { Directive } from '@angular/core';
 import { HlmInputGroup, HlmInputGroupAddon, HlmInputGroupButton, HlmInputGroupInput, HlmInputGroupText, HlmInputGroupTextarea } from '@spartan-ng/helm/input-group';
 import { provideBrnButtonConfig } from '@spartan-ng/helm/button';
+import { inputGroupMaterial } from '../material';
 
 /** Wraps spartan `HlmInputGroupAddon` (`[hlmInputGroupAddon],hlm-input-group-addon`). API: input `align`. */
 @Directive({
@@ -39,11 +40,16 @@ export class AioInputGroupText extends HlmInputGroupText {}
 })
 export class AioInputGroupTextarea extends HlmInputGroupTextarea {}
 
-/** Wraps spartan `HlmInputGroup` (`[hlmInputGroup],hlm-input-group`). */
+/** Wraps spartan `HlmInputGroup` (`[hlmInputGroup],hlm-input-group`). Material: `inputGroupMaterial`. */
 @Directive({
   selector: '[aioInputGroup],aio-input-group',
   exportAs: 'aioInputGroup',
 })
-export class AioInputGroup extends HlmInputGroup {}
+export class AioInputGroup extends HlmInputGroup {
+  constructor() {
+    super();
+    inputGroupMaterial(this);
+  }
+}
 
 export const AioInputGroupDirectives = [AioInputGroupAddon, AioInputGroupButton, AioInputGroupInput, AioInputGroupText, AioInputGroupTextarea, AioInputGroup] as const;

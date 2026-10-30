@@ -57,8 +57,11 @@
   - `libs/shared/packages/ui/package.json` and `libs/shared/spartan/package.json` declare `sideEffects` so
     unused wrappers are tree-shaken (subclasses are otherwise kept).
 - Design system (Skeuo Next base): `design-system/all-in-one/MASTER.md`; tokens in
-  `libs/shared/packages/ui/src/styles/theme.css`; material (pill/pillow buttons, inset inputs, card shadow) is in the
-  Helm classes under `libs/shared/spartan`; style guide at admin `/design`. Each app's `styles.css` only imports the
+  `libs/shared/packages/ui/src/styles/theme.css`; material (pill/pillow buttons, inset inputs, card shadow) is in
+  `libs/shared/packages/ui/src/lib/material.ts`: each `xMaterial(hlm: HlmX)` is called from the generated `AioX`
+  constructor (the generator wires it by parameter type) and adds a later `classes()` source, which wins over Helm's
+  classes while template classes still win over both. Hand-written wrappers pass material through Helm inputs
+  (`aio-native-select` → `selectClass`). Style guide at admin `/design`. Each app's `styles.css` only imports the
   theme; apps load Inter + Vazirmatn through `project.json` styles. A CSS variable built from `var(--primary)` on
   `:root` resolves there, so applet accents don't reach it: put such gradients in the class itself.
 - Applet accents: the applet root gets `applet-planner` / `applet-english` / `applet-health` (sets spartan `--primary`
@@ -136,6 +139,10 @@ When the owner gives a new instruction, add it to this list in the same change.
     above, and documented in `design-system/all-in-one/MASTER.md` (palette, contrast, type, shape, spacing).
     The living style guide is the admin page `/design`. New colours go into `theme.css` and MASTER.md together,
     with their contrast checked.
+
+19. **Never edit spartan Helm code for design** (2026-10-30). The owner: "you should have changed the wrapper".
+    `libs/shared/spartan` stays as the spartan CLI generates it; every visual customization (material, sizes, radius,
+    shadows) goes into the wrappers in `libs/shared/packages` (see `material.ts`) or the theme variables.
 
 ## Git (2026-10-30)
 
