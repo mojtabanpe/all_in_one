@@ -131,119 +131,38 @@ type CategoryFilter = ActivityCategory | 'all';
     <div class="flex flex-col gap-5">
       <section aioCard>
         <div aioCardHeader>
-          <h2 aioCardTitle>برنامه شخصی خانه، TRX و باشگاه</h2>
+          <h2 aioCardTitle>این هفته</h2>
           <p aioCardDescription>
-            بر اساس تجهیزات و زمان شما؛ توضیح حرکت‌ها همیشه در دسترس است.
+            {{ fa(week.value()?.minutes ?? 0) }} از ۱۵۰ دقیقه فعالیت پیشنهادی
           </p>
         </div>
-        <form
-          aioCardContent
-          class="flex flex-col gap-4"
-          [formRoot]="routineForm"
-          (submit)="$event.preventDefault(); generateRoutine()"
-        >
-          <div aioField>
-            <label aioFieldLabel for="routine-title">نام برنامه</label
-            ><input
-              aioInput
-              id="routine-title"
-              [formField]="routineForm.title"
-            />
+        <div aioCardContent class="flex flex-col gap-2">
+          <div
+            aioProgress
+            [value]="Math.min(((week.value()?.minutes ?? 0) * 100) / 150, 100)"
+            aria-label="دقیقه فعالیت هفته"
+          >
+            <div aioProgressIndicator></div>
           </div>
-          <div class="grid gap-3 sm:grid-cols-2">
-            <div aioField>
-              <label aioFieldLabel for="routine-goal">هدف تمرین</label
-              ><aio-native-select
-                selectId="routine-goal"
-                [value]="routineModel().goal"
-                (valueChange)="setRoutineGoal($event)"
-              >
-                @for (goal of trainingGoals; track goal) {
-                  <option aioNativeSelectOption [value]="goal">
-                    {{ trainingGoalLabels[goal] }}
-                  </option>
-                }
-              </aio-native-select>
-            </div>
-            <div aioField>
-              <label aioFieldLabel for="routine-level">سطح</label
-              ><aio-native-select
-                selectId="routine-level"
-                [value]="routineModel().level"
-                (valueChange)="setRoutineLevel($event)"
-              >
-                @for (level of trainingLevels; track level) {
-                  <option aioNativeSelectOption [value]="level">
-                    {{ levelLabels[level] }}
-                  </option>
-                }
-              </aio-native-select>
-            </div>
-          </div>
-          <div aioField>
-            <span aioFieldLabel>تجهیزات در دسترس</span>
-            <div
-              aioToggleGroup
-              type="multiple"
-              variant="outline"
-              class="flex-wrap"
-              [value]="routineModel().equipment"
-              (valueChange)="setRoutineEquipment($event)"
-            >
-              @for (eq of equipment; track eq) {
-                <button
-                  aioToggleGroupItem
-                  type="button"
-                  [value]="eq"
-                  class="min-h-11"
-                >
-                  {{ equipmentLabels[eq] }}
-                </button>
-              }
-            </div>
-          </div>
-          <div class="grid grid-cols-3 gap-3">
-            <div aioField>
-              <label aioFieldLabel for="routine-days">جلسه در هفته</label
-              ><input
-                aioInput
-                id="routine-days"
-                type="number"
-                [formField]="routineForm.daysPerWeek"
-              />
-            </div>
-            <div aioField>
-              <label aioFieldLabel for="routine-weeks">تعداد هفته</label
-              ><input
-                aioInput
-                id="routine-weeks"
-                type="number"
-                [formField]="routineForm.weeks"
-              />
-            </div>
-            <div aioField>
-              <label aioFieldLabel for="routine-minutes">دقیقه هر جلسه</label
-              ><input
-                aioInput
-                id="routine-minutes"
-                type="number"
-                [formField]="routineForm.minutes"
-              />
-            </div>
-          </div>
-          @if (trainingError()) {
-            <p role="alert" class="text-destructive text-sm">
-              {{ trainingError() }}
-            </p>
-          }
-          <button aioBtn type="submit" [disabled]="trainingBusy()">
-            {{ trainingBusy() ? 'در حال ذخیره…' : 'ساخت و ذخیره برنامه' }}
-          </button>
           <p class="text-muted-foreground text-sm">
-            جلسات عضلات مشترک را با فاصله حداقل ۴۸ ساعت بچینید. تعداد جلسه،
-            زمان‌بندی تقویمی نیست.
+            {{ fa(week.value()?.sessions ?? 0) }} جلسه، حدود
+            {{ fa(week.value()?.calories ?? 0) }} کالری
           </p>
-        </form>
+        </div>
+      </section>
+
+      <section aioCard>
+        <div aioCardHeader>
+          <h2 aioCardTitle>برنامه تمرین شما</h2>
+          <p aioCardDescription>
+            خانه، TRX یا باشگاه؛ متناسب با تجهیزات و زمان شما.
+          </p>
+        </div>
+        <div aioCardContent>
+          <button aioBtn (click)="trainingError.set(''); creatorOpen.set(true)">
+            ساخت برنامه شخصی
+          </button>
+        </div>
       </section>
 
       <section class="flex flex-col gap-3" aria-label="برنامه‌های شخصی">
@@ -418,7 +337,7 @@ type CategoryFilter = ActivityCategory | 'all';
               تلاش دوباره
             </button>
           }
-          @for (exercise of filteredExercises(); track exercise.slug) {
+          @for (exercise of displayedExercises(); track exercise.slug) {
             <button
               aioBtn
               variant="outline"
@@ -432,6 +351,17 @@ type CategoryFilter = ActivityCategory | 'all';
               >
             </button>
           }
+          @if (displayedExercises().length < filteredExercises().length) {
+            <button
+              aioBtn
+              variant="outline"
+              (click)="exerciseLimit.update(moreExercises)"
+            >
+              نمایش حرکت‌های بیشتر ({{
+                fa(filteredExercises().length - displayedExercises().length)
+              }})
+            </button>
+          }
           @if (
             !exerciseCatalog.isLoading() &&
             !exerciseCatalog.error() &&
@@ -439,28 +369,6 @@ type CategoryFilter = ActivityCategory | 'all';
           ) {
             <p class="text-muted-foreground">حرکتی با این مشخصات موجود نیست.</p>
           }
-        </div>
-      </section>
-
-      <section aioCard>
-        <div aioCardHeader>
-          <h2 aioCardTitle>این هفته</h2>
-          <p aioCardDescription>
-            {{ fa(week.value()?.minutes ?? 0) }} از ۱۵۰ دقیقه فعالیت پیشنهادی
-          </p>
-        </div>
-        <div aioCardContent class="flex flex-col gap-2">
-          <div
-            aioProgress
-            [value]="Math.min(((week.value()?.minutes ?? 0) * 100) / 150, 100)"
-            aria-label="دقیقه فعالیت هفته"
-          >
-            <div aioProgressIndicator></div>
-          </div>
-          <p class="text-muted-foreground text-sm">
-            {{ fa(week.value()?.sessions ?? 0) }} جلسه، حدود
-            {{ fa(week.value()?.calories ?? 0) }} کالری
-          </p>
         </div>
       </section>
 
@@ -477,7 +385,7 @@ type CategoryFilter = ActivityCategory | 'all';
           <button
             aioToggleGroupItem
             value="all"
-            class="glass data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-9 rounded-full px-4"
+            class="glass data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-11 rounded-full px-4"
           >
             همه
           </button>
@@ -485,7 +393,7 @@ type CategoryFilter = ActivityCategory | 'all';
             <button
               aioToggleGroupItem
               [value]="c"
-              class="glass data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-9 rounded-full px-4"
+              class="glass data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-11 rounded-full px-4"
             >
               {{ categoryLabels[c] }}
             </button>
@@ -600,6 +508,122 @@ type CategoryFilter = ActivityCategory | 'all';
       </section>
     </div>
 
+    <aio-dialog
+      [(open)]="creatorOpen"
+      title="ساخت برنامه شخصی"
+      description="تجهیزات، هدف و زمان تمرین را انتخاب کنید."
+    >
+      <ng-template aioDialogBody>
+        <form
+          id="routine-create-form"
+          class="flex flex-col gap-4"
+          [formRoot]="routineForm"
+          (submit)="$event.preventDefault(); generateRoutine()"
+        >
+          <div aioField>
+            <label aioFieldLabel for="routine-title">نام برنامه</label
+            ><input
+              aioInput
+              id="routine-title"
+              [formField]="routineForm.title"
+            />
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div aioField>
+              <label aioFieldLabel for="routine-goal">هدف تمرین</label
+              ><aio-native-select
+                selectId="routine-goal"
+                [value]="routineModel().goal"
+                (valueChange)="setRoutineGoal($event)"
+              >
+                @for (goal of trainingGoals; track goal) {
+                  <option aioNativeSelectOption [value]="goal">
+                    {{ trainingGoalLabels[goal] }}
+                  </option>
+                }
+              </aio-native-select>
+            </div>
+            <div aioField>
+              <label aioFieldLabel for="routine-level">سطح</label
+              ><aio-native-select
+                selectId="routine-level"
+                [value]="routineModel().level"
+                (valueChange)="setRoutineLevel($event)"
+              >
+                @for (level of trainingLevels; track level) {
+                  <option aioNativeSelectOption [value]="level">
+                    {{ levelLabels[level] }}
+                  </option>
+                }
+              </aio-native-select>
+            </div>
+          </div>
+          <div aioField>
+            <span aioFieldLabel>تجهیزات در دسترس</span>
+            <div
+              aioToggleGroup
+              type="multiple"
+              variant="outline"
+              class="flex-wrap"
+              [value]="routineModel().equipment"
+              (valueChange)="setRoutineEquipment($event)"
+            >
+              @for (eq of equipment; track eq) {
+                <button
+                  aioToggleGroupItem
+                  type="button"
+                  [value]="eq"
+                  class="min-h-11"
+                >
+                  {{ equipmentLabels[eq] }}
+                </button>
+              }
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <div aioField>
+              <label aioFieldLabel for="routine-days">جلسه در هفته</label
+              ><input
+                aioInput
+                id="routine-days"
+                type="number"
+                [formField]="routineForm.daysPerWeek"
+              />
+            </div>
+            <div aioField>
+              <label aioFieldLabel for="routine-weeks">تعداد هفته</label
+              ><input
+                aioInput
+                id="routine-weeks"
+                type="number"
+                [formField]="routineForm.weeks"
+              />
+            </div>
+            <div aioField>
+              <label aioFieldLabel for="routine-minutes">دقیقه هر جلسه</label
+              ><input
+                aioInput
+                id="routine-minutes"
+                type="number"
+                [formField]="routineForm.minutes"
+              />
+            </div>
+          </div>
+          @if (trainingError()) {
+            <p role="alert" class="text-destructive text-sm">
+              {{ trainingError() }}
+            </p>
+          }
+          <button aioBtn type="submit" [disabled]="trainingBusy()">
+            {{ trainingBusy() ? 'در حال ذخیره…' : 'ساخت و ذخیره برنامه' }}
+          </button>
+          <p class="text-muted-foreground text-sm">
+            جلسات عضلات مشترک را با فاصله حداقل ۴۸ ساعت بچینید. تعداد جلسه،
+            زمان‌بندی تقویمی نیست.
+          </p>
+        </form>
+      </ng-template>
+    </aio-dialog>
     <aio-dialog
       [open]="selectedExercise() !== null"
       (openChange)="!$event && selectedExercise.set(null)"
@@ -1013,6 +1037,12 @@ export class FitnessPage {
     ),
   );
 
+  protected readonly creatorOpen = signal(false);
+  protected readonly exerciseLimit = signal(6);
+  protected readonly moreExercises = (count: number) => count + 6;
+  protected readonly displayedExercises = computed(() =>
+    this.filteredExercises().slice(0, this.exerciseLimit()),
+  );
   protected readonly equipment = EQUIPMENT;
   protected readonly equipmentLabels = EQUIPMENT_LABELS;
   protected readonly muscleLabels = MUSCLE_LABELS;
@@ -1133,6 +1163,7 @@ export class FitnessPage {
     try {
       await this.api.generateRoutine(parsed.data);
       this.routines.reload();
+      this.creatorOpen.set(false);
       aioToast.success('برنامه ذخیره شد');
     } catch (error) {
       this.trainingError.set(apiErrorMessage(error));

@@ -36,13 +36,13 @@ const BUTTON_VARIANT: Record<Variant, string> = {
 
 /** Pills everywhere; default and large sizes grow toward 44px touch targets. */
 const BUTTON_SIZE: Record<Size, string> = {
-  default: 'h-10 px-4',
-  xs: 'rounded-full',
-  sm: 'rounded-full px-3',
+  default: 'h-11 px-4',
+  xs: 'min-h-11 rounded-full md:min-h-0',
+  sm: 'min-h-11 rounded-full px-3 md:min-h-0',
   lg: 'h-12 gap-2 px-5 text-base',
-  icon: 'size-10',
-  'icon-xs': 'rounded-full',
-  'icon-sm': 'rounded-full',
+  icon: 'size-11',
+  'icon-xs': 'min-h-11 min-w-11 rounded-full md:min-h-0 md:min-w-0',
+  'icon-sm': 'min-h-11 min-w-11 rounded-full md:min-h-0 md:min-w-0',
   'icon-lg': 'size-12',
 };
 
@@ -76,9 +76,7 @@ export function inputGroupMaterial(_group: HlmInputGroup): void {
 
 /** Porcelain glass card: soft surface shadow, white edge, 20px padding. */
 export function cardMaterial(_card: HlmCard): void {
-  classes(
-    () => 'shadow-surface ring-white/80 [--card-spacing:--spacing(5)]',
-  );
+  classes(() => 'shadow-surface ring-white/80 [--card-spacing:--spacing(5)]');
 }
 
 /** For `aio-native-select`, which passes it to spartan's `selectClass`. */

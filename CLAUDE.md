@@ -206,3 +206,5 @@ When the owner gives a new instruction, add it to this list in the same change.
 ## Independent health coaching (2026-10-30)
 
 26. Build our own health features, selecting useful ideas from reviewed fitness/nutrition MCPs. Do not depend on their platforms or APIs. Support home, TRX and gym routines, exercise instruction and alternatives, logged sets/progress, diet-aware meal plans and shopping lists. Exercise video links are optional and can be added later.
+
+27. **Design review (2026-10-30):** Review and improve the current Claude-designed version when needed; preserve its established design system and verify responsive behavior before changing visuals.
