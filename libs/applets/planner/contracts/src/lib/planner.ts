@@ -225,6 +225,9 @@ export interface PlannerHabit {
   unit: string;
   /** 0 = Sunday … 6 = Saturday */
   weekdays: number[];
+  externalSourceId: string | null;
+  repeatRule: string | null;
+  reminders: string[];
   archived: boolean;
   sortOrder: number;
   /** Check-ins of the requested window (default: the past 90 days). */
@@ -503,6 +506,9 @@ export const createHabitSchema = z.object({
       .check(z.minLength(1), z.maxLength(7)),
   ),
   sectionId: z.optional(z.nullable(uuid)),
+  externalSourceId: z.optional(z.string().check(z.minLength(1), z.maxLength(120))),
+  repeatRule: z.optional(z.nullable(z.string().check(z.maxLength(500)))),
+  reminders: z.optional(z.array(z.string().check(z.maxLength(150))).check(z.maxLength(30))),
 });
 export type CreateHabitInput = z.infer<typeof createHabitSchema>;
 
@@ -511,6 +517,14 @@ export const updateHabitSchema = z.extend(z.partial(createHabitSchema), {
   sortOrder: z.optional(sortOrder),
 });
 export type UpdateHabitInput = z.infer<typeof updateHabitSchema>;
+
+export const batchHabitCheckinsSchema = z.object({
+  entries: z.array(z.object({
+    date: isoDate,
+    value: z.number().check(z.int(), z.minimum(0), z.maximum(1000)),
+  })).check(z.minLength(1), z.maxLength(500)),
+});
+export type BatchHabitCheckinsInput = z.infer<typeof batchHabitCheckinsSchema>;
 
 export const checkinSchema = z.object({
   date: isoDate,
