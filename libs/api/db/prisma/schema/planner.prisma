@@ -120,6 +120,12 @@ model PlannerTask {
   priority    TaskPriority           @default(NONE)
   status      TaskStatus             @default(TODO)
   completedAt DateTime?
+  /// Source identity makes repeated TickTick imports idempotent.
+  externalSourceId String? @db.VarChar(120)
+  recurrenceRule String? @db.VarChar(500)
+  reminders String[] @default([])
+  timeZone String? @db.VarChar(80)
+  endTime String? @db.VarChar(5)
   /// Set when moved to the Trash.
   deletedAt   DateTime?
   sortOrder   Int                    @default(0)
@@ -130,6 +136,7 @@ model PlannerTask {
   comments    PlannerComment[]
   focuses     PlannerFocus[]
 
+  @@unique([userId, externalSourceId])
   @@index([userId, date])
   @@index([listId, status])
   @@index([assigneeId])
