@@ -8,9 +8,12 @@ import { AioButton } from '@all-in-one/ui';
   imports: [AioButton, RouterLink, RouterLinkActive, RouterOutlet],
   template: `
     <div class="applet-health flex flex-col gap-6 [&>router-outlet]:hidden">
-      <h1 class="text-2xl font-bold">سلامت</h1>
+      <header>
+        <p class="aio-eyebrow">مراقبت‌های کوچک، حال بهتر</p>
+        <h1 class="aio-page-title">برای خودت وقت بگذار.</h1>
+      </header>
       <nav
-        class="glass grid grid-cols-4 gap-1 rounded-2xl p-1"
+        class="aio-applet-tabs grid grid-cols-4 gap-1 rounded-2xl p-1"
         aria-label="بخش‌های سلامت"
       >
         @for (link of links; track link.path) {

@@ -16,6 +16,15 @@
 
 @import '@spartan-ng/brain/hlm-tailwind-preset.css';
 
+/* Full official variable font: ss01 substitutes Persian digit glyphs. */
+@font-face {
+  font-family: 'Vazirmatn UI Variable';
+  src: url('./fonts/vazirmatn-variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Tailwind only scans files under the working directory by default; be explicit
    so classes in libs/ are always picked up. */
 @source '../../../../../../apps';
@@ -24,7 +33,7 @@
 @theme inline {
   /* Inter for Latin (and English-learning words), Vazirmatn for Persian. */
   --font-sans:
-    'Inter Variable', 'Vazirmatn Variable', 'Vazirmatn', system-ui, sans-serif;
+    'Vazirmatn UI Variable', 'Vazirmatn Variable', system-ui, sans-serif;
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
@@ -54,30 +63,30 @@
 :root {
   color-scheme: light;
 
-  --radius: 1.375rem;
+  --radius: 1rem;
 
   /* ---- Neutrals: cool porcelain ---- */
-  --background: oklch(0.965 0.006 240);
-  --foreground: oklch(0.19 0.02 265);
-  --card: oklch(0.995 0.003 240 / 0.78);
-  --card-foreground: oklch(0.19 0.02 265);
-  --popover: oklch(0.995 0.003 240 / 0.92);
-  --popover-foreground: oklch(0.19 0.02 265);
-  --secondary: oklch(0.93 0.008 240);
-  --secondary-foreground: oklch(0.24 0.025 265);
-  --muted: oklch(0.93 0.008 240);
+  --background: #f5f7f7;
+  --foreground: #172b2d;
+  --card: rgb(255 255 255 / 0.94);
+  --card-foreground: #172b2d;
+  --popover: #ffffff;
+  --popover-foreground: #172b2d;
+  --secondary: #eaf0ef;
+  --secondary-foreground: #254442;
+  --muted: #edf2f1;
   /* 0.49 (Skeuo uses 0.52) keeps 5:1 on --muted as well as on --background. */
-  --muted-foreground: oklch(0.49 0.02 255);
-  --border: oklch(0.9 0.008 245);
-  --input: oklch(0.88 0.01 245);
+  --muted-foreground: #586b6b;
+  --border: #dce5e3;
+  --input: #d2dedb;
 
   /* ---- Brand: glossy graphite + aqua ---- */
-  --primary: oklch(0.24 0.025 265);
-  --primary-foreground: oklch(0.98 0.004 240);
-  --accent: oklch(0.93 0.045 200);
-  --accent-foreground: oklch(0.46 0.1 205);
+  --primary: #174d48;
+  --primary-foreground: #ffffff;
+  --accent: #e3efeb;
+  --accent-foreground: #174d48;
   /* Focus ring: aqua, darkened to 3:1 against the background. */
-  --ring: oklch(0.62 0.13 205);
+  --ring: #32796e;
 
   /* ---- Status (each ≥4.5:1 with its foreground) ---- */
   --destructive: oklch(0.56 0.2 22);
@@ -102,51 +111,38 @@
   --chart-4: var(--health);
   --chart-5: var(--info);
 
-  --sidebar: oklch(0.995 0.003 240 / 0.7);
+  --sidebar: rgb(255 255 255 / 0.76);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-accent: var(--accent);
   --sidebar-accent-foreground: var(--accent-foreground);
-  --sidebar-border: oklch(1 0 0 / 0.8);
+  --sidebar-border: #e1e8e6;
   --sidebar-ring: var(--ring);
 
   /* ---- Material: porcelain glass ---- */
-  --glass: oklch(0.995 0.003 240 / 0.72);
-  --glass-strong: oklch(0.995 0.003 240 / 0.9);
-  --glass-border: oklch(1 0 0 / 0.8);
-  --glass-blur: 20px;
+  --glass: rgb(255 255 255 / 0.82);
+  --glass-strong: rgb(255 255 255 / 0.97);
+  --glass-border: rgb(25 65 60 / 0.1);
+  --glass-blur: 12px;
   --surface-shadow:
-    inset 0 0.0625rem 0 0 oklch(1 0 0 / 0.9), 0 0.0625rem 0.125rem oklch(0 0 0 / 0.06),
-    0 0.375rem 1rem oklch(0 0 0 / 0.07);
+    0 2px 4px rgb(18 48 44 / 0.02), 0 12px 32px -20px rgb(18 48 44 / 0.13);
   --glass-shadow: var(--surface-shadow);
-  --pillow-primary:
-    inset 0 0.0938rem 0 0 oklch(1 0 0 / 0.18), inset 0 -0.125rem 0.0625rem 0 oklch(0 0 0 / 0.4),
-    0 0.0625rem 0.0625rem 0 oklch(0 0 0 / 0.12), 0 0.375rem 0.875rem -0.25rem oklch(0 0 0 / 0.28);
-  --pillow-primary-hover:
-    inset 0 0.0938rem 0 0 oklch(1 0 0 / 0.22), inset 0 -0.125rem 0.0625rem 0 oklch(0 0 0 / 0.42),
-    0 0.125rem 0.1875rem 0 oklch(0 0 0 / 0.12), 0 0.75rem 1.625rem -0.375rem oklch(0 0 0 / 0.34);
-  --pillow-secondary:
-    inset 0 0.0625rem 0 0 oklch(1 0 0 / 0.9), inset 0 -0.0938rem 0 0 oklch(0 0 0 / 0.05),
-    0 0 0 0.0625rem oklch(0 0 0 / 0.05), 0 0.0625rem 0.0625rem 0 oklch(0 0 0 / 0.05),
-    0 0.375rem 1rem -0.25rem oklch(0 0 0 / 0.1);
-  --pillow-secondary-hover:
-    inset 0 0.0625rem 0 0 oklch(1 0 0 / 1), inset 0 -0.0938rem 0 0 oklch(0 0 0 / 0.07),
-    0 0 0 0.0625rem oklch(0 0 0 / 0.07), 0 0.125rem 0.125rem 0 oklch(0 0 0 / 0.07),
-    0 0.75rem 1.5rem -0.25rem oklch(0 0 0 / 0.14);
-  --inset-input:
-    inset 0 0.0625rem 0.125rem 0 oklch(0 0 0 / 0.06), inset 0 0.0625rem 0 0 oklch(1 0 0 / 0.8),
-    0 0 0 0.0625rem oklch(0 0 0 / 0.05);
+  --pillow-primary: 0 2px 3px rgb(18 48 44 / 0.12);
+  --pillow-primary-hover: 0 4px 10px rgb(18 48 44 / 0.16);
+  --pillow-secondary: 0 1px 2px rgb(18 48 44 / 0.04);
+  --pillow-secondary-hover: 0 2px 6px rgb(18 48 44 / 0.08);
+  --inset-input: 0 1px 2px rgb(18 48 44 / 0.03);
   /* Glossy primary fill lives in the Helm button class (a gradient var defined
      here would resolve --primary at :root and ignore the applet accents). */
 
   /* Ambient light behind the glass */
-  --blob-1: oklch(0.9 0.05 200 / 0.55);
-  --blob-2: oklch(0.92 0.03 265 / 0.5);
-  --blob-3: oklch(0.94 0.03 160 / 0.35);
+  --blob-1: rgb(157 202 183 / 0.12);
+  --blob-2: rgb(211 222 230 / 0.1);
+  --blob-3: rgb(221 232 223 / 0.1);
 
   /* ---- Motion ---- */
-  --ease-out: cubic-bezier(0.165, 0.84, 0.44, 1);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --default-transition-duration: 150ms;
   --default-transition-timing-function: var(--ease-out);
 
@@ -200,8 +196,8 @@
   font-weight: 700;
   font-size: 1.125rem;
   transition:
-    transform 80ms ease-out,
-    box-shadow 80ms ease-out;
+    transform 80ms var(--ease-out),
+    box-shadow 80ms var(--ease-out);
   &:active:not(:disabled) {
     transform: translateY(0.25rem);
     box-shadow: 0 0 0 var(--btn-3d-edge) !important;
@@ -231,7 +227,9 @@
       radial-gradient(40rem 40rem at 85% -10%, var(--blob-1), transparent 60%),
       radial-gradient(36rem 36rem at -10% 40%, var(--blob-2), transparent 60%),
       radial-gradient(30rem 30rem at 70% 110%, var(--blob-3), transparent 60%);
-    background-attachment: fixed;
+    background-attachment: scroll;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'ss01' 1;
   }
 }
 
@@ -297,4 +295,226 @@
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
+}
+
+/* Emil-inspired design engineering: quiet chrome, purposeful hierarchy. */
+@layer components {
+  .aio-app-header {
+    min-height: 80px;
+    border-bottom: 1px solid var(--border);
+  }
+  .aio-brand-mark {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: var(--primary);
+    color: white;
+    flex-shrink: 0;
+  }
+  .aio-sidebar-caption {
+    color: var(--muted-foreground);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+  .aio-workspace-nav [data-slot='sidebar-menu-button'] {
+    min-height: 46px;
+    padding-inline: 12px;
+    border-radius: 12px;
+    font-weight: 500;
+  }
+  .aio-workspace-nav [data-active='true'] {
+    background: var(--accent);
+    color: var(--accent-foreground);
+  }
+  .aio-bottom-navigation {
+    box-shadow: 0 8px 36px rgb(18 48 44 / 0.12);
+  }
+  .aio-applet-tabs {
+    border: 1px solid var(--border);
+    background: rgb(255 255 255 / 0.7);
+    box-shadow: none;
+    border-radius: 16px;
+  }
+  .aio-applet-tabs [aria-current='page'] {
+    box-shadow: 0 1px 4px rgb(18 48 44 / 0.08);
+  }
+  .aio-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted-foreground);
+  }
+  .aio-page-title {
+    font-size: clamp(1.65rem, 4vw, 2.25rem);
+    font-weight: 750;
+    line-height: 1.65;
+    letter-spacing: -0.025em;
+  }
+  .aio-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: 24px;
+    padding: clamp(24px, 4vw, 40px);
+    background: #173c38;
+    color: #fff;
+  }
+  .aio-hero::before {
+    content: '';
+    pointer-events: none;
+    position: absolute;
+    z-index: -1;
+    width: 320px;
+    height: 320px;
+    border: 1px solid rgb(217 246 225 / 0.14);
+    border-radius: 50%;
+    inset-inline-end: -90px;
+    top: -160px;
+    box-shadow:
+      0 0 0 45px rgb(217 246 225 / 0.035),
+      0 0 0 90px rgb(217 246 225 / 0.025);
+  }
+  .aio-hero-caption {
+    color: #c1d9d1;
+    font-size: 14px;
+    line-height: 1.9;
+  }
+  .aio-hero-action {
+    background: #d9f0c7;
+    color: #173c38;
+    border: 1px solid transparent;
+    box-shadow: none;
+  }
+  .aio-hero-action:hover {
+    background: #e7f6dc;
+  }
+  .aio-module-card {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+    text-align: start;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    background: var(--card);
+    transition:
+      border-color 160ms ease,
+      transform 160ms var(--ease-out);
+  }
+  .aio-module-card:focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 4px;
+  }
+  .aio-module-icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    color: var(--primary);
+    background: var(--accent);
+  }
+  .aio-module-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .aio-task-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-block: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .aio-task-row:last-child {
+    border-bottom: 0;
+  }
+  [data-slot='button'] {
+    transition:
+      transform 140ms var(--ease-out),
+      background-color 140ms ease,
+      color 140ms ease;
+  }
+  [data-slot='button']:active:not(:disabled):not(:focus-visible):not(.btn-3d) {
+    transform: scale(0.97);
+  }
+  [data-slot='button']:focus-visible {
+    transform: none;
+  }
+}
+@media (hover: hover) and (pointer: fine) {
+  .aio-module-card:hover {
+    border-color: #a3bbb4;
+    transform: translateY(-2px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aio-module-card,
+  [data-slot='button'] {
+    transition:
+      background-color 100ms ease,
+      color 100ms ease;
+  }
+  .aio-module-card:hover,
+  [data-slot='button']:active {
+    transform: none !important;
+  }
+}
+@media (max-width: 767px) {
+  .aio-app-header {
+    min-height: 72px;
+  }
+  .aio-module-card {
+    padding: 20px;
+    gap: 16px;
+  }
+  .aio-hero {
+    border-radius: 20px;
+  }
+}
+
+/* Wrapper utility classes must not override the hero's intentional contrast. */
+[data-slot='button'].aio-hero-action {
+  background: #d9f0c7;
+  color: #173c38;
+  box-shadow: none;
+}
+.aio-hero-stat-label {
+  color: #c1d9d1;
+  font-size: 12px;
+  line-height: 1.8;
+}
+@media (max-width: 767px) {
+  .aio-module-card {
+    padding: 18px;
+  }
+  .aio-module-card .aio-module-icon {
+    width: 38px;
+    height: 38px;
+  }
+  .aio-module-card h3 {
+    font-size: 14px;
+  }
+  .aio-module-card p {
+    font-size: 12px;
+    line-height: 1.8;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-3d:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* Form controls inherit Persian digit shaping without changing their values. */
+button,
+input,
+select,
+textarea {
+  font-feature-settings: inherit;
 }

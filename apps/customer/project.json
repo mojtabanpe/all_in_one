@@ -20,11 +20,7 @@
             "input": "apps/customer/public"
           }
         ],
-        "styles": [
-          "node_modules/@fontsource-variable/inter/index.css",
-          "node_modules/@fontsource-variable/vazirmatn/index.css",
-          "apps/customer/src/styles.css"
-        ]
+        "styles": ["apps/customer/src/styles.css"]
       },
       "configurations": {
         "production": {

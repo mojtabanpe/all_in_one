@@ -75,7 +75,7 @@ import { MealForm } from './meal-form';
     }),
   ],
   template: `
-    <div class="flex flex-col gap-5">
+    <div class="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-2">
       <section aioCard>
         <div aioCardHeader>
           <h2 aioCardTitle>رژیم شما</h2>

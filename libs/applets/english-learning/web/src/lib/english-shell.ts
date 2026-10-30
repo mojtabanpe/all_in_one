@@ -10,8 +10,12 @@ import { AioButton } from '@all-in-one/ui';
     <div
       class="applet-english mx-auto flex w-full max-w-3xl flex-col gap-6 [&>router-outlet]:hidden"
     >
+      <header>
+        <p class="aio-eyebrow">هر روز، یک قدم جلوتر</p>
+        <h1 class="aio-page-title">زبان، به ریتم خودت.</h1>
+      </header>
       <nav
-        class="glass grid grid-cols-3 gap-1 rounded-2xl p-1"
+        class="aio-applet-tabs grid grid-cols-3 gap-1 rounded-2xl p-1"
         aria-label="بخش‌های انگلیسی"
       >
         @for (link of links; track link.path) {

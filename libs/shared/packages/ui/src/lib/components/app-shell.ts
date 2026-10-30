@@ -24,17 +24,24 @@ import { AioIcon } from './icon';
   template: `
     <div hlmSidebarWrapper>
       <hlm-sidebar side="right" variant="floating" collapsible="icon">
-        <div hlmSidebarHeader class="px-3 py-4">
+        <div hlmSidebarHeader class="px-4 py-7">
           <a routerLink="/" class="flex items-center gap-2 font-bold">
-            <aio-icon [name]="brandIcon()" class="text-primary" />
+            <span class="aio-brand-mark"
+              ><aio-icon [name]="brandIcon()" size="sm"
+            /></span>
             <span class="group-data-[collapsible=icon]:hidden">{{
               appName()
             }}</span>
           </a>
         </div>
-        <div hlmSidebarContent>
+        <div hlmSidebarContent class="aio-workspace-nav px-2">
+          <p
+            class="aio-sidebar-caption px-4 pb-3 group-data-[collapsible=icon]:hidden"
+          >
+            فضای شخصی شما
+          </p>
           <div hlmSidebarGroup>
-            <ul hlmSidebarMenu>
+            <ul hlmSidebarMenu class="gap-2">
               @for (item of navItems(); track item.link) {
                 <li hlmSidebarMenuItem>
                   <a
@@ -57,7 +64,7 @@ import { AioIcon } from './icon';
       </hlm-sidebar>
 
       <main hlmSidebarInset class="bg-transparent">
-        <header class="flex items-center gap-2 px-4 pt-4 md:px-6">
+        <header class="aio-app-header flex items-center gap-2 px-5 md:px-8">
           <!-- spartan's trigger component renders its own icon and sr-only label -->
           <!-- eslint-disable-next-line @angular-eslint/template/elements-content -->
           <button
@@ -65,13 +72,13 @@ import { AioIcon } from './icon';
             srOnlyText="باز و بسته کردن منو"
             class="hidden md:inline-flex"
           ></button>
-          <span class="text-lg font-bold md:hidden">{{ appName() }}</span>
+          <span class="text-base font-bold md:hidden">{{ appName() }}</span>
           <div class="ms-auto flex items-center gap-2">
             <ng-content select="[aioShellActions]" />
           </div>
         </header>
         <div
-          class="mx-auto w-full max-w-5xl px-4 pt-4 pb-[var(--bottom-nav-space)] md:px-6 md:pb-8"
+          class="mx-auto w-full max-w-6xl px-5 pt-7 pb-[var(--bottom-nav-space)] md:px-8 md:pt-10 md:pb-12"
         >
           <ng-content />
         </div>

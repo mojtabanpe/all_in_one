@@ -208,3 +208,7 @@ When the owner gives a new instruction, add it to this list in the same change.
 26. Build our own health features, selecting useful ideas from reviewed fitness/nutrition MCPs. Do not depend on their platforms or APIs. Support home, TRX and gym routines, exercise instruction and alternatives, logged sets/progress, diet-aware meal plans and shopping lists. Exercise video links are optional and can be added later.
 
 27. **Design review (2026-10-30):** Review and improve the current Claude-designed version when needed; preserve its established design system and verify responsive behavior before changing visuals.
+
+28. **Full redesign with Emil Kowalski (2026-10-30):** The owner rejected the previous UI and explicitly requested `npx skills@latest add emilkowalski/skills`. Use the installed `emil-design-eng` and relevant animation skills for a substantial app redesign. This supersedes the earlier instruction to preserve the Skeuo Next visual direction. Keep Persian RTL, Spartan wrappers, mobile bottom navigation and bottom-sheet behavior. Prefer calm surfaces, strong hierarchy and purposeful fast interactions over glossy/pillow styling.
+
+29. **Persian variable font (2026-10-30):** Use Vazirmatn Variable as the primary font across the apps, with Persian digit glyphs everywhere in the UI. The full self-hosted official font supports weights 100–900; enable its `ss01` feature for display without rewriting numeric values in storage or APIs.

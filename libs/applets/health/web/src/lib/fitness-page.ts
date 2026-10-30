@@ -128,7 +128,7 @@ type CategoryFilter = ActivityCategory | 'all';
     }),
   ],
   template: `
-    <div class="flex flex-col gap-5">
+    <div class="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-2">
       <section aioCard>
         <div aioCardHeader>
           <h2 aioCardTitle>این هفته</h2>
@@ -165,7 +165,10 @@ type CategoryFilter = ActivityCategory | 'all';
         </div>
       </section>
 
-      <section class="flex flex-col gap-3" aria-label="برنامه‌های شخصی">
+      <section
+        class="flex flex-col gap-3 lg:col-span-2"
+        aria-label="برنامه‌های شخصی"
+      >
         @if (routines.isLoading()) {
           <p role="status">در حال دریافت برنامه‌ها…</p>
         }

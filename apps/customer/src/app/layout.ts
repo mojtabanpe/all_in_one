@@ -81,11 +81,12 @@ import {
         aioShellActions
         aioBtn
         variant="ghost"
-        class="h-11"
+        class="size-11 md:w-auto"
+        aria-label="خروج از حساب"
         (click)="logout()"
       >
         <aio-icon name="lucideLogOut" size="sm" />
-        خروج
+        <span class="hidden md:inline">خروج</span>
       </button>
       <router-outlet />
     </aio-app-shell>

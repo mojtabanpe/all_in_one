@@ -26,8 +26,12 @@ import {
     <div
       class="applet-planner mx-auto flex w-full max-w-2xl flex-col gap-5 [&>router-outlet]:hidden"
     >
+      <header>
+        <p class="aio-eyebrow">ذهن خلوت، مسیر روشن</p>
+        <h1 class="aio-page-title">جا برای کارهای مهم.</h1>
+      </header>
       <nav
-        class="glass grid grid-cols-5 gap-1 rounded-2xl p-1"
+        class="aio-applet-tabs grid grid-cols-5 gap-1 rounded-2xl p-1"
         aria-label="بخش‌های برنامه‌ریز"
       >
         @for (link of links; track link.path) {
