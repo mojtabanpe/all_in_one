@@ -7,13 +7,15 @@ import { AioButton } from '@all-in-one/ui';
   selector: 'health-shell',
   imports: [AioButton, RouterLink, RouterLinkActive, RouterOutlet],
   template: `
-    <div class="applet-health flex flex-col gap-6 [&>router-outlet]:hidden">
+    <div
+      class="applet-health health-calm flex flex-col gap-6 [&>router-outlet]:hidden"
+    >
       <header>
-        <p class="aio-eyebrow">مراقبت‌های کوچک، حال بهتر</p>
-        <h1 class="aio-page-title">برای خودت وقت بگذار.</h1>
+        <p class="aio-eyebrow">با یک قدم کوچک، حال بهتر</p>
+        <h1 class="text-2xl font-bold">سلامت من</h1>
       </header>
       <nav
-        class="aio-applet-tabs grid grid-cols-4 gap-1 rounded-2xl p-1"
+        class="health-tabs grid grid-cols-4 gap-1"
         aria-label="بخش‌های سلامت"
       >
         @for (link of links; track link.path) {

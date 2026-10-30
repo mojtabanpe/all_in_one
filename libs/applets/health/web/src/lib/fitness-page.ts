@@ -129,38 +129,76 @@ type CategoryFilter = ActivityCategory | 'all';
   ],
   template: `
     <div class="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-2">
-      <section aioCard>
-        <div aioCardHeader>
-          <h2 aioCardTitle>این هفته</h2>
-          <p aioCardDescription>
-            {{ fa(week.value()?.minutes ?? 0) }} از ۱۵۰ دقیقه فعالیت پیشنهادی
-          </p>
+      <section class="health-workout-banner lg:col-span-2">
+        <div class="flex min-w-0 flex-col items-start gap-3">
+          <p class="health-metric-label">با ریتم خودت حرکت کن</p>
+          @if (routines.value()?.[0]; as routine) {
+            <h2 class="text-2xl font-bold">{{ routine.title }}</h2>
+            <p class="health-metric-label">
+              {{ fa(routine.minutes) }} دقیقه،
+              {{ fa(routine.days[0]?.exercises?.length ?? 0) }} حرکت در جلسه اول
+            </p>
+            <button
+              aioBtn
+              class="health-primary-action"
+              (click)="startSession(routine, 0)"
+            >
+              باز کردن جلسه اول
+            </button>
+            <p class="text-muted-foreground text-xs">
+              پس از انجام تمرین، تعداد و وزنه واقعی ست‌ها را ثبت کن.
+            </p>
+          } @else {
+            <h2 class="text-2xl font-bold">یک برنامه، مخصوص خودت.</h2>
+            <p class="health-metric-label">
+              خانه، TRX یا باشگاه؛ متناسب با سطح و زمانی که داری.
+            </p>
+            <button
+              aioBtn
+              class="health-primary-action"
+              (click)="trainingError.set(''); creatorOpen.set(true)"
+            >
+              ساخت برنامه شخصی
+            </button>
+          }
         </div>
-        <div aioCardContent class="flex flex-col gap-2">
-          <div
-            aioProgress
-            [value]="Math.min(((week.value()?.minutes ?? 0) * 100) / 150, 100)"
-            aria-label="دقیقه فعالیت هفته"
-          >
-            <div aioProgressIndicator></div>
-          </div>
-          <p class="text-muted-foreground text-sm">
-            {{ fa(week.value()?.sessions ?? 0) }} جلسه، حدود
-            {{ fa(week.value()?.calories ?? 0) }} کالری
-          </p>
-        </div>
+        <span class="health-helper-art shrink-0" aria-hidden="true"></span>
       </section>
-
-      <section aioCard>
-        <div aioCardHeader>
-          <h2 aioCardTitle>برنامه تمرین شما</h2>
-          <p aioCardDescription>
-            خانه، TRX یا باشگاه؛ متناسب با تجهیزات و زمان شما.
-          </p>
-        </div>
-        <div aioCardContent>
-          <button aioBtn (click)="trainingError.set(''); creatorOpen.set(true)">
-            ساخت برنامه شخصی
+      <section aioCard class="lg:col-span-2">
+        <div aioCardContent class="health-topline flex-wrap pt-6">
+          <div>
+            <p class="health-metric-label">فعالیت این هفته</p>
+            <p class="health-small-number">
+              {{
+                week.isLoading()
+                  ? '…'
+                  : week.error()
+                    ? '—'
+                    : fa(week.value()?.minutes ?? 0)
+              }}
+              <span class="text-sm font-normal text-muted-foreground"
+                >دقیقه از ۱۵۰</span
+              >
+            </p>
+          </div>
+          <div>
+            <p class="health-metric-label">جلسه ثبت‌شده</p>
+            <p class="health-small-number">
+              {{
+                week.isLoading()
+                  ? '…'
+                  : week.error()
+                    ? '—'
+                    : fa(week.value()?.sessions ?? 0)
+              }}
+            </p>
+          </div>
+          <button
+            aioBtn
+            class="health-soft-action"
+            (click)="openLog('walking')"
+          >
+            ثبت فعالیت
           </button>
         </div>
       </section>
@@ -471,47 +509,86 @@ type CategoryFilter = ActivityCategory | 'all';
         }
       </section>
 
-      <section class="flex flex-col gap-3">
-        <h2 class="text-lg font-semibold">برنامه‌های تمرینی</h2>
-        <div aioAccordion type="single" class="glass rounded-3xl px-4">
-          @for (p of programs.value() ?? []; track p.slug) {
-            <div aioAccordionItem>
-              <aio-accordion-trigger>
-                <span class="flex flex-col items-start gap-0.5 text-start">
-                  <span>{{ p.title }}</span>
-                  <span class="text-muted-foreground text-xs">
-                    هفته‌ای {{ fa(p.sessionsPerWeek) }} جلسه،
-                    {{ fa(p.minutes) }} دقیقه
-                  </span>
-                </span>
-              </aio-accordion-trigger>
-              <aio-accordion-content>
-                <p class="text-muted-foreground mb-3 text-sm">
-                  {{ p.description }}
+      <section class="flex flex-col gap-4 lg:col-span-2">
+        <div>
+          <h2 class="health-section-heading">تمرین‌های آماده</h2>
+          <p class="health-metric-label mt-1">
+            از یک جلسه ساده شروع کن؛ لازم نیست از روز اول سخت بگیری.
+          </p>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          @for (program of programs.value() ?? []; track program.slug) {
+            <section aioCard>
+              <div aioCardHeader>
+                <span class="health-icon-disc mb-2 text-[var(--health-blue)]"
+                  ><aio-icon name="lucideDumbbell"
+                /></span>
+                <h3 aioCardTitle class="text-base leading-7">
+                  {{ program.title }}
+                </h3>
+                <p aioCardDescription>
+                  {{ fa(program.minutes) }} دقیقه،
+                  {{ fa(program.exercises.length) }} حرکت
                 </p>
-                <ol
-                  class="mb-3 flex [list-style-type:persian] flex-col gap-1 ps-5 text-sm"
+              </div>
+              <div aioCardFooter>
+                <button
+                  aioBtn
+                  class="health-soft-action w-full"
+                  (click)="selectedProgram.set(program)"
                 >
-                  @for (e of p.exercises; track e.name) {
-                    <li>
-                      {{ e.name }}
-                      <span class="text-muted-foreground">{{
-                        exerciseDetail(e)
-                      }}</span>
-                    </li>
-                  }
-                </ol>
-                <button aioBtn size="sm" (click)="openLog(p.activitySlug, p)">
-                  ثبت این جلسه
+                  دیدن برنامه
                 </button>
-              </aio-accordion-content>
-            </div>
+              </div>
+            </section>
           }
         </div>
       </section>
     </div>
 
     <aio-dialog
+      [open]="selectedProgram() !== null"
+      (openChange)="!$event && selectedProgram.set(null)"
+      [title]="selectedProgram()?.title ?? 'برنامه تمرین'"
+      contentClass="applet-health health-calm"
+    >
+      <ng-template aioDialogBody>
+        @if (selectedProgram(); as program) {
+          <div class="flex flex-col gap-5">
+            <p class="health-metric-label">{{ program.description }}</p>
+            <ol class="flex flex-col gap-3">
+              @for (exercise of program.exercises; track $index) {
+                <li class="flex gap-3 border-b border-border py-3">
+                  <span class="health-icon-disc text-[var(--health-purple)]">{{
+                    fa($index + 1)
+                  }}</span>
+                  <div>
+                    <h3 class="font-semibold">{{ exercise.name }}</h3>
+                    <p class="health-metric-label">
+                      {{ exerciseDetail(exercise) }}
+                    </p>
+                  </div>
+                </li>
+              }
+            </ol>
+            <p class="text-muted-foreground text-xs">
+              این برنامه پیشنهادی است؛ فقط تمرینی را که انجام داده‌ای ثبت کن.
+            </p>
+          </div>
+        }
+      </ng-template>
+      <ng-template aioDialogActions
+        ><button
+          aioBtn
+          class="health-primary-action"
+          (click)="logSelectedProgram()"
+        >
+          این جلسه را انجام دادم؛ ثبت
+        </button></ng-template
+      >
+    </aio-dialog>
+    <aio-dialog
+      contentClass="applet-health health-calm"
       [(open)]="creatorOpen"
       title="ساخت برنامه شخصی"
       description="تجهیزات، هدف و زمان تمرین را انتخاب کنید."
@@ -628,6 +705,7 @@ type CategoryFilter = ActivityCategory | 'all';
       </ng-template>
     </aio-dialog>
     <aio-dialog
+      contentClass="applet-health health-calm"
       [open]="selectedExercise() !== null"
       (openChange)="!$event && selectedExercise.set(null)"
       [title]="selectedExercise()?.name ?? 'آموزش حرکت'"
@@ -683,8 +761,9 @@ type CategoryFilter = ActivityCategory | 'all';
       </ng-template>
     </aio-dialog>
     <aio-dialog
+      contentClass="applet-health health-calm"
       [(open)]="sessionOpen"
-      title="ثبت تمرین انجام‌شده"
+      title="جلسه تمرین شما"
       description="فقط ست‌هایی را نگه دارید که انجام داده‌اید؛ تکرار، زمان و وزنه واقعی را وارد کنید."
     >
       <ng-template aioDialogBody>
@@ -787,7 +866,11 @@ type CategoryFilter = ActivityCategory | 'all';
         </button></ng-template
       >
     </aio-dialog>
-    <aio-dialog [(open)]="editorOpen" title="ویرایش برنامه">
+    <aio-dialog
+      contentClass="applet-health health-calm"
+      [(open)]="editorOpen"
+      title="ویرایش برنامه"
+    >
       <ng-template aioDialogBody>
         <form
           id="routine-editor-form"
@@ -888,6 +971,7 @@ type CategoryFilter = ActivityCategory | 'all';
     </aio-dialog>
 
     <aio-dialog
+      contentClass="applet-health health-calm"
       [(open)]="logging"
       title="ثبت ورزش"
       description="کالری با وزن شما در مشخصات برآورد می‌شود."
@@ -1040,6 +1124,13 @@ export class FitnessPage {
     ),
   );
 
+  protected readonly selectedProgram = signal<WorkoutProgram | null>(null);
+  protected logSelectedProgram() {
+    const program = this.selectedProgram();
+    if (!program) return;
+    this.selectedProgram.set(null);
+    this.openLog(program.activitySlug, program);
+  }
   protected readonly creatorOpen = signal(false);
   protected readonly exerciseLimit = signal(6);
   protected readonly moreExercises = (count: number) => count + 6;

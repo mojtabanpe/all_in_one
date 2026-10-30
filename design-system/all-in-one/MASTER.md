@@ -33,6 +33,21 @@ specification below is historical where it conflicts with this section.
 
 ---
 
+## Health companion override
+
+The health applet uses a scoped `.health-calm` theme inspired by the owner's
+Gordool screenshots. Other applets retain the workspace theme above.
+
+- White cards with 30px corners; primary text/actions `#232326`, muted text
+  `#72727a`, borders `#e7e7ec`, and soft controls `#f0f0f4`.
+- Asymmetric daily calorie tiles, a seven-day selector, grouped profile settings,
+  approachable workout cards and meal details using the existing dialog wrapper.
+- Values come from saved records and plans. Missing macros remain unknown.
+  Opening a planned meal never logs it; recording requires the meal form.
+- The apricot companion is an original generated illustration, bundled locally
+  as `health-companion.webp`; it is decorative and carries no health data.
+- Preserve RTL, Persian digit glyphs, keyboard focus and reduced-motion behavior.
+
 ## Historical specification
 
 # All in One — Design System (MASTER)

@@ -20,6 +20,7 @@ import {
   FOOD_GROUPS,
   type FoodGroup,
   type MealEstimate,
+  type Recipe,
   type MealLogInput,
   MEAL_TYPE_LABELS,
   MEAL_TYPES,
@@ -188,6 +189,7 @@ import { HealthApi, scoreClass } from './health-api';
   `,
 })
 export class MealForm {
+  readonly initialRecipe = input<Recipe | null>(null);
   readonly date = input.required<string>();
   readonly rules = input.required<DietRules>();
   readonly calorieTarget = input<number | null>(null);
@@ -229,6 +231,22 @@ export class MealForm {
 
   constructor() {
     queueMicrotask(() => {
+      const recipe = this.initialRecipe();
+      if (recipe) {
+        this.model.update((m) => ({
+          ...m,
+          description: recipe.title,
+          calories: recipe.calories,
+        }));
+        this.macros.set({
+          calories: recipe.calories,
+          proteinG: recipe.proteinG,
+          carbsG: recipe.carbsG,
+          fatG: recipe.fatG,
+          portions: {},
+          note: 'بر اساس دستور پخت انتخاب‌شده',
+        });
+      }
       const preset = this.mealType();
       if (preset) this.model.update((m) => ({ ...m, mealType: preset }));
     });
@@ -269,6 +287,9 @@ export class MealForm {
       );
       this.saved.emit({
         date: this.date(),
+        ...(this.initialRecipe()?.title === m.description.trim()
+          ? { recipeSlug: this.initialRecipe()?.slug }
+          : {}),
         mealType: m.mealType,
         description: m.description.trim(),
         portions,

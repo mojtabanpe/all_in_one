@@ -518,3 +518,283 @@ select,
 textarea {
   font-feature-settings: inherit;
 }
+/* Health companion: scoped to the applet; other workspaces keep their design. */
+.health-calm {
+  --primary: #232326;
+  --primary-foreground: #ffffff;
+  --accent: #f0f0f4;
+  --accent-foreground: #232326;
+  --foreground: #29292e;
+  --muted-foreground: #72727a;
+  --card: #ffffff;
+  --card-foreground: #29292e;
+  --border: #e7e7ec;
+  --glass: #ffffff;
+  --glass-border: transparent;
+  --glass-shadow: none;
+  --surface-shadow: none;
+  --ring: #1976ce;
+  --health-blue: #1976ce;
+  --health-green: #269a83;
+  --health-orange: #dc784d;
+  --health-purple: #9768d9;
+  color: var(--foreground);
+}
+.health-calm [data-slot='card'],
+.health-calm .glass {
+  border: 0;
+  border-radius: 30px;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.health-calm [data-slot='card'] {
+  --card-spacing: 24px;
+}
+.health-calm [data-slot='button'] {
+  border-radius: 999px;
+}
+.health-calm [data-slot='button'][data-variant='default'] {
+  box-shadow: none;
+}
+.health-calm .health-tabs {
+  padding: 5px;
+  background: #ececf0;
+  border-radius: 999px;
+}
+.health-calm .health-tabs a {
+  color: #72727a;
+  border-radius: 999px;
+}
+.health-calm .health-tabs a[aria-current='page'] {
+  color: #232326;
+  background: white;
+  box-shadow: 0 2px 8px rgb(30 30 40 / 0.05);
+}
+.health-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.health-day-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+.health-day-strip [data-slot='button'] {
+  padding: 8px 2px;
+  height: auto;
+  min-height: 62px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: #72727a;
+  background: transparent;
+  box-shadow: none;
+}
+.health-day-strip [aria-pressed='true'] {
+  background: white;
+  color: #232326;
+  box-shadow: 0 3px 12px rgb(30 30 40 / 0.05);
+}
+.health-daily-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  grid-template-rows: repeat(2, minmax(120px, auto));
+  gap: 14px;
+}
+.health-calorie-panel {
+  grid-row: span 2;
+  position: relative;
+  overflow: hidden;
+}
+.health-number {
+  font-size: clamp(36px, 6vw, 56px);
+  line-height: 1.2;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+.health-small-number {
+  font-size: 28px;
+  line-height: 1.4;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.health-helper-art {
+  width: 100px;
+  height: 110px;
+  object-fit: contain;
+  align-self: end;
+}
+.health-metric {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 22px;
+  background: white;
+  border-radius: 30px;
+}
+.health-metric-label {
+  color: #72727a;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.health-macro-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.health-macro {
+  background: white;
+  border-radius: 24px;
+  padding: 16px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.health-icon-disc {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #f2f2f6;
+}
+.health-section-heading {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.7;
+}
+.health-meal-list {
+  border-radius: 30px;
+  background: white;
+  padding: 4px 22px;
+}
+.health-meal-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 0;
+  text-align: start;
+  border-bottom: 1px solid #e7e7ec;
+}
+.health-meal-row:last-child {
+  border-bottom: 0;
+}
+.health-meal-art {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #f6f4ee;
+  color: #b08046;
+}
+.health-meal-art[data-meal='DINNER'] {
+  color: #269a83;
+  background: #edf5ee;
+}
+.health-meal-art[data-meal='SNACK'] {
+  color: #b65f64;
+  background: #fff0f0;
+}
+.health-meal-art[data-meal='LUNCH'] {
+  color: #1976ce;
+  background: #edf3fc;
+}
+.health-calm .health-primary-action {
+  min-height: 48px;
+  background: #232326;
+  color: white;
+  box-shadow: none;
+  border-radius: 999px;
+}
+.health-calm .health-soft-action {
+  min-height: 44px;
+  background: #f0f0f4;
+  color: #232326;
+  box-shadow: none;
+  border-radius: 999px;
+}
+.health-sheet-stat {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.health-workout-banner {
+  background: #edf1fc;
+  border-radius: 30px;
+  padding: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-width: 0;
+}
+.health-calm [data-slot='progress'] {
+  background: #ededf2;
+  height: 6px;
+  border-radius: 999px;
+}
+.health-calm [data-slot='progress-indicator'] {
+  background: var(--health-blue);
+}
+@media (min-width: 1024px) {
+  .health-overview-layout {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .health-overview-wide {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 380px) {
+  .health-metric {
+    padding: 18px;
+  }
+  .health-macro {
+    padding: 14px 9px;
+    gap: 6px;
+  }
+  .health-macro .health-icon-disc {
+    width: 28px;
+    height: 28px;
+  }
+  .health-meal-art {
+    width: 48px;
+    height: 48px;
+  }
+}
+.health-helper-art {
+  background: url('./illustrations/health-companion.webp') center / contain
+    no-repeat;
+}
+.health-calm .health-settings-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  height: auto;
+  min-height: 76px;
+  padding: 20px 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--border);
+  white-space: normal;
+  box-shadow: none;
+  font-weight: 400;
+}
+.health-calm .health-settings-row:last-child {
+  border-bottom: 0;
+}
+.health-calm.health-overview-layout {
+  min-width: 0;
+}

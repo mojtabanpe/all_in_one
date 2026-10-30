@@ -320,6 +320,7 @@ import { MealForm } from './meal-form';
       >
     </aio-dialog>
     <aio-dialog
+      contentClass="applet-health health-calm"
       [(open)]="swapOpen"
       title="جایگزینی وعده"
       description="فقط غذاهای سازگار با نوع وعده، رژیم برنامه و مواد مستثنا نمایش داده می‌شوند."
@@ -353,7 +354,11 @@ import { MealForm } from './meal-form';
         </div></ng-template
       >
     </aio-dialog>
-    <aio-dialog [(open)]="choosing" title="رژیم غذایی">
+    <aio-dialog
+      contentClass="applet-health health-calm"
+      [(open)]="choosing"
+      title="رژیم غذایی"
+    >
       <ng-template aioDialogBody>
         @if (profile.value(); as p) {
           <health-diet-chooser
@@ -366,6 +371,7 @@ import { MealForm } from './meal-form';
     </aio-dialog>
 
     <aio-dialog
+      contentClass="applet-health health-calm"
       [(open)]="logging"
       title="ثبت وعده"
       [description]="'امتیاز بر اساس ' + (diet()?.name ?? 'تغذیه متعادل')"
