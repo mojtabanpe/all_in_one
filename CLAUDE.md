@@ -107,6 +107,17 @@ When the owner gives a new instruction, add it to this list in the same change.
     Dialogs, alerts and confirmations on phones are bottom sheets (spartan drawer/sheet), never modals.
 14. **Applets ship as MVP + backend:** auth first, then Prisma tables and api endpoints per applet.
 
+## Design references (2026-10-30)
+
+17. Each applet follows a reference product's UX and look (adapted to spartan + RTL + glass):
+    - **planner → TickTick**: smart lists (today, tomorrow, next 7 days, all), quick-add on top, compact task
+      rows with round priority-coloured checkboxes, overdue/today/completed sections, calm blue accent.
+    - **english-learning → Duolingo**: bright green, chunky rounded "3D" buttons, big friendly cards, XP and
+      streak flame up top, playful copy, celebration at the end of a session.
+    - **health → Gordool (https://gordol.app)**: friendly Persian coach voice, daily stats at a glance
+      (calories, macros, weekly training), quick "+" logging in two taps, streak "fire", step-by-step workouts.
+    Each applet sets its own accent through spartan CSS variables on its root; the shared design system stays.
+
 ## Git (2026-10-30)
 
 16. **Work and push on `master`.** Commit directly on `master` and push to `origin master`. Never create or
