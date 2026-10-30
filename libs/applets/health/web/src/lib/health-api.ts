@@ -4,6 +4,7 @@ import type {
   GeneratePlanInput,
   HealthProfile,
   HealthProfileInput,
+  MealEstimate,
   MealLog,
   MealLogInput,
   MealPlan,
@@ -33,6 +34,14 @@ export class HealthApi {
   removeWorkout(id: string): Promise<void> {
     return firstValueFrom(
       this.http.delete<void>(`${this.base}/workouts/${id}`),
+    );
+  }
+
+  estimateMeal(description: string): Promise<MealEstimate> {
+    return firstValueFrom(
+      this.http.post<MealEstimate>(`${this.base}/ai/estimate-meal`, {
+        description,
+      }),
     );
   }
 

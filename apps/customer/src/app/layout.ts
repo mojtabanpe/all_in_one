@@ -1,5 +1,12 @@
-import { Component, inject } from '@angular/core';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs';
+import {
+  NavigationEnd,
+  Router,
+  RouterLink,
+  RouterOutlet,
+} from '@angular/router';
 import {
   AioAppShell,
   AioButton,
@@ -7,7 +14,8 @@ import {
   type AioNavItem,
   provideIcons,
 } from '@all-in-one/ui';
-import { AuthStore } from '@all-in-one/web/shared';
+import { Assistant, AuthStore } from '@all-in-one/web/shared';
+import type { AssistantContext } from '@all-in-one/shared/schemas';
 import { Pwa } from './pwa';
 import {
   lucideCalendarCheck,
@@ -23,7 +31,14 @@ import {
 /** Signed-in layout: shell with the applets in the navigation. */
 @Component({
   selector: 'customer-layout',
-  imports: [RouterLink, AioAppShell, AioButton, AioIcon, RouterOutlet],
+  imports: [
+    RouterLink,
+    AioAppShell,
+    AioButton,
+    AioIcon,
+    Assistant,
+    RouterOutlet,
+  ],
   providers: [
     provideIcons({
       lucideCalendarCheck,
@@ -38,6 +53,7 @@ import {
   ],
   template: `
     <aio-app-shell appName="همه در یک" [navItems]="nav">
+      <web-assistant aioShellActions [context]="assistantContext()" />
       @if (pwa.canInstall()) {
         <button
           aioShellActions
@@ -79,6 +95,20 @@ export class Layout {
   private readonly auth = inject(AuthStore);
   private readonly router = inject(Router);
   protected readonly pwa = inject(Pwa);
+  private readonly url = toSignal(
+    this.router.events.pipe(
+      filter((e) => e instanceof NavigationEnd),
+      map(() => this.router.url),
+    ),
+    { initialValue: this.router.url },
+  );
+  /** The assistant focuses on the applet the user is in. */
+  protected readonly assistantContext = computed<AssistantContext>(() => {
+    const first = this.url().split(/[/?#]/)[1];
+    return first === 'planner' || first === 'health' || first === 'english'
+      ? first
+      : 'home';
+  });
 
   protected readonly nav: readonly AioNavItem[] = [
     { label: 'خانه', icon: 'lucideHouse', link: '/', exact: true },

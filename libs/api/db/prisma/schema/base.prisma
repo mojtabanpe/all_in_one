@@ -54,6 +54,7 @@ model User {
   workoutLogs     WorkoutLog[]
   mealLogs        MealLog[]
   mealPlans       MealPlan[]
+  aiSettings      UserAiSettings?
 
   @@map("users")
 }

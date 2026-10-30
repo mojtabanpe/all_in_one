@@ -1,4 +1,11 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import {
   form,
   FormField,
@@ -12,6 +19,7 @@ import {
   FOOD_GROUP_LABELS,
   FOOD_GROUPS,
   type FoodGroup,
+  type MealEstimate,
   type MealLogInput,
   MEAL_TYPE_LABELS,
   MEAL_TYPES,
@@ -24,12 +32,14 @@ import {
   AioFieldError,
   AioIcon,
   AioInput,
+  AioSpinner,
+  aioToast,
   AioToggleGroupDirectives,
   provideIcons,
 } from '@all-in-one/ui';
-import { faNumber } from '@all-in-one/web/shared';
-import { lucideMinus, lucidePlus } from '@ng-icons/lucide';
-import { scoreClass } from './health-api';
+import { apiErrorMessage, faNumber } from '@all-in-one/web/shared';
+import { lucideMinus, lucidePlus, lucideSparkles } from '@ng-icons/lucide';
+import { HealthApi, scoreClass } from './health-api';
 
 /** Logs a meal by food-group servings, with a live score from the shared evaluator. */
 @Component({
@@ -41,11 +51,12 @@ import { scoreClass } from './health-api';
     AioFieldError,
     AioIcon,
     AioInput,
+    AioSpinner,
     AioToggleGroupDirectives,
     FormField,
     FormRoot,
   ],
-  providers: [provideIcons({ lucideMinus, lucidePlus })],
+  providers: [provideIcons({ lucideMinus, lucidePlus, lucideSparkles })],
   template: `
     <form
       id="meal-form"
@@ -79,6 +90,33 @@ import { scoreClass } from './health-api';
           <aio-field-error [validator]="e.kind">{{
             e.message
           }}</aio-field-error>
+        }
+      </div>
+      <div class="-mt-2 flex flex-col gap-1">
+        <button
+          aioBtn
+          type="button"
+          variant="outline"
+          size="sm"
+          class="self-start"
+          [disabled]="estimating() || model().description.trim().length < 2"
+          (click)="estimate()"
+        >
+          @if (estimating()) {
+            <aio-spinner />
+          } @else {
+            <aio-icon name="lucideSparkles" size="xs" />
+          }
+          تخمین کالری و گروه‌ها با هوش مصنوعی
+        </button>
+        @if (macros(); as m) {
+          <p class="text-muted-foreground text-xs" aria-live="polite">
+            پروتئین {{ fa(m.proteinG) }}، کربوهیدرات {{ fa(m.carbsG) }}، چربی
+            {{ fa(m.fatG) }} گرم
+            @if (m.note) {
+              ، {{ m.note }}
+            }
+          </p>
         }
       </div>
       <fieldset class="flex flex-col gap-1">
@@ -156,6 +194,7 @@ export class MealForm {
   /** Preselected meal (e.g. from a "+" next to lunch); otherwise guessed from the time. */
   readonly mealType = input<MealType | null>(null);
   readonly saved = output<MealLogInput>();
+  private readonly api = inject(HealthApi);
 
   protected readonly mealTypes = MEAL_TYPES;
   protected readonly mealTypeLabels = MEAL_TYPE_LABELS;
@@ -165,6 +204,9 @@ export class MealForm {
   protected readonly fa = (n: number) => faNumber(n);
 
   protected readonly portions = signal<Partial<Record<FoodGroup, number>>>({});
+  protected readonly estimating = signal(false);
+  /** Macros from the last AI estimate, saved with the meal. */
+  protected readonly macros = signal<MealEstimate | null>(null);
   protected readonly model = signal({
     mealType: defaultMealType(),
     description: '',
@@ -204,6 +246,21 @@ export class MealForm {
     }));
   }
 
+  /** Fills calories and food groups from the user's AI (they stay editable). */
+  protected async estimate() {
+    this.estimating.set(true);
+    try {
+      const e = await this.api.estimateMeal(this.model().description.trim());
+      this.portions.set(e.portions);
+      this.model.update((m) => ({ ...m, calories: e.calories }));
+      this.macros.set(e);
+    } catch (error) {
+      aioToast.error(apiErrorMessage(error));
+    } finally {
+      this.estimating.set(false);
+    }
+  }
+
   send() {
     submit(this.mealForm, async () => {
       const m = this.model();
@@ -216,6 +273,13 @@ export class MealForm {
         description: m.description.trim(),
         portions,
         calories: m.calories || undefined,
+        ...(this.macros()
+          ? {
+              proteinG: this.macros()?.proteinG,
+              carbsG: this.macros()?.carbsG,
+              fatG: this.macros()?.fatG,
+            }
+          : {}),
       });
     });
   }

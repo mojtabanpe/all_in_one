@@ -14,13 +14,13 @@ import {
   updateTextSchema,
 } from '@all-in-one/applets/english-learning/contracts';
 import * as z from 'zod';
-import { parseWith, type ToolKit } from './tool-kit';
+import { parseWith, type ToolSink } from './tool-kit';
 
 const id = z.uuid();
 
 /** Recall's 20 tools: decks, cards (with review) and reading passages. */
 export function englishTools(
-  kit: ToolKit,
+  kit: ToolSink,
   s: { decks: DecksService; cards: CardsService; texts: TextsService },
 ) {
   const user = kit.user;
@@ -80,6 +80,7 @@ export function englishTools(
   kit.tool(
     'delete_deck',
     {
+      assistant: false,
       description:
         'Permanently delete a deck AND ALL its cards, including their review state. Cannot be undone.',
       scope: 'cards:write',

@@ -5,9 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { lookup as dnsLookup, type LookupAddress } from 'node:dns';
 import { request } from 'node:https';
-import { BlockList, isIP, type LookupFunction } from 'node:net';
+import { assertPublicUrl, guardedLookup } from '@all-in-one/api/ai';
 import {
   type PlannerCalendar as DbCalendar,
   PrismaService,
@@ -27,45 +26,6 @@ import { parseIcs } from './ics';
 const MAX_BYTES = 2 * 1024 * 1024;
 const TIMEOUT_MS = 10_000;
 const CACHE_MS = 15 * 60_000;
-
-/** Addresses a user-supplied feed URL must never reach (SSRF). */
-const PRIVATE_V4 = new BlockList();
-const PRIVATE_V6 = new BlockList();
-for (const [net, bits] of [
-  ['0.0.0.0', 8],
-  ['10.0.0.0', 8],
-  ['100.64.0.0', 10],
-  ['127.0.0.0', 8],
-  ['169.254.0.0', 16],
-  ['172.16.0.0', 12],
-  ['192.0.0.0', 24],
-  ['192.168.0.0', 16],
-  ['198.18.0.0', 15],
-  ['224.0.0.0', 3],
-] as const)
-  PRIVATE_V4.addSubnet(net, bits, 'ipv4');
-for (const [net, bits] of [
-  ['::', 128],
-  ['::1', 128],
-  ['::ffff:0:0', 96],
-  ['64:ff9b::', 96],
-  ['fc00::', 7],
-  ['fe80::', 10],
-  ['ff00::', 8],
-] as const)
-  PRIVATE_V6.addSubnet(net, bits, 'ipv6');
-
-export function isPrivateAddress(address: string): boolean {
-  const family = isIP(address);
-  if (!family) return true;
-  if (family === 6 && address.toLowerCase().startsWith('::ffff:')) {
-    const v4 = address.slice(7);
-    if (isIP(v4) === 4) return PRIVATE_V4.check(v4, 'ipv4');
-  }
-  return family === 4
-    ? PRIVATE_V4.check(address, 'ipv4')
-    : PRIVATE_V6.check(address, 'ipv6');
-}
 
 function toCalendar(c: DbCalendar): PlannerCalendar {
   return {
@@ -227,29 +187,15 @@ export class CalendarsService {
   private fetch(url: string, redirects = 3): Promise<string> {
     const allowPrivate =
       this.config.get('PLANNER_ICS_ALLOW_PRIVATE') === 'true';
-    const guarded: LookupFunction = (hostname, options, callback) => {
-      dnsLookup(hostname, { ...options, all: true }, (error, addresses) => {
-        if (error) return callback(error, '', 0);
-        const list = addresses as LookupAddress[];
-        const bad = list.find(
-          (a) => !allowPrivate && isPrivateAddress(a.address),
-        );
-        if (bad || !list.length)
-          return callback(new Error('نشانی تقویم به شبکه داخلی می‌رسد'), '', 0);
-        if (options.all)
-          return (callback as unknown as (e: null, a: LookupAddress[]) => void)(
-            null,
-            list,
-          );
-        callback(null, list[0].address, list[0].family);
-      });
-    };
+    const guarded = guardedLookup(allowPrivate);
     return new Promise((resolve, reject) => {
       const target = new URL(url);
       if (target.protocol !== 'https:') return reject(new Error('فقط https'));
-      const host = target.hostname.replace(/^\[|\]$/g, '');
-      if (isIP(host) && !allowPrivate && isPrivateAddress(host))
-        return reject(new Error('نشانی تقویم به شبکه داخلی می‌رسد'));
+      try {
+        assertPublicUrl(target, allowPrivate);
+      } catch (error) {
+        return reject(error);
+      }
       const req = request(
         target,
         {

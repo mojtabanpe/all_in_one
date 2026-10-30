@@ -9,6 +9,7 @@ import {
   aioToast,
 } from '@all-in-one/ui';
 import { apiErrorMessage } from './auth.guards';
+import { AiSettingsCard } from './ai-settings';
 import { ChatGptConnection } from './chatgpt-connection';
 import { AuthStore } from './auth.store';
 
@@ -256,6 +257,7 @@ export class VerifyEmailPage implements OnInit {
     AioCardDirectives,
     AioFieldDirectives,
     AioInput,
+    AiSettingsCard,
     ChatGptConnection,
   ],
   template: `
@@ -307,6 +309,7 @@ export class VerifyEmailPage implements OnInit {
           </button>
         </form>
       </section>
+      <web-ai-settings />
       <web-chatgpt-connection />
       <ng-content />
     </div>

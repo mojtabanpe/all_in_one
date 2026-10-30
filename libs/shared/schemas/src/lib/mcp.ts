@@ -8,6 +8,8 @@ export const MCP_SCOPES = [
   'readings:write',
   'planner:read',
   'planner:write',
+  'health:read',
+  'health:write',
 ] as const;
 export type McpScope = (typeof MCP_SCOPES)[number];
 
@@ -18,6 +20,8 @@ export const MCP_SCOPE_LABELS: Record<McpScope, string> = {
   'readings:write': 'ذخیره و ویرایش متن‌های خواندنی',
   'planner:read': 'دیدن کارها، فهرست‌ها، عادت‌ها و تمرکز',
   'planner:write': 'ساختن و ویرایش کارها، عادت‌ها، تمرکز و روزشمارها',
+  'health:read': 'دیدن پروفایل سلامت، وعده‌ها، کالری و ورزش‌ها',
+  'health:write': 'ثبت و ویرایش وعده‌ها، ورزش‌ها، پروفایل و برنامه غذایی',
 };
 
 /** A personal token's metadata; the token itself is shown once, at creation. */

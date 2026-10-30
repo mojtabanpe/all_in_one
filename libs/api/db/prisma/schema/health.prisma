@@ -166,6 +166,9 @@ model MealLog {
   /// Food-group servings (see health contracts: MealPortions)
   portions    Json
   calories    Int?
+  proteinG    Int?
+  carbsG      Int?
+  fatG        Int?
   score       Int
   /// string[] (Persian feedback)
   feedback    Json

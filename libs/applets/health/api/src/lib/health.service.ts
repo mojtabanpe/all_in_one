@@ -19,6 +19,9 @@ import {
   type HealthProfileInput,
   type MealLog,
   type MealLogInput,
+  type NutritionDay,
+  type UpdateMealInput,
+  type UpdateWorkoutInput,
   type MealPlan,
   type MealPlanDay,
   type MealPortions,
@@ -78,6 +81,9 @@ function toMealLog(m: DbMealLog): MealLog {
     description: m.description,
     portions: m.portions as MealPortions,
     calories: m.calories,
+    proteinG: m.proteinG,
+    carbsG: m.carbsG,
+    fatG: m.fatG,
     score: m.score,
     feedback: m.feedback as string[],
     recipeSlug: m.recipeSlug,
@@ -209,6 +215,52 @@ export class HealthService {
     };
   }
 
+  /** Changes a logged workout; calories follow the new activity, time and intensity. */
+  async updateWorkout(
+    userId: string,
+    id: string,
+    patch: UpdateWorkoutInput,
+  ): Promise<WorkoutLog> {
+    const log = await this.prisma.workoutLog.findFirst({
+      where: { id, userId },
+    });
+    if (!log) throw new NotFoundException('ورزش پیدا نشد');
+    const activity = await this.prisma.activityType.findUnique({
+      where: { slug: patch.activitySlug ?? log.activitySlug },
+    });
+    if (!activity) throw new NotFoundException('این نوع فعالیت پیدا نشد');
+    const profile = await this.prisma.healthProfile.findUnique({
+      where: { userId },
+      select: { weightKg: true },
+    });
+    const durationMin = patch.durationMin ?? log.durationMin;
+    const intensity = patch.intensity ?? log.intensity;
+    const row = await this.prisma.workoutLog.update({
+      where: { id },
+      data: {
+        activitySlug: activity.slug,
+        ...(patch.date ? { date: toDate(patch.date) } : {}),
+        durationMin,
+        intensity,
+        ...(patch.distanceKm !== undefined
+          ? { distanceKm: patch.distanceKm }
+          : {}),
+        ...(patch.steps !== undefined ? { steps: patch.steps } : {}),
+        ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
+        calories: workoutCalories(
+          activity.met,
+          profile?.weightKg ?? null,
+          durationMin,
+          intensity,
+        ),
+      },
+    });
+    const day = iso(row.date);
+    return (await this.workouts(userId, day, day)).find(
+      (w) => w.id === row.id,
+    ) as WorkoutLog;
+  }
+
   async removeWorkout(userId: string, id: string): Promise<void> {
     const { count } = await this.prisma.workoutLog.deleteMany({
       where: { id, userId },
@@ -285,12 +337,77 @@ export class HealthService {
         description: input.description,
         portions: input.portions,
         calories: input.calories ?? null,
+        proteinG: input.proteinG ?? null,
+        carbsG: input.carbsG ?? null,
+        fatG: input.fatG ?? null,
         recipeSlug: input.recipeSlug ?? null,
         score: evaluation.score,
         feedback: evaluation.feedback,
       },
     });
     return toMealLog(row);
+  }
+
+  /** Changes a logged meal and scores it again. */
+  async updateMeal(
+    userId: string,
+    id: string,
+    patch: UpdateMealInput,
+    now = new Date(),
+  ): Promise<MealLog> {
+    const meal = await this.prisma.mealLog.findFirst({ where: { id, userId } });
+    if (!meal) throw new NotFoundException('وعده پیدا نشد');
+    const merged = {
+      date: patch.date ?? iso(meal.date),
+      mealType: patch.mealType ?? meal.mealType,
+      description: patch.description ?? meal.description,
+      portions: patch.portions ?? (meal.portions as MealPortions),
+      calories: patch.calories !== undefined ? patch.calories : meal.calories,
+      proteinG: patch.proteinG !== undefined ? patch.proteinG : meal.proteinG,
+      carbsG: patch.carbsG !== undefined ? patch.carbsG : meal.carbsG,
+      fatG: patch.fatG !== undefined ? patch.fatG : meal.fatG,
+    };
+    const { rules, target } = await this.nutritionContext(userId, now);
+    const evaluation = evaluateMeal(
+      { ...merged, calories: merged.calories ?? undefined },
+      rules,
+      target,
+    );
+    const row = await this.prisma.mealLog.update({
+      where: { id },
+      data: {
+        ...merged,
+        date: toDate(merged.date),
+        // A meal changed by hand is no longer the plan's recipe.
+        recipeSlug: patch.description ? null : meal.recipeSlug,
+        score: evaluation.score,
+        feedback: evaluation.feedback,
+      },
+    });
+    return toMealLog(row);
+  }
+
+  /** A day's meals with totals against the calorie target. */
+  async nutritionDay(
+    userId: string,
+    date: string,
+    now = new Date(),
+  ): Promise<NutritionDay> {
+    const [meals, { target }] = await Promise.all([
+      this.meals(userId, date),
+      this.nutritionContext(userId, now),
+    ]);
+    const sum = (pick: (m: MealLog) => number | null) =>
+      meals.reduce((total, m) => total + (pick(m) ?? 0), 0);
+    return {
+      date,
+      calorieTarget: target,
+      calories: sum((m) => m.calories),
+      proteinG: sum((m) => m.proteinG),
+      carbsG: sum((m) => m.carbsG),
+      fatG: sum((m) => m.fatG),
+      meals,
+    };
   }
 
   async removeMeal(userId: string, id: string): Promise<void> {

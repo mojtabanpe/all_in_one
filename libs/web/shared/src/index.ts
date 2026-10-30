@@ -6,3 +6,5 @@ export * from './lib/auth/login-page';
 export * from './lib/format/fa';
 export * from './lib/auth/account-pages';
 export * from './lib/auth/chatgpt-connection';
+export * from './lib/auth/ai-settings';
+export * from './lib/assistant/assistant';

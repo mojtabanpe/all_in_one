@@ -100,6 +100,7 @@
       ],
       "@all-in-one/ui": ["./libs/shared/packages/ui/src/index.ts"],
       "@all-in-one/api/db": ["./libs/api/db/src/index.ts"],
+      "@all-in-one/api/ai": ["./libs/api/ai/src/index.ts"],
       "@all-in-one/api/auth": ["./libs/api/auth/src/index.ts"],
       "@all-in-one/applets/planner/contracts": [
         "./libs/applets/planner/contracts/src/index.ts"

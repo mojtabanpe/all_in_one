@@ -28,6 +28,7 @@ import {
   AioInputGroupDirectives,
   AioNativeSelect,
   AioNativeSelectDirectives,
+  AioSpinner,
   AioSwitch,
   AioTextarea,
   aioToast,
@@ -39,6 +40,7 @@ import {
   lucideFlag,
   lucidePlus,
   lucideSend,
+  lucideSparkles,
   lucideTimer,
   lucideTrash2,
   lucideX,
@@ -68,6 +70,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
     AioInputGroupDirectives,
     AioNativeSelect,
     AioNativeSelectDirectives,
+    AioSpinner,
     AioSwitch,
     AioTextarea,
     AioToggleGroupDirectives,
@@ -77,6 +80,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
       lucideFlag,
       lucidePlus,
       lucideSend,
+      lucideSparkles,
       lucideTimer,
       lucideTrash2,
       lucideX,
@@ -303,6 +307,22 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
             </button>
           </aio-input-group-addon>
         </form>
+        <button
+          aioBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="self-start"
+          [disabled]="splitting()"
+          (click)="split()"
+        >
+          @if (splitting()) {
+            <aio-spinner />
+          } @else {
+            <aio-icon name="lucideSparkles" size="xs" />
+          }
+          شکستن به زیرکار با هوش مصنوعی
+        </button>
       </div>
 
       <div class="flex min-h-11 items-center justify-between gap-3 text-sm">
@@ -414,6 +434,7 @@ export class TaskDetail {
   protected readonly newTag = signal('');
   protected readonly newItem = signal('');
   protected readonly newComment = signal('');
+  protected readonly splitting = signal(false);
 
   private readonly list = computed(() =>
     this.lists().find((l) => l.id === this.task().listId),
@@ -495,6 +516,12 @@ export class TaskDetail {
 
   protected removeItem(id: string) {
     void this.run(() => this.api.removeItem(this.task().id, id));
+  }
+
+  protected async split() {
+    this.splitting.set(true);
+    await this.run(() => this.api.aiSubtasks(this.task().id));
+    this.splitting.set(false);
   }
 
   protected async addComment() {

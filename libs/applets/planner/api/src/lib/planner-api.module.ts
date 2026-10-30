@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { PlannerAccess } from './access.service';
+import { PlannerAiService } from './planner-ai.service';
 import { CalendarsService } from './calendars.service';
 import { CountdownsService, FocusService } from './focus.service';
 import { HabitsService } from './habits.service';
@@ -22,6 +23,7 @@ const SERVICES = [
   FocusService,
   CountdownsService,
   CalendarsService,
+  PlannerAiService,
 ];
 
 /**

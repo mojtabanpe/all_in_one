@@ -6,6 +6,7 @@ import {
   HttpCode,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Put,
   Query,
@@ -31,8 +32,17 @@ import {
   type WorkoutLogInput,
   workoutLogSchema,
   type WorkoutProgram,
+  estimateMealSchema,
+  type MealEstimate,
+  type NutritionDay,
+  type UpdateMealInput,
+  updateMealSchema,
+  type UpdateWorkoutInput,
+  updateWorkoutSchema,
 } from '@all-in-one/applets/health/contracts';
+import { Throttle } from '@nestjs/throttler';
 import * as z from 'zod/mini';
+import { HealthAiService } from './health-ai.service';
 import { HealthService } from './health.service';
 
 const dateQuery = z.object({ date: z.iso.date() });
@@ -44,7 +54,10 @@ const recipeQuery = z.object({
 
 @Controller('health')
 export class HealthController {
-  constructor(private readonly health: HealthService) {}
+  constructor(
+    private readonly health: HealthService,
+    private readonly ai: HealthAiService,
+  ) {}
 
   // ---------- profile ----------
 
@@ -89,6 +102,15 @@ export class HealthController {
     @Body({ schema: workoutLogSchema }) input: WorkoutLogInput,
   ): Promise<WorkoutLog> {
     return this.health.logWorkout(user.id, input);
+  }
+
+  @Patch('workouts/:id')
+  updateWorkout(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body({ schema: updateWorkoutSchema }) input: UpdateWorkoutInput,
+  ): Promise<WorkoutLog> {
+    return this.health.updateWorkout(user.id, id, input);
   }
 
   @Delete('workouts/:id')
@@ -144,6 +166,34 @@ export class HealthController {
     @Body({ schema: mealLogSchema }) input: MealLogInput,
   ): Promise<MealLog> {
     return this.health.logMeal(user.id, input);
+  }
+
+  @Patch('meals/:id')
+  updateMeal(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body({ schema: updateMealSchema }) input: UpdateMealInput,
+  ): Promise<MealLog> {
+    return this.health.updateMeal(user.id, id, input);
+  }
+
+  @Get('nutrition/day')
+  nutritionDay(
+    @CurrentUser() user: AuthUser,
+    @Query({ schema: dateQuery }) q: { date: string },
+  ): Promise<NutritionDay> {
+    return this.health.nutritionDay(user.id, q.date);
+  }
+
+  /** Calories and macros of a described meal, from the user's AI. */
+  @Post('ai/estimate-meal')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  estimateMeal(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: estimateMealSchema }) input: { description: string },
+  ): Promise<MealEstimate> {
+    return this.ai.estimateMeal(user.id, input.description);
   }
 
   @Delete('meals/:id')

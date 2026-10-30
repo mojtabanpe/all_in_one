@@ -9,7 +9,6 @@ import {
   EnglishLibraryController,
   EnglishTextsController,
 } from './english.controller';
-import { GatewayService } from './gateway.service';
 import { SpeechService } from './speech.service';
 import { StarterDecksService } from './starter-decks.service';
 import { TextsService } from './texts.service';
@@ -32,7 +31,6 @@ import { TextsService } from './texts.service';
     AudioCacheService,
     CardsService,
     DecksService,
-    GatewayService,
     SpeechService,
     StarterDecksService,
     TextsService,

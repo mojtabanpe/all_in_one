@@ -14,18 +14,12 @@ export const envSchema = z.object({
   APP_ORIGINS: z.string().optional(),
   APP_PUBLIC_URL: z.url().optional(),
 
-  // English applet: 9Router gateway (chat, text-to-speech, speech-to-text). Unset = feature off.
-  AI_URL: z.url().optional(),
-  AI_MODEL: z.string().optional(),
-  AI_API_KEY: z.string().optional(),
-  TTS_URL: z.url().optional(),
-  TTS_MODEL: z.string().optional(),
-  TTS_SECONDARY_MODEL: z.string().optional(),
-  TTS_API_KEY: z.string().optional(),
+  // AI: each user sets their own OpenAI-compatible chat / TTS / STT urls in the profile.
+  /** Let those urls reach private addresses (e.g. a local gateway on a single-user server). */
+  AI_ALLOW_PRIVATE_URLS: z.enum(['true', 'false']).optional(),
+  /** 32 random bytes (base64) to encrypt the users' AI keys; derived from JWT_SECRET if unset. */
+  AI_KEYS_SECRET: z.string().optional(),
   TTS_CACHE_TTL_SECONDS: z.coerce.number().int().positive().optional(),
-  STT_URL: z.url().optional(),
-  STT_MODEL: z.string().optional(),
-  STT_API_KEY: z.string().optional(),
   /** Optional Redis for the speech audio cache. */
   REDIS_URL: z.string().optional(),
 

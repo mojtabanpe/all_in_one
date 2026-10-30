@@ -33,7 +33,7 @@ import {
   tagSchema,
 } from '@all-in-one/applets/planner/contracts';
 import * as z from 'zod';
-import { parseWith, type ToolKit } from './tool-kit';
+import { parseWith, type ToolSink } from './tool-kit';
 
 export interface PlannerServices {
   lists: ListsService;
@@ -124,7 +124,7 @@ function range(from: string, to: string, max: number, what: string) {
  * comments, members and assignment, tags, habits with check-ins, focus
  * records, subscribed calendars and countdowns.
  */
-export function plannerTools(kit: ToolKit, s: PlannerServices) {
+export function plannerTools(kit: ToolSink, s: PlannerServices) {
   const user = kit.user;
   const read = 'planner:read' as const;
   const write = 'planner:write' as const;
@@ -302,6 +302,7 @@ export function plannerTools(kit: ToolKit, s: PlannerServices) {
   kit.tool(
     'delete_list',
     {
+      assistant: false,
       description:
         'Permanently delete a list AND all its tasks (owner only; not the Inbox).',
       scope: write,
@@ -374,6 +375,7 @@ export function plannerTools(kit: ToolKit, s: PlannerServices) {
   kit.tool(
     'add_list_member',
     {
+      assistant: false,
       description: 'Share a list with another account by email (owner only).',
       scope: write,
       kind: 'create',
@@ -384,6 +386,7 @@ export function plannerTools(kit: ToolKit, s: PlannerServices) {
   kit.tool(
     'remove_list_member',
     {
+      assistant: false,
       description:
         'Remove a member from a shared list (owner), or leave it (your own user id).',
       scope: write,
@@ -735,6 +738,7 @@ export function plannerTools(kit: ToolKit, s: PlannerServices) {
   kit.tool(
     'delete_habit',
     {
+      assistant: false,
       description: 'Delete a habit and all its check-ins.',
       scope: write,
       kind: 'delete',
@@ -852,6 +856,7 @@ export function plannerTools(kit: ToolKit, s: PlannerServices) {
   kit.tool(
     'subscribe_calendar',
     {
+      assistant: false,
       description:
         'Subscribe to an iCal feed (https:// or webcal:// .ics link). It is read-only.',
       scope: write,

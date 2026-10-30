@@ -66,6 +66,20 @@ export const workoutLogSchema = z.object({
 });
 export type WorkoutLogInput = z.input<typeof workoutLogSchema>;
 
+/** Change a logged workout; calories are recalculated. */
+export const updateWorkoutSchema = z.partial(
+  z.object({
+    activitySlug: z.string().check(z.minLength(1), z.maxLength(32)),
+    date: z.iso.date(),
+    durationMin: z.int().check(z.gte(1), z.lte(600)),
+    intensity: z.enum(INTENSITIES),
+    distanceKm: z.nullable(z.number().check(z.gte(0), z.lte(300))),
+    steps: z.nullable(z.int().check(z.gte(0), z.lte(200_000))),
+    notes: z.nullable(z.string().check(z.trim(), z.maxLength(1000))),
+  }),
+);
+export type UpdateWorkoutInput = z.infer<typeof updateWorkoutSchema>;
+
 export interface WorkoutLog {
   id: string;
   activitySlug: string;

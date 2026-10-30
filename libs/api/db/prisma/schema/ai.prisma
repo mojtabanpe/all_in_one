@@ -1,0 +1,22 @@
+// Per-user AI services (libs/api/ai): OpenAI-compatible chat, text-to-speech and
+// speech-to-text. Without them, AI features are off for that user. Keys are
+// AES-256-GCM encrypted (never returned to the browser).
+
+model UserAiSettings {
+  userId    String   @id @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatUrl   String?  @db.VarChar(500)
+  chatModel String?  @db.VarChar(100)
+  chatKey   String?  @db.VarChar(1000)
+  ttsUrl    String?  @db.VarChar(500)
+  ttsModel  String?  @db.VarChar(100)
+  /// Second voice (dialogues), e.g. a male voice
+  ttsModel2 String?  @db.VarChar(100)
+  ttsKey    String?  @db.VarChar(1000)
+  sttUrl    String?  @db.VarChar(500)
+  sttModel  String?  @db.VarChar(100)
+  sttKey    String?  @db.VarChar(1000)
+  updatedAt DateTime @updatedAt
+
+  @@map("user_ai_settings")
+}

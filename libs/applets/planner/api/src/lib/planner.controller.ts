@@ -79,6 +79,8 @@ import { HabitsService } from './habits.service';
 import { ListsService } from './lists.service';
 import { TagsService } from './tags.service';
 import { TasksService } from './tasks.service';
+import { PlannerAiService } from './planner-ai.service';
+import { Throttle } from '@nestjs/throttler';
 
 const partialSection = z.partial(sectionSchema);
 const partialFolder = z.partial(folderSchema);
@@ -228,7 +230,18 @@ export class PlannerListsController {
 /** Tasks: queries, writes, checklist, comments and trash. */
 @Controller('planner')
 export class PlannerTasksController {
-  constructor(private readonly tasks: TasksService) {}
+  constructor(
+    private readonly tasks: TasksService,
+    private readonly ai: PlannerAiService,
+  ) {}
+
+  /** Splits a task into checklist steps with the user's AI. */
+  @Post('tasks/:id/ai-subtasks')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  aiSubtasks(@CurrentUser() user: AuthUser, @Id() id: string) {
+    return this.ai.subtasks(user.id, id);
+  }
 
   @Get('tasks')
   filter(

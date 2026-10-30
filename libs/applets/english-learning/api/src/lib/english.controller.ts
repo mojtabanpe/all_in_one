@@ -61,7 +61,7 @@ import {
 import { AiService } from './ai.service';
 import { CardsService } from './cards.service';
 import { DecksService } from './decks.service';
-import { GatewayService } from './gateway.service';
+import { AiGateway } from '@all-in-one/api/ai';
 import { SpeechService } from './speech.service';
 import { StarterDecksService } from './starter-decks.service';
 import { TextsService } from './texts.service';
@@ -86,7 +86,10 @@ export class EnglishLibraryController {
   }
 
   @Get('decks/:id')
-  get(@CurrentUser() user: AuthUser, @Param('id', id) deckId: string): Promise<Deck> {
+  get(
+    @CurrentUser() user: AuthUser,
+    @Param('id', id) deckId: string,
+  ): Promise<Deck> {
     return this.decks.get(user.id, deckId);
   }
 
@@ -109,7 +112,10 @@ export class EnglishLibraryController {
 
   @Delete('decks/:id')
   @HttpCode(204)
-  async remove(@CurrentUser() user: AuthUser, @Param('id', id) deckId: string): Promise<void> {
+  async remove(
+    @CurrentUser() user: AuthUser,
+    @Param('id', id) deckId: string,
+  ): Promise<void> {
     await this.decks.remove(user.id, deckId);
   }
 
@@ -119,7 +125,10 @@ export class EnglishLibraryController {
   }
 
   @Post('starter-decks/:slug')
-  copyStarter(@CurrentUser() user: AuthUser, @Param('slug') slug: string): Promise<Deck> {
+  copyStarter(
+    @CurrentUser() user: AuthUser,
+    @Param('slug') slug: string,
+  ): Promise<Deck> {
     return this.starters.copy(user.id, slug);
   }
 }
@@ -131,7 +140,8 @@ export class EnglishCardsController {
   @Get()
   list(
     @CurrentUser() user: AuthUser,
-    @Query({ schema: listCardsQuerySchema }) query: { deckId: string; due?: 'true' | 'false' },
+    @Query({ schema: listCardsQuerySchema })
+    query: { deckId: string; due?: 'true' | 'false' },
   ): Promise<Card[]> {
     return this.cards.list(user.id, query.deckId, query.due === 'true');
   }
@@ -139,7 +149,8 @@ export class EnglishCardsController {
   @Get('search')
   search(
     @CurrentUser() user: AuthUser,
-    @Query({ schema: searchCardsQuerySchema }) query: { q: string; deckId?: string },
+    @Query({ schema: searchCardsQuerySchema })
+    query: { q: string; deckId?: string },
   ): Promise<Card[]> {
     return this.cards.search(user.id, query.q, query.deckId);
   }
@@ -163,7 +174,10 @@ export class EnglishCardsController {
 
   @Delete(':id')
   @HttpCode(204)
-  async remove(@CurrentUser() user: AuthUser, @Param('id', id) cardId: string): Promise<void> {
+  async remove(
+    @CurrentUser() user: AuthUser,
+    @Param('id', id) cardId: string,
+  ): Promise<void> {
     await this.cards.remove(user.id, cardId);
   }
 
@@ -186,12 +200,18 @@ export class EnglishCardsController {
   }
 
   @Post(':id/suspend')
-  suspend(@CurrentUser() user: AuthUser, @Param('id', id) cardId: string): Promise<Card> {
+  suspend(
+    @CurrentUser() user: AuthUser,
+    @Param('id', id) cardId: string,
+  ): Promise<Card> {
     return this.cards.suspend(user.id, cardId);
   }
 
   @Post(':id/unsuspend')
-  unsuspend(@CurrentUser() user: AuthUser, @Param('id', id) cardId: string): Promise<Card> {
+  unsuspend(
+    @CurrentUser() user: AuthUser,
+    @Param('id', id) cardId: string,
+  ): Promise<Card> {
     return this.cards.unsuspend(user.id, cardId);
   }
 }
@@ -206,7 +226,10 @@ export class EnglishTextsController {
   }
 
   @Get(':id')
-  get(@CurrentUser() user: AuthUser, @Param('id', id) textId: string): Promise<ReadingText> {
+  get(
+    @CurrentUser() user: AuthUser,
+    @Param('id', id) textId: string,
+  ): Promise<ReadingText> {
     return this.texts.get(user.id, textId);
   }
 
@@ -222,7 +245,8 @@ export class EnglishTextsController {
   update(
     @CurrentUser() user: AuthUser,
     @Param('id', id) textId: string,
-    @Body({ schema: updateTextSchema }) input: { title?: string; body?: string },
+    @Body({ schema: updateTextSchema })
+    input: { title?: string; body?: string },
   ): Promise<ReadingText> {
     return this.texts.update(user.id, textId, input);
   }
@@ -238,7 +262,10 @@ export class EnglishTextsController {
 
   @Delete(':id')
   @HttpCode(204)
-  async remove(@CurrentUser() user: AuthUser, @Param('id', id) textId: string): Promise<void> {
+  async remove(
+    @CurrentUser() user: AuthUser,
+    @Param('id', id) textId: string,
+  ): Promise<void> {
     await this.texts.remove(user.id, textId);
   }
 }
@@ -248,19 +275,25 @@ export class EnglishAiController {
   constructor(
     private readonly ai: AiService,
     private readonly speech: SpeechService,
-    private readonly gateway: GatewayService,
+    private readonly gateway: AiGateway,
   ) {}
 
-  /** Lets the apps hide AI buttons when no gateway key is configured. */
+  /** Which of the user's AI services are set (apps hide or explain AI buttons). */
   @Get('ai/status')
-  status(): { ai: boolean } {
-    return { ai: this.gateway.chatConfigured };
+  async status(
+    @CurrentUser() user: AuthUser,
+  ): Promise<{ ai: boolean; tts: boolean; stt: boolean }> {
+    const s = await this.gateway.status(user.id);
+    return { ai: s.chat, tts: s.tts, stt: s.stt };
   }
 
   @Post('ai/card-answer')
   @Throttle({ default: { limit: 20, ttl: 60000 } })
-  cardAnswer(@Body({ schema: cardAnswerRequestSchema }) input: CardAnswerRequest): Promise<CardAnswer> {
-    return this.ai.cardAnswer(input.front, input.deck, input.context);
+  cardAnswer(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: cardAnswerRequestSchema }) input: CardAnswerRequest,
+  ): Promise<CardAnswer> {
+    return this.ai.cardAnswer(user.id, input.front, input.deck, input.context);
   }
 
   @Post('ai/reading-text')
@@ -274,30 +307,45 @@ export class EnglishAiController {
 
   @Post('ai/practice/writing-task')
   @Throttle({ default: { limit: 20, ttl: 60000 } })
-  writingTask(@Body({ schema: practiceRequestSchema }) input: PracticeRequest): Promise<WritingTask> {
-    return this.ai.writingTask(input.situation, input.level);
+  writingTask(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: practiceRequestSchema }) input: PracticeRequest,
+  ): Promise<WritingTask> {
+    return this.ai.writingTask(user.id, input.situation, input.level);
   }
 
   @Post('ai/practice/writing-feedback')
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   writingFeedback(
-    @Body({ schema: writingFeedbackRequestSchema }) input: WritingFeedbackRequest,
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: writingFeedbackRequestSchema })
+    input: WritingFeedbackRequest,
   ): Promise<WritingFeedback> {
-    return this.ai.writingFeedback(input);
+    return this.ai.writingFeedback(user.id, input);
   }
 
   @Post('ai/practice/dialogue')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  dialogue(@Body({ schema: practiceRequestSchema }) input: PracticeRequest): Promise<Dialogue> {
-    return this.ai.dialogue(input.situation, input.level);
+  dialogue(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: practiceRequestSchema }) input: PracticeRequest,
+  ): Promise<Dialogue> {
+    return this.ai.dialogue(user.id, input.situation, input.level);
   }
 
   /** Raw audio body (the host app registers a raw parser for RECORDING_TYPES). */
   @Post('ai/practice/transcribe')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async transcribe(@Req() request: Request): Promise<Transcript> {
+  async transcribe(
+    @CurrentUser() user: AuthUser,
+    @Req() request: Request,
+  ): Promise<Transcript> {
     return {
-      text: await this.gateway.transcribe(request.body, request.headers['content-type'] ?? ''),
+      text: await this.gateway.transcribe(
+        user.id,
+        request.body,
+        request.headers['content-type'] ?? '',
+      ),
     };
   }
 

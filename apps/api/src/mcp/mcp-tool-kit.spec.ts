@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import * as z from 'zod';
-import { ToolKit } from './tool-kit';
+import { ToolKit } from './mcp-tool-kit';
 
 type Handler = (
   args: unknown,

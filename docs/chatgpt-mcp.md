@@ -1,7 +1,8 @@
 # ChatGPT connection (MCP)
 
 Ported from Recall (`github.com/mojtabanpe/flashcard`, `server/MCP.md`) and extended with the
-planner tools of TickTick's ChatGPT MCP (CLAUDE.md directives 21 and 23). Code: `apps/api/src/mcp`.
+planner tools of TickTick's ChatGPT MCP and the health tools (CLAUDE.md directives 21, 23 and 25). Code:
+`apps/api/src/mcp` (server, OAuth) and `apps/api/src/tools` (tool definitions shared with the in-app assistant).
 
 ## Connecting
 
@@ -16,7 +17,8 @@ Personal tokens (`aio_mcp_…`) last 90 days and can also be sent directly as
 
 ## Permissions
 
-`cards:read`, `cards:write`, `readings:read`, `readings:write`, `planner:read`, `planner:write`.
+`cards:read`, `cards:write`, `readings:read`, `readings:write`, `planner:read`, `planner:write`,
+`health:read`, `health:write`. Tokens made before the health tools existed lack the health scopes: make a new one.
 A token holds all of them by default (`POST /api/mcp/keys` accepts `scopes` to narrow it).
 
 ## Tools
@@ -44,6 +46,13 @@ A token holds all of them by default (`POST /api/mcp/keys` accepts `scopes` to n
 - **Calendars:** `list_calendars`, `list_calendar_events` (≤ 92 days), `subscribe_calendar`,
   `unsubscribe_calendar`.
 - **Countdowns:** `list_countdowns`, `create_countdown`, `update_countdown`, `delete_countdown`.
+- **Health:** `get_health_profile`, `update_health_profile`, `get_nutrition_day`, `log_meal`, `update_meal`,
+  `delete_meal`, `estimate_meal` (uses the user's own AI), `list_diets`, `list_recipes`, `get_recipe`,
+  `get_meal_plan`, `generate_meal_plan`, `list_activities`, `list_workout_programs`, `list_workouts`,
+  `get_fitness_week`, `log_workout`, `update_workout`, `delete_workout`.
+
+The same tools (minus `delete_deck`, `delete_list`, `delete_habit`, list sharing and calendar subscription)
+power the in-app assistant («دستیار» in the app header), which runs on the user's own AI settings.
 
 Planner dates are calendar days in Tehran time. Every tool is scoped to the token owner and
 validates input with the same Zod contracts as the REST api.

@@ -133,6 +133,9 @@ export class PlannerApi {
   removeItem(taskId: string, itemId: string): Promise<PlannerTask> {
     return this.delete(`/tasks/${taskId}/checklist/${itemId}`);
   }
+  aiSubtasks(taskId: string): Promise<PlannerTask> {
+    return this.post(`/tasks/${taskId}/ai-subtasks`);
+  }
   addComment(taskId: string, body: string): Promise<PlannerComment[]> {
     return this.post(`/tasks/${taskId}/comments`, { body });
   }

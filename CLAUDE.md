@@ -74,7 +74,11 @@
 - Planner (TickTick parity): `libs/applets/planner/api` exports one service per area (lists, tasks, tags, habits,
   focus + countdowns, calendars); access goes through `PlannerAccess` (list membership). TickTick's limits live in
   `PLANNER_LIMITS` (contracts). Planner dates are Tehran calendar days. Calendar feeds are fetched with an SSRF guard.
-- ChatGPT connection: `apps/api/src/mcp` (OAuth + personal tokens, tools in `english-tools.ts` / `planner-tools.ts`,
+- AI: `libs/api/ai` (`AiGateway`, per-user settings, SSRF guard; `AI_ALLOW_PRIVATE_URLS=true` only for trusted
+  single-user servers). Tools live once in `apps/api/src/tools` (`ToolsService.register(sink)`); the MCP server
+  (`apps/api/src/mcp`) and the in-app assistant (`apps/api/src/assistant`, web `web-assistant` in the customer header)
+  both consume them. `assistant: false` keeps bulk-destructive or sharing tools out of the assistant.
+- ChatGPT connection: `apps/api/src/mcp` (OAuth + personal tokens, tools from `apps/api/src/tools`,
   validated with the contracts schemas). Mounted on Express before the CSRF check. A new applet capability that
   ChatGPT should reach gets a tool there. Docs: `docs/chatgpt-mcp.md`.
 - Production layout (`deploy/`, guide `deploy/README.fa.md`): one domain; `/` public SSR, `/app/` customer (PWA,
@@ -174,6 +178,15 @@ When the owner gives a new instruction, add it to this list in the same change.
     sections and check-ins (past 90 days), focus records (query ≤1 month, create, update without changing duration,
     delete), subscribed calendars (events ≤3 months) and countdowns. The same operations are exposed as tools on
     this app's ChatGPT MCP server.
+
+## AI (2026-10-30)
+
+24. **Each user brings their own AI.** In the profile («حساب کاربری ← هوش مصنوعی») every user sets an
+    OpenAI-compatible chat url (+ model, key), a text-to-speech url and a speech-to-text url. Without them the AI
+    features are off for that user; there is no server-wide AI gateway. Keys are stored encrypted, never shown again.
+25. **AI can do everything, everywhere.** Planner, health and English get AI features, and an in-app assistant
+    acts on the user's data with the same tools as the ChatGPT MCP (e.g. "change today's lunch to X" → finds the
+    meal, estimates its calories and updates it). Every new capability gets a tool so both can use it.
 
 ## Git (2026-10-30)
 

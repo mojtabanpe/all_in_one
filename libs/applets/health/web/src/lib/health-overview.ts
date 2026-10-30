@@ -99,6 +99,13 @@ const MEAL_ICONS: Record<MealType, string> = {
           >
             <div aioProgressIndicator class="rounded-full"></div>
           </div>
+          @if (macros(); as m) {
+            <p class="text-muted-foreground flex justify-between text-xs">
+              <span>پروتئین {{ fa(m.protein) }} گرم</span>
+              <span>کربوهیدرات {{ fa(m.carbs) }} گرم</span>
+              <span>چربی {{ fa(m.fat) }} گرم</span>
+            </p>
+          }
         } @else {
           <div class="flex flex-col gap-3">
             <h2 id="calories-title" class="text-lg font-bold">
@@ -122,9 +129,7 @@ const MEAL_ICONS: Record<MealType, string> = {
       </section>
 
       <section class="flex flex-col gap-2" aria-labelledby="meals-title">
-        <h2 id="meals-title" class="px-1 text-lg font-bold">
-          امروز چی خوردی؟
-        </h2>
+        <h2 id="meals-title" class="px-1 text-lg font-bold">امروز چی خوردی؟</h2>
         <ul class="glass divide-border/60 flex flex-col divide-y rounded-2xl">
           @for (row of mealRows(); track row.type) {
             <li class="flex min-h-16 items-center gap-3 px-3">
@@ -260,6 +265,20 @@ export class HealthOverview {
   protected readonly eaten = computed(() =>
     this.todayMeals().reduce((sum, m) => sum + (m.calories ?? 0), 0),
   );
+  /** Macro totals of today's meals that have them (AI estimates or the assistant). */
+  protected readonly macros = computed(() => {
+    const meals = this.todayMeals().filter(
+      (m) => m.proteinG !== null || m.carbsG !== null || m.fatG !== null,
+    );
+    if (!meals.length) return null;
+    const sum = (pick: (m: (typeof meals)[number]) => number | null) =>
+      meals.reduce((total, m) => total + (pick(m) ?? 0), 0);
+    return {
+      protein: sum((m) => m.proteinG),
+      carbs: sum((m) => m.carbsG),
+      fat: sum((m) => m.fatG),
+    };
+  });
   protected readonly left = computed(() => (this.target() ?? 0) - this.eaten());
   protected readonly minutes = computed(() => this.week.value()?.minutes ?? 0);
   protected readonly goal = computed(

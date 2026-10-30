@@ -6,3 +6,4 @@ export * from './lib/tags.service';
 export * from './lib/habits.service';
 export * from './lib/focus.service';
 export * from './lib/calendars.service';
+export * from './lib/planner-ai.service';

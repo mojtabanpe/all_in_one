@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import type { SpeechVoice } from '@all-in-one/applets/english-learning/contracts';
 import { AudioCacheService, type AudioResult } from './audio-cache.service';
-import { GatewayService } from './gateway.service';
+import { AiGateway } from '@all-in-one/api/ai';
 
 export function speechCacheKey(
   userId: string,
@@ -28,7 +28,7 @@ export class SpeechService {
   private readonly pending = new Map<string, Promise<SpeechResult>>();
 
   constructor(
-    private readonly gateway: GatewayService,
+    private readonly gateway: AiGateway,
     private readonly cache: AudioCacheService,
   ) {}
 
@@ -37,12 +37,12 @@ export class SpeechService {
     text: string,
     voice: SpeechVoice = 'primary',
   ): Promise<SpeechResult> {
-    const { endpoint, model } = this.gateway.speechTarget(voice);
+    const { endpoint, model } = await this.gateway.speechTarget(userId, voice);
     const normalized = text.trim();
     const key = speechCacheKey(userId, endpoint, model, normalized);
     const running = this.pending.get(key);
     if (running) return running;
-    const request = this.load(key, normalized, voice);
+    const request = this.load(userId, key, normalized, voice);
     this.pending.set(key, request);
     try {
       return await request;
@@ -52,13 +52,14 @@ export class SpeechService {
   }
 
   private async load(
+    userId: string,
     key: string,
     text: string,
     voice: SpeechVoice,
   ): Promise<SpeechResult> {
     const cached = await this.cache.get(key);
     if (cached) return { ...cached, cacheStatus: 'HIT' };
-    const result = await this.gateway.speech(text, voice);
+    const result = await this.gateway.speech(userId, text, voice);
     const saved = await this.cache.set(key, result);
     return { ...result, cacheStatus: saved ? 'MISS' : 'BYPASS' };
   }

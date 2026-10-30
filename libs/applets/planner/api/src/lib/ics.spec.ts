@@ -1,4 +1,4 @@
-import { isPrivateAddress } from './calendars.service';
+import { isPrivateAddress } from '@all-in-one/api/ai';
 import { parseIcs } from './ics';
 
 const feed = (...events: string[]) =>

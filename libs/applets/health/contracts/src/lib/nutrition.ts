@@ -196,9 +196,56 @@ export const mealLogSchema = z.object({
     z.int().check(z.gte(0), z.lte(10)),
   ),
   calories: z.optional(z.int().check(z.gte(0), z.lte(5000))),
+  proteinG: z.optional(z.int().check(z.gte(0), z.lte(500))),
+  carbsG: z.optional(z.int().check(z.gte(0), z.lte(1000))),
+  fatG: z.optional(z.int().check(z.gte(0), z.lte(500))),
   recipeSlug: z.optional(z.string().check(z.maxLength(64))),
 });
 export type MealLogInput = z.infer<typeof mealLogSchema>;
+
+/** Change a logged meal; it is scored again. `null` clears a number. */
+export const updateMealSchema = z.partial(
+  z.object({
+    date: z.iso.date(),
+    mealType: z.enum(MEAL_TYPES),
+    description: z.string().check(z.trim(), z.minLength(1), z.maxLength(500)),
+    portions: z.partialRecord(
+      z.enum(FOOD_GROUPS),
+      z.int().check(z.gte(0), z.lte(10)),
+    ),
+    calories: z.nullable(z.int().check(z.gte(0), z.lte(5000))),
+    proteinG: z.nullable(z.int().check(z.gte(0), z.lte(500))),
+    carbsG: z.nullable(z.int().check(z.gte(0), z.lte(1000))),
+    fatG: z.nullable(z.int().check(z.gte(0), z.lte(500))),
+  }),
+);
+export type UpdateMealInput = z.infer<typeof updateMealSchema>;
+
+/** One day of eating against the target (dashboard, coach and assistant). */
+export interface NutritionDay {
+  date: string;
+  calorieTarget: number;
+  calories: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+  meals: MealLog[];
+}
+
+/** What the AI estimates for a described meal. */
+export interface MealEstimate {
+  calories: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+  portions: MealPortions;
+  /** Persian line about how the estimate was made */
+  note: string;
+}
+
+export const estimateMealSchema = z.object({
+  description: z.string().check(z.trim(), z.minLength(2), z.maxLength(500)),
+});
 
 export interface MealLog extends MealEvaluation {
   id: string;
@@ -207,6 +254,9 @@ export interface MealLog extends MealEvaluation {
   description: string;
   portions: MealPortions;
   calories: number | null;
+  proteinG: number | null;
+  carbsG: number | null;
+  fatG: number | null;
   recipeSlug: string | null;
 }
 

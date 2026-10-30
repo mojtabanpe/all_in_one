@@ -1,8 +1,5 @@
-import {
-  BadGatewayException,
-  Injectable,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { BadGatewayException, HttpException, Injectable } from '@nestjs/common';
+import { AiGateway } from '@all-in-one/api/ai';
 import {
   type CardAnswer,
   CONVERSATION_SITUATIONS,
@@ -16,7 +13,6 @@ import {
   type WritingFeedbackRequest,
   type WritingTask,
 } from '@all-in-one/applets/english-learning/contracts';
-import { GatewayService } from './gateway.service';
 import {
   CARD_ANSWER_INSTRUCTIONS,
   DIALOGUE_INSTRUCTIONS,
@@ -37,12 +33,13 @@ import { TextsService } from './texts.service';
 @Injectable()
 export class AiService {
   constructor(
-    private readonly gateway: GatewayService,
+    private readonly gateway: AiGateway,
     private readonly texts: TextsService,
   ) {}
 
-  /** Asks the model; anything but "not configured" becomes a friendly 502. */
+  /** Asks the user's model; an unusable answer becomes a friendly 502. */
   private async ask<T>(
+    userId: string,
     system: string,
     user: string,
     temperature: number,
@@ -52,7 +49,8 @@ export class AiService {
   ): Promise<T> {
     try {
       return parse(
-        await this.gateway.chat(
+        await this.gateway.text(
+          userId,
           [
             { role: 'system', content: system },
             { role: 'user', content: user },
@@ -62,13 +60,20 @@ export class AiService {
         ),
       );
     } catch (error) {
-      if (error instanceof ServiceUnavailableException) throw error;
+      // Not configured or the user's service failed: keep that message.
+      if (error instanceof HttpException) throw error;
       throw new BadGatewayException(failure);
     }
   }
 
-  cardAnswer(front: string, deck?: string, context?: string): Promise<CardAnswer> {
+  cardAnswer(
+    userId: string,
+    front: string,
+    deck?: string,
+    context?: string,
+  ): Promise<CardAnswer> {
     return this.ask(
+      userId,
       CARD_ANSWER_INSTRUCTIONS,
       (deck?.trim() ? 'Deck: ' + deck.trim() + '\n' : '') +
         'Front: ' +
@@ -91,9 +96,14 @@ export class AiService {
     const last = await this.texts.latestFeedback(userId);
     const feedback =
       last?.rating != null
-        ? { title: last.title, rating: last.rating, reviewNote: last.reviewNote }
+        ? {
+            title: last.title,
+            rating: last.rating,
+            reviewNote: last.reviewNote,
+          }
         : null;
     const text = await this.ask(
+      userId,
       READING_INSTRUCTIONS,
       'Topic: ' +
         label +
@@ -108,14 +118,23 @@ export class AiService {
     return feedback ? { ...text, feedbackFrom: feedback.title } : text;
   }
 
-  private context(situation: ConversationSituation, level: ReadingLevel = 'B1') {
+  private context(
+    situation: ConversationSituation,
+    level: ReadingLevel = 'B1',
+  ) {
     const label =
-      CONVERSATION_SITUATIONS.find((s) => s.id === situation)?.label ?? situation;
+      CONVERSATION_SITUATIONS.find((s) => s.id === situation)?.label ??
+      situation;
     return 'Situation: ' + label + '\nLevel: ' + LEVEL_NAMES[level];
   }
 
-  writingTask(situation: ConversationSituation, level?: ReadingLevel): Promise<WritingTask> {
+  writingTask(
+    userId: string,
+    situation: ConversationSituation,
+    level?: ReadingLevel,
+  ): Promise<WritingTask> {
     return this.ask(
+      userId,
       WRITING_TASK_INSTRUCTIONS,
       this.context(situation, level),
       0.9,
@@ -125,8 +144,12 @@ export class AiService {
     );
   }
 
-  writingFeedback(input: WritingFeedbackRequest): Promise<WritingFeedback> {
+  writingFeedback(
+    userId: string,
+    input: WritingFeedbackRequest,
+  ): Promise<WritingFeedback> {
     return this.ask(
+      userId,
       WRITING_FEEDBACK_INSTRUCTIONS,
       this.context(input.situation, input.level) +
         '\nTask: ' +
@@ -144,8 +167,13 @@ export class AiService {
     );
   }
 
-  dialogue(situation: ConversationSituation, level?: ReadingLevel): Promise<Dialogue> {
+  dialogue(
+    userId: string,
+    situation: ConversationSituation,
+    level?: ReadingLevel,
+  ): Promise<Dialogue> {
     return this.ask(
+      userId,
       DIALOGUE_INSTRUCTIONS,
       this.context(situation, level),
       0.9,
