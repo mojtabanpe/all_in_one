@@ -1,0 +1,74 @@
+name: Deploy
+
+# After CI passes on master: build the images on GitHub (amd64, Docker Hub reachable),
+# then load and start them on the server through its self-hosted runner (label "aio").
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.release.outputs.release }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - id: release
+        run: echo "release=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build images
+        env:
+          RELEASE: ${{ steps.release.outputs.release }}
+        run: |
+          for t in api public web; do
+            docker buildx build -f deploy/images.dockerfile --target "$t" \
+              --cache-from type=gha,scope=aio --cache-to type=gha,scope=aio,mode=max \
+              --load -t "all-in-one-$t:$RELEASE" .
+          done
+          docker save "all-in-one-api:$RELEASE" "all-in-one-public:$RELEASE" "all-in-one-web:$RELEASE" \
+            | gzip -1 > images.tar.gz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: images
+          path: images.tar.gz
+          retention-days: 1
+          compression-level: 0
+
+  deploy:
+    needs: build
+    runs-on: [self-hosted, aio]
+    environment:
+      name: production
+      url: https://poshtetgarm.ir
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: images
+
+      - name: Load images
+        run: gunzip -c images.tar.gz | docker load && rm images.tar.gz
+
+      - name: Start release
+        run: sh deploy/release.sh "${{ needs.build.outputs.release }}"
