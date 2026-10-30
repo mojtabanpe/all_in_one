@@ -16,7 +16,7 @@ describe('AdminController', () => {
     const prisma = {
       user: { count },
       plannerTask: { count: vi.fn().mockResolvedValue(5) },
-      englishWordProgress: { count: vi.fn().mockResolvedValue(0) },
+      englishCard: { count: vi.fn().mockResolvedValue(0) },
       workoutLog: { count: vi.fn().mockResolvedValue(0) },
       mealLog: { count: vi.fn().mockResolvedValue(0) },
       mealPlan: { count: vi.fn().mockResolvedValue(0) },

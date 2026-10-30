@@ -45,7 +45,7 @@ export class Dashboard {
       { label: 'کاربران', value: s.users },
       { label: 'کاربران جدید این هفته', value: s.newUsersThisWeek },
       { label: 'کارهای برنامه‌ریز', value: s.plannerTasks },
-      { label: 'واژه‌های در مرور', value: s.englishWordsInReview },
+      { label: 'کارت‌های انگلیسی', value: s.englishCards },
       { label: 'ورزش‌های ثبت‌شده', value: s.workouts },
       { label: 'وعده‌های سنجیده‌شده', value: s.meals },
       { label: 'برنامه‌های غذایی', value: s.mealPlans },

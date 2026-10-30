@@ -100,7 +100,7 @@ export class Home {
 
   protected readonly cards = computed(() => {
     const open = (this.tasks.value() ?? []).filter((t) => !t.done).length;
-    const due = this.english.value()?.dueNow ?? 0;
+    const due = this.english.value()?.due ?? 0;
     const meals = this.meals.value() ?? [];
     const avg = meals.length
       ? Math.round(meals.reduce((s, m) => s + m.score, 0) / meals.length)
@@ -117,7 +117,7 @@ export class Home {
         title: 'انگلیسی',
         icon: 'lucideLanguages',
         link: '/english',
-        value: due ? `${faNumber(due)} واژه آماده مرور` : 'مروری باقی نمانده',
+        value: due ? `${faNumber(due)} کارت آماده مرور` : 'مروری باقی نمانده',
         accent: 'applet-english',
       },
       {

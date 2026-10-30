@@ -1,6 +1,6 @@
 import { httpResource } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
-import type { EnglishDeckSummary } from '@all-in-one/applets/english-learning/contracts';
+import type { StarterDeck } from '@all-in-one/applets/english-learning/contracts';
 import {
   type Diet,
   MEAL_TYPE_LABELS,
@@ -20,9 +20,9 @@ import { API_BASE_URL, faNumber } from '@all-in-one/web/shared';
       <div class="grid gap-3 md:grid-cols-2">
         <section aioCard>
           <div aioCardHeader>
-            <h2 aioCardTitle>مجموعه واژه‌ها</h2>
+            <h2 aioCardTitle>دسته‌های آماده انگلیسی</h2>
             <p aioCardDescription>
-              {{ fa((decks.value() ?? []).length) }} مجموعه
+              {{ fa((decks.value() ?? []).length) }} دسته
             </p>
           </div>
           <div aioCardContent aioItemGroup class="flex flex-col gap-1">
@@ -33,7 +33,7 @@ import { API_BASE_URL, faNumber } from '@all-in-one/web/shared';
                 </div>
                 <div aioItemActions>
                   <span aioBadge variant="outline" dir="ltr"
-                    >{{ d.level }}، {{ d.wordCount }}</span
+                    >{{ d.level }}، {{ fa(d.cardCount) }}</span
                   >
                 </div>
               </div>
@@ -104,8 +104,8 @@ import { API_BASE_URL, faNumber } from '@all-in-one/web/shared';
 })
 export class Content {
   private readonly api = inject(API_BASE_URL);
-  protected readonly decks = httpResource<EnglishDeckSummary[]>(
-    () => `${this.api}/english/decks`,
+  protected readonly decks = httpResource<StarterDeck[]>(
+    () => `${this.api}/english/starter-decks`,
   );
   protected readonly diets = httpResource<Diet[]>(
     () => `${this.api}/health/diets`,

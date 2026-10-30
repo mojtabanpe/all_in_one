@@ -1,4 +1,14 @@
-import type { CefrLevel } from '@all-in-one/applets/english-learning/contracts';
+/**
+ * Starter decks: the ready-made CEFR word lists of the old english applet. Users
+ * copy one into their own decks (Recall cards: front = word, back = Persian
+ * meaning, examples = the sentence and its translation).
+ */
+import type {
+  DeckColor,
+  StarterDeck,
+} from '@all-in-one/applets/english-learning/contracts';
+
+type CefrLevel = StarterDeck['level'];
 
 export interface SeedWord {
   term: string;
@@ -10,6 +20,7 @@ export interface SeedWord {
 
 export interface SeedDeck {
   slug: string;
+  color?: DeckColor;
   title: string;
   description: string;
   level: CefrLevel;

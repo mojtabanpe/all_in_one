@@ -5,6 +5,8 @@
 
 import { Logger, StandardSchemaValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { RECORDING_TYPES } from '@all-in-one/applets/english-learning/api';
 import { config as zodConfig, locales } from 'zod/mini';
 import { AppModule } from './app/app.module';
 
@@ -12,7 +14,12 @@ import { AppModule } from './app/app.module';
 zodConfig(locales.fa());
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // English practice uploads a raw recording (audio/webm, …) for transcription.
+  app.useBodyParser('raw', {
+    type: Object.keys(RECORDING_TYPES),
+    limit: '1500kb',
+  });
   app.useSecurityHeaders();
   // Session cookie auth: reject cross-site state-changing requests.
   app.enableCsrfProtection();

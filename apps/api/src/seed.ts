@@ -2,7 +2,6 @@ import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { hashPassword } from '@all-in-one/api/auth';
 import { PrismaClient } from '@all-in-one/api/db';
-import { seedEnglish } from '@all-in-one/applets/english-learning/api';
 import { seedHealth } from '@all-in-one/applets/health/api';
 
 const prisma = new PrismaClient({
@@ -18,10 +17,10 @@ async function main() {
       name: 'Admin',
       role: 'ADMIN',
       passwordHash: await hashPassword('change-me-admin'),
+      emailVerifiedAt: new Date(),
     },
   });
-  // Applet catalogs (idempotent)
-  await seedEnglish(prisma);
+  // Applet catalogs (idempotent). English starter decks ship in code.
   await seedHealth(prisma);
 }
 

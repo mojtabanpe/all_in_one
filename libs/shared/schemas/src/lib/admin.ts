@@ -7,7 +7,7 @@ export interface AdminStats {
   admins: number;
   newUsersThisWeek: number;
   plannerTasks: number;
-  englishWordsInReview: number;
+  englishCards: number;
   workouts: number;
   meals: number;
   mealPlans: number;

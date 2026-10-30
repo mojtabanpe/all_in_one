@@ -1,0 +1,68 @@
+// ChatGPT connection (MCP with OAuth), ported from Recall. Only hashes of tokens are stored.
+
+/// A personal token the user pastes on the consent page (or uses directly as a bearer token).
+model McpKey {
+  id          String          @id @default(uuid(7)) @db.Uuid
+  userId      String          @db.Uuid
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String          @db.VarChar(100)
+  tokenHash   String          @unique
+  scopes      String[]
+  createdAt   DateTime        @default(now())
+  expiresAt   DateTime
+  codes       McpCode[]
+  credentials McpCredential[]
+
+  @@index([userId])
+  @@map("mcp_keys")
+}
+
+/// OAuth clients registered dynamically (ChatGPT).
+model McpClient {
+  id          String          @id @db.Uuid
+  metadata    Json
+  pending     McpPending[]
+  codes       McpCode[]
+  credentials McpCredential[]
+
+  @@map("mcp_clients")
+}
+
+/// An authorization request waiting for the user's consent.
+model McpPending {
+  id        String    @id
+  clientId  String    @db.Uuid
+  client    McpClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  params    Json
+  csrfHash  String
+  expiresAt DateTime
+
+  @@map("mcp_pending")
+}
+
+model McpCode {
+  codeHash  String    @id
+  keyId     String    @db.Uuid
+  key       McpKey    @relation(fields: [keyId], references: [id], onDelete: Cascade)
+  clientId  String    @db.Uuid
+  client    McpClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  params    Json
+  expiresAt DateTime
+
+  @@map("mcp_codes")
+}
+
+model McpCredential {
+  tokenHash      String    @id
+  refreshHash    String    @unique
+  keyId          String    @db.Uuid
+  key            McpKey    @relation(fields: [keyId], references: [id], onDelete: Cascade)
+  clientId       String    @db.Uuid
+  client         McpClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  scopes         String[]
+  accessExpires  DateTime
+  refreshExpires DateTime
+
+  @@index([keyId])
+  @@map("mcp_credentials")
+}

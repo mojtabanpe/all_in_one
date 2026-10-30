@@ -144,6 +144,17 @@ When the owner gives a new instruction, add it to this list in the same change.
     `libs/shared/spartan` stays as the spartan CLI generates it; every visual customization (material, sizes, radius,
     shadows) goes into the wrappers in `libs/shared/packages` (see `material.ts`) or the theme variables.
 
+## Recall port (2026-10-30)
+
+20. **The English applet is Recall** (`github.com/mojtabanpe/flashcard`). Everything in that repo moves into the
+    language part of this app, replacing the old english-learning model (CEFR decks + simple Leitner + "my words"):
+    user decks and cards with SM-2 and Leitner leeches, study, AI card answers, reading texts (own and AI-written,
+    rated), reader, practice (writing, listening, pronunciation), TTS/STT through the 9Router gateway. The old
+    CEFR decks become starter decks the user can copy. No data import: users start from scratch.
+21. **Recall's non-language parts come too:** the ChatGPT connection (MCP with OAuth and personal tokens), password
+    reset by email, email verification at signup, and PWA install for the customer app.
+22. **Domain: poshtetgarm.ir** (Recall's domain) serves this app.
+
 ## Git (2026-10-30)
 
 16. **Work and push on `master`.** Commit directly on `master` and push to `origin master`. Never create or
