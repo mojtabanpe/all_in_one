@@ -11,11 +11,20 @@ import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost } from '@nestjs/core';
 import { Throttle } from '@nestjs/throttler';
 import {
+  type ChangePasswordInput,
+  changePasswordSchema,
+  type EmailOnlyInput,
+  emailOnlySchema,
   type LoginInput,
   loginSchema,
   type RegisterInput,
+  type RegisterResult,
   registerSchema,
+  type ResetPasswordInput,
+  resetPasswordSchema,
   type User,
+  type VerifyEmailInput,
+  verifyEmailSchema,
 } from '@all-in-one/shared/schemas';
 import type { User as DbUser } from '@all-in-one/api/db';
 import { type AuthUser, CurrentUser, Public } from './auth.decorators';
@@ -38,10 +47,64 @@ export class AuthController {
   async register(
     @Body({ schema: registerSchema }) input: RegisterInput,
     @Res({ passthrough: true }) res: unknown,
-  ): Promise<User> {
+  ): Promise<RegisterResult> {
     const user = await this.auth.register(input);
+    if (!user.emailVerifiedAt) return { status: 'verify-email', email: user.email };
     await this.startSession(res, user);
-    return toUser(user);
+    return { status: 'signed-in', user: toUser(user) };
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @HttpCode(204)
+  @Post('verify-email')
+  async verifyEmail(
+    @Body({ schema: verifyEmailSchema }) input: VerifyEmailInput,
+  ): Promise<void> {
+    await this.auth.verifyEmail(input.token);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  @HttpCode(202)
+  @Post('resend-verification')
+  resendVerification(@Body({ schema: emailOnlySchema }) input: EmailOnlyInput): void {
+    this.auth.requestVerification(input.email);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  @HttpCode(202)
+  @Post('forgot-password')
+  forgotPassword(@Body({ schema: emailOnlySchema }) input: EmailOnlyInput): void {
+    this.auth.requestPasswordReset(input.email);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @HttpCode(204)
+  @Post('reset-password')
+  async resetPassword(
+    @Body({ schema: resetPasswordSchema }) input: ResetPasswordInput,
+  ): Promise<void> {
+    await this.auth.resetPassword(input.token, input.password);
+  }
+
+  /** Changes the password; this session gets a fresh cookie, others are signed out. */
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @HttpCode(204)
+  @Post('password')
+  async changePassword(
+    @CurrentUser() current: AuthUser,
+    @Body({ schema: changePasswordSchema }) input: ChangePasswordInput,
+    @Res({ passthrough: true }) res: unknown,
+  ): Promise<void> {
+    const user = await this.auth.changePassword(
+      current.id,
+      input.currentPassword,
+      input.newPassword,
+    );
+    await this.startSession(res, user);
   }
 
   @Public()

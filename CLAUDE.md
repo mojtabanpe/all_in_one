@@ -155,6 +155,17 @@ When the owner gives a new instruction, add it to this list in the same change.
     reset by email, email verification at signup, and PWA install for the customer app.
 22. **Domain: poshtetgarm.ir** (Recall's domain) serves this app.
 
+## TickTick parity (2026-10-30)
+
+23. **The planner gets every capability of TickTick's ChatGPT MCP** (https://help.ticktick.com/articles/7438129581631995904):
+    task queries (search, by id, undone by preset range today/last24hour/last7day/tomorrow/next24hour/next7day,
+    undone by date range ≤14 days, completed by date, multi-condition filter), lists with sections and folders,
+    tasks (create, batch create, complete, checklist items, complete up to 20 in a list, update, batch update, move,
+    trash), comments, assignment in shared lists with members, tags (create, rename, color, delete), habits with
+    sections and check-ins (past 90 days), focus records (query ≤1 month, create, update without changing duration,
+    delete), subscribed calendars (events ≤3 months) and countdowns. The same operations are exposed as tools on
+    this app's ChatGPT MCP server.
+
 ## Git (2026-10-30)
 
 16. **Work and push on `master`.** Commit directly on `master` and push to `origin master`. Never create or

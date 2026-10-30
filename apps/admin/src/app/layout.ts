@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import {
   AioAppShell,
   AioButton,
@@ -12,6 +12,7 @@ import {
   lucideLayoutDashboard,
   lucideLibrary,
   lucideLogOut,
+  lucideUserRound,
   lucidePalette,
   lucideShieldCheck,
   lucideUsers,
@@ -19,12 +20,13 @@ import {
 
 @Component({
   selector: 'admin-layout',
-  imports: [AioAppShell, AioButton, AioIcon, RouterOutlet],
+  imports: [RouterLink, AioAppShell, AioButton, AioIcon, RouterOutlet],
   providers: [
     provideIcons({
       lucideLayoutDashboard,
       lucideLibrary,
       lucideLogOut,
+      lucideUserRound,
       lucidePalette,
       lucideShieldCheck,
       lucideUsers,
@@ -36,6 +38,17 @@ import {
       brandIcon="lucideShieldCheck"
       [navItems]="nav"
     >
+      <a
+        aioShellActions
+        aioBtn
+        variant="ghost"
+        size="icon"
+        class="size-11"
+        routerLink="/account"
+        aria-label="حساب کاربری"
+      >
+        <aio-icon name="lucideUserRound" size="sm" />
+      </a>
       <button
         aioShellActions
         aioBtn

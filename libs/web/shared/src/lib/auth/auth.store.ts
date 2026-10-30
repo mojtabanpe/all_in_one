@@ -1,8 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import type {
+  ChangePasswordInput,
   LoginInput,
   RegisterInput,
+  RegisterResult,
   User,
 } from '@all-in-one/shared/schemas';
 import { firstValueFrom } from 'rxjs';
@@ -42,12 +44,44 @@ export class AuthStore {
     return user;
   }
 
-  async register(input: RegisterInput): Promise<User> {
-    const user = await firstValueFrom(
-      this.http.post<User>(`${this.api}/auth/register`, input),
+  /** Signs in right away, or reports that a confirmation email was sent. */
+  async register(input: RegisterInput): Promise<RegisterResult> {
+    const result = await firstValueFrom(
+      this.http.post<RegisterResult>(`${this.api}/auth/register`, input),
     );
-    this.user.set(user);
-    return user;
+    if (result.status === 'signed-in') this.user.set(result.user);
+    return result;
+  }
+
+  resendVerification(email: string): Promise<void> {
+    return firstValueFrom(
+      this.http.post<void>(`${this.api}/auth/resend-verification`, { email }),
+    );
+  }
+
+  verifyEmail(token: string): Promise<void> {
+    return firstValueFrom(
+      this.http.post<void>(`${this.api}/auth/verify-email`, { token }),
+    );
+  }
+
+  forgotPassword(email: string): Promise<void> {
+    return firstValueFrom(
+      this.http.post<void>(`${this.api}/auth/forgot-password`, { email }),
+    );
+  }
+
+  resetPassword(token: string, password: string): Promise<void> {
+    return firstValueFrom(
+      this.http.post<void>(`${this.api}/auth/reset-password`, { token, password }),
+    );
+  }
+
+  /** Other devices are signed out; this session continues. */
+  changePassword(input: ChangePasswordInput): Promise<void> {
+    return firstValueFrom(
+      this.http.post<void>(`${this.api}/auth/password`, input),
+    );
   }
 
   async logout(): Promise<void> {

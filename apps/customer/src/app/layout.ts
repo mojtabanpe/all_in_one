@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import {
   AioAppShell,
   AioButton,
@@ -14,13 +14,14 @@ import {
   lucideHouse,
   lucideLanguages,
   lucideLogOut,
+  lucideUserRound,
   lucideSparkles,
 } from '@ng-icons/lucide';
 
 /** Signed-in layout: shell with the applets in the navigation. */
 @Component({
   selector: 'customer-layout',
-  imports: [AioAppShell, AioButton, AioIcon, RouterOutlet],
+  imports: [RouterLink, AioAppShell, AioButton, AioIcon, RouterOutlet],
   providers: [
     provideIcons({
       lucideCalendarCheck,
@@ -28,11 +29,23 @@ import {
       lucideHouse,
       lucideLanguages,
       lucideLogOut,
+      lucideUserRound,
       lucideSparkles,
     }),
   ],
   template: `
     <aio-app-shell appName="همه در یک" [navItems]="nav">
+      <a
+        aioShellActions
+        aioBtn
+        variant="ghost"
+        size="icon"
+        class="size-11"
+        routerLink="/account"
+        aria-label="حساب کاربری"
+      >
+        <aio-icon name="lucideUserRound" size="sm" />
+      </a>
       <button
         aioShellActions
         aioBtn

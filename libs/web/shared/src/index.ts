@@ -4,3 +4,4 @@ export * from './lib/auth/auth.guards';
 export * from './lib/auth/auth.store';
 export * from './lib/auth/login-page';
 export * from './lib/format/fa';
+export * from './lib/auth/account-pages';

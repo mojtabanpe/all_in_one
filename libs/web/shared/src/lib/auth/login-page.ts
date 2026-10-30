@@ -6,7 +6,8 @@ import {
   submit,
   validateStandardSchema,
 } from '@angular/forms/signals';
-import { ActivatedRoute, Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   AioButton,
   AioCardDirectives,
@@ -34,6 +35,7 @@ import { AuthStore } from './auth.store';
     AioInput,
     FormField,
     FormRoot,
+    RouterLink,
   ],
   template: `
     <div class="mx-auto flex min-h-[70dvh] max-w-sm flex-col justify-center">
@@ -101,9 +103,23 @@ import { AuthStore } from './auth.store';
               }}</aio-field-error>
             }
           </div>
+          @if (pendingEmail()) {
+            <div class="bg-accent text-accent-foreground flex flex-col gap-2 rounded-2xl p-3 text-sm" role="status">
+              <p>
+                لینک تأیید به <span dir="ltr">{{ pendingEmail() }}</span> فرستاده شد.
+                ایمیلت را باز کن و روی لینک بزن، بعد وارد شو.
+              </p>
+              <button aioBtn type="button" variant="outline" size="sm" class="self-start" [disabled]="busy()" (click)="resend()">
+                دوباره بفرست
+              </button>
+            </div>
+          }
           <button aioBtn type="submit" size="lg" [disabled]="busy()">
             {{ mode() === 'login' ? 'ورود' : 'ساخت حساب' }}
           </button>
+          @if (mode() === 'login') {
+            <a aioBtn variant="link" routerLink="/forgot-password">رمز را فراموش کرده‌ای؟</a>
+          }
           @if (canRegister()) {
             <button aioBtn type="button" variant="link" (click)="toggleMode()">
               {{
@@ -131,6 +147,8 @@ export class LoginPage {
 
   protected readonly mode = signal<'login' | 'register'>('login');
   protected readonly busy = signal(false);
+  /** Set when an account waits for its emailed confirmation link. */
+  protected readonly pendingEmail = signal('');
   protected readonly model = signal({ name: '', email: '', password: '' });
   // Email and password rules are the same for both modes; the name is optional.
   protected readonly authForm = form(this.model, (path) => {
@@ -153,22 +171,43 @@ export class LoginPage {
       try {
         const { name, email, password } = this.model();
         if (this.mode() === 'login') await this.auth.login({ email, password });
-        else
-          await this.auth.register({
+        else {
+          const result = await this.auth.register({
             email,
             password,
             name: name.trim() || undefined,
           });
+          if (result.status === 'verify-email') {
+            this.pendingEmail.set(result.email);
+            this.mode.set('login');
+            return;
+          }
+        }
         const redirect =
           this.route.snapshot.queryParamMap.get('redirect') ?? '/';
         await this.router.navigateByUrl(
           redirect.startsWith('/') ? redirect : '/',
         );
       } catch (error) {
+        // 403 on login: the account exists but its email is not confirmed yet.
+        if (error instanceof HttpErrorResponse && error.status === 403)
+          this.pendingEmail.set(this.model().email);
         aioToast.error(apiErrorMessage(error));
       } finally {
         this.busy.set(false);
       }
     });
+  }
+
+  protected async resend() {
+    this.busy.set(true);
+    try {
+      await this.auth.resendVerification(this.pendingEmail());
+      aioToast.success('اگر حسابی با این ایمیل منتظر تأیید باشد، لینک تازه فرستاده شد.');
+    } catch (error) {
+      aioToast.error(apiErrorMessage(error));
+    } finally {
+      this.busy.set(false);
+    }
   }
 }

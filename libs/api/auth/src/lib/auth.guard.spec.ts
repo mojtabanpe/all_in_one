@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
+import type { PrismaService } from '@all-in-one/api/db';
 import { IS_PUBLIC, ROLES } from './auth.decorators';
 import { AuthGuard, SESSION_COOKIE } from './auth.guard';
 
@@ -28,8 +29,19 @@ function context(
   return { ctx, request };
 }
 
+/** Users the guard can look up: u1 is a customer whose password was changed once. */
+const users: Record<string, { role: string; sessionVersion: number }> = {
+  u1: { role: 'CUSTOMER', sessionVersion: 1 },
+};
+const prisma = {
+  user: {
+    findUnique: async ({ where }: { where: { id: string } }) =>
+      users[where.id] ?? null,
+  },
+} as unknown as PrismaService;
+
 describe('AuthGuard', () => {
-  const guard = new AuthGuard(jwt, new Reflector());
+  const guard = new AuthGuard(jwt, new Reflector(), prisma);
 
   it('lets public routes through without a session', async () => {
     await expect(
@@ -50,18 +62,32 @@ describe('AuthGuard', () => {
   });
 
   it('sets request.user from a valid session', async () => {
-    const token = await jwt.signAsync({ sub: 'u1', role: 'CUSTOMER' });
+    const token = await jwt.signAsync({ sub: 'u1', role: 'CUSTOMER', sv: 1 });
     const { ctx, request } = context(`theme=dark; ${SESSION_COOKIE}=${token}`);
     await expect(guard.canActivate(ctx)).resolves.toBe(true);
     expect(request['user']).toEqual({ id: 'u1', role: 'CUSTOMER' });
   });
 
   it('enforces @Roles', async () => {
-    const token = await jwt.signAsync({ sub: 'u1', role: 'CUSTOMER' });
+    const token = await jwt.signAsync({ sub: 'u1', role: 'CUSTOMER', sv: 1 });
     await expect(
       guard.canActivate(
         context(`${SESSION_COOKIE}=${token}`, { [ROLES]: ['ADMIN'] }).ctx,
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('rejects a session from before the last password change', async () => {
+    const token = await jwt.signAsync({ sub: 'u1', role: 'CUSTOMER', sv: 0 });
+    await expect(
+      guard.canActivate(context(`${SESSION_COOKIE}=${token}`).ctx),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('rejects a session of a deleted user', async () => {
+    const token = await jwt.signAsync({ sub: 'gone', role: 'CUSTOMER', sv: 0 });
+    await expect(
+      guard.canActivate(context(`${SESSION_COOKIE}=${token}`).ctx),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 });

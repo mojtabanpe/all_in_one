@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
-import type { Role } from '@all-in-one/api/db';
+import { PrismaService, type Role } from '@all-in-one/api/db';
 import { type AuthUser, IS_PUBLIC, ROLES } from './auth.decorators';
 
 export const SESSION_COOKIE = 'aio_session';
@@ -15,6 +15,8 @@ export const SESSION_COOKIE = 'aio_session';
 interface SessionPayload {
   sub: string;
   role: Role;
+  /** User.sessionVersion when the session started; older sessions are rejected. */
+  sv?: number;
 }
 
 function readCookie(
@@ -39,6 +41,7 @@ export class AuthGuard implements CanActivate {
   constructor(
     private readonly jwt: JwtService,
     private readonly reflector: Reflector,
+    private readonly prisma: PrismaService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -56,7 +59,14 @@ export class AuthGuard implements CanActivate {
     } catch {
       throw new UnauthorizedException();
     }
-    const user: AuthUser = { id: payload.sub, role: payload.role };
+    // The user must still exist and the session must postdate the last password change.
+    const account = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { role: true, sessionVersion: true },
+    });
+    if (!account || account.sessionVersion !== (payload.sv ?? 0))
+      throw new UnauthorizedException();
+    const user: AuthUser = { id: payload.sub, role: account.role };
     request.user = user;
 
     const roles = this.reflector.getAllAndOverride<Role[] | undefined>(

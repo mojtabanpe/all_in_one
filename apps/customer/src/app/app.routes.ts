@@ -1,5 +1,13 @@
 import type { Route } from '@angular/router';
-import { authGuard, guestGuard, LoginPage } from '@all-in-one/web/shared';
+import {
+  AccountPage,
+  authGuard,
+  ForgotPasswordPage,
+  guestGuard,
+  LoginPage,
+  ResetPasswordPage,
+  VerifyEmailPage,
+} from '@all-in-one/web/shared';
 
 export const appRoutes: Route[] = [
   {
@@ -10,10 +18,19 @@ export const appRoutes: Route[] = [
     data: { appName: 'همه در یک', allowRegister: true },
   },
   {
+    path: 'forgot-password',
+    component: ForgotPasswordPage,
+    canActivate: [guestGuard],
+    title: 'بازیابی رمز',
+  },
+  { path: 'reset-password', component: ResetPasswordPage, title: 'رمز تازه' },
+  { path: 'verify-email', component: VerifyEmailPage, title: 'تأیید ایمیل' },
+  {
     path: '',
     loadComponent: () => import('./layout').then((m) => m.Layout),
     canActivate: [authGuard()],
     children: [
+      { path: 'account', component: AccountPage, title: 'حساب کاربری' },
       {
         path: '',
         loadComponent: () => import('./home/home').then((m) => m.Home),
