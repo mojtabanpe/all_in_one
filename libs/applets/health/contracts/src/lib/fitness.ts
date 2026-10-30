@@ -1,4 +1,5 @@
 import * as z from 'zod/mini';
+import type { CompletedSet } from './coaching';
 
 export const INTENSITIES = ['LOW', 'MODERATE', 'HIGH'] as const;
 export type Intensity = (typeof INTENSITIES)[number];
@@ -85,6 +86,8 @@ export interface WorkoutLog {
   activitySlug: string;
   activityName: string;
   programSlug: string | null;
+  routineId?: string | null;
+  completedSets?: CompletedSet[];
   date: string;
   durationMin: number;
   intensity: Intensity;

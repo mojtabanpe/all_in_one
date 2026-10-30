@@ -73,3 +73,7 @@ validates input with the same Zod contracts as the REST api.
 required in production and never derived from the Host header. The reverse proxy must forward,
 without rewriting: `/api/…`, `/authorize`, `/token`, `/register`, `/revoke`,
 `/.well-known/oauth-authorization-server` and `/.well-known/oauth-protected-resource/api/mcp`.
+
+## Native health coaching extension
+
+Fourteen additional tools cover the exercise catalog, custom routines, actual set logs, progress, diet suggestions, shopping lists and meal replacement. See [health-coaching.md](health-coaching.md) for their behavior and upgrade steps. These tools use our own database and the existing health scopes; they do not call external fitness/nutrition platforms.

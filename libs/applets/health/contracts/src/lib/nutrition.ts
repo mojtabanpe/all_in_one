@@ -295,7 +295,7 @@ export interface Recipe {
 
 export interface MealPlanDay {
   date: string;
-  meals: { mealType: MealType; recipeSlug: string }[];
+  meals: { mealType: MealType; recipeSlug: string; servings?: number }[];
 }
 
 export interface MealPlan {

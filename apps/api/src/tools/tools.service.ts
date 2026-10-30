@@ -4,7 +4,11 @@ import {
   DecksService,
   TextsService,
 } from '@all-in-one/applets/english-learning/api';
-import { HealthAiService, HealthService } from '@all-in-one/applets/health/api';
+import {
+  HealthAiService,
+  HealthService,
+  TrainingService,
+} from '@all-in-one/applets/health/api';
 import {
   CalendarsService,
   CountdownsService,
@@ -15,6 +19,7 @@ import {
   TasksService,
 } from '@all-in-one/applets/planner/api';
 import { englishTools } from './english-tools';
+import { healthCoachTools } from './health-coach-tools';
 import { healthTools } from './health-tools';
 import { plannerTools } from './planner-tools';
 import type { ToolSink } from './tool-kit';
@@ -37,6 +42,7 @@ export class ToolsService {
     private readonly calendars: CalendarsService,
     private readonly countdowns: CountdownsService,
     private readonly health: HealthService,
+    private readonly training: TrainingService,
     private readonly healthAi: HealthAiService,
   ) {}
 
@@ -55,6 +61,7 @@ export class ToolsService {
       calendars: this.calendars,
       countdowns: this.countdowns,
     });
+    healthCoachTools(sink, { health: this.health, training: this.training });
     healthTools(sink, { health: this.health, ai: this.healthAi });
   }
 }

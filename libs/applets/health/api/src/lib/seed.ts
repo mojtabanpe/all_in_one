@@ -1,9 +1,18 @@
 import type { PrismaClient } from '@all-in-one/api/db';
 import { ACTIVITY_TYPES, WORKOUT_PROGRAMS } from './seed-fitness';
+import { EXERCISES } from './exercise-catalog';
 import { DIETS, RECIPES } from './seed-nutrition';
 
 /** Idempotent: upserts activities, programs, diets and recipes. */
 export async function seedHealth(prisma: PrismaClient): Promise<void> {
+  for (const e of EXERCISES) {
+    const { videoUrl, ...data } = e;
+    await prisma.healthExercise.upsert({
+      where: { slug: e.slug },
+      create: { ...data, videoUrl },
+      update: data,
+    });
+  }
   for (const [sortOrder, a] of ACTIVITY_TYPES.entries()) {
     await prisma.activityType.upsert({
       where: { slug: a.slug },

@@ -52,6 +52,7 @@ model User {
   englishDays     EnglishReviewDay[]
   healthProfile   HealthProfile?
   workoutLogs     WorkoutLog[]
+  healthRoutines  HealthRoutine[]
   mealLogs        MealLog[]
   mealPlans       MealPlan[]
   aiSettings      UserAiSettings?

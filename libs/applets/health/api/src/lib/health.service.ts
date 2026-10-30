@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   type Diet as DbDiet,
   type HealthProfile as DbProfile,
@@ -7,6 +12,13 @@ import {
   type Recipe as DbRecipe,
 } from '@all-in-one/api/db';
 import {
+  recipeAllowed,
+  shoppingList,
+  dietSuggestions,
+  MEAL_SHARE,
+  MEAL_TYPES,
+  type SwapPlanMealInput,
+  type CompletedSet,
   type ActivityType,
   BALANCED_RULES,
   calorieTarget,
@@ -125,6 +137,7 @@ export class HealthService {
       dietMode: p?.dietMode ?? 'NONE',
       dietSlug: p?.dietSlug ?? null,
       ownDietNotes: p?.ownDietNotes ?? null,
+      excludedIngredients: p?.excludedIngredients ?? [],
     } as const;
     return {
       ...profile,
@@ -166,6 +179,8 @@ export class HealthService {
       activitySlug: r.activitySlug,
       activityName: r.activity.name,
       programSlug: r.programSlug,
+      routineId: r.routineId,
+      completedSets: r.completedSets as unknown as CompletedSet[],
       date: iso(r.date),
       durationMin: r.durationMin,
       intensity: r.intensity,
@@ -452,7 +467,35 @@ export class HealthService {
     const dates = Array.from({ length: input.days ?? 7 }, (_, i) =>
       addDays(input.startDate, i),
     );
-    const days = planMeals(recipes, dietSlug, target, dates);
+    const profile = await this.profile(userId, now);
+    const allowed = recipes
+      .map(toRecipe)
+      .filter((r) => recipeAllowed(r, profile.excludedIngredients ?? []));
+    for (const mealType of MEAL_TYPES)
+      if (!allowed.some((r) => r.mealType === mealType))
+        throw new BadRequestException(
+          'برای همه وعده‌ها دستور پخت سازگار با رژیم و محدودیت‌ها موجود نیست؛ رژیم یا محدودیت‌ها را بررسی کنید.',
+        );
+    const days = planMeals(allowed, dietSlug, target, dates).map((day) => ({
+      ...day,
+      meals: day.meals.map((meal) => {
+        const recipe = allowed.find((r) => r.slug === meal.recipeSlug)!;
+        return {
+          ...meal,
+          servings:
+            Math.round(
+              Math.min(
+                3,
+                Math.max(
+                  0.5,
+                  (target * MEAL_SHARE[meal.mealType]) /
+                    Math.max(1, recipe.calories),
+                ),
+              ) * 100,
+            ) / 100,
+        };
+      }),
+    }));
     const plan = await this.prisma.mealPlan.create({
       data: {
         userId,
@@ -483,6 +526,75 @@ export class HealthService {
       plan.dietSlug,
       plan.calorieTarget,
       plan.days as unknown as MealPlanDay[],
+    );
+  }
+
+  async suggestions(userId: string) {
+    const [diets, profile] = await Promise.all([
+      this.diets(),
+      this.profile(userId),
+    ]);
+    return {
+      suggestions: dietSuggestions(diets, profile.goal),
+      note: 'این گزینه‌ها برای مقایسه‌اند؛ انتخاب نهایی رژیم با شماست و محدودیت مواد غذایی هنگام چیدن برنامه اعمال می‌شود.',
+    };
+  }
+
+  async planShopping(userId: string) {
+    const plan = await this.currentPlan(userId);
+    if (!plan) throw new NotFoundException('برنامه غذایی ندارید');
+    return shoppingList(plan);
+  }
+
+  async swapPlanMeal(
+    userId: string,
+    input: SwapPlanMealInput,
+  ): Promise<MealPlan> {
+    const plan = await this.prisma.mealPlan.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!plan) throw new NotFoundException('برنامه غذایی ندارید');
+    const days = structuredClone(plan.days) as unknown as MealPlanDay[];
+    const day = days.find((d) => d.date === input.date);
+    const meal = day?.meals.find((m) => m.mealType === input.mealType);
+    if (!meal) throw new NotFoundException('این وعده در برنامه نیست');
+    const [recipe, profile] = await Promise.all([
+      this.recipe(input.recipeSlug),
+      this.profile(userId),
+    ]);
+    if (
+      recipe.mealType !== input.mealType ||
+      !recipe.diets.includes(plan.dietSlug) ||
+      !recipeAllowed(recipe, profile.excludedIngredients ?? [])
+    )
+      throw new BadRequestException(
+        'این غذا با وعده، رژیم یا محدودیت مواد غذایی سازگار نیست',
+      );
+    meal.recipeSlug = recipe.slug;
+    meal.servings =
+      Math.round(
+        Math.min(
+          3,
+          Math.max(
+            0.5,
+            (plan.calorieTarget * MEAL_SHARE[input.mealType]) /
+              Math.max(1, recipe.calories),
+          ),
+        ) * 100,
+      ) / 100;
+    const { count } = await this.prisma.mealPlan.updateMany({
+      where: { id: plan.id, userId, days: { equals: plan.days! } },
+      data: { days: days as object[] },
+    });
+    if (!count)
+      throw new ConflictException('برنامه تغییر کرده؛ دوباره دریافت کنید');
+    return this.withRecipes(
+      plan.id,
+      iso(plan.startDate),
+      plan.dietSlug,
+      plan.calorieTarget,
+      days,
     );
   }
 

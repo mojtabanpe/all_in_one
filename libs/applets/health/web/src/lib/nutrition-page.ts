@@ -2,6 +2,11 @@ import { httpResource } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
+  recipeAllowed,
+  type Recipe,
+  type ShoppingItem,
+  type DietSuggestion,
+  type MealType,
   BALANCED_RULES,
   type Diet,
   DIET_MODE_LABELS,
@@ -122,6 +127,34 @@ import { MealForm } from './meal-form';
         }
       </section>
 
+      <section aioCard>
+        <div aioCardHeader>
+          <h2 aioCardTitle>کدام رژیم به سلیقه شما نزدیک‌تر است؟</h2>
+          <p aioCardDescription>
+            پیشنهادهای اولیه برای مقایسه؛ انتخاب رژیم را خودتان انجام می‌دهید.
+          </p>
+        </div>
+        <div aioCardContent class="flex flex-col gap-3">
+          @for (
+            suggestion of suggestions.value()?.suggestions ?? [];
+            track suggestion.slug
+          ) {
+            <div>
+              <strong>{{ suggestion.name }}</strong>
+              <p class="text-muted-foreground text-sm">
+                {{ suggestion.reason }}
+              </p>
+            </div>
+          }
+          <button aioBtn variant="outline" (click)="choosing.set(true)">
+            مقایسه و انتخاب رژیم
+          </button>
+          <a aioBtn variant="link" routerLink="../profile"
+            >تنظیم مواد غذایی مستثنا</a
+          >
+        </div>
+      </section>
+
       <section class="flex flex-col gap-3">
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-semibold">وعده‌های امروز</h2>
@@ -199,9 +232,20 @@ import { MealForm } from './meal-form';
         </div>
         @if (plan.value(); as p) {
           <p class="text-muted-foreground text-sm">
-            ۷ روز از {{ faDate(p.startDate) }}، حدود
+            {{ fa(p.days.length) }} روز از {{ faDate(p.startDate) }}، هدف
             {{ fa(p.calorieTarget) }} کالری در روز
           </p>
+          <p class="text-muted-foreground text-sm">
+            مقدار هر غذا نسبت به یک سهم دستور پخت است؛ کالری‌ها برآوردی‌اند.
+          </p>
+          <button
+            aioBtn
+            variant="outline"
+            [disabled]="shoppingBusy()"
+            (click)="showShopping()"
+          >
+            {{ shoppingBusy() ? 'در حال دریافت…' : 'فهرست خرید این برنامه' }}
+          </button>
           <div aioAccordion type="single" class="glass rounded-3xl px-4">
             @for (day of p.days; track day.date) {
               <div aioAccordionItem>
@@ -226,8 +270,16 @@ import { MealForm } from './meal-form';
                           <span class="text-muted-foreground text-xs"
                             >{{ mealTypeLabels[meal.mealType] }}:</span
                           >
-                          {{ r.title }}
+                          {{ r.title }}، {{ fa(meal.servings ?? 1) }} سهم
                         </span>
+                        <button
+                          aioBtn
+                          variant="outline"
+                          size="sm"
+                          (click)="openSwap(day.date, meal.mealType)"
+                        >
+                          جایگزین
+                        </button>
                         <a
                           aioBtn
                           variant="link"
@@ -251,6 +303,56 @@ import { MealForm } from './meal-form';
       </section>
     </div>
 
+    <aio-dialog [(open)]="shoppingOpen" title="فهرست خرید">
+      <ng-template aioDialogBody
+        ><div class="flex flex-col gap-3">
+          <p class="text-muted-foreground text-sm">
+            مقدار پایه هر ماده را در تعداد سهم ضرب کنید. واحدهای متفاوت با هم
+            جمع نشده‌اند.
+          </p>
+          @for (item of shoppingItems(); track $index) {
+            <p>
+              <strong>{{ item.item }}</strong
+              >: {{ item.amountPerServing }} × {{ fa(item.servings) }} سهم
+            </p>
+          }
+        </div></ng-template
+      >
+    </aio-dialog>
+    <aio-dialog
+      [(open)]="swapOpen"
+      title="جایگزینی وعده"
+      description="فقط غذاهای سازگار با نوع وعده، رژیم برنامه و مواد مستثنا نمایش داده می‌شوند."
+    >
+      <ng-template aioDialogBody
+        ><div class="flex flex-col gap-3">
+          @if (recipes.isLoading()) {
+            <p role="status">در حال دریافت غذاها…</p>
+          }
+          @if (recipes.error()) {
+            <p role="alert">دریافت غذاها ممکن نشد.</p>
+            <button aioBtn variant="outline" (click)="recipes.reload()">
+              تلاش دوباره
+            </button>
+          }
+          @for (recipe of swapOptions(); track recipe.slug) {
+            <button
+              aioBtn
+              variant="outline"
+              [disabled]="swapping()"
+              (click)="swapRecipe(recipe.slug)"
+            >
+              {{ recipe.title }}، {{ fa(recipe.calories) }} کالری در سهم پایه
+            </button>
+          }
+          @if (
+            !recipes.isLoading() && !recipes.error() && !swapOptions().length
+          ) {
+            <p>غذای جایگزین سازگار موجود نیست.</p>
+          }
+        </div></ng-template
+      >
+    </aio-dialog>
     <aio-dialog [(open)]="choosing" title="رژیم غذایی">
       <ng-template aioDialogBody>
         @if (profile.value(); as p) {
@@ -310,6 +412,60 @@ export class NutritionPage {
     () => `${this.api.base}/meal-plans/current`,
   );
 
+  protected readonly suggestions = httpResource<{
+    suggestions: DietSuggestion[];
+  }>(() => `${this.api.base}/diet-suggestions`);
+  protected readonly recipes = httpResource<Recipe[]>(() =>
+    this.swapOpen() ? `${this.api.base}/recipes` : undefined,
+  );
+  protected readonly shoppingOpen = signal(false);
+  protected readonly shoppingBusy = signal(false);
+  protected readonly shoppingItems = signal<ShoppingItem[]>([]);
+  protected readonly swapOpen = signal(false);
+  protected readonly swapping = signal(false);
+  private readonly swapTarget = signal<{
+    date: string;
+    mealType: MealType;
+  } | null>(null);
+  protected readonly swapOptions = computed(() =>
+    (this.recipes.value() ?? []).filter(
+      (r) =>
+        r.mealType === this.swapTarget()?.mealType &&
+        r.diets.includes(this.plan.value()?.dietSlug ?? '') &&
+        recipeAllowed(r, this.profile.value()?.excludedIngredients ?? []),
+    ),
+  );
+  protected openSwap(date: string, mealType: MealType) {
+    this.swapTarget.set({ date, mealType });
+    this.swapOpen.set(true);
+  }
+  protected async showShopping() {
+    if (this.shoppingBusy()) return;
+    this.shoppingBusy.set(true);
+    try {
+      this.shoppingItems.set(await this.api.shopping());
+      this.shoppingOpen.set(true);
+    } catch (error) {
+      aioToast.error(apiErrorMessage(error));
+    } finally {
+      this.shoppingBusy.set(false);
+    }
+  }
+  protected async swapRecipe(recipeSlug: string) {
+    const target = this.swapTarget();
+    if (!target || this.swapping()) return;
+    this.swapping.set(true);
+    try {
+      this.plan.set(await this.api.swapMeal({ ...target, recipeSlug }));
+      this.swapOpen.set(false);
+      aioToast.success('وعده جایگزین شد');
+    } catch (error) {
+      aioToast.error(apiErrorMessage(error));
+    } finally {
+      this.swapping.set(false);
+    }
+  }
+
   protected readonly choosing = signal(false);
   protected readonly logging = signal(false);
   protected readonly saving = signal(false);
@@ -327,10 +483,11 @@ export class NutritionPage {
 
   protected dayCalories(
     plan: MealPlan,
-    meals: { recipeSlug: string }[],
+    meals: { recipeSlug: string; servings?: number }[],
   ): number {
     return meals.reduce(
-      (sum, m) => sum + (plan.recipes[m.recipeSlug]?.calories ?? 0),
+      (sum, m) =>
+        sum + (plan.recipes[m.recipeSlug]?.calories ?? 0) * (m.servings ?? 1),
       0,
     );
   }

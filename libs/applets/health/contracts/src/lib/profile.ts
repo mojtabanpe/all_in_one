@@ -36,6 +36,11 @@ export const DIET_MODE_LABELS: Record<DietMode, string> = {
 };
 
 export const healthProfileSchema = z.object({
+  excludedIngredients: z.optional(
+    z
+      .array(z.string().check(z.trim(), z.minLength(1), z.maxLength(80)))
+      .check(z.maxLength(30)),
+  ),
   sex: z.optional(z.nullable(z.enum(SEXES))),
   birthYear: z.optional(z.nullable(z.int().check(z.gte(1920), z.lte(2020)))),
   heightCm: z.optional(z.nullable(z.int().check(z.gte(100), z.lte(250)))),
@@ -60,6 +65,7 @@ export interface HealthProfile {
   dietMode: DietMode;
   dietSlug: string | null;
   ownDietNotes: string | null;
+  excludedIngredients?: string[];
   /** Daily calories, when sex/age/height/weight are known */
   calorieTarget: number | null;
 }

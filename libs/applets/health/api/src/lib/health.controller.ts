@@ -11,8 +11,24 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { type AuthUser, CurrentUser, Public } from '@all-in-one/api/auth';
 import {
+  type AuthUser,
+  CurrentUser,
+  Public,
+  Roles,
+} from '@all-in-one/api/auth';
+import {
+  type ExerciseFilter,
+  exerciseFilterSchema,
+  exerciseVideoSchema,
+  type GenerateRoutineInput,
+  generateRoutineSchema,
+  type SaveRoutineInput,
+  saveRoutineSchema,
+  type LogSessionInput,
+  logSessionSchema,
+  swapPlanMealSchema,
+  type SwapPlanMealInput,
   type ActivityType,
   type Diet,
   type FitnessWeek,
@@ -43,6 +59,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import * as z from 'zod/mini';
 import { HealthAiService } from './health-ai.service';
+import { TrainingService } from './training.service';
 import { HealthService } from './health.service';
 
 const dateQuery = z.object({ date: z.iso.date() });
@@ -56,8 +73,117 @@ const recipeQuery = z.object({
 export class HealthController {
   constructor(
     private readonly health: HealthService,
+    private readonly training: TrainingService,
     private readonly ai: HealthAiService,
   ) {}
+
+  @Get('exercises')
+  exercises(@Query({ schema: exerciseFilterSchema }) query: ExerciseFilter) {
+    return this.training.exercises(query);
+  }
+
+  @Get('exercises/:slug')
+  exercise(@Param('slug') slug: string) {
+    return this.training.exercise(slug);
+  }
+
+  @Get('exercises/:slug/alternatives')
+  alternatives(
+    @Param('slug') slug: string,
+    @Query({ schema: exerciseFilterSchema }) query: ExerciseFilter,
+  ) {
+    return this.training.alternatives(slug, query.equipment);
+  }
+
+  @Roles('ADMIN')
+  @Patch('exercises/:slug/video')
+  video(
+    @Param('slug') slug: string,
+    @Body({ schema: exerciseVideoSchema }) input: { videoUrl: string | null },
+  ) {
+    return this.training.video(slug, input.videoUrl);
+  }
+
+  @Get('routines')
+  routines(@CurrentUser() user: AuthUser) {
+    return this.training.routines(user.id);
+  }
+
+  @Get('routines/:id')
+  routine(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.training.routine(user.id, id);
+  }
+
+  @Post('routines/generate')
+  generateRoutine(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: generateRoutineSchema }) input: GenerateRoutineInput,
+  ) {
+    return this.training.generate(user.id, input);
+  }
+
+  @Post('routines')
+  saveRoutine(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: saveRoutineSchema }) input: SaveRoutineInput,
+  ) {
+    return this.training.save(user.id, input);
+  }
+
+  @Put('routines/:id')
+  updateRoutine(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body({ schema: saveRoutineSchema }) input: SaveRoutineInput,
+  ) {
+    return this.training.save(user.id, input, id);
+  }
+
+  @Delete('routines/:id')
+  @HttpCode(204)
+  removeRoutine(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.training.remove(user.id, id);
+  }
+
+  @Post('training-sessions')
+  logSession(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: logSessionSchema }) input: LogSessionInput,
+  ) {
+    return this.training.logSession(user.id, input);
+  }
+
+  @Get('training-progress')
+  progress(
+    @CurrentUser() user: AuthUser,
+    @Query({ schema: rangeQuery }) query: { from: string; to: string },
+  ) {
+    return this.training.progress(user.id, query.from, query.to);
+  }
+
+  @Get('diet-suggestions')
+  dietSuggestions(@CurrentUser() user: AuthUser) {
+    return this.health.suggestions(user.id);
+  }
+
+  @Get('meal-plans/shopping-list')
+  shoppingList(@CurrentUser() user: AuthUser) {
+    return this.health.planShopping(user.id);
+  }
+
+  @Patch('meal-plans/current/meal')
+  swapMeal(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: swapPlanMealSchema }) input: SwapPlanMealInput,
+  ) {
+    return this.health.swapPlanMeal(user.id, input);
+  }
 
   // ---------- profile ----------
 

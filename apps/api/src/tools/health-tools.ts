@@ -79,7 +79,7 @@ export function healthTools(
     'update_health_profile',
     {
       description:
-        'Save the health profile (send every field you know; omitted optional fields are cleared).',
+        'Update the health profile; omitted fields remain unchanged. Excluded ingredients are text filters, not a verified allergy database.',
       scope: write,
       kind: 'update',
       input: {
@@ -92,6 +92,10 @@ export function healthTools(
         diet_mode: z.enum(DIET_MODES).optional(),
         diet_slug: z.string().max(64).optional().describe('From list_diets'),
         own_diet_notes: z.string().max(2000).optional(),
+        excluded_ingredients: z
+          .array(z.string().min(1).max(80))
+          .max(30)
+          .optional(),
       },
     },
     (a) =>
@@ -107,6 +111,7 @@ export function healthTools(
           dietMode: a.diet_mode,
           dietSlug: a.diet_slug,
           ownDietNotes: a.own_diet_notes,
+          excludedIngredients: a.excluded_ingredients,
         }),
       ),
   );
@@ -262,7 +267,7 @@ export function healthTools(
       kind: 'create',
       input: {
         start_date: date,
-        days: z.number().int().min(1).max(14).default(7),
+        days: z.number().int().min(1).max(7).default(7),
       },
     },
     (a) =>

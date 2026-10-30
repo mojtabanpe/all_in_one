@@ -169,6 +169,21 @@ import { HealthApi } from './health-api';
             }
           </div>
         </div>
+        <div aioField>
+          <label aioFieldLabel for="excluded-foods"
+            >مواد غذایی که نمی‌خواهید در برنامه باشند</label
+          >
+          <input
+            aioInput
+            id="excluded-foods"
+            [formField]="profileForm.excludedIngredients"
+            placeholder="مثلاً: گردو، شیر"
+          />
+          <p aioFieldDescription>
+            با ویرگول جدا کنید. این فیلتر نام مواد است؛ ترکیبات جایگزین یا
+            آلودگی متقاطع را تشخیص نمی‌دهد.
+          </p>
+        </div>
         <div class="flex items-center justify-between gap-3">
           @if (profile.value()?.calorieTarget; as target) {
             <p class="text-sm">
@@ -197,6 +212,7 @@ export class ProfilePage {
   );
   // 0 / '' mean "not set" (Signal Forms models avoid null).
   protected readonly model = signal({
+    excludedIngredients: '',
     sex: '' as '' | 'FEMALE' | 'MALE',
     birthYear: 0,
     heightCm: 0,
@@ -227,6 +243,7 @@ export class ProfilePage {
       const p = this.profile.value();
       if (!p) return;
       this.model.set({
+        excludedIngredients: (p.excludedIngredients ?? []).join('، '),
         sex: p.sex ?? '',
         birthYear: p.birthYear ?? 0,
         heightCm: p.heightCm ?? 0,
@@ -248,6 +265,10 @@ export class ProfilePage {
       const m = this.model();
       try {
         const saved = await this.api.saveProfile({
+          excludedIngredients: m.excludedIngredients
+            .split(/[,،]/)
+            .map((s) => s.trim())
+            .filter(Boolean),
           sex: m.sex || null,
           birthYear: m.birthYear || null,
           heightCm: m.heightCm || null,

@@ -108,10 +108,10 @@ When the owner gives a new instruction, add it to this list in the same change.
 7. **Mobile: bottom sheets, never modals.** On phone sizes every notification, alert, dialog and
    confirmation is shown as a bottom sheet. Modals are not used on mobile.
 8. **Use the `ui-ux-pro-max` skill** for design decisions (palette, typography, layout, UX rules).
-15. **Use the `better-design` skill** (2026-10-30) for all UI/UX design, redesign and review work. The owner
-    judged the first visual design "very bad"; redesign through better-design. The skill needs the Better
-    Design MCP (`https://better-design.com/api/mcp`); if it is not connected, say so and do not claim its
-    guidance was used. better-design takes precedence over generic design advice when both apply.
+9. **Use the `better-design` skill** (2026-10-30) for all UI/UX design, redesign and review work. The owner
+   judged the first visual design "very bad"; redesign through better-design. The skill needs the Better
+   Design MCP (`https://better-design.com/api/mcp`); if it is not connected, say so and do not claim its
+   guidance was used. better-design takes precedence over generic design advice when both apply.
 
 ## Applets (2026-10-29)
 
@@ -142,7 +142,7 @@ When the owner gives a new instruction, add it to this list in the same change.
       streak flame up top, playful copy, celebration at the end of a session.
     - **health → Gordool (https://gordol.app)**: friendly Persian coach voice, daily stats at a glance
       (calories, macros, weekly training), quick "+" logging in two taps, streak "fire", step-by-step workouts.
-    Each applet sets its own accent through spartan CSS variables on its root; the shared design system stays.
+      Each applet sets its own accent through spartan CSS variables on its root; the shared design system stays.
 
 ## Design system (2026-10-30)
 
@@ -202,3 +202,7 @@ When the owner gives a new instruction, add it to this list in the same change.
 
 - **BottomNav** (2026-10-29): floating bottom navigation for phone sizes, in `libs/shared/packages`,
   assembled from spartan pieces (`hlmBtn`, ng-icons) inside a glass container.
+
+## Independent health coaching (2026-10-30)
+
+26. Build our own health features, selecting useful ideas from reviewed fitness/nutrition MCPs. Do not depend on their platforms or APIs. Support home, TRX and gym routines, exercise instruction and alternatives, logged sets/progress, diet-aware meal plans and shopping lists. Exercise video links are optional and can be added later.
