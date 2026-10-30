@@ -179,12 +179,12 @@ export function buildRoutine(
   catalog: readonly Exercise[],
 ): RoutineDay[] {
   const ranks = { beginner: 0, intermediate: 1, advanced: 2 };
-  const available = catalog.filter(
-    (e) =>
-      input.equipment.includes(e.equipment) &&
-      ranks[e.level] <= ranks[input.level] &&
-      e.muscle !== 'cardio',
+  const suitable = catalog.filter(
+    (e) => ranks[e.level] <= ranks[input.level] && e.muscle !== 'cardio',
   );
+  const chosen = suitable.filter((e) => input.equipment.includes(e.equipment));
+  // Everyone has their own body: bodyweight moves fill groups the chosen equipment can't cover.
+  const fallback = suitable.filter((e) => e.equipment === 'bodyweight');
   const count = Math.min(6, Math.max(3, Math.floor((input.minutes - 8) / 5)));
   const sets = input.level === 'beginner' ? 2 : 3;
   const muscleOrder: Muscle[] = [
@@ -199,14 +199,19 @@ export function buildRoutine(
   return Array.from({ length: input.daysPerWeek }, (_, day) => {
     const selected: Exercise[] = [];
     for (const muscle of muscleOrder) {
-      const options = available.filter((e) => e.muscle === muscle);
+      const own = chosen.filter((e) => e.muscle === muscle);
+      const options = own.length
+        ? own
+        : fallback.filter((e) => e.muscle === muscle);
       if (options.length) selected.push(options[day % options.length]);
       if (selected.length >= count) break;
     }
-    if (selected.length < 3)
-      throw new Error(
-        'برای این تجهیزات و سطح، دست‌کم سه گروه حرکت موجود نیست؛ بدون وسیله را هم انتخاب کنید.',
-      );
+    // Few groups covered: add a second move per group from the chosen equipment.
+    for (const e of chosen) {
+      if (selected.length >= count) break;
+      if (!selected.includes(e)) selected.push(e);
+    }
+    if (!selected.length) throw new Error('حرکتی برای ساخت برنامه پیدا نشد.');
     return {
       title: `جلسه ${(day + 1).toLocaleString('fa-IR')}`,
       exercises: selected.map((e) => ({

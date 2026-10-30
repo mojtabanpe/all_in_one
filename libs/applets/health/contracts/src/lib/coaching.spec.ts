@@ -49,10 +49,14 @@ describe('independent training coach', () => {
         expect(e.sets).toBe(2);
       }
   });
-  it('does not silently substitute unavailable or advanced equipment', () => {
-    expect(() =>
-      buildRoutine({ ...input, equipment: ['machine'] }, catalog),
-    ).toThrow();
+  it('fills groups the chosen equipment cannot cover with bodyweight moves only', () => {
+    const days = buildRoutine({ ...input, equipment: ['machine'] }, catalog);
+    expect(days[0].exercises.length).toBeGreaterThanOrEqual(3);
+    for (const day of days)
+      for (const e of day.exercises)
+        expect(catalog.find((c) => c.slug === e.exerciseSlug)?.equipment).toBe(
+          'bodyweight',
+        );
     expect(
       generateRoutineSchema.safeParse({
         ...input,
