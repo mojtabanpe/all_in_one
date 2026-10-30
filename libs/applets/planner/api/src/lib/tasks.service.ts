@@ -59,6 +59,11 @@ export function toTask(t: DbTask): PlannerTask {
     priority: t.priority,
     done: t.status === 'DONE',
     completedAt: t.completedAt?.toISOString() ?? null,
+    externalSourceId: t.externalSourceId,
+    recurrenceRule: t.recurrenceRule,
+    reminders: t.reminders,
+    timeZone: t.timeZone,
+    endTime: t.endTime,
     deletedAt: t.deletedAt?.toISOString() ?? null,
     tags: t.tags
       .map((x) => x.tag.name)
@@ -206,6 +211,13 @@ export class TasksService {
   // ---------------------------------------------------------------- writes
 
   async create(userId: string, input: CreateTaskInput): Promise<PlannerTask> {
+    if (input.externalSourceId) {
+      const existing = await this.prisma.plannerTask.findUnique({
+        where: { userId_externalSourceId: { userId, externalSourceId: input.externalSourceId } },
+        include: TASK_INCLUDE,
+      });
+      if (existing) return toTask(existing);
+    }
     const listId = input.listId ?? (await this.access.inbox(userId)).id;
     await this.access.list(userId, listId);
     if (input.sectionId) await this.access.section(listId, input.sectionId);
@@ -225,6 +237,12 @@ export class TasksService {
         date: date ? day(date) : null,
         time: date ? (input.time ?? null) : null,
         priority: input.priority ?? 'NONE',
+        externalSourceId: input.externalSourceId ?? null,
+        recurrenceRule: input.recurrenceRule ?? null,
+        reminders: input.reminders ?? [],
+        timeZone: input.timeZone ?? null,
+        endTime: input.endTime ?? null,
+        ...(input.completedAt ? { status: 'DONE' as const, completedAt: new Date(input.completedAt) } : {}),
         sortOrder: count,
         tags: { create: tagIds.map((tagId) => ({ tagId })) },
         checklist: {
@@ -294,6 +312,10 @@ export class TasksService {
       ...(input.content !== undefined ? { content: input.content } : {}),
       ...(input.kind ? { kind: input.kind } : {}),
       ...(input.priority ? { priority: input.priority } : {}),
+      ...(input.recurrenceRule !== undefined ? { recurrenceRule: input.recurrenceRule } : {}),
+      ...(input.reminders !== undefined ? { reminders: input.reminders } : {}),
+      ...(input.timeZone !== undefined ? { timeZone: input.timeZone } : {}),
+      ...(input.endTime !== undefined ? { endTime: input.endTime } : {}),
       ...(input.sortOrder !== undefined ? { sortOrder: input.sortOrder } : {}),
       date: date ? day(date) : null,
       time: !date ? null : input.time !== undefined ? input.time : task.time,
