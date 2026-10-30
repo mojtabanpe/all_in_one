@@ -219,12 +219,16 @@ model PlannerHabit {
   unit      String                @default("") @db.VarChar(20)
   /// Days it is due, 0 = Sunday … 6 = Saturday.
   weekdays  Int[]                 @default([0, 1, 2, 3, 4, 5, 6])
+  externalSourceId String?         @db.VarChar(120)
+  repeatRule String?               @db.VarChar(500)
+  reminders String[]               @default([])
   archived  Boolean               @default(false)
   sortOrder Int                   @default(0)
   createdAt DateTime              @default(now())
   updatedAt DateTime              @updatedAt
   checkins  PlannerHabitCheckin[]
 
+  @@unique([userId, externalSourceId])
   @@index([userId])
   @@map("planner_habits")
 }
