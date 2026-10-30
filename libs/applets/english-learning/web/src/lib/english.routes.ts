@@ -13,7 +13,8 @@ export const englishLearningRoutes: Routes = [
       {
         path: '',
         title: 'انگلیسی',
-        loadComponent: () => import('./library-page').then((m) => m.LibraryPage),
+        loadComponent: () =>
+          import('./library-page').then((m) => m.LibraryPage),
       },
       {
         path: 'texts',
@@ -23,7 +24,8 @@ export const englishLearningRoutes: Routes = [
       {
         path: 'practice',
         title: 'تمرین مکالمه',
-        loadComponent: () => import('./practice-page').then((m) => m.PracticePage),
+        loadComponent: () =>
+          import('./practice-page').then((m) => m.PracticePage),
       },
     ],
   },

@@ -83,8 +83,7 @@ export class StarterDecksService {
       due,
       total,
       mature,
-      reviewedToday:
-        days.find((_, i) => isoDays[i] === today)?.reviews ?? 0,
+      reviewedToday: days.find((_, i) => isoDays[i] === today)?.reviews ?? 0,
       streakDays: streakFrom(isoDays, today),
     };
   }

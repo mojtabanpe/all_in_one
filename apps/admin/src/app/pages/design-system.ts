@@ -49,7 +49,8 @@ interface Swatch {
       <header class="flex flex-col gap-1">
         <h1 class="text-2xl font-bold">سیستم طراحی</h1>
         <p class="text-muted-foreground text-sm">
-          بر پایه Skeuo Next: شیشه چینی سرد، دکمه‌های گرافیتی براق، تأکید آبی‌فیروزه‌ای.
+          بر پایه Skeuo Next: شیشه چینی سرد، دکمه‌های گرافیتی براق، تأکید
+          آبی‌فیروزه‌ای.
         </p>
       </header>
 
@@ -138,7 +139,11 @@ interface Swatch {
               <aio-input-group-addon>
                 <aio-icon name="lucideSearch" size="sm" />
               </aio-input-group-addon>
-              <input aioInputGroupInput id="ds-search" placeholder="واژه یا کار" />
+              <input
+                aioInputGroupInput
+                id="ds-search"
+                placeholder="واژه یا کار"
+              />
             </div>
           </div>
           <div aioField>
@@ -177,8 +182,12 @@ interface Swatch {
                 <span aioBadge>پیش‌فرض</span>
                 <span aioBadge variant="secondary">ملایم</span>
                 <span aioBadge variant="outline">قاب‌دار</span>
-                <span aioBadge class="bg-success text-success-foreground">موفق</span>
-                <span aioBadge class="bg-warning text-warning-foreground">هشدار</span>
+                <span aioBadge class="bg-success text-success-foreground"
+                  >موفق</span
+                >
+                <span aioBadge class="bg-warning text-warning-foreground"
+                  >هشدار</span
+                >
                 <span aioBadge variant="destructive">خطا</span>
               </div>
             </div>
@@ -220,7 +229,11 @@ export class DesignSystem {
       title: 'برند',
       swatches: [
         { token: 'primary', label: 'گرافیت', on: 'primary-foreground' },
-        { token: 'accent', label: 'آبی‌فیروزه‌ای روشن', on: 'accent-foreground' },
+        {
+          token: 'accent',
+          label: 'آبی‌فیروزه‌ای روشن',
+          on: 'accent-foreground',
+        },
         { token: 'ring', label: 'حلقه فوکوس' },
       ],
     },
@@ -246,8 +259,16 @@ export class DesignSystem {
   ];
 
   protected readonly type = [
-    { name: 'text-3xl bold', class: 'text-3xl font-bold', sample: 'عدد اصلی ۲٬۲۶۰' },
-    { name: 'text-2xl bold', class: 'text-2xl font-bold', sample: 'عنوان صفحه' },
+    {
+      name: 'text-3xl bold',
+      class: 'text-3xl font-bold',
+      sample: 'عدد اصلی ۲٬۲۶۰',
+    },
+    {
+      name: 'text-2xl bold',
+      class: 'text-2xl font-bold',
+      sample: 'عنوان صفحه',
+    },
     { name: 'text-lg bold', class: 'text-lg font-bold', sample: 'عنوان بخش' },
     { name: 'text-base', class: 'text-base', sample: 'متن اصلی برای خواندن' },
     {
@@ -257,5 +278,11 @@ export class DesignSystem {
     },
   ];
 
-  protected readonly radii = ['rounded-sm', 'rounded-md', 'rounded-lg', 'rounded-xl', 'rounded-full'];
+  protected readonly radii = [
+    'rounded-sm',
+    'rounded-md',
+    'rounded-lg',
+    'rounded-xl',
+    'rounded-full',
+  ];
 }

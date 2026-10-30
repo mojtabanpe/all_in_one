@@ -36,7 +36,9 @@ export class MailService {
   get appUrl(): string {
     const url =
       this.config.get<string>('APP_PUBLIC_URL') ||
-      (this.config.get<string>('APP_ORIGINS') || 'http://localhost:4400').split(',')[0];
+      (this.config.get<string>('APP_ORIGINS') || 'http://localhost:4400').split(
+        ',',
+      )[0];
     return url.trim().replace(/\/+$/, '') + '/';
   }
 
@@ -50,7 +52,9 @@ export class MailService {
   async send(mail: Mail): Promise<void> {
     if (this.transport) {
       await this.transport.sendMail({
-        from: this.config.get<string>('MAIL_FROM') || 'همه در یک <no-reply@localhost>',
+        from:
+          this.config.get<string>('MAIL_FROM') ||
+          'همه در یک <no-reply@localhost>',
         ...mail,
       });
     } else if (this.env === 'test') {

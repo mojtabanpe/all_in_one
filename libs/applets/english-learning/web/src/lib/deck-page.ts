@@ -92,12 +92,21 @@ const UNIT = /^(?:u\d+)?$/i;
         <div aioSkeleton class="h-64 rounded-3xl"></div>
       } @else if (deck(); as d) {
         <header class="flex items-start gap-3">
-          <a aioBtn variant="ghost" size="icon" routerLink="../.." aria-label="بازگشت به کتابخانه">
+          <a
+            aioBtn
+            variant="ghost"
+            size="icon"
+            routerLink="../.."
+            aria-label="بازگشت به کتابخانه"
+          >
             <aio-icon name="lucideArrowRight" />
           </a>
           <div class="flex min-w-0 flex-1 flex-col gap-1">
             <h1 class="flex items-center gap-2 text-2xl font-bold">
-              <span class="size-3 shrink-0 rounded-full" [class]="tone(d.color).bar"></span>
+              <span
+                class="size-3 shrink-0 rounded-full"
+                [class]="tone(d.color).bar"
+              ></span>
               <span class="truncate">{{ d.name }}</span>
             </h1>
             @if (d.description) {
@@ -110,7 +119,13 @@ const UNIT = /^(?:u\d+)?$/i;
               }
             </p>
           </div>
-          <button aioBtn variant="ghost" size="icon" (click)="openEditDeck()" aria-label="تنظیمات دسته">
+          <button
+            aioBtn
+            variant="ghost"
+            size="icon"
+            (click)="openEditDeck()"
+            aria-label="تنظیمات دسته"
+          >
             <aio-icon name="lucideSettings2" />
           </button>
         </header>
@@ -125,12 +140,22 @@ const UNIT = /^(?:u\d+)?$/i;
           routerLink="study"
         >
           <aio-icon name="lucideBookOpen" />
-          {{ dueCount() ? 'مرور ' + fa(dueCount()) + ' کارت' : 'فعلاً کارتی برای مرور نیست' }}
+          {{
+            dueCount()
+              ? 'مرور ' + fa(dueCount()) + ' کارت'
+              : 'فعلاً کارتی برای مرور نیست'
+          }}
         </a>
 
-        <section class="glass flex flex-col gap-4 rounded-2xl p-4" aria-labelledby="add-title">
+        <section
+          class="glass flex flex-col gap-4 rounded-2xl p-4"
+          aria-labelledby="add-title"
+        >
           <h2 id="add-title" class="font-bold">کارت جدید</h2>
-          <form class="flex flex-col gap-3" (submit)="$event.preventDefault(); addCard()">
+          <form
+            class="flex flex-col gap-3"
+            (submit)="$event.preventDefault(); addCard()"
+          >
             <div aioField>
               <label aioFieldLabel for="card-front">واژه یا عبارت</label>
               <input
@@ -186,7 +211,9 @@ const UNIT = /^(?:u\d+)?$/i;
                 />
               </div>
               <div aioField>
-                <label aioFieldLabel for="card-examples">مثال‌ها (اختیاری)</label>
+                <label aioFieldLabel for="card-examples"
+                  >مثال‌ها (اختیاری)</label
+                >
                 <textarea
                   aioTextarea
                   id="card-examples"
@@ -200,9 +227,16 @@ const UNIT = /^(?:u\d+)?$/i;
               </div>
             </div>
             @if (composerError()) {
-              <p class="text-destructive text-sm" role="alert">{{ composerError() }}</p>
+              <p class="text-destructive text-sm" role="alert">
+                {{ composerError() }}
+              </p>
             }
-            <button aioBtn type="submit" class="self-start" [disabled]="adding()">
+            <button
+              aioBtn
+              type="submit"
+              class="self-start"
+              [disabled]="adding()"
+            >
               <aio-icon name="lucidePlus" size="sm" />
               افزودن کارت
             </button>
@@ -248,12 +282,18 @@ const UNIT = /^(?:u\d+)?$/i;
                   {{ cards().length ? 'کارتی پیدا نشد' : 'هنوز کارتی نداری' }}
                 </h3>
                 <p aioEmptyDescription>
-                  {{ cards().length ? 'عبارت دیگری را جست‌وجو کن.' : 'اولین کارت را بالا اضافه کن.' }}
+                  {{
+                    cards().length
+                      ? 'عبارت دیگری را جست‌وجو کن.'
+                      : 'اولین کارت را بالا اضافه کن.'
+                  }}
                 </p>
               </div>
             </div>
           } @else {
-            <ul class="glass divide-border/60 flex flex-col divide-y rounded-2xl">
+            <ul
+              class="glass divide-border/60 flex flex-col divide-y rounded-2xl"
+            >
               @for (card of visibleCards(); track card.id) {
                 <li class="flex min-h-14 items-center gap-2 px-3">
                   <button
@@ -262,22 +302,48 @@ const UNIT = /^(?:u\d+)?$/i;
                     (click)="openPreview(card)"
                   >
                     <span class="flex w-full items-center gap-2">
-                      <span dir="ltr" lang="en" class="truncate font-semibold">{{ card.front }}</span>
+                      <span
+                        dir="ltr"
+                        lang="en"
+                        class="truncate font-semibold"
+                        >{{ card.front }}</span
+                      >
                       @if (parts(card).unit; as u) {
-                        <span class="bg-accent text-accent-foreground rounded-full px-2 text-xs" dir="ltr">{{ u }}</span>
+                        <span
+                          class="bg-accent text-accent-foreground rounded-full px-2 text-xs"
+                          dir="ltr"
+                          >{{ u }}</span
+                        >
                       }
                     </span>
-                    <span dir="auto" class="text-muted-foreground line-clamp-1 text-sm">{{ parts(card).body }}</span>
+                    <span
+                      dir="auto"
+                      class="text-muted-foreground line-clamp-1 text-sm"
+                      >{{ parts(card).body }}</span
+                    >
                   </button>
-                  <button aioBtn variant="ghost" size="icon" (click)="speak(card.front)" [attr.aria-label]="'تلفظ ' + card.front">
+                  <button
+                    aioBtn
+                    variant="ghost"
+                    size="icon"
+                    (click)="speak(card.front)"
+                    [attr.aria-label]="'تلفظ ' + card.front"
+                  >
                     <aio-icon name="lucideVolume2" size="sm" />
                   </button>
                 </li>
               }
             </ul>
             @if (activeCards().length > visibleCards().length) {
-              <button aioBtn variant="outline" class="self-center" (click)="visibleCount.update(n => n + page)">
-                نمایش بیشتر ({{ fa(activeCards().length - visibleCards().length) }})
+              <button
+                aioBtn
+                variant="outline"
+                class="self-center"
+                (click)="visibleCount.update((n) => n + page)"
+              >
+                نمایش بیشتر ({{
+                  fa(activeCards().length - visibleCards().length)
+                }})
               </button>
             }
           }
@@ -286,25 +352,50 @@ const UNIT = /^(?:u\d+)?$/i;
         @if (suspendedCards().length) {
           <section class="flex flex-col gap-3" aria-labelledby="paused-title">
             <div>
-              <h2 id="paused-title" class="text-lg font-bold">کنار گذاشته‌ها</h2>
+              <h2 id="paused-title" class="text-lg font-bold">
+                کنار گذاشته‌ها
+              </h2>
               <p class="text-muted-foreground text-sm">
-                کارت‌هایی که بارها فراموش شدند از چرخه مرور بیرون رفتند (روش لایتنر).
+                کارت‌هایی که بارها فراموش شدند از چرخه مرور بیرون رفتند (روش
+                لایتنر).
               </p>
             </div>
-            <ul class="glass divide-border/60 flex flex-col divide-y rounded-2xl">
+            <ul
+              class="glass divide-border/60 flex flex-col divide-y rounded-2xl"
+            >
               @for (card of suspendedCards(); track card.id) {
                 <li class="flex min-h-14 items-center gap-2 px-3 py-2">
                   <span class="flex min-w-0 flex-1 flex-col">
-                    <span dir="ltr" lang="en" class="truncate text-start font-semibold">{{ card.front }}</span>
+                    <span
+                      dir="ltr"
+                      lang="en"
+                      class="truncate text-start font-semibold"
+                      >{{ card.front }}</span
+                    >
                     @if (beyondSalvage(card)) {
-                      <span class="text-destructive text-xs">دو بار کنار گذاشته شده؛ بهتر است حذف یا بازنویسی شود.</span>
+                      <span class="text-destructive text-xs"
+                        >دو بار کنار گذاشته شده؛ بهتر است حذف یا بازنویسی
+                        شود.</span
+                      >
                     }
                   </span>
-                  <button aioBtn variant="outline" size="sm" (click)="unsuspend(card)">
+                  <button
+                    aioBtn
+                    variant="outline"
+                    size="sm"
+                    (click)="unsuspend(card)"
+                  >
                     <aio-icon name="lucideRotateCcw" size="sm" />
                     برگرداندن
                   </button>
-                  <button aioBtn variant="ghost" size="icon" class="text-destructive" (click)="deleteCard(card)" [attr.aria-label]="'حذف ' + card.front">
+                  <button
+                    aioBtn
+                    variant="ghost"
+                    size="icon"
+                    class="text-destructive"
+                    (click)="deleteCard(card)"
+                    [attr.aria-label]="'حذف ' + card.front"
+                  >
                     <aio-icon name="lucideTrash2" size="sm" />
                   </button>
                 </li>
@@ -327,34 +418,50 @@ const UNIT = /^(?:u\d+)?$/i;
             <button
               type="button"
               class="glass flex min-h-40 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-b-4 p-6 text-center"
-              (click)="previewFlipped.update(f => !f)"
+              (click)="previewFlipped.update((f) => !f)"
               [attr.aria-label]="previewFlipped() ? 'نمایش رو' : 'نمایش پشت'"
             >
               @if (previewFlipped()) {
                 @if (parts(card).unit; as u) {
-                  <span class="text-muted-foreground text-xs" dir="ltr">{{ u }}</span>
+                  <span class="text-muted-foreground text-xs" dir="ltr">{{
+                    u
+                  }}</span>
                 }
                 <span dir="auto" class="text-lg">{{ parts(card).body }}</span>
               } @else {
-                <span dir="ltr" lang="en" class="text-3xl font-bold">{{ card.front }}</span>
-                <span class="text-muted-foreground text-xs">برای دیدن پشت کارت بزن</span>
+                <span dir="ltr" lang="en" class="text-3xl font-bold">{{
+                  card.front
+                }}</span>
+                <span class="text-muted-foreground text-xs"
+                  >برای دیدن پشت کارت بزن</span
+                >
               }
             </button>
             @if (exampleList(card).length) {
-              <ul dir="ltr" lang="en" class="text-muted-foreground flex list-disc flex-col gap-1 ps-5 text-sm">
+              <ul
+                dir="ltr"
+                lang="en"
+                class="text-muted-foreground flex list-disc flex-col gap-1 ps-5 text-sm"
+              >
                 @for (line of exampleList(card); track $index) {
                   <li>{{ line }}</li>
                 }
               </ul>
             }
             <p class="text-muted-foreground text-xs">
-              مرور بعدی: {{ dueLabel(card) }}، {{ fa(card.repetitions) }} بار پشت سر هم درست
+              مرور بعدی: {{ dueLabel(card) }}، {{ fa(card.repetitions) }} بار
+              پشت سر هم درست
             </p>
           </div>
         }
       </ng-template>
       <ng-template aioDialogActions>
-        <button aioBtn variant="ghost" class="text-destructive" (click)="deleteCard(previewCard()!)">
+        <button
+          aioBtn
+          variant="ghost"
+          class="text-destructive"
+          (click)="deleteCard(previewCard()!)"
+        >
           <aio-icon name="lucideTrash2" size="sm" />
           حذف
         </button>
@@ -376,44 +483,107 @@ const UNIT = /^(?:u\d+)?$/i;
       contentClass="applet-english"
     >
       <ng-template aioDialogBody>
-        <form id="edit-card-form" class="flex flex-col gap-3" (submit)="$event.preventDefault(); saveCard()">
+        <form
+          id="edit-card-form"
+          class="flex flex-col gap-3"
+          (submit)="$event.preventDefault(); saveCard()"
+        >
           <div aioField>
             <label aioFieldLabel for="edit-front">رو</label>
-            <input aioInput id="edit-front" dir="ltr" lang="en" [value]="editFront()" (input)="editFront.set($any($event.target).value)" />
+            <input
+              aioInput
+              id="edit-front"
+              dir="ltr"
+              lang="en"
+              [value]="editFront()"
+              (input)="editFront.set($any($event.target).value)"
+            />
           </div>
           <div aioField>
             <label aioFieldLabel for="edit-back">پشت</label>
-            <textarea aioTextarea id="edit-back" dir="auto" rows="3" [value]="editBack()" (input)="editBack.set($any($event.target).value)"></textarea>
+            <textarea
+              aioTextarea
+              id="edit-back"
+              dir="auto"
+              rows="3"
+              [value]="editBack()"
+              (input)="editBack.set($any($event.target).value)"
+            ></textarea>
           </div>
           <div aioField>
             <label aioFieldLabel for="edit-unit">واحد</label>
-            <input aioInput id="edit-unit" dir="ltr" placeholder="u19" [value]="editUnit()" (input)="editUnit.set($any($event.target).value)" />
+            <input
+              aioInput
+              id="edit-unit"
+              dir="ltr"
+              placeholder="u19"
+              [value]="editUnit()"
+              (input)="editUnit.set($any($event.target).value)"
+            />
           </div>
           <div aioField>
             <label aioFieldLabel for="edit-examples">مثال‌ها</label>
-            <textarea aioTextarea id="edit-examples" dir="ltr" lang="en" rows="3" [value]="editExamples()" (input)="editExamples.set($any($event.target).value)"></textarea>
+            <textarea
+              aioTextarea
+              id="edit-examples"
+              dir="ltr"
+              lang="en"
+              rows="3"
+              [value]="editExamples()"
+              (input)="editExamples.set($any($event.target).value)"
+            ></textarea>
           </div>
           @if (editError()) {
-            <p class="text-destructive text-sm" role="alert">{{ editError() }}</p>
+            <p class="text-destructive text-sm" role="alert">
+              {{ editError() }}
+            </p>
           }
         </form>
       </ng-template>
       <ng-template aioDialogActions>
-        <button aioBtn variant="outline" (click)="editCard.set(null)">انصراف</button>
-        <button aioBtn type="submit" form="edit-card-form" [disabled]="savingCard()">ذخیره</button>
+        <button aioBtn variant="outline" (click)="editCard.set(null)">
+          انصراف
+        </button>
+        <button
+          aioBtn
+          type="submit"
+          form="edit-card-form"
+          [disabled]="savingCard()"
+        >
+          ذخیره
+        </button>
       </ng-template>
     </aio-dialog>
 
-    <aio-dialog [(open)]="deckModal" title="تنظیمات دسته" contentClass="applet-english">
+    <aio-dialog
+      [(open)]="deckModal"
+      title="تنظیمات دسته"
+      contentClass="applet-english"
+    >
       <ng-template aioDialogBody>
-        <form id="edit-deck-form" class="flex flex-col gap-4" (submit)="$event.preventDefault(); saveDeck()">
+        <form
+          id="edit-deck-form"
+          class="flex flex-col gap-4"
+          (submit)="$event.preventDefault(); saveDeck()"
+        >
           <div aioField>
             <label aioFieldLabel for="deck-edit-name">نام</label>
-            <input aioInput id="deck-edit-name" [value]="dName()" (input)="dName.set($any($event.target).value)" />
+            <input
+              aioInput
+              id="deck-edit-name"
+              [value]="dName()"
+              (input)="dName.set($any($event.target).value)"
+            />
           </div>
           <div aioField>
             <label aioFieldLabel for="deck-edit-desc">توضیح</label>
-            <textarea aioTextarea id="deck-edit-desc" rows="2" [value]="dDesc()" (input)="dDesc.set($any($event.target).value)"></textarea>
+            <textarea
+              aioTextarea
+              id="deck-edit-desc"
+              rows="2"
+              [value]="dDesc()"
+              (input)="dDesc.set($any($event.target).value)"
+            ></textarea>
           </div>
           <fieldset>
             <legend class="mb-2 text-sm font-medium">رنگ</legend>
@@ -439,11 +609,23 @@ const UNIT = /^(?:u\d+)?$/i;
         </form>
       </ng-template>
       <ng-template aioDialogActions>
-        <button aioBtn variant="ghost" class="text-destructive" (click)="deleteDeck()">
+        <button
+          aioBtn
+          variant="ghost"
+          class="text-destructive"
+          (click)="deleteDeck()"
+        >
           <aio-icon name="lucideTrash2" size="sm" />
           حذف دسته
         </button>
-        <button aioBtn type="submit" form="edit-deck-form" [disabled]="savingDeck()">ذخیره</button>
+        <button
+          aioBtn
+          type="submit"
+          form="edit-deck-form"
+          [disabled]="savingDeck()"
+        >
+          ذخیره
+        </button>
       </ng-template>
     </aio-dialog>
   `,
@@ -499,14 +681,21 @@ export class DeckPage {
 
   protected readonly dueCount = computed(
     () =>
-      this.cards().filter((c) => !c.suspended && new Date(c.dueAt).getTime() <= Date.now())
-        .length,
+      this.cards().filter(
+        (c) => !c.suspended && new Date(c.dueAt).getTime() <= Date.now(),
+      ).length,
   );
-  protected readonly pausedCount = computed(() => this.cards().filter((c) => c.suspended).length);
+  protected readonly pausedCount = computed(
+    () => this.cards().filter((c) => c.suspended).length,
+  );
   protected readonly units = computed(() =>
-    [...new Set(this.cards().map((c) => cardParts(c).unit).filter((u): u is string => !!u))].sort(
-      (a, b) => Number(a.slice(1)) - Number(b.slice(1)),
-    ),
+    [
+      ...new Set(
+        this.cards()
+          .map((c) => cardParts(c).unit)
+          .filter((u): u is string => !!u),
+      ),
+    ].sort((a, b) => Number(a.slice(1)) - Number(b.slice(1))),
   );
   protected readonly activeCards = computed(() =>
     this.cards().filter(
@@ -562,7 +751,9 @@ export class DeckPage {
   }
 
   protected dueLabel(card: Card): string {
-    const days = Math.round((new Date(card.dueAt).getTime() - Date.now()) / 86400000);
+    const days = Math.round(
+      (new Date(card.dueAt).getTime() - Date.now()) / 86400000,
+    );
     if (days <= 0) return 'امروز';
     if (days === 1) return 'فردا';
     return `${faNumber(days)} روز دیگر`;
@@ -666,7 +857,9 @@ export class DeckPage {
         unit,
         examples: this.editExamples().trim(),
       });
-      this.cards.update((list) => list.map((c) => (c.id === card.id ? saved : c)));
+      this.cards.update((list) =>
+        list.map((c) => (c.id === card.id ? saved : c)),
+      );
       this.editCard.set(null);
       aioToast.success('کارت به‌روز شد');
     } catch (error) {
@@ -697,7 +890,9 @@ export class DeckPage {
   protected async unsuspend(card: Card) {
     try {
       const saved = await this.api.unsuspend(card.id);
-      this.cards.update((list) => list.map((c) => (c.id === card.id ? saved : c)));
+      this.cards.update((list) =>
+        list.map((c) => (c.id === card.id ? saved : c)),
+      );
       aioToast.success('کارت به چرخه مرور برگشت');
     } catch (error) {
       aioToast.error(apiErrorMessage(error));

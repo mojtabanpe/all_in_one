@@ -39,11 +39,17 @@ describe('SM-2 scheduling (Recall)', () => {
   });
 
   it('sends a failed card back in 5 minutes and counts the lapse', () => {
-    const failed = schedule({ ...fresh, repetitions: 3, intervalDays: 20 }, 'again', now);
+    const failed = schedule(
+      { ...fresh, repetitions: 3, intervalDays: 20 },
+      'again',
+      now,
+    );
     expect(failed.repetitions).toBe(0);
     expect(failed.lapses).toBe(1);
     expect(failed.easeFactor).toBe(2.3);
-    expect(new Date(failed.dueAt).getTime() - now.getTime()).toBe(5 * 60 * 1000);
+    expect(new Date(failed.dueAt).getTime() - now.getTime()).toBe(
+      5 * 60 * 1000,
+    );
   });
 
   it('dampens hard and stretches easy, never below ease 1.3', () => {
@@ -54,7 +60,9 @@ describe('SM-2 scheduling (Recall)', () => {
     expect(schedule(base, 'easy', now).intervalDays).toBeGreaterThan(
       schedule(base, 'good', now).intervalDays,
     );
-    expect(schedule({ ...fresh, easeFactor: 1.3 }, 'again', now).easeFactor).toBe(1.3);
+    expect(
+      schedule({ ...fresh, easeFactor: 1.3 }, 'again', now).easeFactor,
+    ).toBe(1.3);
   });
 
   it('labels the next interval in Persian', () => {
@@ -73,7 +81,12 @@ describe('Leitner leeches', () => {
 });
 
 describe('card search', () => {
-  const card = { front: 'Résumé', back: 'u3 a summary of your career', examples: '- Send your résumé', unit: '' };
+  const card = {
+    front: 'Résumé',
+    back: 'u3 a summary of your career',
+    examples: '- Send your résumé',
+    unit: '',
+  };
   it('ignores accents and case and matches every word', () => {
     expect(matchesCard(card, 'resume career')).toBe(true);
     expect(matchesCard(card, 'resume banana')).toBe(false);
@@ -105,11 +118,19 @@ describe('reader parsing', () => {
 describe('schemas and streaks', () => {
   it('validates unit badges on cards', () => {
     const deckId = '0190f5e2-0000-7000-8000-000000000000';
-    expect(createCardSchema.safeParse({ deckId, front: 'a', back: 'b', unit: 'u12' }).success).toBe(true);
-    expect(createCardSchema.safeParse({ deckId, front: 'a', back: 'b', unit: 'x' }).success).toBe(false);
+    expect(
+      createCardSchema.safeParse({ deckId, front: 'a', back: 'b', unit: 'u12' })
+        .success,
+    ).toBe(true);
+    expect(
+      createCardSchema.safeParse({ deckId, front: 'a', back: 'b', unit: 'x' })
+        .success,
+    ).toBe(false);
   });
   it('counts a streak ending today or yesterday', () => {
-    expect(streakFrom(['2026-10-28', '2026-10-29', '2026-10-30'], '2026-10-30')).toBe(3);
+    expect(
+      streakFrom(['2026-10-28', '2026-10-29', '2026-10-30'], '2026-10-30'),
+    ).toBe(3);
     expect(streakFrom(['2026-10-28', '2026-10-29'], '2026-10-30')).toBe(2);
     expect(streakFrom(['2026-10-27'], '2026-10-30')).toBe(0);
   });

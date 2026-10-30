@@ -68,7 +68,9 @@ export interface Card {
 
 const deckName = z.string().check(z.trim(), z.minLength(1), z.maxLength(200));
 const deckDescription = z.string().check(z.trim(), z.maxLength(10000));
-const cardText = z.string().check(z.trim(), z.minLength(1), z.maxLength(100000));
+const cardText = z
+  .string()
+  .check(z.trim(), z.minLength(1), z.maxLength(100000));
 const unit = z.string().check(z.trim(), z.regex(/^(?:[uU]\d+)?$/));
 const examples = z.string().check(z.trim(), z.maxLength(100000));
 
@@ -324,11 +326,19 @@ export const READING_TOPICS = [
   { id: 'history', label: 'History', fa: 'تاریخ' },
   { id: 'culture', label: 'Culture & traditions', fa: 'فرهنگ و آداب' },
   { id: 'arts', label: 'Art & design', fa: 'هنر و طراحی' },
-  { id: 'entertainment', label: 'Movies, music & books', fa: 'فیلم، موسیقی و کتاب' },
+  {
+    id: 'entertainment',
+    label: 'Movies, music & books',
+    fa: 'فیلم، موسیقی و کتاب',
+  },
   { id: 'psychology', label: 'Psychology', fa: 'روان‌شناسی' },
   { id: 'education', label: 'Education & learning', fa: 'آموزش و یادگیری' },
   { id: 'space', label: 'Space & astronomy', fa: 'فضا و نجوم' },
-  { id: 'relationships', label: 'Family & relationships', fa: 'خانواده و روابط' },
+  {
+    id: 'relationships',
+    label: 'Family & relationships',
+    fa: 'خانواده و روابط',
+  },
   { id: 'daily-life', label: 'Everyday life', fa: 'زندگی روزمره' },
   { id: 'story', label: 'Short story', fa: 'داستان کوتاه' },
 ] as const;

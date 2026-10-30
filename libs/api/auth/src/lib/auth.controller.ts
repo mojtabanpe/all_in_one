@@ -49,7 +49,8 @@ export class AuthController {
     @Res({ passthrough: true }) res: unknown,
   ): Promise<RegisterResult> {
     const user = await this.auth.register(input);
-    if (!user.emailVerifiedAt) return { status: 'verify-email', email: user.email };
+    if (!user.emailVerifiedAt)
+      return { status: 'verify-email', email: user.email };
     await this.startSession(res, user);
     return { status: 'signed-in', user: toUser(user) };
   }
@@ -68,7 +69,9 @@ export class AuthController {
   @Throttle({ default: { limit: 3, ttl: 60_000 } })
   @HttpCode(202)
   @Post('resend-verification')
-  resendVerification(@Body({ schema: emailOnlySchema }) input: EmailOnlyInput): void {
+  resendVerification(
+    @Body({ schema: emailOnlySchema }) input: EmailOnlyInput,
+  ): void {
     this.auth.requestVerification(input.email);
   }
 
@@ -76,7 +79,9 @@ export class AuthController {
   @Throttle({ default: { limit: 3, ttl: 60_000 } })
   @HttpCode(202)
   @Post('forgot-password')
-  forgotPassword(@Body({ schema: emailOnlySchema }) input: EmailOnlyInput): void {
+  forgotPassword(
+    @Body({ schema: emailOnlySchema }) input: EmailOnlyInput,
+  ): void {
     this.auth.requestPasswordReset(input.email);
   }
 

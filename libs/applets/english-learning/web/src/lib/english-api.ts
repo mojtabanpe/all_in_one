@@ -100,17 +100,27 @@ export class EnglishApi {
     return this.delete(`/texts/${id}`);
   }
 
-  cardAnswer(front: string, deck?: string, context?: string): Promise<CardAnswer> {
+  cardAnswer(
+    front: string,
+    deck?: string,
+    context?: string,
+  ): Promise<CardAnswer> {
     return this.post('/ai/card-answer', {
       front,
       ...(deck ? { deck } : {}),
       ...(context ? { context: context.slice(0, 1000) } : {}),
     });
   }
-  readingText(topic: ReadingTopic, level: ReadingLevel): Promise<GeneratedText> {
+  readingText(
+    topic: ReadingTopic,
+    level: ReadingLevel,
+  ): Promise<GeneratedText> {
     return this.post('/ai/reading-text', { topic, level });
   }
-  writingTask(situation: ConversationSituation, level: ReadingLevel): Promise<WritingTask> {
+  writingTask(
+    situation: ConversationSituation,
+    level: ReadingLevel,
+  ): Promise<WritingTask> {
     return this.post('/ai/practice/writing-task', { situation, level });
   }
   writingFeedback(
@@ -127,7 +137,10 @@ export class EnglishApi {
       answer,
     });
   }
-  dialogue(situation: ConversationSituation, level: ReadingLevel): Promise<Dialogue> {
+  dialogue(
+    situation: ConversationSituation,
+    level: ReadingLevel,
+  ): Promise<Dialogue> {
     return this.post('/ai/practice/dialogue', { situation, level });
   }
   /** Sends the raw recording; the api forwards it to speech-to-text. */

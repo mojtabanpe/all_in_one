@@ -4,12 +4,21 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import {
+  ActivatedRoute,
+  convertToParamMap,
+  provideRouter,
+} from '@angular/router';
 import type { Card } from '@all-in-one/applets/english-learning/contracts';
 import { StudyPage } from './study-page';
 
 const DECK = '0190f5e2-0000-7000-8000-000000000001';
-const card = (id: string, front: string, back: string, over: Partial<Card> = {}): Card => ({
+const card = (
+  id: string,
+  front: string,
+  back: string,
+  over: Partial<Card> = {},
+): Card => ({
   id,
   deckId: DECK,
   front,
@@ -70,7 +79,9 @@ describe('StudyPage (Recall study)', () => {
   }
 
   it('flips the card, sends the rating and celebrates at the end', async () => {
-    const { fixture, http, el, button, settle } = await setup([card('c1', 'take', 'to carry')]);
+    const { fixture, http, el, button, settle } = await setup([
+      card('c1', 'take', 'to carry'),
+    ]);
     expect(el.textContent).toContain('take');
     expect(el.textContent).not.toContain('to carry');
     button('نمایش جواب').click();
@@ -81,7 +92,9 @@ describe('StudyPage (Recall study)', () => {
     button('خوب').click();
     const req = http.expectOne('/api/english/cards/c1/review');
     expect(req.request.body).toEqual({ rating: 'good' });
-    req.flush(card('c1', 'take', 'to carry', { repetitions: 1, intervalDays: 1 }));
+    req.flush(
+      card('c1', 'take', 'to carry', { repetitions: 1, intervalDays: 1 }),
+    );
     await settle();
     expect(el.textContent).toContain('آفرین! تمامش کردی');
   });
@@ -102,7 +115,9 @@ describe('StudyPage (Recall study)', () => {
     button('نمایش جواب').click();
     await fixture.whenStable();
     button('خوب').click();
-    http.expectOne('/api/english/cards/c2/review').flush(card('c2', 'book', 'x'));
+    http
+      .expectOne('/api/english/cards/c2/review')
+      .flush(card('c2', 'book', 'x'));
     await settle();
     expect(el.textContent).toContain('take');
   });

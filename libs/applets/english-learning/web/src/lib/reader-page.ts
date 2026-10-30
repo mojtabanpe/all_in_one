@@ -1,4 +1,11 @@
-import { Component, computed, DestroyRef, inject, input, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   type DeckWithStats,
@@ -77,15 +84,32 @@ const UNIT_KEY = 'aio.english.reader.unit';
         <div aioSkeleton class="h-96 rounded-3xl"></div>
       } @else if (text(); as t) {
         <header class="flex items-start gap-3">
-          <a aioBtn variant="ghost" size="icon" routerLink="../../texts" aria-label="بازگشت به متن‌ها">
+          <a
+            aioBtn
+            variant="ghost"
+            size="icon"
+            routerLink="../../texts"
+            aria-label="بازگشت به متن‌ها"
+          >
             <aio-icon name="lucideArrowRight" />
           </a>
-          <h1 dir="ltr" lang="en" class="min-w-0 flex-1 text-start text-2xl font-bold">{{ t.title }}</h1>
+          <h1
+            dir="ltr"
+            lang="en"
+            class="min-w-0 flex-1 text-start text-2xl font-bold"
+          >
+            {{ t.title }}
+          </h1>
         </header>
 
-        <div class="glass sticky top-2 z-10 flex items-center gap-3 rounded-2xl p-2">
+        <div
+          class="glass sticky top-2 z-10 flex items-center gap-3 rounded-2xl p-2"
+        >
           <button aioBtn class="btn-3d rounded-xl" (click)="toggleReading()">
-            <aio-icon [name]="reading() ? 'lucidePause' : 'lucidePlay'" size="sm" />
+            <aio-icon
+              [name]="reading() ? 'lucidePause' : 'lucidePlay'"
+              size="sm"
+            />
             {{ reading() ? 'توقف' : 'خواندن با صدا' }}
           </button>
           <p class="text-muted-foreground text-xs">
@@ -119,7 +143,10 @@ const UNIT_KEY = 'aio.english.reader.unit';
         </article>
 
         @if (t.ai) {
-          <section class="glass flex flex-col gap-3 rounded-2xl p-4" aria-labelledby="rate-title">
+          <section
+            class="glass flex flex-col gap-3 rounded-2xl p-4"
+            aria-labelledby="rate-title"
+          >
             <h2 id="rate-title" class="font-bold">این متن چطور بود؟</h2>
             <p class="text-muted-foreground text-sm">
               امتیاز و یادداشتت، متن بعدی هوش مصنوعی را بهتر می‌کند.
@@ -136,7 +163,10 @@ const UNIT_KEY = 'aio.english.reader.unit';
                   [attr.aria-label]="s + ' ستاره'"
                   (click)="rating.set(s)"
                 >
-                  <aio-icon name="lucideStar" [class]="s <= rating() ? '[&_svg]:fill-current' : ''" />
+                  <aio-icon
+                    name="lucideStar"
+                    [class]="s <= rating() ? '[&_svg]:fill-current' : ''"
+                  />
                 </button>
               }
             </div>
@@ -149,7 +179,12 @@ const UNIT_KEY = 'aio.english.reader.unit';
               [value]="note()"
               (input)="note.set($any($event.target).value)"
             ></textarea>
-            <button aioBtn class="self-start" [disabled]="savingReview()" (click)="saveReview()">
+            <button
+              aioBtn
+              class="self-start"
+              [disabled]="savingReview()"
+              (click)="saveReview()"
+            >
               ثبت امتیاز
             </button>
           </section>
@@ -165,7 +200,11 @@ const UNIT_KEY = 'aio.english.reader.unit';
       contentClass="applet-english"
     >
       <ng-template aioDialogBody>
-        <form id="reader-card-form" class="flex flex-col gap-3" (submit)="$event.preventDefault(); addCard()">
+        <form
+          id="reader-card-form"
+          class="flex flex-col gap-3"
+          (submit)="$event.preventDefault(); addCard()"
+        >
           @if (looking()) {
             <p class="text-muted-foreground flex items-center gap-2 text-sm">
               <aio-spinner /> در حال پیدا کردن معنی…
@@ -174,7 +213,15 @@ const UNIT_KEY = 'aio.english.reader.unit';
           @if (lookupError()) {
             <p class="text-destructive text-sm" role="alert">
               {{ lookupError() }}
-              <button aioBtn variant="link" size="sm" type="button" (click)="define()">دوباره</button>
+              <button
+                aioBtn
+                variant="link"
+                size="sm"
+                type="button"
+                (click)="define()"
+              >
+                دوباره
+              </button>
             </p>
           }
           <div aioField>
@@ -188,44 +235,88 @@ const UNIT_KEY = 'aio.english.reader.unit';
                 [value]="front()"
                 (input)="front.set($any($event.target).value); checkDuplicate()"
               />
-              <button aioBtn type="button" variant="outline" size="icon" (click)="speak(front())" aria-label="تلفظ">
+              <button
+                aioBtn
+                type="button"
+                variant="outline"
+                size="icon"
+                (click)="speak(front())"
+                aria-label="تلفظ"
+              >
                 <aio-icon name="lucideVolume2" size="sm" />
               </button>
             </div>
             @if (duplicate()) {
-              <p class="text-xs text-[var(--streak)]">این واژه از قبل در این دسته هست.</p>
+              <p class="text-xs text-[var(--streak)]">
+                این واژه از قبل در این دسته هست.
+              </p>
             }
           </div>
           <div aioField>
             <label aioFieldLabel for="lookup-back">معنی</label>
-            <textarea aioTextarea id="lookup-back" dir="auto" rows="2" [value]="back()" (input)="back.set($any($event.target).value)"></textarea>
+            <textarea
+              aioTextarea
+              id="lookup-back"
+              dir="auto"
+              rows="2"
+              [value]="back()"
+              (input)="back.set($any($event.target).value)"
+            ></textarea>
           </div>
           <div aioField>
             <label aioFieldLabel for="lookup-examples">مثال‌ها</label>
-            <textarea aioTextarea id="lookup-examples" dir="ltr" lang="en" rows="3" [value]="examples()" (input)="examples.set($any($event.target).value)"></textarea>
+            <textarea
+              aioTextarea
+              id="lookup-examples"
+              dir="ltr"
+              lang="en"
+              rows="3"
+              [value]="examples()"
+              (input)="examples.set($any($event.target).value)"
+            ></textarea>
           </div>
           <div class="grid grid-cols-[1fr_6rem] gap-3">
             <div aioField>
               <label aioFieldLabel for="lookup-deck">دسته</label>
-              <aio-native-select selectId="lookup-deck" [value]="deckId()" (valueChange)="setDeck($event)">
+              <aio-native-select
+                selectId="lookup-deck"
+                [value]="deckId()"
+                (valueChange)="setDeck($event)"
+              >
                 @for (d of decks(); track d.id) {
-                  <option aioNativeSelectOption [value]="d.id">{{ d.name }}</option>
+                  <option aioNativeSelectOption [value]="d.id">
+                    {{ d.name }}
+                  </option>
                 }
               </aio-native-select>
             </div>
             <div aioField>
               <label aioFieldLabel for="lookup-unit">واحد</label>
-              <input aioInput id="lookup-unit" dir="ltr" placeholder="u19" [value]="unit()" (input)="unit.set($any($event.target).value)" />
+              <input
+                aioInput
+                id="lookup-unit"
+                dir="ltr"
+                placeholder="u19"
+                [value]="unit()"
+                (input)="unit.set($any($event.target).value)"
+              />
             </div>
           </div>
           @if (formError()) {
-            <p class="text-destructive text-sm" role="alert">{{ formError() }}</p>
+            <p class="text-destructive text-sm" role="alert">
+              {{ formError() }}
+            </p>
           }
         </form>
       </ng-template>
       <ng-template aioDialogActions>
         <button aioBtn variant="outline" (click)="close()">بستن</button>
-        <button aioBtn type="submit" form="reader-card-form" [disabled]="adding() || !decks().length">
+        <button
+          aioBtn
+          type="submit"
+          form="reader-card-form"
+          [disabled]="adding() || !decks().length"
+        >
           <aio-icon name="lucidePlus" size="sm" />
           افزودن کارت
         </button>
@@ -242,7 +333,11 @@ export class ReaderPage {
   private readonly route = inject(ActivatedRoute);
 
   protected readonly text = signal<ReadingText | null>(null);
-  protected readonly doc = signal<ReadingDoc>({ paragraphs: [], sentences: [], chunks: [] });
+  protected readonly doc = signal<ReadingDoc>({
+    paragraphs: [],
+    sentences: [],
+    chunks: [],
+  });
   protected readonly decks = signal<DeckWithStats[]>([]);
   protected readonly loading = signal(true);
 
@@ -282,7 +377,8 @@ export class ReaderPage {
   /** Highlights the passage being read, looked-up words and words saved as cards. */
   protected tokenClass(token: ReadingToken): string {
     const classes = [];
-    if (this.readingSentences().has(token.sentence)) classes.push('bg-primary/15');
+    if (this.readingSentences().has(token.sentence))
+      classes.push('bg-primary/15');
     if (this.marked().has(token.id)) classes.push('bg-accent');
     if (token.word && this.saved().has(token.text.toLowerCase()))
       classes.push('underline decoration-primary decoration-2');
@@ -292,7 +388,10 @@ export class ReaderPage {
   private async load() {
     try {
       const id = this.id() ?? this.route.snapshot.paramMap.get('id') ?? '';
-      const [text, decks] = await Promise.all([this.api.text(id), this.api.decks()]);
+      const [text, decks] = await Promise.all([
+        this.api.text(id),
+        this.api.decks(),
+      ]);
       this.text.set(text);
       this.rating.set(text.rating ?? 0);
       this.note.set(text.reviewNote);
@@ -314,7 +413,9 @@ export class ReaderPage {
     }
     this.savingReview.set(true);
     try {
-      this.text.set(await this.api.rateText(text.id, this.rating(), this.note().trim()));
+      this.text.set(
+        await this.api.rateText(text.id, this.rating(), this.note().trim()),
+      );
       aioToast.success('ممنون! متن بعدی را با این نظر می‌نویسیم.');
     } catch (error) {
       aioToast.error(apiErrorMessage(error));
@@ -342,7 +443,9 @@ export class ReaderPage {
   }
 
   private tokenAt(event: Event): ReadingToken | null {
-    const el = (event.target as HTMLElement | null)?.closest<HTMLElement>('[data-t]');
+    const el = (event.target as HTMLElement | null)?.closest<HTMLElement>(
+      '[data-t]',
+    );
     if (!el) return null;
     const id = Number(el.dataset['t']);
     for (const paragraph of this.doc().paragraphs) {
@@ -385,7 +488,9 @@ export class ReaderPage {
     this.formError.set('');
     const last = remember(DECK_KEY);
     this.deckId.set(
-      this.decks().some((d) => d.id === last) ? last : (this.decks()[0]?.id ?? ''),
+      this.decks().some((d) => d.id === last)
+        ? last
+        : (this.decks()[0]?.id ?? ''),
     );
     this.unit.set(remember(UNIT_KEY));
     void this.loadDeckFronts();
@@ -438,7 +543,10 @@ export class ReaderPage {
     if (!id || this.deckFronts.has(id)) return this.checkDuplicate();
     try {
       const cards = await this.api.cards(id);
-      this.deckFronts.set(id, new Set(cards.map((c) => c.front.trim().toLowerCase())));
+      this.deckFronts.set(
+        id,
+        new Set(cards.map((c) => c.front.trim().toLowerCase())),
+      );
     } catch {
       // The duplicate hint is optional; adding still works.
     }
@@ -447,7 +555,9 @@ export class ReaderPage {
 
   protected checkDuplicate() {
     this.duplicate.set(
-      !!this.deckFronts.get(this.deckId())?.has(this.front().trim().toLowerCase()),
+      !!this.deckFronts
+        .get(this.deckId())
+        ?.has(this.front().trim().toLowerCase()),
     );
   }
 
@@ -483,7 +593,9 @@ export class ReaderPage {
       this.deckFronts.get(this.deckId())?.add(front.toLowerCase());
       this.saved.update((set) => new Set(set).add(token.text.toLowerCase()));
       const deck = this.decks().find((d) => d.id === this.deckId());
-      aioToast.success(`«${front.slice(0, 40)}» به ${deck?.name ?? 'دسته'} اضافه شد`);
+      aioToast.success(
+        `«${front.slice(0, 40)}» به ${deck?.name ?? 'دسته'} اضافه شد`,
+      );
       this.close();
     } catch (error) {
       this.formError.set(apiErrorMessage(error, 'کارت اضافه نشد.'));

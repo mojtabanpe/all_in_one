@@ -33,8 +33,7 @@ export class AudioCacheService implements OnModuleInit, OnModuleDestroy {
           disableOfflineQueue: true,
           socket: {
             connectTimeout: 1000,
-            reconnectStrategy: (retries) =>
-              Math.min(250 * (retries + 1), 3000),
+            reconnectStrategy: (retries) => Math.min(250 * (retries + 1), 3000),
           },
         })
       : undefined;
@@ -46,7 +45,9 @@ export class AudioCacheService implements OnModuleInit, OnModuleDestroy {
         ? Math.max(MIN_CACHE_SECONDS, configured)
         : MIN_CACHE_SECONDS;
     this.client?.on('error', () =>
-      this.logger.warn('Redis audio cache unavailable; using the speech provider.'),
+      this.logger.warn(
+        'Redis audio cache unavailable; using the speech provider.',
+      ),
     );
   }
 
@@ -66,10 +67,7 @@ export class AudioCacheService implements OnModuleInit, OnModuleDestroy {
       const value = await this.client
         .withAbortSignal(AbortSignal.timeout(1000))
         .get(key);
-      if (
-        !value ||
-        value.length > Math.ceil((MAX_AUDIO_BYTES * 4) / 3) + 1024
-      )
+      if (!value || value.length > Math.ceil((MAX_AUDIO_BYTES * 4) / 3) + 1024)
         return null;
       const record = JSON.parse(value) as Record<string, unknown>;
       if (
@@ -87,7 +85,9 @@ export class AudioCacheService implements OnModuleInit, OnModuleDestroy {
         return null;
       return { audio, contentType: record['contentType'] };
     } catch {
-      this.logger.warn('Redis audio cache read failed; using the speech provider.');
+      this.logger.warn(
+        'Redis audio cache read failed; using the speech provider.',
+      );
       return null;
     }
   }
@@ -105,7 +105,9 @@ export class AudioCacheService implements OnModuleInit, OnModuleDestroy {
       );
       return true;
     } catch {
-      this.logger.warn('Redis audio cache write failed; returning uncached speech.');
+      this.logger.warn(
+        'Redis audio cache write failed; returning uncached speech.',
+      );
       return false;
     }
   }

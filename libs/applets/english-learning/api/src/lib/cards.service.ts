@@ -27,7 +27,11 @@ export class CardsService {
     return toCard(card);
   }
 
-  async list(userId: string, deckId: string, dueOnly: boolean): Promise<Card[]> {
+  async list(
+    userId: string,
+    deckId: string,
+    dueOnly: boolean,
+  ): Promise<Card[]> {
     await this.decks.get(userId, deckId);
     const cards = await this.prisma.englishCard.findMany({
       where: dueOnly
@@ -144,8 +148,7 @@ export class CardsService {
         await tx.englishCard.findUniqueOrThrow({ where: { id } }),
       );
       const next = schedule(card, rating);
-      const suspended =
-        card.suspended || (rating === 'again' && isLeech(next));
+      const suspended = card.suspended || (rating === 'again' && isLeech(next));
       const date = new Date(`${toIsoDate(new Date())}T00:00:00Z`);
       await tx.englishReviewDay.upsert({
         where: { userId_date: { userId, date } },

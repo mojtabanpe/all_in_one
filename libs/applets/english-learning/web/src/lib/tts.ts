@@ -50,7 +50,9 @@ export class Tts {
         const current = next ?? this.api.speech(parts[i], voices[i]);
         const following = parts.findIndex((p, j) => j > i && !!p);
         next =
-          following > 0 ? this.api.speech(parts[following], voices[following]) : null;
+          following > 0
+            ? this.api.speech(parts[following], voices[following])
+            : null;
         next?.catch(() => undefined);
         const blob = await current;
         if (generation !== this.generation) return;
@@ -59,7 +61,8 @@ export class Tts {
         if (generation !== this.generation) return;
       }
     } catch {
-      if (generation === this.generation) aioToast.error('خواندن متن ممکن نشد.');
+      if (generation === this.generation)
+        aioToast.error('خواندن متن ممکن نشد.');
     } finally {
       if (generation === this.generation) this.cancel();
     }

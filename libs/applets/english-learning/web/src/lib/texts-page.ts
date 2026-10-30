@@ -56,7 +56,13 @@ import { EnglishApi } from './english-api';
     RouterLink,
   ],
   providers: [
-    provideIcons({ lucideFileText, lucidePlus, lucideSparkles, lucideStar, lucideTrash2 }),
+    provideIcons({
+      lucideFileText,
+      lucidePlus,
+      lucideSparkles,
+      lucideStar,
+      lucideTrash2,
+    }),
   ],
   template: `
     <div class="flex flex-col gap-6">
@@ -84,7 +90,8 @@ import { EnglishApi } from './english-api';
             </div>
             <h2 aioEmptyTitle>هنوز متنی نداری</h2>
             <p aioEmptyDescription>
-              یک متن انگلیسی بچسبان یا بگذار هوش مصنوعی درباره موضوع دلخواهت بنویسد.
+              یک متن انگلیسی بچسبان یا بگذار هوش مصنوعی درباره موضوع دلخواهت
+              بنویسد.
             </p>
           </div>
           <div aioEmptyContent>
@@ -95,21 +102,46 @@ import { EnglishApi } from './english-api';
         <ul class="glass divide-border/60 flex flex-col divide-y rounded-2xl">
           @for (text of texts.value() ?? []; track text.id) {
             <li class="flex min-h-16 items-center gap-3 px-4">
-              <a [routerLink]="['../read', text.id]" class="flex min-w-0 flex-1 flex-col py-3">
-                <span dir="ltr" lang="en" class="truncate text-start font-semibold">{{ text.title }}</span>
-                <span class="text-muted-foreground flex items-center gap-2 text-sm">
+              <a
+                [routerLink]="['../read', text.id]"
+                class="flex min-w-0 flex-1 flex-col py-3"
+              >
+                <span
+                  dir="ltr"
+                  lang="en"
+                  class="truncate text-start font-semibold"
+                  >{{ text.title }}</span
+                >
+                <span
+                  class="text-muted-foreground flex items-center gap-2 text-sm"
+                >
                   {{ fa(words(text)) }} واژه، {{ faDate(text.createdAt) }}
                   @if (text.ai) {
-                    <span class="bg-accent text-accent-foreground rounded-full px-2 text-xs">هوش مصنوعی</span>
+                    <span
+                      class="bg-accent text-accent-foreground rounded-full px-2 text-xs"
+                      >هوش مصنوعی</span
+                    >
                   }
                   @if (text.rating) {
-                    <span class="flex items-center gap-0.5 text-[var(--streak)]" [attr.aria-label]="fa(text.rating) + ' ستاره'">
-                      <aio-icon name="lucideStar" size="xs" />{{ fa(text.rating) }}
+                    <span
+                      class="flex items-center gap-0.5 text-[var(--streak)]"
+                      [attr.aria-label]="fa(text.rating) + ' ستاره'"
+                    >
+                      <aio-icon name="lucideStar" size="xs" />{{
+                        fa(text.rating)
+                      }}
                     </span>
                   }
                 </span>
               </a>
-              <button aioBtn variant="ghost" size="icon" class="text-destructive" (click)="remove(text)" [attr.aria-label]="'حذف ' + text.title">
+              <button
+                aioBtn
+                variant="ghost"
+                size="icon"
+                class="text-destructive"
+                (click)="remove(text)"
+                [attr.aria-label]="'حذف ' + text.title"
+              >
                 <aio-icon name="lucideTrash2" size="sm" />
               </button>
             </li>
@@ -126,27 +158,49 @@ import { EnglishApi } from './english-api';
       contentClass="applet-english"
     >
       <ng-template aioDialogBody>
-        <form id="english-text-form" class="flex flex-col gap-4" (submit)="$event.preventDefault(); save()">
+        <form
+          id="english-text-form"
+          class="flex flex-col gap-4"
+          (submit)="$event.preventDefault(); save()"
+        >
           <div class="glass flex flex-col gap-3 rounded-2xl p-3">
             <div class="grid grid-cols-2 gap-3">
               <div aioField>
                 <label aioFieldLabel for="text-topic">موضوع</label>
-                <aio-native-select selectId="text-topic" [value]="topic()" (valueChange)="topic.set($any($event))">
+                <aio-native-select
+                  selectId="text-topic"
+                  [value]="topic()"
+                  (valueChange)="topic.set($any($event))"
+                >
                   @for (t of topics; track t.id) {
-                    <option aioNativeSelectOption [value]="t.id">{{ t.fa }}</option>
+                    <option aioNativeSelectOption [value]="t.id">
+                      {{ t.fa }}
+                    </option>
                   }
                 </aio-native-select>
               </div>
               <div aioField>
                 <label aioFieldLabel for="text-level">سطح</label>
-                <aio-native-select selectId="text-level" [value]="level()" (valueChange)="level.set($any($event))">
+                <aio-native-select
+                  selectId="text-level"
+                  [value]="level()"
+                  (valueChange)="level.set($any($event))"
+                >
                   @for (l of levels; track l.id) {
-                    <option aioNativeSelectOption [value]="l.id">{{ l.fa }}</option>
+                    <option aioNativeSelectOption [value]="l.id">
+                      {{ l.fa }}
+                    </option>
                   }
                 </aio-native-select>
               </div>
             </div>
-            <button aioBtn type="button" variant="outline" [disabled]="generating()" (click)="generate()">
+            <button
+              aioBtn
+              type="button"
+              variant="outline"
+              [disabled]="generating()"
+              (click)="generate()"
+            >
               @if (generating()) {
                 <aio-spinner />
                 در حال نوشتن (حدود یک دقیقه)…
@@ -157,13 +211,23 @@ import { EnglishApi } from './english-api';
             </button>
             @if (feedbackFrom()) {
               <p class="text-muted-foreground text-xs">
-                با توجه به امتیازی که به «<span dir="ltr">{{ feedbackFrom() }}</span>» دادی نوشته شد.
+                با توجه به امتیازی که به «<span dir="ltr">{{
+                  feedbackFrom()
+                }}</span
+                >» دادی نوشته شد.
               </p>
             }
           </div>
           <div aioField>
             <label aioFieldLabel for="text-title">عنوان</label>
-            <input aioInput id="text-title" dir="ltr" lang="en" [value]="title()" (input)="title.set($any($event.target).value)" />
+            <input
+              aioInput
+              id="text-title"
+              dir="ltr"
+              lang="en"
+              [value]="title()"
+              (input)="title.set($any($event.target).value)"
+            />
           </div>
           <div aioField>
             <label aioFieldLabel for="text-body">متن</label>
@@ -175,17 +239,26 @@ import { EnglishApi } from './english-api';
               rows="8"
               placeholder="Paste an English text here…"
               [value]="body()"
-              (input)="body.set($any($event.target).value); aiWritten.set(false)"
+              (input)="
+                body.set($any($event.target).value); aiWritten.set(false)
+              "
             ></textarea>
           </div>
           @if (formError()) {
-            <p class="text-destructive text-sm" role="alert">{{ formError() }}</p>
+            <p class="text-destructive text-sm" role="alert">
+              {{ formError() }}
+            </p>
           }
         </form>
       </ng-template>
       <ng-template aioDialogActions>
         <button aioBtn variant="outline" (click)="closeModal()">انصراف</button>
-        <button aioBtn type="submit" form="english-text-form" [disabled]="saving() || generating()">
+        <button
+          aioBtn
+          type="submit"
+          form="english-text-form"
+          [disabled]="saving() || generating()"
+        >
           ذخیره و خواندن
         </button>
       </ng-template>
@@ -198,7 +271,9 @@ export class TextsPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
-  protected readonly texts = httpResource<ReadingText[]>(() => `${this.api.base}/texts`);
+  protected readonly texts = httpResource<ReadingText[]>(
+    () => `${this.api.base}/texts`,
+  );
   protected readonly topics = READING_TOPICS;
   protected readonly levels = READING_LEVELS;
   protected readonly modalOpen = signal(false);
@@ -217,7 +292,8 @@ export class TextsPage {
 
   protected readonly fa = (n: number) => faNumber(n);
   protected readonly faDate = (iso: string) => faDate(iso);
-  protected readonly words = (t: ReadingText) => t.body.split(/\s+/).filter(Boolean).length;
+  protected readonly words = (t: ReadingText) =>
+    t.body.split(/\s+/).filter(Boolean).length;
 
   protected openNew() {
     this.title.set('');
@@ -248,7 +324,8 @@ export class TextsPage {
       this.aiWritten.set(true);
       this.feedbackFrom.set(text.feedbackFrom ?? '');
     } catch (error) {
-      if (run === this.generation) this.formError.set(apiErrorMessage(error, 'متن نوشته نشد.'));
+      if (run === this.generation)
+        this.formError.set(apiErrorMessage(error, 'متن نوشته نشد.'));
     } finally {
       if (run === this.generation) this.generating.set(false);
     }
@@ -256,7 +333,8 @@ export class TextsPage {
 
   protected async save() {
     const body = this.body().trim();
-    const title = this.title().trim() || body.split(/\s+/).slice(0, 6).join(' ');
+    const title =
+      this.title().trim() || body.split(/\s+/).slice(0, 6).join(' ');
     if (!body) {
       this.formError.set('متنی که می‌خواهی بخوانی را بنویس یا بچسبان.');
       return;
@@ -267,9 +345,15 @@ export class TextsPage {
     }
     this.saving.set(true);
     try {
-      const text = await this.api.createText(title.slice(0, 200), body, this.aiWritten());
+      const text = await this.api.createText(
+        title.slice(0, 200),
+        body,
+        this.aiWritten(),
+      );
       this.closeModal();
-      await this.router.navigate(['../read', text.id], { relativeTo: this.route });
+      await this.router.navigate(['../read', text.id], {
+        relativeTo: this.route,
+      });
     } catch (error) {
       this.formError.set(apiErrorMessage(error, 'متن ذخیره نشد.'));
     } finally {

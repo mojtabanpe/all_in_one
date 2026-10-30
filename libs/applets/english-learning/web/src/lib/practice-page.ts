@@ -101,7 +101,9 @@ const freshTask = (): TaskState => ({
     <div class="flex flex-col gap-6">
       <header>
         <h1 class="text-2xl font-bold">تمرین مکالمه</h1>
-        <p class="text-muted-foreground text-sm">انگلیسی روزمره: بنویس، بگو و گوش کن.</p>
+        <p class="text-muted-foreground text-sm">
+          انگلیسی روزمره: بنویس، بگو و گوش کن.
+        </p>
       </header>
 
       <div
@@ -128,7 +130,11 @@ const freshTask = (): TaskState => ({
       <div class="grid grid-cols-2 gap-3">
         <div aioField>
           <label aioFieldLabel for="practice-situation">موقعیت</label>
-          <aio-native-select selectId="practice-situation" [value]="situation()" (valueChange)="situation.set($any($event))">
+          <aio-native-select
+            selectId="practice-situation"
+            [value]="situation()"
+            (valueChange)="situation.set($any($event))"
+          >
             @for (s of situations; track s.id) {
               <option aioNativeSelectOption [value]="s.id">{{ s.fa }}</option>
             }
@@ -136,7 +142,11 @@ const freshTask = (): TaskState => ({
         </div>
         <div aioField>
           <label aioFieldLabel for="practice-level">سطح</label>
-          <aio-native-select selectId="practice-level" [value]="level()" (valueChange)="level.set($any($event))">
+          <aio-native-select
+            selectId="practice-level"
+            [value]="level()"
+            (valueChange)="level.set($any($event))"
+          >
             @for (l of levels; track l.id) {
               <option aioNativeSelectOption [value]="l.id">{{ l.fa }}</option>
             }
@@ -149,7 +159,13 @@ const freshTask = (): TaskState => ({
       }
 
       @if (mode() === 'listening') {
-        <button aioBtn size="lg" class="btn-3d h-14 rounded-2xl" [disabled]="busy()" (click)="newDialogue()">
+        <button
+          aioBtn
+          size="lg"
+          class="btn-3d h-14 rounded-2xl"
+          [disabled]="busy()"
+          (click)="newDialogue()"
+        >
           @if (busy()) {
             <aio-spinner /> در حال آماده کردن…
           } @else {
@@ -158,19 +174,46 @@ const freshTask = (): TaskState => ({
         </button>
 
         @if (dialogue(); as d) {
-          <section class="glass flex flex-col gap-4 rounded-2xl p-4" aria-labelledby="dialogue-title">
-            <h2 id="dialogue-title" dir="ltr" lang="en" class="text-start text-lg font-bold">{{ d.title }}</h2>
+          <section
+            class="glass flex flex-col gap-4 rounded-2xl p-4"
+            aria-labelledby="dialogue-title"
+          >
+            <h2
+              id="dialogue-title"
+              dir="ltr"
+              lang="en"
+              class="text-start text-lg font-bold"
+            >
+              {{ d.title }}
+            </h2>
             <div class="flex flex-wrap items-center gap-2">
               <button aioBtn (click)="playAll()">
-                <aio-icon [name]="playing() ? 'lucidePause' : 'lucidePlay'" size="sm" />
+                <aio-icon
+                  [name]="playing() ? 'lucidePause' : 'lucidePlay'"
+                  size="sm"
+                />
                 {{ playing() ? 'توقف' : 'پخش گفت‌وگو' }}
               </button>
-              <div aioToggleGroup type="single" variant="outline" [value]="speedValue()" (valueChange)="setSpeed($event)" aria-label="سرعت">
+              <div
+                aioToggleGroup
+                type="single"
+                variant="outline"
+                [value]="speedValue()"
+                (valueChange)="setSpeed($event)"
+                aria-label="سرعت"
+              >
                 <button aioToggleGroupItem value="0.75">آهسته</button>
                 <button aioToggleGroupItem value="1">عادی</button>
               </div>
-              <button aioBtn variant="ghost" (click)="showText.update(v => !v)">
-                <aio-icon [name]="showText() ? 'lucideEyeOff' : 'lucideEye'" size="sm" />
+              <button
+                aioBtn
+                variant="ghost"
+                (click)="showText.update((v) => !v)"
+              >
+                <aio-icon
+                  [name]="showText() ? 'lucideEyeOff' : 'lucideEye'"
+                  size="sm"
+                />
                 {{ showText() ? 'پنهان کردن متن' : 'نمایش متن' }}
               </button>
             </div>
@@ -186,7 +229,9 @@ const freshTask = (): TaskState => ({
                       class="text-primary shrink-0 font-bold"
                       (click)="speak(l.text, speakerVoice(l.speaker))"
                       [attr.aria-label]="'پخش جمله ' + l.speaker"
-                    >{{ l.speaker }}:</button>
+                    >
+                      {{ l.speaker }}:
+                    </button>
                     <span>{{ l.text }}</span>
                   </li>
                 }
@@ -195,11 +240,25 @@ const freshTask = (): TaskState => ({
           </section>
 
           @if (d.questions.length) {
-            <section class="flex flex-col gap-3" aria-labelledby="questions-title">
+            <section
+              class="flex flex-col gap-3"
+              aria-labelledby="questions-title"
+            >
               <h2 id="questions-title" class="text-lg font-bold">سؤال‌ها</h2>
               @for (q of d.questions; track $index; let qi = $index) {
-                <div class="glass flex flex-col gap-2 rounded-2xl p-4" role="group" [attr.aria-labelledby]="'q-' + qi">
-                  <p [id]="'q-' + qi" dir="ltr" lang="en" class="mb-1 text-start font-semibold">{{ q.question }}</p>
+                <div
+                  class="glass flex flex-col gap-2 rounded-2xl p-4"
+                  role="group"
+                  [attr.aria-labelledby]="'q-' + qi"
+                >
+                  <p
+                    [id]="'q-' + qi"
+                    dir="ltr"
+                    lang="en"
+                    class="mb-1 text-start font-semibold"
+                  >
+                    {{ q.question }}
+                  </p>
                   @for (o of q.options; track $index; let oi = $index) {
                     <button
                       type="button"
@@ -212,9 +271,17 @@ const freshTask = (): TaskState => ({
                     >
                       <span>{{ o }}</span>
                       @if (qi in choices() && oi === q.answer) {
-                        <aio-icon name="lucideCheck" size="sm" aria-label="درست" />
+                        <aio-icon
+                          name="lucideCheck"
+                          size="sm"
+                          aria-label="درست"
+                        />
                       } @else if (choices()[qi] === oi) {
-                        <aio-icon name="lucideX" size="sm" aria-label="نادرست" />
+                        <aio-icon
+                          name="lucideX"
+                          size="sm"
+                          aria-label="نادرست"
+                        />
                       }
                     </button>
                   }
@@ -222,27 +289,54 @@ const freshTask = (): TaskState => ({
               }
             </section>
           }
-          <ng-container *ngTemplateOutlet="phrasesTpl; context: { $implicit: d.phrases }" />
+          <ng-container
+            *ngTemplateOutlet="phrasesTpl; context: { $implicit: d.phrases }"
+          />
         }
       } @else {
-        <button aioBtn size="lg" class="btn-3d h-14 rounded-2xl" [disabled]="busy()" (click)="newTask()">
+        <button
+          aioBtn
+          size="lg"
+          class="btn-3d h-14 rounded-2xl"
+          [disabled]="busy()"
+          (click)="newTask()"
+        >
           @if (busy() && !current().task) {
             <aio-spinner /> در حال آماده کردن…
           } @else {
-            <aio-icon [name]="mode() === 'speaking' ? 'lucideMic' : 'lucidePenLine'" />
+            <aio-icon
+              [name]="mode() === 'speaking' ? 'lucideMic' : 'lucidePenLine'"
+            />
             تمرین تازه
           }
         </button>
 
         @if (current().task; as task) {
-          <section class="glass flex flex-col gap-3 rounded-2xl p-4" aria-labelledby="task-title">
+          <section
+            class="glass flex flex-col gap-3 rounded-2xl p-4"
+            aria-labelledby="task-title"
+          >
             <h2 id="task-title" class="sr-only">تمرین</h2>
             <p dir="ltr" lang="en" class="text-start">{{ task.scenario }}</p>
             @if (task.message) {
-              <div dir="ltr" lang="en" class="bg-accent text-accent-foreground flex items-start gap-2 self-start rounded-2xl rounded-ss-sm p-3">
-                <aio-icon name="lucideMessageSquare" size="sm" class="mt-1 shrink-0" />
+              <div
+                dir="ltr"
+                lang="en"
+                class="bg-accent text-accent-foreground flex items-start gap-2 self-start rounded-2xl rounded-ss-sm p-3"
+              >
+                <aio-icon
+                  name="lucideMessageSquare"
+                  size="sm"
+                  class="mt-1 shrink-0"
+                />
                 <span>{{ task.message }}</span>
-                <button aioBtn variant="ghost" size="icon-sm" (click)="speak(task.message)" aria-label="شنیدن پیام">
+                <button
+                  aioBtn
+                  variant="ghost"
+                  size="icon-sm"
+                  (click)="speak(task.message)"
+                  aria-label="شنیدن پیام"
+                >
                   <aio-icon name="lucideVolume2" size="sm" />
                 </button>
               </div>
@@ -258,20 +352,33 @@ const freshTask = (): TaskState => ({
                   [disabled]="transcribing()"
                   (click)="record()"
                 >
-                  <aio-icon [name]="recording() ? 'lucideSquare' : 'lucideMic'" />
+                  <aio-icon
+                    [name]="recording() ? 'lucideSquare' : 'lucideMic'"
+                  />
                   {{ recording() ? 'پایان ضبط' : 'ضبط پاسخ' }}
                 </button>
                 @if (transcribing()) {
-                  <span class="text-muted-foreground flex items-center gap-2 text-sm"><aio-spinner /> در حال تبدیل صدا به متن…</span>
+                  <span
+                    class="text-muted-foreground flex items-center gap-2 text-sm"
+                    ><aio-spinner /> در حال تبدیل صدا به متن…</span
+                  >
                 }
                 @if (recordingUrl()) {
-                  <audio [src]="recordingUrl()" controls class="h-10 max-w-full"></audio>
+                  <audio
+                    [src]="recordingUrl()"
+                    controls
+                    class="h-10 max-w-full"
+                  ></audio>
                 }
               </div>
             }
 
             <label for="practice-answer" class="text-sm font-medium">
-              {{ mode() === 'speaking' ? 'آنچه گفتی (می‌توانی اصلاحش کنی)' : 'پاسخ تو' }}
+              {{
+                mode() === 'speaking'
+                  ? 'آنچه گفتی (می‌توانی اصلاحش کنی)'
+                  : 'پاسخ تو'
+              }}
             </label>
             <textarea
               aioTextarea
@@ -280,9 +387,16 @@ const freshTask = (): TaskState => ({
               lang="en"
               rows="4"
               [value]="current().answer"
-              (input)="patch({ answer: $any($event.target).value, feedback: null })"
+              (input)="
+                patch({ answer: $any($event.target).value, feedback: null })
+              "
             ></textarea>
-            <button aioBtn class="self-start" [disabled]="busy() || !current().answer.trim()" (click)="check()">
+            <button
+              aioBtn
+              class="self-start"
+              [disabled]="busy() || !current().answer.trim()"
+              (click)="check()"
+            >
               @if (busy()) {
                 <aio-spinner />
               } @else {
@@ -293,10 +407,19 @@ const freshTask = (): TaskState => ({
           </section>
 
           @if (current().feedback; as f) {
-            <section class="glass flex flex-col gap-4 rounded-2xl p-4" aria-labelledby="feedback-title">
+            <section
+              class="glass flex flex-col gap-4 rounded-2xl p-4"
+              aria-labelledby="feedback-title"
+            >
               <h2 id="feedback-title" class="text-lg font-bold">بازخورد</h2>
               @if (f.comment) {
-                <p dir="ltr" lang="en" class="text-primary text-start font-semibold">{{ f.comment }}</p>
+                <p
+                  dir="ltr"
+                  lang="en"
+                  class="text-primary text-start font-semibold"
+                >
+                  {{ f.comment }}
+                </p>
               }
               <div class="flex flex-col gap-1">
                 <span class="text-muted-foreground text-sm">اصلاح‌شده</span>
@@ -304,9 +427,19 @@ const freshTask = (): TaskState => ({
               </div>
               <div class="flex flex-col gap-1">
                 <span class="text-muted-foreground text-sm">طبیعی‌تر</span>
-                <p dir="ltr" lang="en" class="flex items-start gap-2 text-start">
+                <p
+                  dir="ltr"
+                  lang="en"
+                  class="flex items-start gap-2 text-start"
+                >
                   {{ f.natural }}
-                  <button aioBtn variant="ghost" size="icon-sm" (click)="speak(f.natural)" aria-label="شنیدن">
+                  <button
+                    aioBtn
+                    variant="ghost"
+                    size="icon-sm"
+                    (click)="speak(f.natural)"
+                    aria-label="شنیدن"
+                  >
                     <aio-icon name="lucideVolume2" size="sm" />
                   </button>
                 </p>
@@ -317,10 +450,17 @@ const freshTask = (): TaskState => ({
                   <ul dir="ltr" lang="en" class="flex flex-col gap-2">
                     @for (m of f.mistakes; track $index) {
                       <li class="bg-background/60 rounded-xl p-3 text-start">
-                        <span class="text-destructive line-through">{{ m.original }}</span>
-                        → <span class="text-success font-semibold">{{ m.fix }}</span>
+                        <span class="text-destructive line-through">{{
+                          m.original
+                        }}</span>
+                        →
+                        <span class="text-success font-semibold">{{
+                          m.fix
+                        }}</span>
                         @if (m.why) {
-                          <p class="text-muted-foreground text-sm">{{ m.why }}</p>
+                          <p class="text-muted-foreground text-sm">
+                            {{ m.why }}
+                          </p>
                         }
                       </li>
                     }
@@ -328,14 +468,19 @@ const freshTask = (): TaskState => ({
                 </div>
               }
             </section>
-            <ng-container *ngTemplateOutlet="phrasesTpl; context: { $implicit: f.phrases }" />
+            <ng-container
+              *ngTemplateOutlet="phrasesTpl; context: { $implicit: f.phrases }"
+            />
           }
         } @else if (!busy()) {
           <div aioEmpty class="glass rounded-2xl">
             <div aioEmptyHeader>
-              <h2 aioEmptyTitle>{{ mode() === 'speaking' ? 'بلند جواب بده' : 'کوتاه بنویس' }}</h2>
+              <h2 aioEmptyTitle>
+                {{ mode() === 'speaking' ? 'بلند جواب بده' : 'کوتاه بنویس' }}
+              </h2>
               <p aioEmptyDescription>
-                موقعیت را انتخاب کن و «تمرین تازه» را بزن. بعد پاسخت را بررسی می‌کنیم.
+                موقعیت را انتخاب کن و «تمرین تازه» را بزن. بعد پاسخت را بررسی
+                می‌کنیم.
               </p>
             </div>
           </div>
@@ -347,11 +492,20 @@ const freshTask = (): TaskState => ({
       @if (phrases.length) {
         <section class="flex flex-col gap-3" aria-labelledby="phrases-title">
           <div class="flex items-center justify-between gap-3">
-            <h2 id="phrases-title" class="text-lg font-bold">عبارت‌های کاربردی</h2>
+            <h2 id="phrases-title" class="text-lg font-bold">
+              عبارت‌های کاربردی
+            </h2>
             @if (decks().length) {
-              <aio-native-select class="w-40" selectId="phrase-deck" [value]="deckId()" (valueChange)="deckId.set($event)">
+              <aio-native-select
+                class="w-40"
+                selectId="phrase-deck"
+                [value]="deckId()"
+                (valueChange)="deckId.set($event)"
+              >
                 @for (d of decks(); track d.id) {
-                  <option aioNativeSelectOption [value]="d.id">{{ d.name }}</option>
+                  <option aioNativeSelectOption [value]="d.id">
+                    {{ d.name }}
+                  </option>
                 }
               </aio-native-select>
             }
@@ -359,11 +513,23 @@ const freshTask = (): TaskState => ({
           <ul class="glass divide-border/60 flex flex-col divide-y rounded-2xl">
             @for (p of phrases; track p.phrase) {
               <li class="flex min-h-14 items-center gap-2 px-3 py-2">
-                <span dir="ltr" lang="en" class="flex min-w-0 flex-1 flex-col text-start">
+                <span
+                  dir="ltr"
+                  lang="en"
+                  class="flex min-w-0 flex-1 flex-col text-start"
+                >
                   <span class="font-semibold">{{ p.phrase }}</span>
-                  <span class="text-muted-foreground text-sm">{{ p.meaning }}</span>
+                  <span class="text-muted-foreground text-sm">{{
+                    p.meaning
+                  }}</span>
                 </span>
-                <button aioBtn variant="ghost" size="icon" (click)="speak(p.phrase)" [attr.aria-label]="'تلفظ ' + p.phrase">
+                <button
+                  aioBtn
+                  variant="ghost"
+                  size="icon"
+                  (click)="speak(p.phrase)"
+                  [attr.aria-label]="'تلفظ ' + p.phrase"
+                >
                   <aio-icon name="lucideVolume2" size="sm" />
                 </button>
                 <button
@@ -374,7 +540,12 @@ const freshTask = (): TaskState => ({
                   (click)="addPhrase(p)"
                   [attr.aria-label]="'افزودن ' + p.phrase + ' به دسته'"
                 >
-                  <aio-icon [name]="added().has(p.phrase) ? 'lucideCheck' : 'lucidePlus'" size="sm" />
+                  <aio-icon
+                    [name]="
+                      added().has(p.phrase) ? 'lucideCheck' : 'lucidePlus'
+                    "
+                    size="sm"
+                  />
                 </button>
               </li>
             }
@@ -454,7 +625,8 @@ export class PracticePage {
       .decks()
       .then((decks) => {
         this.decks.set(decks);
-        if (!decks.some((d) => d.id === this.deckId())) this.deckId.set(decks[0]?.id ?? '');
+        if (!decks.some((d) => d.id === this.deckId()))
+          this.deckId.set(decks[0]?.id ?? '');
       })
       .catch(() => undefined);
   }
@@ -501,7 +673,11 @@ export class PracticePage {
     this.cancelRecording();
     return this.load(
       () => this.api.writingTask(situation, level),
-      (task) => this.patch({ task, answer: '', feedback: null, situation, level }, mode),
+      (task) =>
+        this.patch(
+          { task, answer: '', feedback: null, situation, level },
+          mode,
+        ),
     );
   }
 
@@ -515,7 +691,13 @@ export class PracticePage {
       return;
     }
     return this.load(
-      () => this.api.writingFeedback(state.situation, state.level, state.task!, answer),
+      () =>
+        this.api.writingFeedback(
+          state.situation,
+          state.level,
+          state.task!,
+          answer,
+        ),
       (feedback) => this.patch({ feedback }, mode),
     );
   }
@@ -540,7 +722,9 @@ export class PracticePage {
   }
 
   protected speakerVoice(speaker: string): SpeechVoice {
-    return speaker === this.dialogue()?.lines[0]?.speaker ? 'primary' : 'secondary';
+    return speaker === this.dialogue()?.lines[0]?.speaker
+      ? 'primary'
+      : 'secondary';
   }
 
   protected async playAll() {
@@ -580,11 +764,16 @@ export class PracticePage {
   }
 
   /** Correct answers turn green after a choice; a wrong pick turns red. */
-  protected optionClass(question: number, option: number, answer: number): string {
+  protected optionClass(
+    question: number,
+    option: number,
+    answer: number,
+  ): string {
     const choices = this.choices();
     if (!(question in choices)) return 'border-border hover:bg-accent';
     if (option === answer) return 'border-success bg-success/10 text-success';
-    if (choices[question] === option) return 'border-destructive bg-destructive/10 text-destructive';
+    if (choices[question] === option)
+      return 'border-destructive bg-destructive/10 text-destructive';
     return 'border-border opacity-60';
   }
 
@@ -595,11 +784,17 @@ export class PracticePage {
       return;
     }
     try {
-      await this.api.createCard({ deckId, front: phrase.phrase, back: phrase.meaning });
+      await this.api.createCard({
+        deckId,
+        front: phrase.phrase,
+        back: phrase.meaning,
+      });
       remember(DECK_KEY, deckId);
       this.added.update((set) => new Set(set).add(phrase.phrase));
       const deck = this.decks().find((d) => d.id === deckId);
-      aioToast.success(`«${phrase.phrase}» به ${deck?.name ?? 'دسته'} اضافه شد`);
+      aioToast.success(
+        `«${phrase.phrase}» به ${deck?.name ?? 'دسته'} اضافه شد`,
+      );
     } catch (error) {
       aioToast.error(apiErrorMessage(error, 'کارت اضافه نشد.'));
     }
@@ -615,7 +810,10 @@ export class PracticePage {
     this.error.set('');
     const run = ++this.recordingRun;
     try {
-      if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined')
+      if (
+        !navigator.mediaDevices?.getUserMedia ||
+        typeof MediaRecorder === 'undefined'
+      )
         throw new Error('ضبط صدا در این مرورگر ممکن نیست. پاسخ را بنویس.');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (run !== this.recordingRun) {
@@ -623,9 +821,11 @@ export class PracticePage {
         return;
       }
       this.stream = stream;
-      const mimeType = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/ogg;codecs=opus'].find(
-        (t) => MediaRecorder.isTypeSupported(t),
-      );
+      const mimeType = [
+        'audio/webm;codecs=opus',
+        'audio/mp4',
+        'audio/ogg;codecs=opus',
+      ].find((t) => MediaRecorder.isTypeSupported(t));
       const recorder = (this.recorder = new MediaRecorder(
         stream,
         mimeType ? { mimeType } : undefined,
@@ -635,7 +835,8 @@ export class PracticePage {
       recorder.ondataavailable = (e) => {
         chunks.push(e.data);
         bytes += e.data.size;
-        if (bytes > MAX_RECORDING - 100 * 1024 && recorder.state !== 'inactive') recorder.stop();
+        if (bytes > MAX_RECORDING - 100 * 1024 && recorder.state !== 'inactive')
+          recorder.stop();
       };
       recorder.onstop = () => {
         clearTimeout(this.timer);
@@ -657,7 +858,8 @@ export class PracticePage {
               this.patch({ answer: result.text, feedback: null }, 'speaking');
           })
           .catch((error) => {
-            if (run === this.recordingRun) this.error.set(apiErrorMessage(error));
+            if (run === this.recordingRun)
+              this.error.set(apiErrorMessage(error));
           })
           .finally(() => {
             if (run === this.recordingRun) this.transcribing.set(false);

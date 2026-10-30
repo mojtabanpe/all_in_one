@@ -14,9 +14,16 @@ describe('AI response parsers', () => {
         '```json\n{"back":" to fail to value ","examples":"- One.\\n- Two."}\n```',
         ' bond ',
       ),
-    ).toEqual({ front: 'bond', back: 'to fail to value', examples: '- One.\n- Two.' });
+    ).toEqual({
+      front: 'bond',
+      back: 'to fail to value',
+      examples: '- One.\n- Two.',
+    });
     expect(
-      parseCardAnswer('{"front":"take","back":"x","examples":["A.","B."]}', 'took'),
+      parseCardAnswer(
+        '{"front":"take","back":"x","examples":["A.","B."]}',
+        'took',
+      ),
     ).toEqual({ front: 'take', back: 'x', examples: '- A.\n- B.' });
     expect(() => parseCardAnswer('no json here', 'x')).toThrow();
     expect(() => parseCardAnswer('{"back":"","examples":""}', 'x')).toThrow();

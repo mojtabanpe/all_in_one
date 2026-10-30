@@ -78,7 +78,9 @@ import { EnglishApi } from './english-api';
           </span>
           <span
             class="flex items-center gap-1 text-[var(--gem)]"
-            [attr.aria-label]="fa(stats.value()?.mature ?? 0) + ' کارت جاافتاده'"
+            [attr.aria-label]="
+              fa(stats.value()?.mature ?? 0) + ' کارت جاافتاده'
+            "
           >
             <aio-icon name="lucideGem" />{{ fa(stats.value()?.mature ?? 0) }}
           </span>
@@ -99,8 +101,8 @@ import { EnglishApi } from './english-api';
           <div class="flex flex-col gap-1">
             <h2 class="text-xl font-bold">مرور امروز</h2>
             <p class="text-muted-foreground">
-              {{ fa(totalDue()) }} کارت آماده مرور است. از «{{ next.name }}» شروع
-              کن.
+              {{ fa(totalDue()) }} کارت آماده مرور است. از «{{ next.name }}»
+              شروع کن.
             </p>
           </div>
           <a
@@ -141,7 +143,8 @@ import { EnglishApi } from './english-api';
             دسته‌های من
             @if (myDecks().length) {
               <span class="text-muted-foreground text-sm font-normal"
-                >{{ fa(myDecks().length) }} دسته، {{ fa(totalCards()) }} کارت</span
+                >{{ fa(myDecks().length) }} دسته،
+                {{ fa(totalCards()) }} کارت</span
               >
             }
           </h2>
@@ -190,7 +193,9 @@ import { EnglishApi } from './english-api';
               <span class="w-2 shrink-0" [class]="tone(deck.color).bar"></span>
               <span class="flex min-w-0 flex-1 flex-col gap-2 p-4">
                 <span class="flex items-start justify-between gap-2">
-                  <span class="truncate text-lg font-bold">{{ deck.name }}</span>
+                  <span class="truncate text-lg font-bold">{{
+                    deck.name
+                  }}</span>
                   @if (deck.due > 0) {
                     <span
                       class="bg-primary text-primary-foreground shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold"
@@ -311,8 +316,15 @@ import { EnglishApi } from './english-api';
         </form>
       </ng-template>
       <ng-template aioDialogActions>
-        <button aioBtn variant="outline" (click)="creating.set(false)">انصراف</button>
-        <button aioBtn type="submit" form="english-deck-form" [disabled]="saving()">
+        <button aioBtn variant="outline" (click)="creating.set(false)">
+          انصراف
+        </button>
+        <button
+          aioBtn
+          type="submit"
+          form="english-deck-form"
+          [disabled]="saving()"
+        >
           ساخت دسته
         </button>
       </ng-template>
@@ -324,8 +336,12 @@ export class LibraryPage {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
-  protected readonly stats = httpResource<EnglishStats>(() => `${this.api.base}/stats`);
-  protected readonly decks = httpResource<DeckWithStats[]>(() => `${this.api.base}/decks`);
+  protected readonly stats = httpResource<EnglishStats>(
+    () => `${this.api.base}/stats`,
+  );
+  protected readonly decks = httpResource<DeckWithStats[]>(
+    () => `${this.api.base}/decks`,
+  );
   protected readonly starters = httpResource<StarterDeck[]>(
     () => `${this.api.base}/starter-decks`,
   );
@@ -346,7 +362,9 @@ export class LibraryPage {
   /** Copied in this visit, or a deck with the same name is already in the library. */
   protected readonly inLibrary = (s: StarterDeck) =>
     this.copied().has(s.slug) || this.myDecks().some((d) => d.name === s.title);
-  protected readonly streak = computed(() => this.stats.value()?.streakDays ?? 0);
+  protected readonly streak = computed(
+    () => this.stats.value()?.streakDays ?? 0,
+  );
   protected readonly myDecks = computed(() =>
     this.decks.hasValue() ? this.decks.value() : [],
   );
@@ -359,8 +377,9 @@ export class LibraryPage {
   /** The deck with the most cards due. */
   protected readonly recommended = computed(
     () =>
-      [...this.myDecks()].filter((d) => d.due > 0).sort((a, b) => b.due - a.due)[0] ??
-      null,
+      [...this.myDecks()]
+        .filter((d) => d.due > 0)
+        .sort((a, b) => b.due - a.due)[0] ?? null,
   );
   protected readonly filteredDecks = computed(() => {
     const q = this.search().trim().toLowerCase();
@@ -405,7 +424,9 @@ export class LibraryPage {
     try {
       await this.api.copyStarter(starter.slug);
       this.copied.update((set) => new Set(set).add(starter.slug));
-      aioToast.success(`«${starter.title}» با ${faNumber(starter.cardCount)} کارت اضافه شد`);
+      aioToast.success(
+        `«${starter.title}» با ${faNumber(starter.cardCount)} کارت اضافه شد`,
+      );
       this.decks.reload();
       this.stats.reload();
     } catch (error) {
