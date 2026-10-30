@@ -1,0 +1,401 @@
+import { httpResource } from '@angular/common/http';
+import {
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import {
+  type PlannerColor,
+  type PlannerFolder,
+  type PlannerListDetail,
+  type PlannerTag,
+} from '@all-in-one/applets/planner/contracts';
+import {
+  AioButton,
+  AioConfirm,
+  AioFieldDirectives,
+  AioIcon,
+  AioInput,
+  AioInputGroupDirectives,
+  AioNativeSelect,
+  AioNativeSelectDirectives,
+  AioSkeleton,
+  aioToast,
+  provideIcons,
+} from '@all-in-one/ui';
+import { apiErrorMessage, AuthStore } from '@all-in-one/web/shared';
+import {
+  lucidePlus,
+  lucideTrash2,
+  lucideUserPlus,
+  lucideX,
+} from '@ng-icons/lucide';
+import { ColorPicker } from './color-picker';
+import { PlannerApi } from './planner-api';
+
+/** A list's name, colour, folder, sections and members (TickTick list settings). */
+@Component({
+  selector: 'planner-list-settings',
+  imports: [
+    AioButton,
+    AioFieldDirectives,
+    AioIcon,
+    AioInput,
+    AioInputGroupDirectives,
+    ColorPicker,
+    AioNativeSelect,
+    AioNativeSelectDirectives,
+    AioSkeleton,
+  ],
+  providers: [
+    provideIcons({ lucidePlus, lucideTrash2, lucideUserPlus, lucideX }),
+  ],
+  template: `
+    @if (detail.hasValue()) {
+      @let l = detail.value();
+      <div class="flex flex-col gap-5 pb-2">
+        @if (l.role === 'OWNER') {
+          <div aioField>
+            <label aioFieldLabel for="list-name">نام</label>
+            <input
+              aioInput
+              id="list-name"
+              [disabled]="l.isInbox"
+              [value]="l.name"
+              (change)="rename($any($event.target).value)"
+            />
+          </div>
+          <planner-color-picker
+            [value]="color()"
+            (valueChange)="setColor($event)"
+          />
+          @if (!l.isInbox) {
+            <div aioField>
+              <label aioFieldLabel for="list-folder">پوشه</label>
+              <aio-native-select
+                selectId="list-folder"
+                [value]="l.folderId ?? ''"
+                (valueChange)="update({ folderId: $event || null })"
+              >
+                <option aioNativeSelectOption value="">بدون پوشه</option>
+                @for (f of folders(); track f.id) {
+                  <option aioNativeSelectOption [value]="f.id">
+                    {{ f.name }}
+                  </option>
+                }
+              </aio-native-select>
+            </div>
+          }
+        }
+
+        <div class="flex flex-col gap-2">
+          <span class="text-sm font-medium">بخش‌ها</span>
+          @for (s of l.sections; track s.id) {
+            <div class="flex items-center gap-2">
+              <input
+                aioInput
+                class="flex-1"
+                [attr.aria-label]="'نام بخش ' + s.name"
+                [value]="s.name"
+                (change)="renameSection(s.id, $any($event.target).value)"
+              />
+              <button
+                aioBtn
+                variant="ghost"
+                size="icon"
+                type="button"
+                [attr.aria-label]="'حذف بخش ' + s.name"
+                (click)="removeSection(s.id, s.name)"
+              >
+                <aio-icon name="lucideTrash2" size="sm" />
+              </button>
+            </div>
+          }
+          <form aioInputGroup (submit)="$event.preventDefault(); addSection()">
+            <input
+              aioInputGroupInput
+              placeholder="بخش تازه، مثلاً «این هفته»"
+              aria-label="بخش تازه"
+              [value]="newSection()"
+              (input)="newSection.set($any($event.target).value)"
+            />
+            <aio-input-group-addon align="inline-end">
+              <button
+                aioInputGroupButton
+                type="submit"
+                size="icon-sm"
+                aria-label="افزودن بخش"
+              >
+                <aio-icon name="lucidePlus" size="sm" />
+              </button>
+            </aio-input-group-addon>
+          </form>
+        </div>
+
+        @if (!l.isInbox) {
+          <div class="flex flex-col gap-2">
+            <span class="text-sm font-medium">اعضا</span>
+            <ul class="flex flex-col">
+              @for (m of l.members; track m.userId) {
+                <li class="flex min-h-11 items-center gap-2 text-sm">
+                  <span class="flex-1">
+                    {{ m.name || m.email }}
+                    <span
+                      class="text-muted-foreground block text-xs"
+                      dir="ltr"
+                      >{{ m.email }}</span
+                    >
+                  </span>
+                  @if (m.role === 'OWNER') {
+                    <span class="text-muted-foreground text-xs"
+                      >صاحب فهرست</span
+                    >
+                  } @else if (l.role === 'OWNER' || m.userId === me()) {
+                    <button
+                      aioBtn
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      (click)="removeMember(m.userId, m.name || m.email)"
+                    >
+                      {{ m.userId === me() ? 'خروج' : 'برداشتن' }}
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+            @if (l.role === 'OWNER') {
+              <form aioInputGroup (submit)="$event.preventDefault(); invite()">
+                <input
+                  aioInputGroupInput
+                  type="email"
+                  dir="ltr"
+                  placeholder="email@example.com"
+                  aria-label="ایمیل عضو تازه"
+                  [value]="email()"
+                  (input)="email.set($any($event.target).value)"
+                />
+                <aio-input-group-addon align="inline-end">
+                  <button aioInputGroupButton type="submit" size="sm">
+                    <aio-icon name="lucideUserPlus" size="sm" />
+                    دعوت
+                  </button>
+                </aio-input-group-addon>
+              </form>
+              <p class="text-muted-foreground text-xs">
+                اعضا همه کارهای این فهرست را می‌بینند و ویرایش می‌کنند و می‌شود
+                کار را به آن‌ها سپرد.
+              </p>
+            }
+          </div>
+          @if (l.role === 'OWNER') {
+            <button
+              aioBtn
+              variant="ghost"
+              type="button"
+              class="text-destructive self-start"
+              (click)="remove(l)"
+            >
+              <aio-icon name="lucideTrash2" size="sm" />
+              حذف فهرست
+            </button>
+          }
+        }
+      </div>
+    } @else {
+      <div aioSkeleton class="h-40 rounded-2xl"></div>
+    }
+  `,
+})
+export class ListSettings {
+  private readonly api = inject(PlannerApi);
+  private readonly confirm = inject(AioConfirm);
+  private readonly auth = inject(AuthStore);
+
+  readonly listId = input.required<string>();
+  readonly folders = input.required<PlannerFolder[]>();
+  readonly changed = output<void>();
+  readonly removed = output<void>();
+
+  protected readonly newSection = signal('');
+  protected readonly email = signal('');
+  protected readonly me = computed(() => this.auth.user()?.id);
+
+  protected readonly detail = httpResource<PlannerListDetail>(
+    () => `${this.api.base}/lists/${this.listId()}`,
+  );
+  protected readonly color = computed(() =>
+    this.detail.hasValue() ? this.detail.value().color : 'sky',
+  );
+
+  protected setColor(color: PlannerColor) {
+    void this.update({ color });
+  }
+
+  protected rename(value: string) {
+    const name = value.trim();
+    if (name) void this.update({ name });
+  }
+
+  protected async update(change: Parameters<PlannerApi['updateList']>[1]) {
+    await this.run(() => this.api.updateList(this.listId(), change));
+  }
+
+  protected async addSection() {
+    const name = this.newSection().trim();
+    if (!name) return;
+    this.newSection.set('');
+    await this.run(() => this.api.addSection(this.listId(), name));
+  }
+
+  protected renameSection(id: string, value: string) {
+    const name = value.trim();
+    if (name) void this.run(() => this.api.renameSection(id, name));
+  }
+
+  protected async removeSection(id: string, name: string) {
+    const ok = await this.confirm.ask({
+      title: `بخش «${name}» حذف شود؟`,
+      description: 'کارهایش در فهرست می‌مانند، بدون بخش.',
+      confirmText: 'حذف بخش',
+      destructive: true,
+    });
+    if (ok) await this.run(() => this.api.removeSection(id));
+  }
+
+  protected async invite() {
+    const email = this.email().trim();
+    if (!email) return;
+    await this.run(async () => {
+      await this.api.addMember(this.listId(), email);
+      this.email.set('');
+      aioToast.success('عضو اضافه شد');
+    });
+  }
+
+  protected async removeMember(userId: string, name: string) {
+    const leaving = userId === this.me();
+    const ok = await this.confirm.ask({
+      title: leaving ? 'از این فهرست خارج می‌شوی؟' : `${name} برداشته شود؟`,
+      description: 'کارهایی که به او سپرده شده بی‌مسئول می‌شوند.',
+      confirmText: leaving ? 'خروج' : 'برداشتن',
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await this.api.removeMember(this.listId(), userId);
+      if (leaving) this.removed.emit();
+      else this.detail.reload();
+      this.changed.emit();
+    } catch (error) {
+      aioToast.error(apiErrorMessage(error));
+    }
+  }
+
+  protected async remove(list: PlannerListDetail) {
+    const ok = await this.confirm.ask({
+      title: `فهرست «${list.name}» حذف شود؟`,
+      description: 'همه کارهای این فهرست هم برای همیشه حذف می‌شوند.',
+      confirmText: 'حذف فهرست',
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await this.api.removeList(list.id);
+      this.removed.emit();
+      this.changed.emit();
+    } catch (error) {
+      aioToast.error(apiErrorMessage(error));
+    }
+  }
+
+  private async run(call: () => Promise<unknown>) {
+    try {
+      await call();
+      this.detail.reload();
+      this.changed.emit();
+    } catch (error) {
+      aioToast.error(apiErrorMessage(error));
+    }
+  }
+}
+
+/** Rename, recolour or delete a tag. */
+@Component({
+  selector: 'planner-tag-settings',
+  imports: [AioButton, AioFieldDirectives, AioIcon, AioInput, ColorPicker],
+  providers: [provideIcons({ lucideTrash2 })],
+  template: `
+    <div class="flex flex-col gap-5 pb-2">
+      <div aioField>
+        <label aioFieldLabel for="tag-name">نام</label>
+        <input
+          aioInput
+          id="tag-name"
+          [value]="tag().name"
+          (change)="rename($any($event.target).value)"
+        />
+      </div>
+      <planner-color-picker
+        [value]="color()"
+        (valueChange)="setColor($event)"
+      />
+      <button
+        aioBtn
+        variant="ghost"
+        type="button"
+        class="text-destructive self-start"
+        (click)="remove()"
+      >
+        <aio-icon name="lucideTrash2" size="sm" />
+        حذف برچسب
+      </button>
+    </div>
+  `,
+})
+export class TagSettings {
+  private readonly api = inject(PlannerApi);
+  private readonly confirm = inject(AioConfirm);
+
+  readonly tag = input.required<PlannerTag>();
+  readonly changed = output<PlannerTag | null>();
+
+  protected readonly color = computed(() => this.tag().color);
+
+  protected setColor(color: PlannerColor) {
+    void this.run(() => this.api.updateTag(this.tag().id, { color }));
+  }
+
+  protected rename(value: string) {
+    const name = value.trim().replace(/^#/, '').replace(/\s+/g, '_');
+    if (name && name !== this.tag().name)
+      void this.run(() => this.api.updateTag(this.tag().id, { name }));
+  }
+
+  protected async remove() {
+    const ok = await this.confirm.ask({
+      title: `برچسب «${this.tag().name}» حذف شود؟`,
+      description: 'از همه کارها برداشته می‌شود؛ خود کارها می‌مانند.',
+      confirmText: 'حذف برچسب',
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await this.api.removeTag(this.tag().id);
+      this.changed.emit(null);
+    } catch (error) {
+      aioToast.error(apiErrorMessage(error));
+    }
+  }
+
+  private async run(call: () => Promise<PlannerTag>) {
+    try {
+      this.changed.emit(await call());
+    } catch (error) {
+      aioToast.error(apiErrorMessage(error));
+    }
+  }
+}

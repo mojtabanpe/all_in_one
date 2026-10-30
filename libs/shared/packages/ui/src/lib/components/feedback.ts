@@ -59,4 +59,7 @@ export const aioToast = {
     toast.error(message, { description }),
   info: (message: string, description?: string) =>
     toast.info(message, { description }),
+  /** A toast with one action button, e.g. «بازگرداندن» (undo). */
+  action: (message: string, label: string, onClick: () => void) =>
+    toast(message, { action: { label, onClick } }),
 };

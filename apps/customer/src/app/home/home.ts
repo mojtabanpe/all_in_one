@@ -86,7 +86,7 @@ export class Home {
   protected readonly name = computed(() => this.auth.user()?.name ?? '');
 
   private readonly tasks = httpResource<PlannerTask[]>(
-    () => `${this.api}/planner/tasks?from=${this.today}&to=${this.today}`,
+    () => `${this.api}/planner/tasks?preset=today`,
   );
   private readonly english = httpResource<EnglishStats>(
     () => `${this.api}/english/stats`,

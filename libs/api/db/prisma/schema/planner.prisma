@@ -1,6 +1,7 @@
-// Applet: planner (libs/applets/planner)
+// Applet: planner (libs/applets/planner), with TickTick MCP parity (directive 23).
 
 enum TaskPriority {
+  NONE
   LOW
   MEDIUM
   HIGH
@@ -11,23 +12,274 @@ enum TaskStatus {
   DONE
 }
 
+/// TickTick's task "type": a task (optionally with checklist items) or a note.
+enum TaskKind {
+  TASK
+  NOTE
+}
+
+enum ListRole {
+  OWNER
+  EDITOR
+}
+
+enum FocusKind {
+  POMODORO
+  STOPWATCH
+}
+
+enum CountdownKind {
+  COUNTDOWN
+  ANNIVERSARY
+  BIRTHDAY
+  HOLIDAY
+}
+
+/// TickTick "folder" (project group): groups lists in the sidebar.
+model PlannerFolder {
+  id        String        @id @default(uuid(7)) @db.Uuid
+  userId    String        @db.Uuid
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String        @db.VarChar(100)
+  sortOrder Int           @default(0)
+  createdAt DateTime      @default(now())
+  lists     PlannerList[]
+
+  @@index([userId])
+  @@map("planner_folders")
+}
+
+/// TickTick "list" (project). Each user has one Inbox; lists can be shared.
+model PlannerList {
+  id        String              @id @default(uuid(7)) @db.Uuid
+  ownerId   String              @db.Uuid
+  owner     User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name      String              @db.VarChar(100)
+  /// sky | violet | rose | amber | sage | clay | slate
+  color     String              @default("sky") @db.VarChar(16)
+  isInbox   Boolean             @default(false)
+  folderId  String?             @db.Uuid
+  folder    PlannerFolder?      @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  sortOrder Int                 @default(0)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  sections  PlannerSection[]
+  tasks     PlannerTask[]
+  members   PlannerListMember[]
+
+  @@index([ownerId])
+  @@map("planner_lists")
+}
+
+/// Members of a shared list (the owner is a member too).
+model PlannerListMember {
+  listId    String      @db.Uuid
+  list      PlannerList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  userId    String      @db.Uuid
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      ListRole    @default(EDITOR)
+  createdAt DateTime    @default(now())
+
+  @@id([listId, userId])
+  @@index([userId])
+  @@map("planner_list_members")
+}
+
+/// TickTick "column": a section inside a list.
+model PlannerSection {
+  id        String        @id @default(uuid(7)) @db.Uuid
+  listId    String        @db.Uuid
+  list      PlannerList   @relation(fields: [listId], references: [id], onDelete: Cascade)
+  name      String        @db.VarChar(100)
+  sortOrder Int           @default(0)
+  tasks     PlannerTask[]
+
+  @@index([listId])
+  @@map("planner_sections")
+}
+
 model PlannerTask {
+  id          String                 @id @default(uuid(7)) @db.Uuid
+  /// Creator
+  userId      String                 @db.Uuid
+  user        User                   @relation("PlannerTaskCreator", fields: [userId], references: [id], onDelete: Cascade)
+  listId      String                 @db.Uuid
+  list        PlannerList            @relation(fields: [listId], references: [id], onDelete: Cascade)
+  sectionId   String?                @db.Uuid
+  section     PlannerSection?        @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  assigneeId  String?                @db.Uuid
+  assignee    User?                  @relation("PlannerTaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  title       String                 @db.VarChar(200)
+  /// Description (TickTick "content")
+  content     String                 @default("") @db.VarChar(10000)
+  kind        TaskKind               @default(TASK)
+  /// Optional: tasks without a date live in their list (TickTick).
+  date        DateTime?              @db.Date
+  /// "HH:mm", optional
+  time        String?                @db.VarChar(5)
+  priority    TaskPriority           @default(NONE)
+  status      TaskStatus             @default(TODO)
+  completedAt DateTime?
+  /// Set when moved to the Trash.
+  deletedAt   DateTime?
+  sortOrder   Int                    @default(0)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  checklist   PlannerChecklistItem[]
+  tags        PlannerTaskTag[]
+  comments    PlannerComment[]
+  focuses     PlannerFocus[]
+
+  @@index([userId, date])
+  @@index([listId, status])
+  @@index([assigneeId])
+  @@map("planner_tasks")
+}
+
+model PlannerChecklistItem {
+  id          String      @id @default(uuid(7)) @db.Uuid
+  taskId      String      @db.Uuid
+  task        PlannerTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  title       String      @db.VarChar(200)
+  done        Boolean     @default(false)
+  completedAt DateTime?
+  sortOrder   Int         @default(0)
+
+  @@index([taskId])
+  @@map("planner_checklist_items")
+}
+
+model PlannerTag {
+  id     String           @id @default(uuid(7)) @db.Uuid
+  userId String           @db.Uuid
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name   String           @db.VarChar(50)
+  color  String           @default("slate") @db.VarChar(16)
+  tasks  PlannerTaskTag[]
+
+  @@unique([userId, name])
+  @@map("planner_tags")
+}
+
+model PlannerTaskTag {
+  taskId String      @db.Uuid
+  task   PlannerTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tagId  String      @db.Uuid
+  tag    PlannerTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, tagId])
+  @@index([tagId])
+  @@map("planner_task_tags")
+}
+
+model PlannerComment {
+  id        String      @id @default(uuid(7)) @db.Uuid
+  taskId    String      @db.Uuid
+  task      PlannerTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId    String      @db.Uuid
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body      String      @db.VarChar(2000)
+  createdAt DateTime    @default(now())
+
+  @@index([taskId])
+  @@map("planner_comments")
+}
+
+model PlannerHabitSection {
+  id        String         @id @default(uuid(7)) @db.Uuid
+  userId    String         @db.Uuid
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String         @db.VarChar(100)
+  sortOrder Int            @default(0)
+  habits    PlannerHabit[]
+
+  @@index([userId])
+  @@map("planner_habit_sections")
+}
+
+model PlannerHabit {
+  id        String                @id @default(uuid(7)) @db.Uuid
+  userId    String                @db.Uuid
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sectionId String?               @db.Uuid
+  section   PlannerHabitSection?  @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  name      String                @db.VarChar(100)
+  /// ng-icons lucide name
+  icon      String                @default("lucideSparkles") @db.VarChar(40)
+  color     String                @default("sage") @db.VarChar(16)
+  /// Check-ins needed per day (e.g. 8 glasses of water).
+  goal      Int                   @default(1)
+  unit      String                @default("") @db.VarChar(20)
+  /// Days it is due, 0 = Sunday … 6 = Saturday.
+  weekdays  Int[]                 @default([0, 1, 2, 3, 4, 5, 6])
+  archived  Boolean               @default(false)
+  sortOrder Int                   @default(0)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  checkins  PlannerHabitCheckin[]
+
+  @@index([userId])
+  @@map("planner_habits")
+}
+
+model PlannerHabitCheckin {
+  habitId String       @db.Uuid
+  habit   PlannerHabit @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  date    DateTime     @db.Date
+  /// Count done that day; the day is complete when value >= habit.goal.
+  value   Int          @default(1)
+
+  @@id([habitId, date])
+  @@map("planner_habit_checkins")
+}
+
+/// A Pomodoro or stopwatch session; the duration is fixed once recorded.
+model PlannerFocus {
   id          String       @id @default(uuid(7)) @db.Uuid
   userId      String       @db.Uuid
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title       String       @db.VarChar(200)
-  notes       String?      @db.VarChar(2000)
-  date        DateTime     @db.Date
-  /// "HH:mm", optional
-  time        String?      @db.VarChar(5)
-  priority    TaskPriority @default(MEDIUM)
-  status      TaskStatus   @default(TODO)
-  /// personal | work | health | learning | home
-  area        String       @default("personal") @db.VarChar(32)
-  completedAt DateTime?
+  taskId      String?      @db.Uuid
+  task        PlannerTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  kind        FocusKind    @default(POMODORO)
+  startAt     DateTime
+  endAt       DateTime
+  durationMin Int
+  note        String       @default("") @db.VarChar(1000)
   createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
 
-  @@index([userId, date])
-  @@map("planner_tasks")
+  @@index([userId, startAt])
+  @@map("planner_focuses")
+}
+
+/// A subscribed calendar (ICS feed URL from Google, Outlook, iCloud, …).
+model PlannerCalendar {
+  id            String    @id @default(uuid(7)) @db.Uuid
+  userId        String    @db.Uuid
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String    @db.VarChar(100)
+  url           String    @db.VarChar(2000)
+  color         String    @default("violet") @db.VarChar(16)
+  lastFetchedAt DateTime?
+  lastError     String?   @db.VarChar(300)
+  createdAt     DateTime  @default(now())
+
+  @@index([userId])
+  @@map("planner_calendars")
+}
+
+model PlannerCountdown {
+  id           String        @id @default(uuid(7)) @db.Uuid
+  userId       String        @db.Uuid
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String        @db.VarChar(100)
+  date         DateTime      @db.Date
+  kind         CountdownKind @default(COUNTDOWN)
+  /// Anniversaries and birthdays come back every year.
+  repeatYearly Boolean       @default(false)
+  color        String        @default("rose") @db.VarChar(16)
+  note         String        @default("") @db.VarChar(500)
+  createdAt    DateTime      @default(now())
+
+  @@index([userId])
+  @@map("planner_countdowns")
 }

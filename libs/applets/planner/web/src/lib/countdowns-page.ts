@@ -1,0 +1,339 @@
+import { httpResource } from '@angular/common/http';
+import { Component, inject, linkedSignal, signal } from '@angular/core';
+import {
+  type CountdownKind,
+  COUNTDOWN_KIND_LABELS,
+  COUNTDOWN_KINDS,
+  type CreateCountdownInput,
+  type PlannerColor,
+  type PlannerCountdown,
+  toIsoDate,
+} from '@all-in-one/applets/planner/contracts';
+import {
+  AioButton,
+  AioConfirm,
+  AioDialog,
+  AioDialogActions,
+  AioDialogBody,
+  AioEmptyDirectives,
+  AioFieldDirectives,
+  AioIcon,
+  AioInput,
+  AioNativeSelect,
+  AioNativeSelectDirectives,
+  AioSkeleton,
+  AioSwitch,
+  aioToast,
+  provideIcons,
+} from '@all-in-one/ui';
+import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
+import { lucideHourglass, lucidePlus, lucideRepeat } from '@ng-icons/lucide';
+import { ColorPicker } from './color-picker';
+import { TONE } from './colors';
+import { PlannerApi } from './planner-api';
+
+interface Draft extends Required<CreateCountdownInput> {
+  id?: string;
+}
+
+const emptyDraft = (): Draft => ({
+  title: '',
+  date: toIsoDate(new Date()),
+  kind: 'COUNTDOWN',
+  repeatYearly: false,
+  color: 'rose',
+  note: '',
+});
+
+/** TickTick countdowns: days left to (or since) dates that matter. */
+@Component({
+  selector: 'planner-countdowns-page',
+  imports: [
+    AioButton,
+    AioDialog,
+    AioDialogActions,
+    AioDialogBody,
+    AioEmptyDirectives,
+    AioFieldDirectives,
+    AioIcon,
+    AioInput,
+    AioNativeSelect,
+    AioNativeSelectDirectives,
+    AioSkeleton,
+    AioSwitch,
+    ColorPicker,
+  ],
+  providers: [provideIcons({ lucideHourglass, lucidePlus, lucideRepeat })],
+  host: { class: 'flex flex-col gap-5' },
+  template: `
+    <header class="flex items-center justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-bold">روزشمار</h1>
+        <p class="text-muted-foreground text-sm">
+          تولدها، سالگردها و روزهای مهم
+        </p>
+      </div>
+      <button aioBtn (click)="open()">
+        <aio-icon name="lucidePlus" size="sm" />
+        روز تازه
+      </button>
+    </header>
+
+    @if (res.isLoading() && !res.hasValue()) {
+      <div aioSkeleton class="h-24 rounded-2xl"></div>
+    } @else {
+      <div class="grid gap-3 sm:grid-cols-2">
+        @for (c of items(); track c.id) {
+          <button
+            type="button"
+            class="glass flex items-center gap-4 rounded-2xl p-4 text-start"
+            (click)="open(c)"
+          >
+            <span
+              [class]="
+                'flex size-16 shrink-0 flex-col items-center justify-center rounded-2xl ' +
+                tone(c.color).soft +
+                ' ' +
+                tone(c.color).text
+              "
+            >
+              <span class="text-2xl leading-none font-bold">{{
+                fa(abs(c.daysLeft))
+              }}</span>
+              <span class="text-xs">روز</span>
+            </span>
+            <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span class="truncate font-semibold">{{ c.title }}</span>
+              <span class="text-muted-foreground text-xs">{{ phrase(c) }}</span>
+              <span
+                class="text-muted-foreground flex items-center gap-1 text-xs"
+              >
+                {{ kindLabels[c.kind] }}، {{ dateLabel(c.nextDate) }}
+                @if (c.repeatYearly) {
+                  <aio-icon name="lucideRepeat" size="xs" aria-label="هر سال" />
+                }
+              </span>
+            </span>
+          </button>
+        } @empty {
+          <div aioEmpty class="glass rounded-2xl sm:col-span-2">
+            <div aioEmptyHeader>
+              <div aioEmptyMedia variant="icon" class="text-primary">
+                <aio-icon name="lucideHourglass" />
+              </div>
+              <h2 aioEmptyTitle>هنوز روزی نشمرده‌ای</h2>
+              <p aioEmptyDescription>
+                تولد عزیزان، سالگرد ازدواج یا روز امتحان را اضافه کن.
+              </p>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <aio-dialog
+      [(open)]="editing"
+      [title]="draft().id ? 'ویرایش روز' : 'روز تازه'"
+      contentClass="applet-planner sm:max-w-md"
+    >
+      <ng-template aioDialogBody>
+        @let d = draft();
+        <form
+          id="countdown-form"
+          class="flex flex-col gap-4 pb-2"
+          (submit)="$event.preventDefault(); save()"
+        >
+          <div aioField>
+            <label aioFieldLabel for="cd-title">عنوان</label>
+            <input
+              aioInput
+              id="cd-title"
+              placeholder="مثلاً: تولد مامان"
+              [value]="d.title"
+              (input)="patch({ title: $any($event.target).value })"
+            />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div aioField>
+              <label aioFieldLabel for="cd-date">تاریخ</label>
+              <input
+                aioInput
+                id="cd-date"
+                type="date"
+                [value]="d.date"
+                (change)="patch({ date: $any($event.target).value })"
+              />
+            </div>
+            <div aioField>
+              <label aioFieldLabel for="cd-kind">نوع</label>
+              <aio-native-select
+                selectId="cd-kind"
+                [value]="d.kind"
+                (valueChange)="setKind($event)"
+              >
+                @for (k of kinds; track k) {
+                  <option aioNativeSelectOption [value]="k">
+                    {{ kindLabels[k] }}
+                  </option>
+                }
+              </aio-native-select>
+            </div>
+          </div>
+          <p class="text-muted-foreground -mt-2 text-xs">
+            {{ dateLabel(d.date, true) }}
+          </p>
+          <div class="flex min-h-11 items-center justify-between text-sm">
+            <label for="cd-repeat">هر سال تکرار شود</label>
+            <aio-switch
+              inputId="cd-repeat"
+              [checked]="d.repeatYearly"
+              (checkedChange)="patch({ repeatYearly: $event })"
+            />
+          </div>
+          <planner-color-picker
+            [value]="d.color"
+            (valueChange)="patch({ color: $event })"
+          />
+          <div aioField>
+            <label aioFieldLabel for="cd-note">یادداشت</label>
+            <input
+              aioInput
+              id="cd-note"
+              [value]="d.note"
+              (input)="patch({ note: $any($event.target).value })"
+            />
+          </div>
+        </form>
+      </ng-template>
+      <ng-template aioDialogActions>
+        @if (draft().id) {
+          <button
+            aioBtn
+            variant="ghost"
+            class="text-destructive"
+            (click)="remove()"
+          >
+            حذف
+          </button>
+        }
+        <button
+          aioBtn
+          type="submit"
+          form="countdown-form"
+          [disabled]="saving()"
+        >
+          ذخیره
+        </button>
+      </ng-template>
+    </aio-dialog>
+  `,
+})
+export class CountdownsPage {
+  private readonly api = inject(PlannerApi);
+  private readonly confirm = inject(AioConfirm);
+
+  protected readonly kinds = COUNTDOWN_KINDS;
+  protected readonly kindLabels = COUNTDOWN_KIND_LABELS;
+
+  protected readonly res = httpResource<PlannerCountdown[]>(
+    () => `${this.api.base}/countdowns`,
+  );
+  protected readonly items = linkedSignal(() =>
+    this.res.hasValue() ? this.res.value() : [],
+  );
+  protected readonly editing = signal(false);
+  protected readonly saving = signal(false);
+  protected readonly draft = signal<Draft>(emptyDraft());
+
+  protected readonly fa = (n: number) => faNumber(n);
+  protected readonly abs = Math.abs;
+  protected readonly tone = (c: PlannerColor) => TONE[c];
+
+  protected phrase(c: PlannerCountdown) {
+    if (c.daysLeft === 0) return 'امروز است!';
+    if (c.daysLeft > 0) return `${faNumber(c.daysLeft)} روز مانده`;
+    return `${faNumber(-c.daysLeft)} روز گذشته`;
+  }
+
+  protected dateLabel(iso: string, year = false) {
+    return faDate(iso, {
+      day: 'numeric',
+      month: 'long',
+      ...(year ? { year: 'numeric' } : {}),
+    });
+  }
+
+  protected open(c?: PlannerCountdown) {
+    this.draft.set(
+      c
+        ? {
+            id: c.id,
+            title: c.title,
+            date: c.date,
+            kind: c.kind,
+            repeatYearly: c.repeatYearly,
+            color: c.color,
+            note: c.note,
+          }
+        : emptyDraft(),
+    );
+    this.editing.set(true);
+  }
+
+  protected patch(change: Partial<Draft>) {
+    this.draft.update((d) => ({ ...d, ...change }));
+  }
+
+  protected setKind(value: string) {
+    const kind = value as CountdownKind;
+    this.patch({
+      kind,
+      repeatYearly:
+        kind === 'BIRTHDAY' ||
+        kind === 'ANNIVERSARY' ||
+        this.draft().repeatYearly,
+    });
+  }
+
+  protected async save() {
+    const { id, ...input } = this.draft();
+    if (!input.title.trim() || !input.date) {
+      aioToast.error('عنوان و تاریخ را بنویس.');
+      return;
+    }
+    this.saving.set(true);
+    try {
+      const body = {
+        ...input,
+        title: input.title.trim(),
+        note: input.note.trim(),
+      };
+      if (id) await this.api.updateCountdown(id, body);
+      else await this.api.createCountdown(body);
+      this.res.reload();
+      this.editing.set(false);
+    } catch (error) {
+      aioToast.error(apiErrorMessage(error));
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  protected async remove() {
+    const id = this.draft().id;
+    if (!id) return;
+    this.editing.set(false);
+    const ok = await this.confirm.ask({
+      title: `«${this.draft().title}» حذف شود؟`,
+      confirmText: 'حذف',
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await this.api.removeCountdown(id);
+      this.items.update((list) => list.filter((c) => c.id !== id));
+    } catch (error) {
+      aioToast.error(apiErrorMessage(error));
+    }
+  }
+}

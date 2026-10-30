@@ -34,7 +34,18 @@ model User {
   mcpKeys            McpKey[]
 
   // Applets (each applet's models live in its own schema file)
-  plannerTasks    PlannerTask[]
+  plannerTasks          PlannerTask[]          @relation("PlannerTaskCreator")
+  plannerAssigned       PlannerTask[]          @relation("PlannerTaskAssignee")
+  plannerLists          PlannerList[]
+  plannerMemberships    PlannerListMember[]
+  plannerFolders        PlannerFolder[]
+  plannerTags           PlannerTag[]
+  plannerComments       PlannerComment[]
+  plannerHabitSections  PlannerHabitSection[]
+  plannerHabits         PlannerHabit[]
+  plannerFocuses        PlannerFocus[]
+  plannerCalendars      PlannerCalendar[]
+  plannerCountdowns     PlannerCountdown[]
   englishDecks    EnglishDeck[]
   englishCards    EnglishCard[]
   englishTexts    EnglishText[]
