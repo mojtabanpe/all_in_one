@@ -177,6 +177,11 @@ export interface PlannerTask {
   priority: TaskPriority;
   done: boolean;
   completedAt: string | null;
+  externalSourceId: string | null;
+  recurrenceRule: string | null;
+  reminders: string[];
+  timeZone: string | null;
+  endTime: string | null;
   /** Set while the task is in the trash. */
   deletedAt: string | null;
   tags: string[];
@@ -352,6 +357,12 @@ export const createTaskSchema = z.object({
   tags: z.optional(z.array(tagName).check(z.maxLength(20))),
   checklist: z.optional(z.array(checklistInput).check(z.maxLength(100))),
   assigneeId: z.optional(z.nullable(uuid)),
+  externalSourceId: z.optional(z.string().check(z.minLength(1), z.maxLength(120))),
+  recurrenceRule: z.optional(z.nullable(z.string().check(z.maxLength(500)))),
+  reminders: z.optional(z.array(z.string().check(z.maxLength(150))).check(z.maxLength(30))),
+  timeZone: z.optional(z.nullable(z.string().check(z.maxLength(80)))),
+  endTime: z.optional(z.nullable(timeOfDay)),
+  completedAt: z.optional(z.iso.datetime({ offset: true })),
 });
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 
@@ -369,6 +380,10 @@ export const updateTaskSchema = z.partial(
     /** Replaces the checklist (TickTick's update semantics). */
     checklist: z.array(checklistInput).check(z.maxLength(100)),
     assigneeId: z.nullable(uuid),
+    recurrenceRule: z.nullable(z.string().check(z.maxLength(500))),
+    reminders: z.array(z.string().check(z.maxLength(150))).check(z.maxLength(30)),
+    timeZone: z.nullable(z.string().check(z.maxLength(80))),
+    endTime: z.nullable(timeOfDay),
     done: z.boolean(),
     sortOrder,
   }),
