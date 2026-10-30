@@ -107,6 +107,12 @@ When the owner gives a new instruction, add it to this list in the same change.
     Dialogs, alerts and confirmations on phones are bottom sheets (spartan drawer/sheet), never modals.
 14. **Applets ship as MVP + backend:** auth first, then Prisma tables and api endpoints per applet.
 
+## Git (2026-10-30)
+
+16. **Work and push on `master`.** Commit directly on `master` and push to `origin master`. Never create or
+    push a separate branch unless the owner explicitly asks for one in that conversation. (This overrides the
+    usual "branch first" habit.)
+
 ## Memory (2026-10-29)
 
 11. Keep every owner instruction in project memory (this file). Do not drop or weaken existing ones.
