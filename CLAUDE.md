@@ -71,6 +71,15 @@
 - spartan `aioProgress`: `[value]` is a percentage (0–100); `max` is ignored by the indicator.
 - Don't use `·` as a separator next to Persian digits (it reads as ۰); use the Persian comma `،`.
 - Touch targets ≥ 44px; small round checkboxes get an invisible hit area (`after:absolute after:-inset-3`).
+- Planner (TickTick parity): `libs/applets/planner/api` exports one service per area (lists, tasks, tags, habits,
+  focus + countdowns, calendars); access goes through `PlannerAccess` (list membership). TickTick's limits live in
+  `PLANNER_LIMITS` (contracts). Planner dates are Tehran calendar days. Calendar feeds are fetched with an SSRF guard.
+- ChatGPT connection: `apps/api/src/mcp` (OAuth + personal tokens, tools in `english-tools.ts` / `planner-tools.ts`,
+  validated with the contracts schemas). Mounted on Express before the CSRF check. A new applet capability that
+  ChatGPT should reach gets a tool there. Docs: `docs/chatgpt-mcp.md`.
+- Production layout (`deploy/`, guide `deploy/README.fa.md`): one domain; `/` public SSR, `/app/` customer (PWA,
+  `baseHref /app/`), `/admin/`, `/api/` + OAuth paths. Images come from `deploy/images.dockerfile` (not named
+  `Dockerfile`: the `@nx/docker` plugin would infer a project from it). Servers listen on loopback (`API_HOST`, `HOST`).
 - Before pushing: `pnpm nx run-many -t lint test build typecheck`.
 
 # User directives (binding — given by the project owner)

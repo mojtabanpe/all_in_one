@@ -8,8 +8,10 @@ import {
   provideIcons,
 } from '@all-in-one/ui';
 import { AuthStore } from '@all-in-one/web/shared';
+import { Pwa } from './pwa';
 import {
   lucideCalendarCheck,
+  lucideDownload,
   lucideHeartPulse,
   lucideHouse,
   lucideLanguages,
@@ -25,6 +27,7 @@ import {
   providers: [
     provideIcons({
       lucideCalendarCheck,
+      lucideDownload,
       lucideHeartPulse,
       lucideHouse,
       lucideLanguages,
@@ -35,6 +38,18 @@ import {
   ],
   template: `
     <aio-app-shell appName="همه در یک" [navItems]="nav">
+      @if (pwa.canInstall()) {
+        <button
+          aioShellActions
+          aioBtn
+          variant="ghost"
+          class="h-11"
+          (click)="pwa.install()"
+        >
+          <aio-icon name="lucideDownload" size="sm" />
+          نصب
+        </button>
+      }
       <a
         aioShellActions
         aioBtn
@@ -63,6 +78,7 @@ import {
 export class Layout {
   private readonly auth = inject(AuthStore);
   private readonly router = inject(Router);
+  protected readonly pwa = inject(Pwa);
 
   protected readonly nav: readonly AioNavItem[] = [
     { label: 'خانه', icon: 'lucideHouse', link: '/', exact: true },

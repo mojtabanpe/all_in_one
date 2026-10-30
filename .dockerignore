@@ -1,0 +1,11 @@
+node_modules
+dist
+tmp
+.nx
+.angular
+.git
+.env
+.env.*
+!.env.example
+/*.png
+coverage

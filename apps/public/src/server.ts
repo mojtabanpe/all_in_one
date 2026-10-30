@@ -54,8 +54,10 @@ app.use('/**', (req, res, next) => {
  * The server listens on the port defined by the `PORT` environment variable, or defaults to 4000.
  */
 if (isMainModule(import.meta.url) || process.env['pm_id']) {
-  const port = process.env['PORT'] || 4000;
-  const server = app.listen(port, async (error?: Error) => {
+  const port = Number(process.env['PORT'] || 4000);
+  // HOST=127.0.0.1 in production: only the reverse proxy reaches it.
+  const host = process.env['HOST'] || '0.0.0.0';
+  const server = app.listen(port, host, async (error?: Error) => {
     if (error) {
       throw error;
     }

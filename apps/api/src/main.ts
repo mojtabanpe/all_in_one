@@ -16,6 +16,8 @@ zodConfig(locales.fa());
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // Behind nginx on the same host: client IPs (rate limits) come from X-Forwarded-For.
+  app.set('trust proxy', 'loopback');
   // English practice uploads a raw recording (audio/webm, …) for transcription.
   app.useBodyParser('raw', {
     type: Object.keys(RECORDING_TYPES),
@@ -32,7 +34,8 @@ async function bootstrap() {
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
   const port = process.env.API_PORT || 3333;
-  await app.listen(port);
+  // API_HOST=127.0.0.1 in production: only the reverse proxy reaches it.
+  await app.listen(port, process.env.API_HOST || '0.0.0.0');
   // Set when Nx waits for this server to be ready
   if (process.env.NX_READY_SIGNAL_SOCKET) {
     try {

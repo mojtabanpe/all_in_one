@@ -1,0 +1,91 @@
+# poshtetgarm.ir: api, SSR site and nginx (host network, loopback only), Postgres and Redis.
+# The host's nginx terminates TLS and forwards everything to 127.0.0.1:4320 (deploy/nginx.conf).
+#   RELEASE=<git sha> docker compose -f deploy/compose.yml --env-file /opt/all-in-one/shared/compose.env up -d
+name: all-in-one
+services:
+  api:
+    image: all-in-one-api:${RELEASE:?Set RELEASE to a tested Git commit}
+    network_mode: host
+    restart: unless-stopped
+    env_file: ${AIO_ENV_FILE:-/opt/all-in-one/shared/.env}
+    environment:
+      NODE_ENV: production
+      API_HOST: 127.0.0.1
+      API_PORT: 4321
+      APP_ORIGINS: https://${APP_DOMAIN:?Set APP_DOMAIN}
+      APP_PUBLIC_URL: https://${APP_DOMAIN}/app
+      MCP_PUBLIC_URL: https://${APP_DOMAIN}
+      DATABASE_URL: postgresql://aio:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@127.0.0.1:15433/all_in_one
+      REDIS_URL: redis://127.0.0.1:16380
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+
+  public:
+    image: all-in-one-public:${RELEASE}
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOST: 127.0.0.1
+      PORT: 4322
+      NG_ALLOWED_HOSTS: ${APP_DOMAIN}
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+
+  web:
+    image: all-in-one-web:${RELEASE}
+    network_mode: host
+    restart: unless-stopped
+    depends_on: [api, public]
+    tmpfs: [/var/cache/nginx, /var/run, /tmp]
+    security_opt: [no-new-privileges:true]
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: aio
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: all_in_one
+    ports: ['127.0.0.1:15433:5432']
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    shm_size: 128mb
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U aio -d all_in_one]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    security_opt: [no-new-privileges:true]
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command:
+      [
+        redis-server,
+        --appendonly,
+        'yes',
+        --maxmemory,
+        256mb,
+        --maxmemory-policy,
+        allkeys-lru,
+      ]
+    ports: ['127.0.0.1:16380:6379']
+    volumes: [redis-data:/data]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    security_opt: [no-new-privileges:true]
+
+volumes:
+  postgres-data:
+  redis-data:

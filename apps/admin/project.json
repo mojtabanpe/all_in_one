@@ -40,7 +40,8 @@
               "maximumError": "8kb"
             }
           ],
-          "outputHashing": "all"
+          "outputHashing": "all",
+          "baseHref": "/admin/"
         },
         "development": {
           "optimization": false,
