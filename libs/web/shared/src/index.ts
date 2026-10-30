@@ -5,3 +5,4 @@ export * from './lib/auth/auth.store';
 export * from './lib/auth/login-page';
 export * from './lib/format/fa';
 export * from './lib/auth/account-pages';
+export * from './lib/auth/chatgpt-connection';

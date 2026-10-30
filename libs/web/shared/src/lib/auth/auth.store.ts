@@ -73,7 +73,10 @@ export class AuthStore {
 
   resetPassword(token: string, password: string): Promise<void> {
     return firstValueFrom(
-      this.http.post<void>(`${this.api}/auth/reset-password`, { token, password }),
+      this.http.post<void>(`${this.api}/auth/reset-password`, {
+        token,
+        password,
+      }),
     );
   }
 

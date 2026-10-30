@@ -9,6 +9,7 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import { RECORDING_TYPES } from '@all-in-one/applets/english-learning/api';
 import { config as zodConfig, locales } from 'zod/mini';
 import { AppModule } from './app/app.module';
+import { McpService } from './mcp/mcp.service';
 
 // Persian validation messages (users see them in the RTL apps).
 zodConfig(locales.fa());
@@ -20,6 +21,8 @@ async function bootstrap() {
     type: Object.keys(RECORDING_TYPES),
     limit: '1500kb',
   });
+  // ChatGPT (MCP + OAuth) routes use bearer tokens: mount them before the cookie CSRF check.
+  app.get(McpService).mount(app.getHttpAdapter().getInstance());
   app.useSecurityHeaders();
   // Session cookie auth: reject cross-site state-changing requests.
   app.enableCsrfProtection();

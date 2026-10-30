@@ -8,6 +8,7 @@ import { PlannerApiModule } from '@all-in-one/applets/planner/api';
 import { envSchema } from '../config/env';
 import { AdminController } from '../admin/admin.controller';
 import { HealthController } from '../health/health.controller';
+import { McpModule } from '../mcp/mcp.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -20,6 +21,8 @@ import { AppService } from './app.service';
     PlannerApiModule,
     EnglishApiModule,
     HealthApiModule,
+    // ChatGPT connection
+    McpModule,
   ],
   controllers: [AppController, HealthController, AdminController],
   providers: [AppService],

@@ -35,6 +35,9 @@ export const envSchema = z.object({
   // ChatGPT connection (MCP)
   MCP_PUBLIC_URL: z.url().optional(),
   MCP_REDIRECT_HOSTS: z.string().optional(),
+
+  /** Planner: let calendar feeds reach private addresses (local testing only). */
+  PLANNER_ICS_ALLOW_PRIVATE: z.enum(['true', 'false']).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

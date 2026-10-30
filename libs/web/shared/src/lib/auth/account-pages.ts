@@ -9,32 +9,60 @@ import {
   aioToast,
 } from '@all-in-one/ui';
 import { apiErrorMessage } from './auth.guards';
+import { ChatGptConnection } from './chatgpt-connection';
 import { AuthStore } from './auth.store';
 
-const PAGE = 'mx-auto flex min-h-[70dvh] w-full max-w-sm flex-col justify-center';
+const PAGE =
+  'mx-auto flex min-h-[70dvh] w-full max-w-sm flex-col justify-center';
 
 /** "Forgot password": emails a single-use reset link (same answer for unknown emails). */
 @Component({
   selector: 'web-forgot-password-page',
-  imports: [AioButton, AioCardDirectives, AioFieldDirectives, AioInput, RouterLink],
+  imports: [
+    AioButton,
+    AioCardDirectives,
+    AioFieldDirectives,
+    AioInput,
+    RouterLink,
+  ],
   template: `
     <div [class]="page">
       <section aioCard>
         <div aioCardHeader>
           <h1 aioCardTitle class="text-xl">بازیابی رمز</h1>
-          <p aioCardDescription>ایمیلت را بنویس تا لینک انتخاب رمز تازه را بفرستیم.</p>
+          <p aioCardDescription>
+            ایمیلت را بنویس تا لینک انتخاب رمز تازه را بفرستیم.
+          </p>
         </div>
-        <form aioCardContent class="flex flex-col gap-4" (submit)="$event.preventDefault(); send()">
+        <form
+          aioCardContent
+          class="flex flex-col gap-4"
+          (submit)="$event.preventDefault(); send()"
+        >
           @if (sent()) {
-            <p class="bg-accent text-accent-foreground rounded-2xl p-3 text-sm" role="status">
-              اگر حسابی با این ایمیل باشد، لینک بازیابی فرستاده شد. لینک یک ساعت اعتبار دارد.
+            <p
+              class="bg-accent text-accent-foreground rounded-2xl p-3 text-sm"
+              role="status"
+            >
+              اگر حسابی با این ایمیل باشد، لینک بازیابی فرستاده شد. لینک یک ساعت
+              اعتبار دارد.
             </p>
           }
           <div aioField>
             <label aioFieldLabel for="forgot-email">ایمیل</label>
-            <input aioInput id="forgot-email" type="email" dir="ltr" autocomplete="email" [value]="email()" (input)="email.set($any($event.target).value)" />
+            <input
+              aioInput
+              id="forgot-email"
+              type="email"
+              dir="ltr"
+              autocomplete="email"
+              [value]="email()"
+              (input)="email.set($any($event.target).value)"
+            />
           </div>
-          <button aioBtn type="submit" size="lg" [disabled]="busy()">فرستادن لینک</button>
+          <button aioBtn type="submit" size="lg" [disabled]="busy()">
+            فرستادن لینک
+          </button>
           <a aioBtn variant="link" routerLink="/login">بازگشت به ورود</a>
         </form>
       </section>
@@ -68,7 +96,13 @@ export class ForgotPasswordPage {
 /** Opens from the emailed link (`?token=`): sets a new password and signs out every session. */
 @Component({
   selector: 'web-reset-password-page',
-  imports: [AioButton, AioCardDirectives, AioFieldDirectives, AioInput, RouterLink],
+  imports: [
+    AioButton,
+    AioCardDirectives,
+    AioFieldDirectives,
+    AioInput,
+    RouterLink,
+  ],
   template: `
     <div [class]="page">
       <section aioCard>
@@ -76,20 +110,51 @@ export class ForgotPasswordPage {
           <h1 aioCardTitle class="text-xl">رمز تازه</h1>
           <p aioCardDescription>رمزی با دست‌کم ۸ نویسه انتخاب کن.</p>
         </div>
-        <form aioCardContent class="flex flex-col gap-4" (submit)="$event.preventDefault(); save()">
+        <form
+          aioCardContent
+          class="flex flex-col gap-4"
+          (submit)="$event.preventDefault(); save()"
+        >
           @if (!token()) {
-            <p class="text-destructive text-sm" role="alert">این لینک ناقص است. دوباره درخواست بازیابی بده.</p>
+            <p class="text-destructive text-sm" role="alert">
+              این لینک ناقص است. دوباره درخواست بازیابی بده.
+            </p>
           }
           <div aioField>
             <label aioFieldLabel for="reset-password">رمز تازه</label>
-            <input aioInput id="reset-password" type="password" dir="ltr" autocomplete="new-password" [value]="password()" (input)="password.set($any($event.target).value)" />
+            <input
+              aioInput
+              id="reset-password"
+              type="password"
+              dir="ltr"
+              autocomplete="new-password"
+              [value]="password()"
+              (input)="password.set($any($event.target).value)"
+            />
           </div>
           <div aioField>
             <label aioFieldLabel for="reset-repeat">تکرار رمز</label>
-            <input aioInput id="reset-repeat" type="password" dir="ltr" autocomplete="new-password" [value]="repeat()" (input)="repeat.set($any($event.target).value)" />
+            <input
+              aioInput
+              id="reset-repeat"
+              type="password"
+              dir="ltr"
+              autocomplete="new-password"
+              [value]="repeat()"
+              (input)="repeat.set($any($event.target).value)"
+            />
           </div>
-          <button aioBtn type="submit" size="lg" [disabled]="busy() || !token()">ذخیره رمز</button>
-          <a aioBtn variant="link" routerLink="/forgot-password">لینک تازه می‌خواهم</a>
+          <button
+            aioBtn
+            type="submit"
+            size="lg"
+            [disabled]="busy() || !token()"
+          >
+            ذخیره رمز
+          </button>
+          <a aioBtn variant="link" routerLink="/forgot-password"
+            >لینک تازه می‌خواهم</a
+          >
         </form>
       </section>
     </div>
@@ -99,7 +164,9 @@ export class ResetPasswordPage {
   private readonly auth = inject(AuthStore);
   private readonly router = inject(Router);
   protected readonly page = PAGE;
-  protected readonly token = signal(inject(ActivatedRoute).snapshot.queryParamMap.get('token') ?? '');
+  protected readonly token = signal(
+    inject(ActivatedRoute).snapshot.queryParamMap.get('token') ?? '',
+  );
   protected readonly password = signal('');
   protected readonly repeat = signal('');
   protected readonly busy = signal(false);
@@ -140,7 +207,9 @@ export class ResetPasswordPage {
         <div aioCardContent class="flex flex-col gap-4" role="status">
           @switch (state()) {
             @case ('working') {
-              <p class="flex items-center gap-2"><aio-spinner /> در حال تأیید…</p>
+              <p class="flex items-center gap-2">
+                <aio-spinner /> در حال تأیید…
+              </p>
             }
             @case ('done') {
               <p>ایمیلت تأیید شد. حالا وارد شو.</p>
@@ -148,7 +217,9 @@ export class ResetPasswordPage {
             }
             @case ('failed') {
               <p class="text-destructive">{{ error() }}</p>
-              <a aioBtn variant="outline" routerLink="/login">بازگشت به ورود و فرستادن لینک تازه</a>
+              <a aioBtn variant="outline" routerLink="/login"
+                >بازگشت به ورود و فرستادن لینک تازه</a
+              >
             }
           }
         </div>
@@ -169,7 +240,9 @@ export class VerifyEmailPage implements OnInit {
       await this.auth.verifyEmail(token);
       this.state.set('done');
     } catch (error) {
-      this.error.set(apiErrorMessage(error, 'این لینک تأیید نامعتبر است یا منقضی شده.'));
+      this.error.set(
+        apiErrorMessage(error, 'این لینک تأیید نامعتبر است یا منقضی شده.'),
+      );
       this.state.set('failed');
     }
   }
@@ -178,30 +251,63 @@ export class VerifyEmailPage implements OnInit {
 /** Signed-in account settings: change password (other devices are signed out). */
 @Component({
   selector: 'web-account-page',
-  imports: [AioButton, AioCardDirectives, AioFieldDirectives, AioInput],
+  imports: [
+    AioButton,
+    AioCardDirectives,
+    AioFieldDirectives,
+    AioInput,
+    ChatGptConnection,
+  ],
   template: `
     <div class="mx-auto flex w-full max-w-lg flex-col gap-6">
       <header class="flex flex-col gap-1">
         <h1 class="text-2xl font-bold">حساب کاربری</h1>
-        <p class="text-muted-foreground text-sm" dir="ltr">{{ auth.user()?.email }}</p>
+        <p class="text-muted-foreground text-sm" dir="ltr">
+          {{ auth.user()?.email }}
+        </p>
       </header>
       <section aioCard>
         <div aioCardHeader>
           <h2 aioCardTitle>تغییر رمز</h2>
-          <p aioCardDescription>بعد از تغییر، دستگاه‌های دیگر از حساب خارج می‌شوند.</p>
+          <p aioCardDescription>
+            بعد از تغییر، دستگاه‌های دیگر از حساب خارج می‌شوند.
+          </p>
         </div>
-        <form aioCardContent class="flex flex-col gap-4" (submit)="$event.preventDefault(); change()">
+        <form
+          aioCardContent
+          class="flex flex-col gap-4"
+          (submit)="$event.preventDefault(); change()"
+        >
           <div aioField>
             <label aioFieldLabel for="current-password">رمز فعلی</label>
-            <input aioInput id="current-password" type="password" dir="ltr" autocomplete="current-password" [value]="current()" (input)="current.set($any($event.target).value)" />
+            <input
+              aioInput
+              id="current-password"
+              type="password"
+              dir="ltr"
+              autocomplete="current-password"
+              [value]="current()"
+              (input)="current.set($any($event.target).value)"
+            />
           </div>
           <div aioField>
             <label aioFieldLabel for="new-password">رمز تازه</label>
-            <input aioInput id="new-password" type="password" dir="ltr" autocomplete="new-password" [value]="next()" (input)="next.set($any($event.target).value)" />
+            <input
+              aioInput
+              id="new-password"
+              type="password"
+              dir="ltr"
+              autocomplete="new-password"
+              [value]="next()"
+              (input)="next.set($any($event.target).value)"
+            />
           </div>
-          <button aioBtn type="submit" class="self-start" [disabled]="busy()">ذخیره رمز تازه</button>
+          <button aioBtn type="submit" class="self-start" [disabled]="busy()">
+            ذخیره رمز تازه
+          </button>
         </form>
       </section>
+      <web-chatgpt-connection />
       <ng-content />
     </div>
   `,

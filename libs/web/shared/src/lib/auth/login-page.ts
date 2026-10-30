@@ -104,12 +104,24 @@ import { AuthStore } from './auth.store';
             }
           </div>
           @if (pendingEmail()) {
-            <div class="bg-accent text-accent-foreground flex flex-col gap-2 rounded-2xl p-3 text-sm" role="status">
+            <div
+              class="bg-accent text-accent-foreground flex flex-col gap-2 rounded-2xl p-3 text-sm"
+              role="status"
+            >
               <p>
-                لینک تأیید به <span dir="ltr">{{ pendingEmail() }}</span> فرستاده شد.
-                ایمیلت را باز کن و روی لینک بزن، بعد وارد شو.
+                لینک تأیید به
+                <span dir="ltr">{{ pendingEmail() }}</span> فرستاده شد. ایمیلت
+                را باز کن و روی لینک بزن، بعد وارد شو.
               </p>
-              <button aioBtn type="button" variant="outline" size="sm" class="self-start" [disabled]="busy()" (click)="resend()">
+              <button
+                aioBtn
+                type="button"
+                variant="outline"
+                size="sm"
+                class="self-start"
+                [disabled]="busy()"
+                (click)="resend()"
+              >
                 دوباره بفرست
               </button>
             </div>
@@ -118,7 +130,9 @@ import { AuthStore } from './auth.store';
             {{ mode() === 'login' ? 'ورود' : 'ساخت حساب' }}
           </button>
           @if (mode() === 'login') {
-            <a aioBtn variant="link" routerLink="/forgot-password">رمز را فراموش کرده‌ای؟</a>
+            <a aioBtn variant="link" routerLink="/forgot-password"
+              >رمز را فراموش کرده‌ای؟</a
+            >
           }
           @if (canRegister()) {
             <button aioBtn type="button" variant="link" (click)="toggleMode()">
@@ -203,7 +217,9 @@ export class LoginPage {
     this.busy.set(true);
     try {
       await this.auth.resendVerification(this.pendingEmail());
-      aioToast.success('اگر حسابی با این ایمیل منتظر تأیید باشد، لینک تازه فرستاده شد.');
+      aioToast.success(
+        'اگر حسابی با این ایمیل منتظر تأیید باشد، لینک تازه فرستاده شد.',
+      );
     } catch (error) {
       aioToast.error(apiErrorMessage(error));
     } finally {
