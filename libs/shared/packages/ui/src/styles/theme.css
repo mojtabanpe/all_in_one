@@ -1,10 +1,12 @@
 /*
- * All in One design system: glassmorphism on spartan/ui, Persian RTL.
- * Source of truth for tokens: design-system/all-in-one/MASTER.md.
+ * All in One design system, based on Better Design "Skeuo Next" (owner's pick,
+ * 2026-10-30): cool porcelain glass, glossy graphite pill buttons, aqua accent,
+ * 22px squircle radius, layered "pillow" shadows. Persian RTL.
+ * Documentation and palette: design-system/all-in-one/MASTER.md.
  *
- * Every app's styles.css imports only this file. Spartan components get the
- * glass look through the semantic CSS variables below and the data-slot rules
- * in the `glass` section, so Helm code stays unmodified.
+ * Every app's styles.css imports only this file. Spartan components take the
+ * look from the semantic variables below; the material (pillow buttons, inset
+ * inputs) lives in the Helm classes in libs/shared/spartan. Light theme only.
  */
 @layer theme, base, components, utilities;
 @import 'tailwindcss/theme.css' layer(theme);
@@ -19,116 +21,136 @@
 @source '../../../../../../libs';
 
 @theme inline {
-  --font-sans: 'Vazirmatn Variable', 'Vazirmatn', system-ui, sans-serif;
+  /* Inter for Latin (and English-learning words), Vazirmatn for Persian. */
+  --font-sans:
+    'Inter Variable', 'Vazirmatn Variable', 'Vazirmatn', system-ui, sans-serif;
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-glass: var(--glass);
   --color-glass-border: var(--glass-border);
+
+  /* Skeuo Next radius scale (the spartan preset multiplies, which over-rounds at 22px). */
+  --radius-sm: calc(var(--radius) - 0.5rem);
+  --radius-md: calc(var(--radius) - 0.25rem);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 0.375rem);
+  --radius-2xl: calc(var(--radius) + 0.375rem);
+  --radius-3xl: calc(var(--radius) + 0.625rem);
+  --radius-4xl: calc(var(--radius) + 0.875rem);
+
+  --shadow-pillow-primary: var(--pillow-primary);
+  --shadow-pillow-primary-hover: var(--pillow-primary-hover);
+  --shadow-pillow-secondary: var(--pillow-secondary);
+  --shadow-pillow-secondary-hover: var(--pillow-secondary-hover);
+  --shadow-input: var(--inset-input);
+  --shadow-surface: var(--surface-shadow);
 }
 
 :root {
   color-scheme: light;
 
-  --radius: 1rem;
+  --radius: 1.375rem;
 
-  /* Lavender violet primary + wellness green (ui-ux-pro-max: wellness palette). */
-  --background: oklch(0.975 0.008 285);
-  --foreground: oklch(0.25 0.06 292);
-  --card: oklch(1 0 0 / 0.62);
-  --card-foreground: oklch(0.25 0.06 292);
-  --popover: oklch(1 0 0 / 0.78);
-  --popover-foreground: oklch(0.25 0.06 292);
-  --primary: oklch(0.52 0.22 292);
-  --primary-foreground: oklch(0.99 0.005 292);
-  --secondary: oklch(1 0 0 / 0.6);
-  --secondary-foreground: oklch(0.3 0.07 292);
-  --muted: oklch(0.93 0.02 292 / 0.6);
-  --muted-foreground: oklch(0.45 0.05 292);
-  --accent: oklch(0.92 0.05 292 / 0.65);
-  --accent-foreground: oklch(0.3 0.09 292);
-  --destructive: oklch(0.56 0.22 27);
-  --border: oklch(0.45 0.08 292 / 0.16);
-  --input: oklch(0.45 0.08 292 / 0.22);
-  --ring: oklch(0.52 0.22 292);
-  --success: oklch(0.53 0.12 163);
-  --success-foreground: oklch(0.99 0 0);
-  --warning: oklch(0.7 0.16 70);
+  /* ---- Neutrals: cool porcelain ---- */
+  --background: oklch(0.965 0.006 240);
+  --foreground: oklch(0.19 0.02 265);
+  --card: oklch(0.995 0.003 240 / 0.78);
+  --card-foreground: oklch(0.19 0.02 265);
+  --popover: oklch(0.995 0.003 240 / 0.92);
+  --popover-foreground: oklch(0.19 0.02 265);
+  --secondary: oklch(0.93 0.008 240);
+  --secondary-foreground: oklch(0.24 0.025 265);
+  --muted: oklch(0.93 0.008 240);
+  /* 0.49 (Skeuo uses 0.52) keeps 5:1 on --muted as well as on --background. */
+  --muted-foreground: oklch(0.49 0.02 255);
+  --border: oklch(0.9 0.008 245);
+  --input: oklch(0.88 0.01 245);
 
-  --chart-1: oklch(0.52 0.22 292);
-  --chart-2: oklch(0.6 0.13 163);
-  --chart-3: oklch(0.7 0.16 70);
-  --chart-4: oklch(0.65 0.2 350);
-  --chart-5: oklch(0.6 0.15 230);
+  /* ---- Brand: glossy graphite + aqua ---- */
+  --primary: oklch(0.24 0.025 265);
+  --primary-foreground: oklch(0.98 0.004 240);
+  --accent: oklch(0.93 0.045 200);
+  --accent-foreground: oklch(0.46 0.1 205);
+  /* Focus ring: aqua, darkened to 3:1 against the background. */
+  --ring: oklch(0.62 0.13 205);
 
-  --sidebar: oklch(1 0 0 / 0.45);
-  --sidebar-foreground: oklch(0.25 0.06 292);
-  --sidebar-primary: oklch(0.52 0.22 292);
-  --sidebar-primary-foreground: oklch(0.99 0.005 292);
-  --sidebar-accent: oklch(0.92 0.05 292 / 0.65);
-  --sidebar-accent-foreground: oklch(0.3 0.09 292);
-  --sidebar-border: oklch(1 0 0 / 0.5);
-  --sidebar-ring: oklch(0.52 0.22 292);
+  /* ---- Status (each ≥4.5:1 with its foreground) ---- */
+  --destructive: oklch(0.56 0.2 22);
+  --destructive-foreground: oklch(0.99 0.004 240);
+  --success: oklch(0.52 0.13 160);
+  --success-foreground: oklch(0.99 0.004 240);
+  --warning: oklch(0.8 0.15 80);
+  --warning-foreground: oklch(0.19 0.02 265);
+  --info: oklch(0.52 0.11 215);
+  --info-foreground: oklch(0.99 0.004 240);
 
-  /* Glass material */
-  --glass: oklch(1 0 0 / 0.62);
-  --glass-strong: oklch(1 0 0 / 0.85);
-  --glass-border: oklch(1 0 0 / 0.75);
-  --glass-blur: 18px;
-  --glass-shadow:
-    0 1px 2px oklch(0.3 0.05 285 / 0.06), 0 6px 20px oklch(0.3 0.05 285 / 0.06);
+  /* ---- Applet accents (directive 17), applied by .applet-* below ---- */
+  --planner: oklch(0.54 0.19 258);
+  --english: oklch(0.53 0.16 142);
+  --health: oklch(0.56 0.19 38);
+  --streak: oklch(0.56 0.14 62);
+  --gem: oklch(0.54 0.14 235);
 
-  /* Ambient background blobs behind the glass */
-  --blob-1: oklch(0.85 0.08 292 / 0.45);
-  --blob-2: oklch(0.88 0.07 200 / 0.35);
-  --blob-3: oklch(0.9 0.06 350 / 0.3);
+  --chart-1: var(--primary);
+  --chart-2: var(--planner);
+  --chart-3: var(--english);
+  --chart-4: var(--health);
+  --chart-5: var(--info);
+
+  --sidebar: oklch(0.995 0.003 240 / 0.7);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: oklch(1 0 0 / 0.8);
+  --sidebar-ring: var(--ring);
+
+  /* ---- Material: porcelain glass ---- */
+  --glass: oklch(0.995 0.003 240 / 0.72);
+  --glass-strong: oklch(0.995 0.003 240 / 0.9);
+  --glass-border: oklch(1 0 0 / 0.8);
+  --glass-blur: 20px;
+  --surface-shadow:
+    inset 0 0.0625rem 0 0 oklch(1 0 0 / 0.9), 0 0.0625rem 0.125rem oklch(0 0 0 / 0.06),
+    0 0.375rem 1rem oklch(0 0 0 / 0.07);
+  --glass-shadow: var(--surface-shadow);
+  --pillow-primary:
+    inset 0 0.0938rem 0 0 oklch(1 0 0 / 0.18), inset 0 -0.125rem 0.0625rem 0 oklch(0 0 0 / 0.4),
+    0 0.0625rem 0.0625rem 0 oklch(0 0 0 / 0.12), 0 0.375rem 0.875rem -0.25rem oklch(0 0 0 / 0.28);
+  --pillow-primary-hover:
+    inset 0 0.0938rem 0 0 oklch(1 0 0 / 0.22), inset 0 -0.125rem 0.0625rem 0 oklch(0 0 0 / 0.42),
+    0 0.125rem 0.1875rem 0 oklch(0 0 0 / 0.12), 0 0.75rem 1.625rem -0.375rem oklch(0 0 0 / 0.34);
+  --pillow-secondary:
+    inset 0 0.0625rem 0 0 oklch(1 0 0 / 0.9), inset 0 -0.0938rem 0 0 oklch(0 0 0 / 0.05),
+    0 0 0 0.0625rem oklch(0 0 0 / 0.05), 0 0.0625rem 0.0625rem 0 oklch(0 0 0 / 0.05),
+    0 0.375rem 1rem -0.25rem oklch(0 0 0 / 0.1);
+  --pillow-secondary-hover:
+    inset 0 0.0625rem 0 0 oklch(1 0 0 / 1), inset 0 -0.0938rem 0 0 oklch(0 0 0 / 0.07),
+    0 0 0 0.0625rem oklch(0 0 0 / 0.07), 0 0.125rem 0.125rem 0 oklch(0 0 0 / 0.07),
+    0 0.75rem 1.5rem -0.25rem oklch(0 0 0 / 0.14);
+  --inset-input:
+    inset 0 0.0625rem 0.125rem 0 oklch(0 0 0 / 0.06), inset 0 0.0625rem 0 0 oklch(1 0 0 / 0.8),
+    0 0 0 0.0625rem oklch(0 0 0 / 0.05);
+  /* Glossy primary fill lives in the Helm button class (a gradient var defined
+     here would resolve --primary at :root and ignore the applet accents). */
+
+  /* Ambient light behind the glass */
+  --blob-1: oklch(0.9 0.05 200 / 0.55);
+  --blob-2: oklch(0.92 0.03 265 / 0.5);
+  --blob-3: oklch(0.94 0.03 160 / 0.35);
+
+  /* ---- Motion ---- */
+  --ease-out: cubic-bezier(0.165, 0.84, 0.44, 1);
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: var(--ease-out);
 
   /* Height reserved for the floating bottom nav on phones */
   --bottom-nav-space: calc(5.5rem + env(safe-area-inset-bottom));
-}
-
-:root.dark {
-  color-scheme: dark;
-
-  --background: oklch(0.17 0.035 285);
-  --foreground: oklch(0.96 0.01 292);
-  --card: oklch(0.3 0.04 285 / 0.42);
-  --card-foreground: oklch(0.96 0.01 292);
-  --popover: oklch(0.24 0.04 285 / 0.85);
-  --popover-foreground: oklch(0.96 0.01 292);
-  --primary: oklch(0.7 0.17 292);
-  --primary-foreground: oklch(0.18 0.04 285);
-  --secondary: oklch(1 0 0 / 0.08);
-  --secondary-foreground: oklch(0.96 0.01 292);
-  --muted: oklch(1 0 0 / 0.06);
-  --muted-foreground: oklch(0.75 0.03 292);
-  --accent: oklch(1 0 0 / 0.1);
-  --accent-foreground: oklch(0.96 0.01 292);
-  --destructive: oklch(0.68 0.19 22);
-  --border: oklch(1 0 0 / 0.12);
-  --input: oklch(1 0 0 / 0.16);
-  --ring: oklch(0.7 0.17 292);
-  --success: oklch(0.72 0.14 163);
-  --success-foreground: oklch(0.18 0.04 285);
-  --warning: oklch(0.8 0.15 75);
-
-  --sidebar: oklch(0.3 0.04 285 / 0.35);
-  --sidebar-foreground: oklch(0.96 0.01 292);
-  --sidebar-primary: oklch(0.7 0.17 292);
-  --sidebar-primary-foreground: oklch(0.18 0.04 285);
-  --sidebar-accent: oklch(1 0 0 / 0.1);
-  --sidebar-accent-foreground: oklch(0.96 0.01 292);
-  --sidebar-border: oklch(1 0 0 / 0.1);
-  --sidebar-ring: oklch(0.7 0.17 292);
-
-  --glass: oklch(0.3 0.04 285 / 0.42);
-  --glass-strong: oklch(0.24 0.04 285 / 0.85);
-  --glass-border: oklch(1 0 0 / 0.12);
-  --glass-shadow: 0 8px 32px oklch(0 0 0 / 0.35);
-
-  --blob-1: oklch(0.45 0.18 292 / 0.55);
-  --blob-2: oklch(0.45 0.12 163 / 0.4);
-  --blob-3: oklch(0.4 0.14 350 / 0.35);
 }
 
 /*
@@ -136,51 +158,29 @@
  * spartan's variables, so every Helm component inside follows it.
  */
 .applet-planner {
-  --primary: oklch(0.56 0.19 258);
+  --primary: var(--planner);
   --primary-foreground: oklch(0.99 0 0);
-  --ring: oklch(0.56 0.19 258);
-  --accent: oklch(0.56 0.19 258 / 0.1);
-  --accent-foreground: oklch(0.4 0.17 258);
+  --ring: var(--planner);
+  --accent: oklch(0.54 0.19 258 / 0.1);
+  --accent-foreground: oklch(0.42 0.17 258);
 }
 
 .applet-english {
-  /* Duolingo-like green, deep enough for white text (≈4.5:1). */
-  --primary: oklch(0.55 0.17 140);
+  --primary: var(--english);
   --primary-foreground: oklch(0.99 0 0);
-  --primary-edge: oklch(0.45 0.15 140);
-  --ring: oklch(0.55 0.17 140);
-  --accent: oklch(0.55 0.17 140 / 0.12);
-  --accent-foreground: oklch(0.42 0.14 140);
-  --streak: oklch(0.62 0.18 45);
-  --gem: oklch(0.56 0.14 235);
+  --primary-edge: oklch(0.43 0.14 142);
+  --ring: var(--english);
+  --accent: oklch(0.53 0.16 142 / 0.12);
+  --accent-foreground: oklch(0.42 0.14 142);
 }
 
 .applet-health {
-  --primary: oklch(0.58 0.19 38);
+  --primary: var(--health);
   --primary-foreground: oklch(0.99 0 0);
-  --primary-edge: oklch(0.48 0.17 38);
-  --ring: oklch(0.58 0.19 38);
-  --accent: oklch(0.58 0.19 38 / 0.1);
-  --accent-foreground: oklch(0.48 0.17 38);
-  --streak: oklch(0.62 0.18 45);
-}
-
-:root.dark .applet-planner {
-  --primary: oklch(0.7 0.15 258);
-  --primary-foreground: oklch(0.18 0.04 258);
-  --accent-foreground: oklch(0.85 0.08 258);
-}
-
-:root.dark .applet-english {
-  --primary: oklch(0.78 0.19 135);
-  --primary-foreground: oklch(0.2 0.05 135);
-  --accent-foreground: oklch(0.88 0.1 135);
-}
-
-:root.dark .applet-health {
-  --primary: oklch(0.74 0.16 45);
-  --primary-foreground: oklch(0.2 0.05 45);
-  --accent-foreground: oklch(0.88 0.08 45);
+  --primary-edge: oklch(0.46 0.17 38);
+  --ring: var(--health);
+  --accent: oklch(0.56 0.19 38 / 0.1);
+  --accent-foreground: oklch(0.46 0.17 38);
 }
 
 /*
@@ -192,7 +192,9 @@
     --btn-edge,
     var(--primary-edge, color-mix(in oklch, var(--primary) 78%, black))
   );
-  box-shadow: 0 0.25rem 0 var(--btn-3d-edge);
+  /* Flat Duolingo fill: replace the glossy pillow from the Helm button. */
+  background-image: none !important;
+  box-shadow: 0 0.25rem 0 var(--btn-3d-edge) !important;
   margin-bottom: 0.25rem;
   font-weight: 700;
   font-size: 1.125rem;
@@ -201,7 +203,7 @@
     box-shadow 80ms ease-out;
   &:active:not(:disabled) {
     transform: translateY(0.25rem);
-    box-shadow: 0 0 0 var(--btn-3d-edge);
+    box-shadow: 0 0 0 var(--btn-3d-edge) !important;
   }
   @media (prefers-reduced-motion: reduce) {
     transition: none;
@@ -283,17 +285,10 @@
 /* Users who ask for less transparency get solid surfaces. */
 @media (prefers-reduced-transparency: reduce) {
   :root {
-    --card: oklch(1 0 0);
-    --glass: oklch(1 0 0);
-    --glass-strong: oklch(1 0 0);
-    --popover: oklch(1 0 0);
-  }
-
-  :root.dark {
-    --card: oklch(0.24 0.04 285);
-    --glass: oklch(0.24 0.04 285);
-    --glass-strong: oklch(0.24 0.04 285);
-    --popover: oklch(0.24 0.04 285);
+    --card: oklch(0.995 0.003 240);
+    --glass: oklch(0.995 0.003 240);
+    --glass-strong: oklch(0.995 0.003 240);
+    --popover: oklch(0.995 0.003 240);
   }
 
   .glass,

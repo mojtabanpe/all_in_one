@@ -30,6 +30,12 @@ export const appRoutes: Route[] = [
         title: 'محتوا',
         loadComponent: () => import('./pages/content').then((m) => m.Content),
       },
+      {
+        path: 'design',
+        title: 'سیستم طراحی',
+        loadComponent: () =>
+          import('./pages/design-system').then((m) => m.DesignSystem),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

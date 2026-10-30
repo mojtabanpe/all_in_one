@@ -36,7 +36,7 @@ export interface AioNavItem {
           [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
           [attr.aria-current]="rla.isActive ? 'page' : null"
           [attr.data-active]="rla.isActive"
-          class="text-muted-foreground data-[active=true]:bg-primary/12 data-[active=true]:text-primary h-auto min-h-12 flex-1 flex-col gap-0.5 rounded-[1.375rem] px-1 py-1.5 text-[0.6875rem] font-medium"
+          class="text-muted-foreground data-[active=true]:bg-accent data-[active=true]:text-accent-foreground h-auto min-h-12 flex-1 flex-col gap-0.5 rounded-[1.375rem] px-1 py-1.5 text-[0.6875rem] font-medium"
         >
           <aio-icon [name]="item.icon" />
           <span>{{ item.label }}</span>

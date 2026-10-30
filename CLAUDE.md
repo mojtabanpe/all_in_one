@@ -56,8 +56,11 @@
   - ESLint `no-restricted-imports` blocks `@spartan-ng/*` outside `libs/shared/spartan` and `libs/shared/packages`.
   - `libs/shared/packages/ui/package.json` and `libs/shared/spartan/package.json` declare `sideEffects` so
     unused wrappers are tree-shaken (subclasses are otherwise kept).
-- Design system: `design-system/all-in-one/MASTER.md`; tokens in `libs/shared/packages/ui/src/styles/theme.css`.
-  Each app's `styles.css` only imports that theme.
+- Design system (Skeuo Next base): `design-system/all-in-one/MASTER.md`; tokens in
+  `libs/shared/packages/ui/src/styles/theme.css`; material (pill/pillow buttons, inset inputs, card shadow) is in the
+  Helm classes under `libs/shared/spartan`; style guide at admin `/design`. Each app's `styles.css` only imports the
+  theme; apps load Inter + Vazirmatn through `project.json` styles. A CSS variable built from `var(--primary)` on
+  `:root` resolves there, so applet accents don't reach it: put such gradients in the class itself.
 - Applet accents: the applet root gets `applet-planner` / `applet-english` / `applet-health` (sets spartan `--primary`
   etc.). Dialogs/sheets are portalled to `<body>`, so pass the same class as `aio-dialog contentClass`. Duolingo-style
   chunky buttons: `aioBtn class="btn-3d"` (`btn-3d-quiet` for outline). Recolour one button by overriding `--primary`
@@ -124,6 +127,15 @@ When the owner gives a new instruction, add it to this list in the same change.
     - **health → Gordool (https://gordol.app)**: friendly Persian coach voice, daily stats at a glance
       (calories, macros, weekly training), quick "+" logging in two taps, streak "fire", step-by-step workouts.
     Each applet sets its own accent through spartan CSS variables on its root; the shared design system stays.
+
+## Design system (2026-10-30)
+
+18. **Base design system: Better Design "Skeuo Next"** (owner's choice). The owner asked to define the design
+    system and colour palette first. Cool porcelain glass, glossy graphite pill buttons, aqua accent, 22px radius,
+    pillow shadows; Inter (Latin) + Vazirmatn (Persian). It is adapted to glass, RTL and the applet accents
+    above, and documented in `design-system/all-in-one/MASTER.md` (palette, contrast, type, shape, spacing).
+    The living style guide is the admin page `/design`. New colours go into `theme.css` and MASTER.md together,
+    with their contrast checked.
 
 ## Git (2026-10-30)
 
