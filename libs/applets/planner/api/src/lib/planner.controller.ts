@@ -21,6 +21,8 @@ import {
   batchUpdateTasksSchema,
   type CheckinInput,
   checkinSchema,
+  type BatchHabitCheckinsInput,
+  batchHabitCheckinsSchema,
   checklistItemSchema,
   commentSchema,
   type CompleteInListInput,
@@ -474,6 +476,16 @@ export class PlannerHabitsController {
     @Body({ schema: checkinSchema }) input: CheckinInput,
   ) {
     return this.habits.checkin(user.id, id, input);
+  }
+
+  @Post('habits/:id/checkins/import')
+  @HttpCode(200)
+  importCheckins(
+    @CurrentUser() user: AuthUser,
+    @Id() id: string,
+    @Body({ schema: batchHabitCheckinsSchema }) input: BatchHabitCheckinsInput,
+  ) {
+    return this.habits.importCheckins(user.id, id, input.entries);
   }
 
   @Get('habit-sections')
