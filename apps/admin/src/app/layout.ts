@@ -38,7 +38,7 @@ import {
         aioShellActions
         aioBtn
         variant="ghost"
-        size="sm"
+        class="h-11"
         (click)="logout()"
       >
         <aio-icon name="lucideLogOut" size="sm" />

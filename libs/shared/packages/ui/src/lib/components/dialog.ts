@@ -51,7 +51,7 @@ export class AioDialogActions {
       >
         <hlm-drawer-content
           *hlmDrawerPortal="let ctx"
-          class="pb-[env(safe-area-inset-bottom)]"
+          [class]="'pb-[env(safe-area-inset-bottom)] ' + contentClass()"
         >
           <hlm-drawer-header>
             <h2 hlmDrawerTitle>{{ title() }}</h2>
@@ -97,6 +97,10 @@ export class AioDialog {
   readonly open = model(false);
   readonly title = input.required<string>();
   readonly description = input<string>();
+  /**
+   * Classes for the dialog/sheet surface. The surface is portalled to <body>, so
+   * pass the applet accent here (`contentClass="applet-planner"`) to keep its colours.
+   */
   readonly contentClass = input('');
 
   protected readonly isMobile = injectIsMobile();

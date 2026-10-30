@@ -8,7 +8,7 @@ import type {
 } from '@all-in-one/applets/health/contracts';
 import type { PlannerTask } from '@all-in-one/applets/planner/contracts';
 import { toIsoDate } from '@all-in-one/shared/schemas';
-import { AioCardDirectives, AioIcon, provideIcons } from '@all-in-one/ui';
+import { AioIcon, provideIcons } from '@all-in-one/ui';
 import {
   API_BASE_URL,
   AuthStore,
@@ -17,6 +17,7 @@ import {
 } from '@all-in-one/web/shared';
 import {
   lucideCalendarCheck,
+  lucideChevronLeft,
   lucideDumbbell,
   lucideLanguages,
   lucideSalad,
@@ -25,18 +26,19 @@ import {
 /** Today at a glance, one card per applet. */
 @Component({
   selector: 'customer-home',
-  imports: [AioCardDirectives, AioIcon, RouterLink],
+  imports: [AioIcon, RouterLink],
   providers: [
     provideIcons({
       lucideCalendarCheck,
+      lucideChevronLeft,
       lucideDumbbell,
       lucideLanguages,
       lucideSalad,
     }),
   ],
   template: `
-    <div class="flex flex-col gap-4">
-      <header>
+    <div class="flex flex-col gap-5">
+      <header class="flex flex-col gap-1">
         <h1 class="text-2xl font-bold">
           سلام{{ name() ? '، ' + name() : '' }} 👋
         </h1>
@@ -46,22 +48,25 @@ import {
         @for (card of cards(); track card.title) {
           <a
             [routerLink]="card.link"
-            aioCard
-            class="transition-transform active:scale-[0.98]"
+            class="glass flex items-center gap-4 rounded-2xl p-4 transition-transform active:scale-[0.98]"
+            [class]="card.accent"
           >
-            <div aioCardHeader>
-              <p aioCardDescription class="flex items-center gap-2">
-                <aio-icon [name]="card.icon" size="sm" class="text-primary" />{{
-                  card.title
-                }}
-              </p>
-              <h2 aioCardTitle class="text-xl">{{ card.value }}</h2>
-            </div>
-            <div aioCardFooter>
-              <span class="text-primary text-sm font-medium"
-                >{{ card.action }} ←</span
-              >
-            </div>
+            <span
+              class="bg-primary text-primary-foreground flex size-12 shrink-0 items-center justify-center rounded-2xl"
+            >
+              <aio-icon [name]="card.icon" />
+            </span>
+            <span class="flex min-w-0 flex-1 flex-col">
+              <span class="text-muted-foreground text-sm">{{
+                card.title
+              }}</span>
+              <span class="text-lg font-bold">{{ card.value }}</span>
+            </span>
+            <aio-icon
+              name="lucideChevronLeft"
+              size="sm"
+              class="text-muted-foreground"
+            />
           </a>
         }
       </div>
@@ -106,29 +111,29 @@ export class Home {
         icon: 'lucideCalendarCheck',
         link: '/planner',
         value: open ? `${faNumber(open)} کار باقی مانده` : 'کاری باقی نمانده',
-        action: 'برنامه‌ریز',
+        accent: 'applet-planner',
       },
       {
         title: 'انگلیسی',
         icon: 'lucideLanguages',
         link: '/english',
         value: due ? `${faNumber(due)} واژه آماده مرور` : 'مروری باقی نمانده',
-        action: 'مرور امروز',
+        accent: 'applet-english',
       },
       {
         title: 'تغذیه',
         icon: 'lucideSalad',
-        link: '/health/nutrition',
+        link: '/health',
         value:
           avg === null ? 'وعده‌ای ثبت نشده' : `میانگین امتیاز ${faNumber(avg)}`,
-        action: 'ثبت وعده',
+        accent: 'applet-health',
       },
       {
         title: 'ورزش این هفته',
         icon: 'lucideDumbbell',
         link: '/health/fitness',
         value: `${faNumber(this.week.value()?.minutes ?? 0)} از ۱۵۰ دقیقه`,
-        action: 'ثبت ورزش',
+        accent: 'applet-health',
       },
     ];
   });

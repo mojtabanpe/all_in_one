@@ -33,7 +33,7 @@ import { API_BASE_URL, faNumber } from '@all-in-one/web/shared';
                 </div>
                 <div aioItemActions>
                   <span aioBadge variant="outline" dir="ltr"
-                    >{{ d.level }} · {{ d.wordCount }}</span
+                    >{{ d.level }}، {{ d.wordCount }}</span
                   >
                 </div>
               </div>
@@ -73,7 +73,7 @@ import { API_BASE_URL, faNumber } from '@all-in-one/web/shared';
                 </div>
                 <div aioItemActions>
                   <span aioBadge variant="secondary"
-                    >{{ mealTypeLabels[r.mealType] }} ·
+                    >{{ mealTypeLabels[r.mealType] }}،
                     {{ fa(r.calories) }}</span
                   >
                 </div>

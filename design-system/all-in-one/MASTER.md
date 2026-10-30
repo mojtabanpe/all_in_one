@@ -37,3 +37,15 @@ Tokens live in `libs/shared/packages/ui/src/styles/theme.css`.
 
 - Raw colors (`bg-violet-500`); use semantic tokens (`bg-primary`, `text-muted-foreground`).
 - Modals on phones; custom components without owner approval; importing spartan outside the wrapper libs.
+
+## Redesign 2026-10-30 (better-design)
+
+- Shell stays lavender violet; each applet sets its own accent on its root (references from directive 17):
+  - planner, TickTick: calm blue `oklch(0.56 0.19 258)`; smart lists (today, tomorrow, 7 days, all), quick-add,
+    compact rows with round priority checkboxes (low grey, medium blue, high red), overdue and completed sections.
+  - english, Duolingo: green `oklch(0.55 0.17 140)`, streak `--streak`, gem `--gem`; `btn-3d` chunky buttons, deck
+    path, lesson-style review with a thick progress bar and a celebration card.
+  - health, Gordool: warm orange `oklch(0.58 0.19 38)`; "today" view with calories left, meal score, weekly
+    training, a "+" per meal (two taps to log), informal coach voice.
+- Accents were darkened until white text reaches about 4.4:1 to 4.8:1; `btn-3d` text is 18px bold.
+- Spacing scale 4/8/12/16/24/32; page sections use `gap-6`; touch targets are at least 44px.

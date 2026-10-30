@@ -153,6 +153,8 @@ export class MealForm {
   readonly date = input.required<string>();
   readonly rules = input.required<DietRules>();
   readonly calorieTarget = input<number | null>(null);
+  /** Preselected meal (e.g. from a "+" next to lunch); otherwise guessed from the time. */
+  readonly mealType = input<MealType | null>(null);
   readonly saved = output<MealLogInput>();
 
   protected readonly mealTypes = MEAL_TYPES;
@@ -182,6 +184,13 @@ export class MealForm {
       this.calorieTarget(),
     ),
   );
+
+  constructor() {
+    queueMicrotask(() => {
+      const preset = this.mealType();
+      if (preset) this.model.update((m) => ({ ...m, mealType: preset }));
+    });
+  }
 
   protected setMealType(value: unknown) {
     if (typeof value === 'string')

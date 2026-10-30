@@ -33,9 +33,9 @@
   --radius: 1rem;
 
   /* Lavender violet primary + wellness green (ui-ux-pro-max: wellness palette). */
-  --background: oklch(0.965 0.018 292);
+  --background: oklch(0.975 0.008 285);
   --foreground: oklch(0.25 0.06 292);
-  --card: oklch(1 0 0 / 0.55);
+  --card: oklch(1 0 0 / 0.62);
   --card-foreground: oklch(0.25 0.06 292);
   --popover: oklch(1 0 0 / 0.78);
   --popover-foreground: oklch(0.25 0.06 292);
@@ -71,16 +71,17 @@
   --sidebar-ring: oklch(0.52 0.22 292);
 
   /* Glass material */
-  --glass: oklch(1 0 0 / 0.55);
-  --glass-strong: oklch(1 0 0 / 0.78);
-  --glass-border: oklch(1 0 0 / 0.65);
+  --glass: oklch(1 0 0 / 0.62);
+  --glass-strong: oklch(1 0 0 / 0.85);
+  --glass-border: oklch(1 0 0 / 0.75);
   --glass-blur: 18px;
-  --glass-shadow: 0 8px 32px oklch(0.3 0.1 292 / 0.12);
+  --glass-shadow:
+    0 1px 2px oklch(0.3 0.05 285 / 0.06), 0 6px 20px oklch(0.3 0.05 285 / 0.06);
 
   /* Ambient background blobs behind the glass */
-  --blob-1: oklch(0.78 0.14 292 / 0.55);
-  --blob-2: oklch(0.82 0.12 163 / 0.45);
-  --blob-3: oklch(0.85 0.1 350 / 0.4);
+  --blob-1: oklch(0.85 0.08 292 / 0.45);
+  --blob-2: oklch(0.88 0.07 200 / 0.35);
+  --blob-3: oklch(0.9 0.06 350 / 0.3);
 
   /* Height reserved for the floating bottom nav on phones */
   --bottom-nav-space: calc(5.5rem + env(safe-area-inset-bottom));
@@ -128,6 +129,87 @@
   --blob-1: oklch(0.45 0.18 292 / 0.55);
   --blob-2: oklch(0.45 0.12 163 / 0.4);
   --blob-3: oklch(0.4 0.14 350 / 0.35);
+}
+
+/*
+ * Applet accents (directive 17): each applet root sets its own primary through
+ * spartan's variables, so every Helm component inside follows it.
+ */
+.applet-planner {
+  --primary: oklch(0.56 0.19 258);
+  --primary-foreground: oklch(0.99 0 0);
+  --ring: oklch(0.56 0.19 258);
+  --accent: oklch(0.56 0.19 258 / 0.1);
+  --accent-foreground: oklch(0.4 0.17 258);
+}
+
+.applet-english {
+  /* Duolingo-like green, deep enough for white text (≈4.5:1). */
+  --primary: oklch(0.55 0.17 140);
+  --primary-foreground: oklch(0.99 0 0);
+  --primary-edge: oklch(0.45 0.15 140);
+  --ring: oklch(0.55 0.17 140);
+  --accent: oklch(0.55 0.17 140 / 0.12);
+  --accent-foreground: oklch(0.42 0.14 140);
+  --streak: oklch(0.62 0.18 45);
+  --gem: oklch(0.56 0.14 235);
+}
+
+.applet-health {
+  --primary: oklch(0.58 0.19 38);
+  --primary-foreground: oklch(0.99 0 0);
+  --primary-edge: oklch(0.48 0.17 38);
+  --ring: oklch(0.58 0.19 38);
+  --accent: oklch(0.58 0.19 38 / 0.1);
+  --accent-foreground: oklch(0.48 0.17 38);
+  --streak: oklch(0.62 0.18 45);
+}
+
+:root.dark .applet-planner {
+  --primary: oklch(0.7 0.15 258);
+  --primary-foreground: oklch(0.18 0.04 258);
+  --accent-foreground: oklch(0.85 0.08 258);
+}
+
+:root.dark .applet-english {
+  --primary: oklch(0.78 0.19 135);
+  --primary-foreground: oklch(0.2 0.05 135);
+  --accent-foreground: oklch(0.88 0.1 135);
+}
+
+:root.dark .applet-health {
+  --primary: oklch(0.74 0.16 45);
+  --primary-foreground: oklch(0.2 0.05 45);
+  --accent-foreground: oklch(0.88 0.08 45);
+}
+
+/*
+ * Chunky "3D" buttons (Duolingo style). Add `btn-3d` to an `aioBtn`; the edge
+ * is a darker primary. For other variants add `btn-3d-quiet` (border-coloured edge).
+ */
+@utility btn-3d {
+  --btn-3d-edge: var(
+    --btn-edge,
+    var(--primary-edge, color-mix(in oklch, var(--primary) 78%, black))
+  );
+  box-shadow: 0 0.25rem 0 var(--btn-3d-edge);
+  margin-bottom: 0.25rem;
+  font-weight: 700;
+  font-size: 1.125rem;
+  transition:
+    transform 80ms ease-out,
+    box-shadow 80ms ease-out;
+  &:active:not(:disabled) {
+    transform: translateY(0.25rem);
+    box-shadow: 0 0 0 var(--btn-3d-edge);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+@utility btn-3d-quiet {
+  --btn-edge: var(--border);
 }
 
 @layer base {

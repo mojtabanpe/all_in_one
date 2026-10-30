@@ -15,7 +15,8 @@ export function faDate(
     dateFormatters.set(key, formatter);
   }
   const date = iso.length === 10 ? new Date(`${iso}T00:00:00Z`) : new Date(iso);
-  return formatter.format(date);
+  // Intl writes a Latin comma ("۸ آبان, جمعه"); use the Persian one.
+  return formatter.format(date).replace(/,/g, '،');
 }
 
 /** Persian digits with grouping, e.g. 2,260 → ۲٬۲۶۰. */

@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import {
   form,
   FormField,
@@ -125,6 +125,8 @@ import {
 })
 export class TaskForm {
   readonly date = input.required<string>();
+  /** Title typed in the quick-add field, carried into the full form. */
+  readonly title = input('');
   readonly saved = output<CreateTaskInput>();
 
   protected readonly priorities = TASK_PRIORITIES;
@@ -149,7 +151,11 @@ export class TaskForm {
 
   constructor() {
     queueMicrotask(() =>
-      this.model.update((m) => ({ ...m, date: m.date || this.date() })),
+      this.model.update((m) => ({
+        ...m,
+        date: m.date || this.date(),
+        title: m.title || (this.title() ?? ''),
+      })),
     );
   }
 

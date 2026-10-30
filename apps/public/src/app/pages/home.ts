@@ -23,7 +23,7 @@ import { APPLETS } from './applets-data';
   template: `
     <section class="flex flex-col items-start gap-5 py-10 md:py-16">
       <span class="glass rounded-full px-3 py-1 text-xs font-medium"
-        >رایگان · فارسی · روی گوشی و کامپیوتر</span
+        >رایگان، فارسی، روی گوشی و کامپیوتر</span
       >
       <h1 class="text-4xl leading-tight font-bold md:text-5xl">
         برنامه‌ریزی، انگلیسی و سلامت؛

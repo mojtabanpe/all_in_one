@@ -58,6 +58,13 @@
     unused wrappers are tree-shaken (subclasses are otherwise kept).
 - Design system: `design-system/all-in-one/MASTER.md`; tokens in `libs/shared/packages/ui/src/styles/theme.css`.
   Each app's `styles.css` only imports that theme.
+- Applet accents: the applet root gets `applet-planner` / `applet-english` / `applet-health` (sets spartan `--primary`
+  etc.). Dialogs/sheets are portalled to `<body>`, so pass the same class as `aio-dialog contentClass`. Duolingo-style
+  chunky buttons: `aioBtn class="btn-3d"` (`btn-3d-quiet` for outline). Recolour one button by overriding `--primary`
+  on it (`[--primary:var(--gem)]`); keep such class strings literal in source so Tailwind finds them.
+- spartan `aioProgress`: `[value]` is a percentage (0–100); `max` is ignored by the indicator.
+- Don't use `·` as a separator next to Persian digits (it reads as ۰); use the Persian comma `،`.
+- Touch targets ≥ 44px; small round checkboxes get an invisible hit area (`after:absolute after:-inset-3`).
 - Before pushing: `pnpm nx run-many -t lint test build typecheck`.
 
 # User directives (binding — given by the project owner)

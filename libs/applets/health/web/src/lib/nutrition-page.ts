@@ -84,7 +84,7 @@ import { MealForm } from './meal-form';
             @if (diet(); as d) {
               <span class="font-semibold">{{ d.name }}</span>
               <span class="text-muted-foreground">
-                · کربوهیدرات {{ fa(d.carbsPct) }}٪، پروتئین
+                ، کربوهیدرات {{ fa(d.carbsPct) }}٪، پروتئین
                 {{ fa(d.proteinPct) }}٪، چربی {{ fa(d.fatPct) }}٪</span
               >
             } @else {
@@ -199,7 +199,7 @@ import { MealForm } from './meal-form';
         </div>
         @if (plan.value(); as p) {
           <p class="text-muted-foreground text-sm">
-            ۷ روز از {{ faDate(p.startDate) }} · حدود
+            ۷ روز از {{ faDate(p.startDate) }}، حدود
             {{ fa(p.calorieTarget) }} کالری در روز
           </p>
           <div aioAccordion type="single" class="glass rounded-3xl px-4">

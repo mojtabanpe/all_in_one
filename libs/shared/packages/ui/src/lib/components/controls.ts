@@ -20,11 +20,14 @@ import { HlmSwitch } from '@spartan-ng/helm/switch';
       [name]="name() || null"
       [required]="required()"
       [forceInvalid]="invalid()"
-      [attr.aria-label]="ariaLabel()"
+      [aria-label]="ariaLabel()"
+      [class]="checkboxClass()"
     />
   `,
 })
 export class AioCheckbox implements FormCheckboxControl {
+  /** Extra classes for the box itself, e.g. `rounded-full size-5` for round task checkboxes. */
+  readonly checkboxClass = input('');
   readonly checked = model(false);
   readonly disabled = input(false, { transform: booleanAttribute });
   readonly invalid = input(false, { transform: booleanAttribute });

@@ -122,14 +122,13 @@ type CategoryFilter = ActivityCategory | 'all';
         <div aioCardContent class="flex flex-col gap-2">
           <div
             aioProgress
-            [value]="Math.min(week.value()?.minutes ?? 0, 150)"
-            [max]="150"
+            [value]="Math.min(((week.value()?.minutes ?? 0) * 100) / 150, 100)"
             aria-label="دقیقه فعالیت هفته"
           >
             <div aioProgressIndicator></div>
           </div>
           <p class="text-muted-foreground text-sm">
-            {{ fa(week.value()?.sessions ?? 0) }} جلسه · حدود
+            {{ fa(week.value()?.sessions ?? 0) }} جلسه، حدود
             {{ fa(week.value()?.calories ?? 0) }} کالری
           </p>
         </div>
@@ -140,15 +139,24 @@ type CategoryFilter = ActivityCategory | 'all';
         <div
           aioToggleGroup
           type="single"
-          variant="outline"
-          size="sm"
-          class="flex flex-wrap"
+          spacing="2"
+          class="-mx-4 w-auto flex-nowrap overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0"
           [value]="category()"
           (valueChange)="setCategory($event)"
         >
-          <button aioToggleGroupItem value="all">همه</button>
+          <button
+            aioToggleGroupItem
+            value="all"
+            class="glass data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-9 rounded-full px-4"
+          >
+            همه
+          </button>
           @for (c of categories; track c) {
-            <button aioToggleGroupItem [value]="c">
+            <button
+              aioToggleGroupItem
+              [value]="c"
+              class="glass data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-9 rounded-full px-4"
+            >
               {{ categoryLabels[c] }}
             </button>
           }
@@ -180,7 +188,7 @@ type CategoryFilter = ActivityCategory | 'all';
               <div aioItem variant="outline" class="glass rounded-2xl">
                 <div aioItemContent>
                   <div aioItemTitle>
-                    {{ w.activityName }} · {{ fa(w.durationMin) }} دقیقه
+                    {{ w.activityName }}، {{ fa(w.durationMin) }} دقیقه
                   </div>
                   <div aioItemDescription class="flex flex-wrap gap-1.5">
                     <span>{{
@@ -231,7 +239,7 @@ type CategoryFilter = ActivityCategory | 'all';
                 <span class="flex flex-col items-start gap-0.5 text-start">
                   <span>{{ p.title }}</span>
                   <span class="text-muted-foreground text-xs">
-                    هفته‌ای {{ fa(p.sessionsPerWeek) }} جلسه ·
+                    هفته‌ای {{ fa(p.sessionsPerWeek) }} جلسه،
                     {{ fa(p.minutes) }} دقیقه
                   </span>
                 </span>

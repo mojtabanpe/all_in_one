@@ -35,20 +35,40 @@ describe('PlannerPage', () => {
     return { fixture, http, el: fixture.nativeElement as HTMLElement };
   }
 
-  it("lists the selected day's tasks with area and priority", async () => {
+  it("lists today's tasks and puts older open tasks under overdue", async () => {
     const { el } = await setup([
       task({}),
-      task({ id: 't2', title: 'دیروز', date: '2000-01-01' }),
+      task({ id: 't2', title: 'کار دیروز', date: '2000-01-01' }),
+      task({ id: 't3', title: 'کار فردا', date: '2999-01-01' }),
     ]);
     expect(el.textContent).toContain('خرید میوه');
-    expect(el.textContent).toContain('خانه');
-    expect(el.textContent).toContain('اولویت زیاد');
-    expect(el.textContent).not.toContain('دیروز');
+    expect(el.textContent).toContain('عقب‌افتاده');
+    expect(el.textContent).toContain('کار دیروز');
+    expect(el.textContent).not.toContain('کار فردا');
   });
 
   it('shows an empty state for a free day', async () => {
     const { el } = await setup([]);
-    expect(el.textContent).toContain('برای این روز کاری ثبت نشده');
+    expect(el.textContent).toContain('فهرست خالی است');
+  });
+
+  it('adds a task from the quick-add field', async () => {
+    const { fixture, http, el } = await setup([]);
+    const input = el.querySelector(
+      'input[name=quick-title]',
+    ) as HTMLInputElement;
+    input.value = 'تماس با مامان';
+    input.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    (input.form as HTMLFormElement).dispatchEvent(new Event('submit'));
+    const req = http.expectOne(
+      (r) => r.method === 'POST' && r.url === '/api/planner/tasks',
+    );
+    expect(req.request.body).toEqual({ title: 'تماس با مامان', date: today });
+    req.flush(task({ id: 't9', title: 'تماس با مامان', priority: 'MEDIUM' }));
+    await fixture.whenStable();
+    expect(el.textContent).toContain('تماس با مامان');
+    expect(input.value).toBe('');
   });
 
   it('marks a task done through the api', async () => {
@@ -63,6 +83,7 @@ describe('PlannerPage', () => {
     expect(req.request.body).toEqual({ done: true });
     req.flush(task({ done: true }));
     await fixture.whenStable();
-    expect(el.textContent).toContain('۱ از ۱ کار انجام شده');
+    expect(el.textContent).toContain('انجام‌شده، ۱');
+    expect(el.textContent).toContain('همه کارهای این فهرست انجام شده');
   });
 });
