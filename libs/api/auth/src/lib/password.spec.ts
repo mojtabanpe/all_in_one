@@ -1,4 +1,5 @@
-import { hashPassword, verifyPassword } from './password';
+import { hash as bcryptHash } from 'bcryptjs';
+import { hashPassword, isLegacyHash, verifyPassword } from './password';
 
 describe('password hashing', () => {
   it('verifies the right password and rejects others', async () => {
@@ -14,5 +15,13 @@ describe('password hashing', () => {
 
   it('rejects malformed stored hashes', async () => {
     await expect(verifyPassword('x', 'not-a-hash')).resolves.toBe(false);
+  });
+
+  it('verifies bcrypt hashes imported from Recall', async () => {
+    const stored = await bcryptHash('recall-pass', 4);
+    expect(isLegacyHash(stored)).toBe(true);
+    expect(isLegacyHash(await hashPassword('x'))).toBe(false);
+    await expect(verifyPassword('recall-pass', stored)).resolves.toBe(true);
+    await expect(verifyPassword('wrong', stored)).resolves.toBe(false);
   });
 });

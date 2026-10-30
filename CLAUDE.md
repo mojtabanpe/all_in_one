@@ -198,6 +198,19 @@ When the owner gives a new instruction, add it to this list in the same change.
 
 11. Keep every owner instruction in project memory (this file). Do not drop or weaken existing ones.
 
+## Recall data (2026-10-31)
+
+30. **Recall's decks, cards and texts come over** (owner, overrides the "no data import" part of directive 20).
+    `deploy/import-recall.sh <email>...` copies the chosen Recall accounts (`memnpe@gmail.com`, `admin@recall.com`)
+    with their decks, cards (SM-2 state), reading texts, keeping ids. Accounts keep their bcrypt passwords;
+    `verifyPassword` accepts them and login re-hashes to scrypt.
+
+## Deployment (2026-10-31)
+
+31. **Push to `master` deploys.** `.github/workflows/deploy.yml` runs after CI passes: images are built on GitHub,
+    then the server's self-hosted runner (`aio-server`, label `aio`, `/opt/actions-runner-aio`) loads them and
+    runs `deploy/release.sh` (health check, rollback). CI must stay green (`nx format:check` included).
+
 ## Approved custom components
 
 - **BottomNav** (2026-10-29): floating bottom navigation for phone sizes, in `libs/shared/packages`,

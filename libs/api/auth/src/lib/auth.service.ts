@@ -17,7 +17,7 @@ import type {
 } from '@all-in-one/shared/schemas';
 import { PrismaService, type User as DbUser } from '@all-in-one/api/db';
 import { MailService } from './mail.service';
-import { hashPassword, verifyPassword } from './password';
+import { hashPassword, isLegacyHash, verifyPassword } from './password';
 
 const RESET_LIFETIME = 60 * 60 * 1000;
 const VERIFY_LIFETIME = 24 * 60 * 60 * 1000;
@@ -63,7 +63,9 @@ export class AuthService {
     const email = input.email.toLowerCase();
     const verify = this.verificationRequired;
     if (verify && !this.mail.enabled)
-      throw new ServiceUnavailableException('ثبت‌نام به ایمیل نیاز دارد که فعلاً در دسترس نیست.');
+      throw new ServiceUnavailableException(
+        'ثبت‌نام به ایمیل نیاز دارد که فعلاً در دسترس نیست.',
+      );
     if (await this.prisma.user.findUnique({ where: { email } })) {
       throw new ConflictException('این ایمیل قبلاً ثبت شده است');
     }
@@ -92,7 +94,14 @@ export class AuthService {
       throw new UnauthorizedException('ایمیل یا رمز عبور نادرست است');
     }
     if (!user.emailVerifiedAt)
-      throw new ForbiddenException('اول ایمیلت را تأیید کن؛ لینک تأیید به صندوقت فرستاده شده.');
+      throw new ForbiddenException(
+        'اول ایمیلت را تأیید کن؛ لینک تأیید به صندوقت فرستاده شده.',
+      );
+    if (isLegacyHash(user.passwordHash))
+      return this.prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash: await hashPassword(input.password) },
+      });
     return user;
   }
 
@@ -157,7 +166,9 @@ export class AuthService {
         where: { tokenHash: row.tokenHash },
       });
       if (!used.count) return false;
-      const user = await tx.user.findUniqueOrThrow({ where: { id: row.userId } });
+      const user = await tx.user.findUniqueOrThrow({
+        where: { id: row.userId },
+      });
       if (!user.emailVerifiedAt)
         await tx.user.update({
           where: { id: user.id },
@@ -198,7 +209,9 @@ export class AuthService {
    */
   requestPasswordReset(email: string): void {
     if (!this.mail.enabled)
-      throw new ServiceUnavailableException('بازیابی رمز با ایمیل فعلاً در دسترس نیست.');
+      throw new ServiceUnavailableException(
+        'بازیابی رمز با ایمیل فعلاً در دسترس نیست.',
+      );
     this.sendResetLink(email).catch((error: Error) =>
       this.logger.error('Password reset email failed: ' + error.message),
     );
@@ -246,7 +259,9 @@ export class AuthService {
         where: { tokenHash: row.tokenHash },
       });
       if (!used.count) return null;
-      const current = await tx.user.findUniqueOrThrow({ where: { id: row.userId } });
+      const current = await tx.user.findUniqueOrThrow({
+        where: { id: row.userId },
+      });
       await tx.passwordReset.deleteMany({ where: { userId: row.userId } });
       return tx.user.update({
         where: { id: row.userId },
@@ -258,7 +273,9 @@ export class AuthService {
       });
     });
     if (!user)
-      throw new BadRequestException('این لینک بازیابی نامعتبر است یا منقضی شده.');
+      throw new BadRequestException(
+        'این لینک بازیابی نامعتبر است یا منقضی شده.',
+      );
     this.notify(user.email, 'رمز حسابت در «همه در یک» بازنشانی شد');
   }
 

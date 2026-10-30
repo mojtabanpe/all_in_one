@@ -1,3 +1,4 @@
+import { compare as bcryptCompare } from 'bcryptjs';
 import { randomBytes, scrypt as scryptCb, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 
@@ -16,10 +17,16 @@ export async function hashPassword(password: string): Promise<string> {
   return `${salt}:${hash.toString('hex')}`;
 }
 
+/** Recall accounts were imported with their bcrypt hashes; they are re-hashed on the next login. */
+export function isLegacyHash(stored: string): boolean {
+  return /^\$2[aby]\$\d{2}\$/.test(stored);
+}
+
 export async function verifyPassword(
   password: string,
   stored: string,
 ): Promise<boolean> {
+  if (isLegacyHash(stored)) return bcryptCompare(password, stored);
   const [salt, hashHex] = stored.split(':');
   if (!salt || !hashHex) return false;
   const expected = Buffer.from(hashHex, 'hex');
