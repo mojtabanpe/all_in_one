@@ -82,6 +82,10 @@ When the owner gives a new instruction, add it to this list in the same change.
 7. **Mobile: bottom sheets, never modals.** On phone sizes every notification, alert, dialog and
    confirmation is shown as a bottom sheet. Modals are not used on mobile.
 8. **Use the `ui-ux-pro-max` skill** for design decisions (palette, typography, layout, UX rules).
+15. **Use the `better-design` skill** (2026-10-30) for all UI/UX design, redesign and review work. The owner
+    judged the first visual design "very bad"; redesign through better-design. The skill needs the Better
+    Design MCP (`https://better-design.com/api/mcp`); if it is not connected, say so and do not claim its
+    guidance was used. better-design takes precedence over generic design advice when both apply.
 
 ## Applets (2026-10-29)
 

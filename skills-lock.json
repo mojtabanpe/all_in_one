@@ -13,6 +13,12 @@
       "skillPath": "angular-new-app/SKILL.md",
       "computedHash": "49bd84ab08bd3498c52f476bed48fbb942dc6dbc0925607e84549adbed34bccf"
     },
+    "better-design": {
+      "source": "marvkr/better-design",
+      "sourceType": "github",
+      "skillPath": "skills/better-design/SKILL.md",
+      "computedHash": "7975e194e715074a1adf001d293f111cd1176009ef90d13d35c7282c26dac29f"
+    },
     "link-workspace-packages": {
       "source": "nrwl/nx-ai-agents-config",
       "sourceType": "github",
