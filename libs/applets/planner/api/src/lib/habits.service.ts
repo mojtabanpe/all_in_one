@@ -63,6 +63,9 @@ export class HabitsService {
         goal: h.goal,
         unit: h.unit,
         weekdays: h.weekdays,
+        externalSourceId: h.externalSourceId,
+        repeatRule: h.repeatRule,
+        reminders: h.reminders,
         archived: h.archived,
         sortOrder: h.sortOrder,
         checkins: own.filter((c) => c.date >= from && c.date <= to),
@@ -79,6 +82,12 @@ export class HabitsService {
   }
 
   async create(userId: string, input: CreateHabitInput): Promise<PlannerHabit> {
+    if (input.externalSourceId) {
+      const existing = await this.prisma.plannerHabit.findUnique({
+        where: { userId_externalSourceId: { userId, externalSourceId: input.externalSourceId } },
+      });
+      if (existing) return this.get(userId, existing.id);
+    }
     if (input.sectionId) await this.section(userId, input.sectionId);
     const count = await this.prisma.plannerHabit.count({ where: { userId } });
     const habit = await this.prisma.plannerHabit.create({
@@ -89,6 +98,9 @@ export class HabitsService {
         color: input.color ?? 'sage',
         goal: input.goal ?? 1,
         unit: input.unit ?? '',
+        externalSourceId: input.externalSourceId ?? null,
+        repeatRule: input.repeatRule ?? null,
+        reminders: input.reminders ?? [],
         weekdays: input.weekdays
           ? [...new Set(input.weekdays)].sort()
           : undefined,
@@ -147,6 +159,29 @@ export class HabitsService {
         create: { habitId: id, date: day(input.date), value: input.value },
         update: { value: input.value },
       });
+    return this.get(userId, id);
+  }
+
+  /** Import historical values atomically, preserving original calendar days. */
+  async importCheckins(userId: string, id: string, entries: CheckinInput[]): Promise<PlannerHabit> {
+    await this.owned(userId, id);
+    const today = isoDateIn(new Date());
+    if (entries.some((item) => daysBetween(item.date, today) < 0))
+      throw new BadRequestException('تاریخ آینده قابل ثبت نیست');
+    await this.prisma.$transaction(async (tx) => {
+      for (const item of entries) {
+        const key = { habitId_date: { habitId: id, date: day(item.date) } };
+        if (item.value === 0) {
+          await tx.plannerHabitCheckin.deleteMany({ where: { habitId: id, date: day(item.date) } });
+        } else {
+          await tx.plannerHabitCheckin.upsert({
+            where: key,
+            create: { habitId: id, date: day(item.date), value: item.value },
+            update: { value: item.value },
+          });
+        }
+      }
+    });
     return this.get(userId, id);
   }
 
