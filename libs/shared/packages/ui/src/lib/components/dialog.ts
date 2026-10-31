@@ -41,7 +41,7 @@ export class AioDialogActions {
  */
 @Component({
   selector: 'aio-dialog',
-  imports: [HlmDialogImports, HlmDrawerImports, NgTemplateOutlet],
+  imports: [HlmDialogImports, HlmDrawerImports, HlmButton, NgTemplateOutlet],
   template: `
     @if (isMobile()) {
       <hlm-drawer
@@ -56,11 +56,20 @@ export class AioDialogActions {
             contentClass()
           "
         >
-          <hlm-drawer-header class="shrink-0">
+          <hlm-drawer-header class="relative shrink-0 pe-24">
             <h2 hlmDrawerTitle>{{ title() }}</h2>
             @if (description()) {
               <p hlmDrawerDescription>{{ description() }}</p>
             }
+            <button
+              hlmBtn
+              hlmDrawerClose
+              variant="ghost"
+              class="absolute end-4 top-2 min-h-11 min-w-11"
+              aria-label="بستن پنجره"
+            >
+              بستن
+            </button>
           </hlm-drawer-header>
           @if (body(); as b) {
             <div
