@@ -785,6 +785,7 @@ type CategoryFilter = ActivityCategory | 'all';
             <div aioField>
               <label aioFieldLabel for="session-date">تاریخ</label
               ><aio-date-input
+                contentClass="applet-health"
                 inputId="session-date"
                 [formField]="sessionForm.date"
               />
@@ -1006,7 +1007,11 @@ type CategoryFilter = ActivityCategory | 'all';
           <div class="grid grid-cols-2 gap-3">
             <div aioField>
               <label aioFieldLabel for="w-date">تاریخ</label>
-              <aio-date-input inputId="w-date" [formField]="logForm.date" />
+              <aio-date-input
+                contentClass="applet-health"
+                inputId="w-date"
+                [formField]="logForm.date"
+              />
             </div>
             <div aioField>
               <label aioFieldLabel for="w-min">مدت (دقیقه)</label>

@@ -132,6 +132,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
         </div>
         <div class="grid min-w-0 grid-cols-1 gap-2 min-[400px]:grid-cols-2">
           <aio-date-input
+            contentClass="applet-planner"
             class="min-w-0 max-w-full"
             aria-label="تاریخ دلخواه"
             [value]="t.date ?? ''"

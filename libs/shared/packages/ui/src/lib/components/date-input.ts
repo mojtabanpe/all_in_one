@@ -145,7 +145,7 @@ export function jalaliToIso(value: JalaliDate): string {
     <aio-dialog
       [(open)]="open"
       title="انتخاب تاریخ شمسی"
-      contentClass="sm:max-w-sm"
+      [contentClass]="'sm:max-w-sm ' + contentClass()"
     >
       <ng-template aioDialogBody>
         <div class="flex justify-center" dir="rtl">
@@ -192,6 +192,7 @@ export class AioDateInput implements FormValueControl<string> {
   readonly required = input(false, { transform: booleanAttribute });
   readonly invalid = input(false, { transform: booleanAttribute });
   readonly inputId = input('');
+  readonly contentClass = input('');
   readonly ariaLabel = input('', { alias: 'aria-label' });
   readonly minDate = input<string>();
   readonly maxDate = input<string>();

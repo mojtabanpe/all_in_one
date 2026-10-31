@@ -123,6 +123,7 @@ const days = [
       </aio-native-select>
       @if (ending() === 'DATE') {
         <aio-date-input
+          contentClass="applet-planner"
           aria-label="تاریخ پایان تکرار"
           [value]="until()"
           (valueChange)="until.set($event)"

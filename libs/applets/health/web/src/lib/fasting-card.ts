@@ -237,6 +237,7 @@ const HOUR = 3_600_000;
           <div aioField>
             <label aioFieldLabel for="fast-start">از کی چیزی نخورده‌ای؟</label>
             <aio-date-input
+              contentClass="applet-health"
               inputId="fast-start"
               [minDate]="minStart().slice(0, 10)"
               [maxDate]="nowInput().slice(0, 10)"

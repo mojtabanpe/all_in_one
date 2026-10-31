@@ -159,6 +159,7 @@ const emptyDraft = (): Draft => ({
             <div aioField>
               <label aioFieldLabel for="cd-date">تاریخ</label>
               <aio-date-input
+                contentClass="applet-planner"
                 inputId="cd-date"
                 [value]="d.date"
                 (valueChange)="patch({ date: $event })"

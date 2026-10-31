@@ -206,6 +206,7 @@ function addMonths(iso: string, months: number): string {
             <div aioField>
               <label aioFieldLabel for="weigh-date">روز</label>
               <aio-date-input
+                contentClass="applet-health"
                 inputId="weigh-date"
                 [maxDate]="today"
                 [formField]="weighForm.date"
@@ -331,6 +332,7 @@ function addMonths(iso: string, months: number): string {
               >یا تاریخ دلخواه</label
             >
             <aio-date-input
+              contentClass="applet-health"
               inputId="goal-date"
               [minDate]="minDate"
               [formField]="goalForm.targetDate"
