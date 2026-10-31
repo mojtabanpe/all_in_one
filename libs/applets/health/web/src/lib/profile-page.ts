@@ -310,7 +310,9 @@ export class ProfilePage {
           },
           {
             label: 'سال تولد',
-            value: value(persianBirthYear(p?.birthYear), 'شمسی'),
+            value: p?.birthYear
+              ? `${faNumber(persianBirthYear(p.birthYear), { useGrouping: false })} شمسی`
+              : 'تکمیل نشده',
             icon: 'lucideUserRound',
             color: 'var(--health-orange)',
           },
