@@ -47,7 +47,10 @@ const plan: MealPlan = {
 function setup(
   reply = JSON.stringify({
     suggestions: [
-      { recipeSlug: 'allowed', reason: 'آماده‌سازی سریع و بدون گوشت' },
+      {
+        recipeSlug: 'allowed',
+        reason: 'آماده‌سازی سریع و بدون گوشت',
+      },
     ],
   }),
 ) {
@@ -80,7 +83,10 @@ describe('AI meal alternatives', () => {
   it('uses the caller’s gateway, preference and only compatible alternatives without changing the plan', async () => {
     const { service, gateway, health } = setup();
     await expect(service.suggestPlanMeal('owner', input)).resolves.toEqual([
-      { recipe: allowed, reason: 'آماده‌سازی سریع و بدون گوشت' },
+      {
+        recipe: allowed,
+        reason: 'آماده‌سازی سریع و بدون گوشت',
+      },
     ]);
     expect(health.currentPlan).toHaveBeenCalledWith('owner');
     expect(health.profile).toHaveBeenCalledWith('owner');
