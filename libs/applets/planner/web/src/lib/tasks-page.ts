@@ -514,6 +514,24 @@ export class TasksPage {
   );
   private readonly datedRes = httpResource<PlannerTask[]>(() => {
     const view = this.view();
+    if (view.startsWith('list:'))
+      return this.api.url('/tasks', {
+        status: 'open',
+        listIds: view.slice(5),
+        limit: '500',
+      });
+    if (view.startsWith('tag:'))
+      return this.api.url('/tasks', {
+        status: 'open',
+        tags: view.slice(4),
+        limit: '500',
+      });
+    if (view === 'assigned')
+      return this.api.url('/tasks', {
+        status: 'open',
+        assigneeId: 'me',
+        limit: '500',
+      });
     if (!['today', 'tomorrow', 'week'].includes(view)) return undefined;
     return this.api.url('/tasks', {
       status: 'open',

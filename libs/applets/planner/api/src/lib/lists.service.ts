@@ -1,3 +1,5 @@
+import { RecurrencesService } from './recurrences.service';
+import { OPEN_TASK_WHERE } from './task-mapping';
 import {
   BadRequestException,
   ConflictException,
@@ -18,7 +20,7 @@ import type {
 } from '@all-in-one/applets/planner/contracts';
 import { PlannerAccess } from './access.service';
 
-const OPEN = { status: 'TODO', deletedAt: null } as const;
+const OPEN = OPEN_TASK_WHERE;
 
 /** Lists (TickTick projects) with their sections, folders and members. */
 @Injectable()
@@ -26,6 +28,7 @@ export class ListsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly access: PlannerAccess,
+    private readonly recurrence: RecurrencesService,
   ) {}
 
   async all(userId: string): Promise<PlannerList[]> {
@@ -41,6 +44,13 @@ export class ListsService {
         },
       },
     });
+    const projected = await this.recurrence.projected(
+      members.map((m) => m.listId),
+      { status: 'open' },
+    );
+    const counts = new Map<string, number>();
+    for (const task of projected)
+      counts.set(task.listId, (counts.get(task.listId) ?? 0) + 1);
     return members
       .map(({ list, role }) => ({
         id: list.id,
@@ -52,7 +62,7 @@ export class ListsService {
         sortOrder: list.sortOrder,
         role,
         shared: list._count.members > 1,
-        openCount: list._count.tasks,
+        openCount: list._count.tasks + (counts.get(list.id) ?? 0),
         sections: list.sections.map(toSection),
       }))
       .sort(

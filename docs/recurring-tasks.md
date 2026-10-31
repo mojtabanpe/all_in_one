@@ -72,7 +72,9 @@ Date windows remain inclusive and Tehran-based. Today/Tomorrow/Next 7 Days use
 existing preset semantics; overdue tasks remain visible in the frontend. Calendar
 uses the existing date-range task query. The frontend explicitly queries its
 selected smart-list date window so a large overdue/global result cannot hide
-Today. Native result limits remain 500; a query without an end date projects at
+Today. Selected lists/tags/assignment also query their own context; list and
+tag badges count projected occurrences plus concrete pending tasks, excluding
+templates and duplicate snapshots. Native result limits remain 500; a query without an end date projects at
 most the next 366 days. Query later windows explicitly for later occurrences.
 Pending overdue occurrences are calculated from the anchor, subject to that
 result limit, rather than silently discarded. A series lookup is available for

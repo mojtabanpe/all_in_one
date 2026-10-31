@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@all-in-one/api/db';
 import {
   PlannerAccess,
+  ListsService,
+  TagsService,
   RecurrencesService,
   TasksService,
   TickTickReconciliationService,
@@ -687,6 +689,40 @@ describe.skipIf(!url)(
       await expect(
         tasks.get(other, `${root.id}@${addDays(today, 1)}`),
       ).rejects.toThrow();
+    });
+
+    it('counts projected occurrences once in list/tag badges even after an occurrence is materialized', async () => {
+      const root = await tasks.create(user, {
+        title: 'Counted occurrences',
+        date: today,
+        repeatRule: 'FREQ=DAILY;COUNT=3',
+        tags: ['counted-series'],
+      });
+      const recurrence = new RecurrencesService(prisma);
+      const lists = new ListsService(prisma, access, recurrence);
+      const tags = new TagsService(prisma, access, recurrence);
+      const initialList = (await lists.all(user)).find(
+        (l) => l.id === root.listId,
+      )!.openCount;
+      expect(
+        (await tags.all(user)).find((t) => t.name === 'counted-series')
+          ?.openCount,
+      ).toBe(3);
+      await tasks.update(user, `${root.id}@${today}`, {
+        content: 'An occurrence exception',
+      });
+      expect(
+        (await lists.all(user)).find((l) => l.id === root.listId)?.openCount,
+      ).toBe(initialList);
+      expect(
+        (await tags.all(user)).find((t) => t.name === 'counted-series')
+          ?.openCount,
+      ).toBe(3);
+      await tasks.update(user, `${root.id}@${today}`, { done: true });
+      expect(
+        (await tags.all(user)).find((t) => t.name === 'counted-series')
+          ?.openCount,
+      ).toBe(2);
     });
 
     it('supports one-off tasks, rejects cross-user access and invalid occurrence handles', async () => {

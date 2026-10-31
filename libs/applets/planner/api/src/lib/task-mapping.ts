@@ -67,3 +67,11 @@ export function toTask(t: DbTask): PlannerTask {
     createdAt: t.createdAt.toISOString(),
   };
 }
+
+/** Concrete pending tasks; series templates are represented by their projections. */
+export const OPEN_TASK_WHERE = {
+  status: 'TODO',
+  deletedAt: null,
+  isSeries: false,
+  OR: [{ seriesId: null }, { series: { deletedAt: null } }],
+} satisfies Prisma.PlannerTaskWhereInput;

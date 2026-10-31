@@ -1,3 +1,6 @@
+import { PlannerAccess } from './access.service';
+import { RecurrencesService } from './recurrences.service';
+import { OPEN_TASK_WHERE } from './task-mapping';
 import {
   ConflictException,
   Injectable,
@@ -14,25 +17,39 @@ import type {
 /** The user's tags: create, rename, recolour and delete (TickTick tags). */
 @Injectable()
 export class TagsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly access: PlannerAccess,
+    private readonly recurrence: RecurrencesService,
+  ) {}
 
   async all(userId: string): Promise<PlannerTag[]> {
+    const listIds = await this.access.listIds(userId);
     const tags = await this.prisma.plannerTag.findMany({
       where: { userId },
       include: {
         _count: {
           select: {
-            tasks: { where: { task: { status: 'TODO', deletedAt: null } } },
+            tasks: {
+              where: { task: { ...OPEN_TASK_WHERE, listId: { in: listIds } } },
+            },
           },
         },
       },
     });
+    const projected = await this.recurrence.projected(listIds, {
+      status: 'open',
+    });
+    const counts = new Map<string, number>();
+    for (const task of projected)
+      for (const tag of task.tags)
+        counts.set(tag.tagId, (counts.get(tag.tagId) ?? 0) + 1);
     return tags
       .map((t) => ({
         id: t.id,
         name: t.name,
         color: t.color as PlannerColor,
-        openCount: t._count.tasks,
+        openCount: t._count.tasks + (counts.get(t.id) ?? 0),
       }))
       .sort((a, b) => a.name.localeCompare(b.name, 'fa'));
   }
