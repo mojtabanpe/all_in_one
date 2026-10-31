@@ -51,21 +51,30 @@ export class AioDialogActions {
       >
         <hlm-drawer-content
           *hlmDrawerPortal="let ctx"
-          [class]="'pb-[env(safe-area-inset-bottom)] ' + contentClass()"
+          [class]="
+            'overflow-hidden pb-[env(safe-area-inset-bottom)] data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-1rem)] ' +
+            contentClass()
+          "
         >
-          <hlm-drawer-header>
+          <hlm-drawer-header class="shrink-0">
             <h2 hlmDrawerTitle>{{ title() }}</h2>
             @if (description()) {
               <p hlmDrawerDescription>{{ description() }}</p>
             }
           </hlm-drawer-header>
           @if (body(); as b) {
-            <div class="overflow-y-auto px-4 pb-2">
+            <div
+              class="min-h-0 min-w-0 overflow-y-auto overscroll-contain px-4 pb-2"
+              data-slot="dialog-body"
+              tabindex="0"
+              role="region"
+              [attr.aria-label]="title()"
+            >
               <ng-container [ngTemplateOutlet]="b.template" />
             </div>
           }
           @if (footer(); as f) {
-            <hlm-drawer-footer>
+            <hlm-drawer-footer class="shrink-0">
               <ng-container [ngTemplateOutlet]="f.template" />
             </hlm-drawer-footer>
           }
@@ -73,18 +82,33 @@ export class AioDialogActions {
       </hlm-drawer>
     } @else {
       <hlm-dialog [state]="state()" (closed)="open.set(false)">
-        <hlm-dialog-content *hlmDialogPortal="let ctx" [class]="contentClass()">
-          <hlm-dialog-header>
+        <hlm-dialog-content
+          *hlmDialogPortal="let ctx"
+          closeLabel="بستن"
+          [class]="
+            'flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden ' +
+            contentClass()
+          "
+        >
+          <hlm-dialog-header class="shrink-0">
             <h2 hlmDialogTitle>{{ title() }}</h2>
             @if (description()) {
               <p hlmDialogDescription>{{ description() }}</p>
             }
           </hlm-dialog-header>
           @if (body(); as b) {
-            <ng-container [ngTemplateOutlet]="b.template" />
+            <div
+              class="min-h-0 min-w-0 overflow-y-auto overscroll-contain"
+              data-slot="dialog-body"
+              tabindex="0"
+              role="region"
+              [attr.aria-label]="title()"
+            >
+              <ng-container [ngTemplateOutlet]="b.template" />
+            </div>
           }
           @if (footer(); as f) {
-            <hlm-dialog-footer>
+            <hlm-dialog-footer class="shrink-0">
               <ng-container [ngTemplateOutlet]="f.template" />
             </hlm-dialog-footer>
           }

@@ -425,7 +425,7 @@ const DONE_DAYS = 30;
       (openChange)="$event || selectedId.set(null)"
       [title]="selected()?.title ?? ''"
       [description]="selected() ? listName(selected()!.listId) : ''"
-      contentClass="applet-planner sm:max-w-lg max-h-[90dvh] overflow-y-auto"
+      contentClass="applet-planner sm:max-w-lg"
     >
       <ng-template aioDialogBody>
         @if (selected(); as task) {
@@ -444,7 +444,7 @@ const DONE_DAYS = 30;
       [open]="!!settingsListId()"
       (openChange)="$event || settingsListId.set(null)"
       title="تنظیم فهرست"
-      contentClass="applet-planner sm:max-w-md max-h-[90dvh] overflow-y-auto"
+      contentClass="applet-planner sm:max-w-md"
     >
       <ng-template aioDialogBody>
         @if (settingsListId(); as id) {

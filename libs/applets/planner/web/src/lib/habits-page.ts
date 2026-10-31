@@ -280,7 +280,7 @@ const emptyDraft = (): Draft => ({
     <aio-dialog
       [(open)]="editing"
       [title]="draft().id ? 'ویرایش عادت' : 'عادت تازه'"
-      contentClass="applet-planner sm:max-w-md max-h-[90dvh] overflow-y-auto"
+      contentClass="applet-planner sm:max-w-md"
     >
       <ng-template aioDialogBody>
         @let d = draft();

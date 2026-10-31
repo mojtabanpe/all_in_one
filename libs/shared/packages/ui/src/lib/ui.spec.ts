@@ -2,14 +2,16 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import {
   AioBadge,
   AioBottomNav,
   AioButton,
   AioCardDirectives,
   AioConfirm,
+  AioConfirmHost,
   AioDialog,
+  AioDialogActions,
   AioDialogBody,
   AioToggleGroupDirectives,
   AioTooltip,
@@ -95,10 +97,11 @@ describe('generated wrappers that provide themselves to children', () => {
 });
 
 @Component({
-  imports: [AioDialog, AioDialogBody],
+  imports: [AioDialog, AioDialogBody, AioDialogActions, AioButton],
   template: `
     <aio-dialog [(open)]="open" title="عنوان">
       <ng-template aioDialogBody><p class="body">محتوا</p></ng-template>
+      <ng-template aioDialogActions><button aioBtn>ذخیره</button></ng-template>
     </aio-dialog>
   `,
 })
@@ -126,6 +129,49 @@ describe('AioDialog', () => {
       document.querySelector('[data-slot="dialog-content"]'),
     ).not.toBeNull();
     expect(document.querySelector('[data-slot="drawer-content"]')).toBeNull();
+    fixture.destroy();
+  });
+
+  it('keeps the body and actions projected when switching to a phone viewport', async () => {
+    const state = new BehaviorSubject({ matches: false, breakpoints: {} });
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: BreakpointObserver,
+          useValue: {
+            observe: () => state,
+            isMatched: () => state.value.matches,
+          },
+        },
+      ],
+    });
+    const fixture = TestBed.createComponent(DialogHost);
+    await fixture.whenStable();
+    state.next({ matches: true, breakpoints: {} });
+    await fixture.whenStable();
+    const content = document.querySelector('[data-slot="drawer-content"]')!;
+    expect(document.querySelector('[data-slot="dialog-content"]')).toBeNull();
+    expect(
+      content.querySelector('[data-slot="dialog-body"]')?.textContent,
+    ).toContain('محتوا');
+    expect(
+      content.querySelector('[data-slot="drawer-footer"]')?.textContent,
+    ).toContain('ذخیره');
+    expect(fixture.componentInstance.open()).toBe(true);
+    fixture.destroy();
+  });
+
+  it('uses the same bottom sheet for confirmation prompts on phones', async () => {
+    TestBed.configureTestingModule({ providers: [breakpoint(true)] });
+    const confirm = TestBed.inject(AioConfirm);
+    const answer = confirm.ask({ title: 'حذف شود؟' });
+    const fixture = TestBed.createComponent(AioConfirmHost);
+    await fixture.whenStable();
+    const content = document.querySelector('[data-slot="drawer-content"]')!;
+    expect(content.getAttribute('data-vaul-drawer-direction')).toBe('bottom');
+    expect(document.querySelector('[data-slot="dialog-content"]')).toBeNull();
+    (content.querySelector('button') as HTMLButtonElement).click();
+    await expect(answer).resolves.toBe(false);
     fixture.destroy();
   });
 });

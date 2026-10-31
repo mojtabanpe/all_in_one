@@ -220,3 +220,7 @@ When the owner gives a new instruction, add it to this list in the same change.
 ## PWA installation (2026-10-31)
 
 31. Provide the customer app as an installable PWA, following the existing Recall implementation while retaining Poshtetgarm branding.
+
+## Overlay scrolling (2026-10-31)
+
+32. Dialogs and bottom sheets must stay within the viewport and scroll long content while keeping their title and actions accessible. Phones always use bottom sheets, including in landscape; never open a desktop modal on a phone.
