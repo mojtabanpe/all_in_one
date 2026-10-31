@@ -360,9 +360,13 @@ export const createTaskSchema = z.object({
   tags: z.optional(z.array(tagName).check(z.maxLength(20))),
   checklist: z.optional(z.array(checklistInput).check(z.maxLength(100))),
   assigneeId: z.optional(z.nullable(uuid)),
-  externalSourceId: z.optional(z.string().check(z.minLength(1), z.maxLength(120))),
+  externalSourceId: z.optional(
+    z.string().check(z.minLength(1), z.maxLength(120)),
+  ),
   recurrenceRule: z.optional(z.nullable(z.string().check(z.maxLength(500)))),
-  reminders: z.optional(z.array(z.string().check(z.maxLength(150))).check(z.maxLength(30))),
+  reminders: z.optional(
+    z.array(z.string().check(z.maxLength(150))).check(z.maxLength(30)),
+  ),
   timeZone: z.optional(z.nullable(z.string().check(z.maxLength(80)))),
   endTime: z.optional(z.nullable(timeOfDay)),
   completedAt: z.optional(z.iso.datetime({ offset: true })),
@@ -384,7 +388,9 @@ export const updateTaskSchema = z.partial(
     checklist: z.array(checklistInput).check(z.maxLength(100)),
     assigneeId: z.nullable(uuid),
     recurrenceRule: z.nullable(z.string().check(z.maxLength(500))),
-    reminders: z.array(z.string().check(z.maxLength(150))).check(z.maxLength(30)),
+    reminders: z
+      .array(z.string().check(z.maxLength(150)))
+      .check(z.maxLength(30)),
     timeZone: z.nullable(z.string().check(z.maxLength(80))),
     endTime: z.nullable(timeOfDay),
     done: z.boolean(),
@@ -506,9 +512,13 @@ export const createHabitSchema = z.object({
       .check(z.minLength(1), z.maxLength(7)),
   ),
   sectionId: z.optional(z.nullable(uuid)),
-  externalSourceId: z.optional(z.string().check(z.minLength(1), z.maxLength(120))),
+  externalSourceId: z.optional(
+    z.string().check(z.minLength(1), z.maxLength(120)),
+  ),
   repeatRule: z.optional(z.nullable(z.string().check(z.maxLength(500)))),
-  reminders: z.optional(z.array(z.string().check(z.maxLength(150))).check(z.maxLength(30))),
+  reminders: z.optional(
+    z.array(z.string().check(z.maxLength(150))).check(z.maxLength(30)),
+  ),
 });
 export type CreateHabitInput = z.infer<typeof createHabitSchema>;
 
@@ -519,10 +529,14 @@ export const updateHabitSchema = z.extend(z.partial(createHabitSchema), {
 export type UpdateHabitInput = z.infer<typeof updateHabitSchema>;
 
 export const batchHabitCheckinsSchema = z.object({
-  entries: z.array(z.object({
-    date: isoDate,
-    value: z.number().check(z.int(), z.minimum(0), z.maximum(1000)),
-  })).check(z.minLength(1), z.maxLength(500)),
+  entries: z
+    .array(
+      z.object({
+        date: isoDate,
+        value: z.number().check(z.int(), z.minimum(0), z.maximum(1000)),
+      }),
+    )
+    .check(z.minLength(1), z.maxLength(500)),
 });
 export type BatchHabitCheckinsInput = z.infer<typeof batchHabitCheckinsSchema>;
 

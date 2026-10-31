@@ -84,7 +84,12 @@ export class HabitsService {
   async create(userId: string, input: CreateHabitInput): Promise<PlannerHabit> {
     if (input.externalSourceId) {
       const existing = await this.prisma.plannerHabit.findUnique({
-        where: { userId_externalSourceId: { userId, externalSourceId: input.externalSourceId } },
+        where: {
+          userId_externalSourceId: {
+            userId,
+            externalSourceId: input.externalSourceId,
+          },
+        },
       });
       if (existing) return this.get(userId, existing.id);
     }
@@ -163,7 +168,11 @@ export class HabitsService {
   }
 
   /** Import historical values atomically, preserving original calendar days. */
-  async importCheckins(userId: string, id: string, entries: CheckinInput[]): Promise<PlannerHabit> {
+  async importCheckins(
+    userId: string,
+    id: string,
+    entries: CheckinInput[],
+  ): Promise<PlannerHabit> {
     await this.owned(userId, id);
     const today = isoDateIn(new Date());
     if (entries.some((item) => daysBetween(item.date, today) < 0))
@@ -172,7 +181,9 @@ export class HabitsService {
       for (const item of entries) {
         const key = { habitId_date: { habitId: id, date: day(item.date) } };
         if (item.value === 0) {
-          await tx.plannerHabitCheckin.deleteMany({ where: { habitId: id, date: day(item.date) } });
+          await tx.plannerHabitCheckin.deleteMany({
+            where: { habitId: id, date: day(item.date) },
+          });
         } else {
           await tx.plannerHabitCheckin.upsert({
             where: key,

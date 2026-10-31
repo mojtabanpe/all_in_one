@@ -213,7 +213,12 @@ export class TasksService {
   async create(userId: string, input: CreateTaskInput): Promise<PlannerTask> {
     if (input.externalSourceId) {
       const existing = await this.prisma.plannerTask.findUnique({
-        where: { userId_externalSourceId: { userId, externalSourceId: input.externalSourceId } },
+        where: {
+          userId_externalSourceId: {
+            userId,
+            externalSourceId: input.externalSourceId,
+          },
+        },
         include: TASK_INCLUDE,
       });
       if (existing) return toTask(existing);
@@ -242,7 +247,12 @@ export class TasksService {
         reminders: input.reminders ?? [],
         timeZone: input.timeZone ?? null,
         endTime: input.endTime ?? null,
-        ...(input.completedAt ? { status: 'DONE' as const, completedAt: new Date(input.completedAt) } : {}),
+        ...(input.completedAt
+          ? {
+              status: 'DONE' as const,
+              completedAt: new Date(input.completedAt),
+            }
+          : {}),
         sortOrder: count,
         tags: { create: tagIds.map((tagId) => ({ tagId })) },
         checklist: {
@@ -312,7 +322,9 @@ export class TasksService {
       ...(input.content !== undefined ? { content: input.content } : {}),
       ...(input.kind ? { kind: input.kind } : {}),
       ...(input.priority ? { priority: input.priority } : {}),
-      ...(input.recurrenceRule !== undefined ? { recurrenceRule: input.recurrenceRule } : {}),
+      ...(input.recurrenceRule !== undefined
+        ? { recurrenceRule: input.recurrenceRule }
+        : {}),
       ...(input.reminders !== undefined ? { reminders: input.reminders } : {}),
       ...(input.timeZone !== undefined ? { timeZone: input.timeZone } : {}),
       ...(input.endTime !== undefined ? { endTime: input.endTime } : {}),
