@@ -183,7 +183,11 @@ export interface PlannerTask {
   /** HH:mm */
   time: string | null;
   priority: TaskPriority;
+  /** Closed: done, or "won't do" (then wontDo is true). */
   done: boolean;
+  /** Closed without being done (TickTick's "Won't Do"). */
+  wontDo: boolean;
+  /** When it was closed (done or won't do). */
   completedAt: string | null;
   externalSourceId: string | null;
   recurrenceRule: string | null;
@@ -436,6 +440,8 @@ export const updateTaskSchema = z.partial(
     timeZone: z.nullable(z.string().check(z.maxLength(80))),
     endTime: z.nullable(timeOfDay),
     done: z.boolean(),
+    /** true closes the task as "won't do" (not done, off the open/overdue lists); false reopens it. */
+    wontDo: z.boolean(),
     sortOrder,
   }),
 );

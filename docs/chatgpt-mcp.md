@@ -34,7 +34,7 @@ A token holds all of them by default (`POST /api/mcp/keys` accepts `scopes` to n
   `update_list`, `delete_list`, `create_folder`, `rename_folder`, `delete_folder`,
   `create_section`, `rename_section`, `delete_section`, `add_list_member`, `remove_list_member`.
 - **Tasks:** `create_task`, `batch_create_tasks` (≤ 50), `update_task`, `batch_update_tasks`
-  (≤ 50), `complete_task`, `complete_tasks_in_list` (≤ 20), `move_task`, `trash_task`,
+  (≤ 50), `complete_task`, `wont_do_task` (closes a task as "won't do": not done, off the overdue list, kept in history; `update_task wont_do=false` reopens it), `complete_tasks_in_list` (≤ 20), `move_task`, `trash_task`,
   `restore_task`, `add_checklist_item`, `update_checklist_item`, `delete_checklist_item`,
   `assign_task`, `list_comments`, `add_comment`.
 - **Tags:** `list_tags`, `create_tag`, `update_tag` (rename, colour), `delete_tag`.

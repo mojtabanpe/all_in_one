@@ -10,6 +10,8 @@ enum TaskPriority {
 enum TaskStatus {
   TODO
   DONE
+  /// TickTick's "Won't Do": closed without being done; kept in history.
+  WONT_DO
 }
 
 /// TickTick's task "type": a task (optionally with checklist items) or a note.

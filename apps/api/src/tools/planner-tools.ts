@@ -38,6 +38,8 @@ import {
   updateTaskSchema,
   updateTagSchema,
   tagSchema,
+  addDays,
+  isoDateIn,
 } from '@all-in-one/applets/planner/contracts';
 import * as z from 'zod';
 import { parseWith, type ToolSink } from './tool-kit';
@@ -72,6 +74,8 @@ const taskId = z
   .describe(
     'Native task UUID or stable recurring occurrence handle from task queries',
   );
+/** How far back list_overdue_tasks looks (old open occurrences of daily series pile up). */
+const OVERDUE_DAYS = 60;
 const date = z.iso.date().describe('YYYY-MM-DD');
 const dateTime = z.iso
   .datetime({ offset: true })
@@ -203,6 +207,12 @@ const updateTask = createTask
   .extend({
     task_id: taskId,
     done: z.boolean().optional(),
+    wont_do: z
+      .boolean()
+      .optional()
+      .describe(
+        'true closes the task as "won\'t do": not done, off the open and overdue lists, kept in history. false reopens it.',
+      ),
     recurrence_scope: z
       .enum(RECURRENCE_SCOPES)
       .optional()
@@ -326,6 +336,24 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
       input: { start_date: date, end_date: date },
     },
     (a) => s.tasks.undoneInRange(user, a.start_date, a.end_date),
+  );
+  kit.tool(
+    'list_overdue_tasks',
+    {
+      description: `Overdue tasks: open tasks (and open recurring occurrences) dated before today in Tehran, from the last ${OVERDUE_DAYS} days. Move one with update_task date; complete it only if the user says it is done.`,
+      scope: read,
+      kind: 'read',
+      input: {},
+    },
+    () => {
+      const today = isoDateIn(new Date());
+      return s.tasks.filter(user, {
+        status: 'open',
+        kind: 'TASK',
+        from: addDays(today, -OVERDUE_DAYS),
+        to: addDays(today, -1),
+      });
+    },
   );
   kit.tool(
     'list_completed_tasks_by_date',
@@ -653,6 +681,17 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
       input: { task_id: taskId },
     },
     (a) => s.tasks.update(user, a.task_id, { done: true }),
+  );
+  kit.tool(
+    'wont_do_task',
+    {
+      description:
+        'Close one occurrence or one-off task as "won\'t do" (the user will not do it): it stays not done, leaves the open and overdue lists and is kept in history. Undo with update_task wont_do=false.',
+      scope: write,
+      kind: 'update',
+      input: { task_id: taskId },
+    },
+    (a) => s.tasks.update(user, a.task_id, { wontDo: true }),
   );
   kit.tool(
     'complete_tasks_in_list',

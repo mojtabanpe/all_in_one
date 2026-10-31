@@ -106,7 +106,8 @@ export class TasksService {
         completedAt: { gte: dayStart(from), lt: dayStart(addDays(to, 1)) },
       });
     }
-    if (status !== 'all') where.status = status === 'done' ? 'DONE' : 'TODO';
+    if (status !== 'all')
+      where.status = status === 'done' ? { in: ['DONE', 'WONT_DO'] } : 'TODO';
 
     const from = window?.from ?? f.from;
     const to = window?.to ?? f.to;
@@ -413,7 +414,7 @@ export class TasksService {
     if (task.isSeries && input.recurrenceScope === 'FUTURE')
       throw new BadRequestException('برای تغییر آینده، یک نوبت را انتخاب کن');
     if (task.seriesId && input.recurrenceScope === 'FUTURE') {
-      if (input.done !== undefined)
+      if (input.done !== undefined || input.wontDo !== undefined)
         throw new BadRequestException(
           'انجام نوبت و تغییر سری را جداگانه انجام بده',
         );
@@ -538,9 +539,18 @@ export class TasksService {
       date: date ? day(date) : null,
       time: !date ? null : input.time !== undefined ? input.time : task.time,
     };
-    if (input.done !== undefined && input.done !== (task.status === 'DONE')) {
-      data.status = input.done ? 'DONE' : 'TODO';
-      data.completedAt = input.done ? new Date() : null;
+    // wontDo wins over done; false for either reopens the task.
+    const status =
+      input.wontDo === true
+        ? 'WONT_DO'
+        : input.wontDo === false || input.done === false
+          ? 'TODO'
+          : input.done
+            ? 'DONE'
+            : undefined;
+    if (status && status !== task.status) {
+      data.status = status;
+      data.completedAt = status === 'TODO' ? null : new Date();
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -555,10 +565,10 @@ export class TasksService {
             'پس از ثبت نوبت‌ها، مبنای تکرار را با گزینه این نوبت و آینده تغییر بده',
           );
       }
-      if (input.done !== undefined) {
-        await this.recurrence.complete(tx, id, input.done);
+      if (status) {
+        await this.recurrence.complete(tx, id, status !== 'TODO');
         // Preserve the first completion timestamp when a completion is retried.
-        if (input.done) {
+        if (status === 'DONE') {
           const current = await tx.plannerTask.findUniqueOrThrow({
             where: { id },
           });
@@ -710,7 +720,7 @@ export class TasksService {
       const task = await this.access.task(userId, id);
       if (task.listId !== listId)
         throw new BadRequestException('کار در این فهرست نیست');
-      if (task.status !== 'DONE' && !task.deletedAt) {
+      if (task.status === 'TODO' && !task.deletedAt) {
         await this.update(userId, id, { done: true });
         completed++;
       }

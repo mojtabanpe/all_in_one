@@ -53,7 +53,8 @@ export function toTask(t: DbTask): PlannerTask {
     timeZone: t.timeZone,
     endTime: t.endTime,
     priority: t.priority,
-    done: t.status === 'DONE',
+    done: t.status !== 'TODO',
+    wontDo: t.status === 'WONT_DO',
     completedAt: t.completedAt?.toISOString() ?? null,
     deletedAt: t.deletedAt?.toISOString() ?? null,
     tags: t.tags

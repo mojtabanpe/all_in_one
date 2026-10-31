@@ -15,6 +15,8 @@ export const assistantRequestSchema = z.object({
       z.object({
         role: z.enum(['user', 'assistant']),
         content: z.string().check(z.trim(), z.minLength(1), z.maxLength(4000)),
+        /** For assistant messages: the tool log the server returned with it (its memory of what it did). */
+        log: z.optional(z.string().check(z.maxLength(6000))),
       }),
     )
     .check(z.minLength(1), z.maxLength(30)),
@@ -33,6 +35,8 @@ export interface AssistantAction {
 export interface AssistantReply {
   reply: string;
   actions: AssistantAction[];
+  /** The tools called and what they returned, in short: send it back with this message next turn. */
+  log?: string;
   /** True when something was changed: the page should reload its data. */
   changed: boolean;
 }

@@ -42,6 +42,8 @@ interface Message {
   content: string;
   /** Tools the assistant used for this answer */
   actions?: number;
+  /** The server's tool log for this answer: sent back so the assistant remembers what it did. */
+  log?: string;
 }
 
 const SUGGESTIONS: Record<AssistantContext, string[]> = {
@@ -284,7 +286,12 @@ export class Assistant implements OnDestroy {
         this.http.post<AssistantReply>(`${this.api}/assistant/chat`, {
           messages: this.store
             .messages()
-            .map(({ role, content }) => ({ role, content })),
+            .slice(-20)
+            .map(({ role, content, log }) => ({
+              role,
+              content: content.slice(0, 4000),
+              log,
+            })),
           context: this.context(),
         }),
       );
@@ -294,7 +301,12 @@ export class Assistant implements OnDestroy {
       ).length;
       this.store.messages.update((list) => [
         ...list,
-        { role: 'assistant', content: result.reply, actions: done },
+        {
+          role: 'assistant',
+          content: result.reply,
+          actions: done,
+          log: result.log,
+        },
       ]);
     } catch (error) {
       this.store.messages.update((list) => [

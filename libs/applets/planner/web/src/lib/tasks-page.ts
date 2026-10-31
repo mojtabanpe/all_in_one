@@ -55,6 +55,7 @@ import {
   lucideRotateCcw,
   lucideRepeat2,
   lucideStickyNote,
+  lucideCircleSlash,
   lucideTrash2,
 } from '@ng-icons/lucide';
 import { TONE } from './colors';
@@ -118,6 +119,7 @@ const DONE_DAYS = 30;
       lucideRotateCcw,
       lucideRepeat2,
       lucideStickyNote,
+      lucideCircleSlash,
       lucideTrash2,
     }),
   ],
@@ -345,6 +347,14 @@ const DONE_DAYS = 30;
             size="sm"
             class="text-muted-foreground"
           />
+        } @else if (task.wontDo) {
+          <span
+            role="img"
+            class="text-muted-foreground flex size-5 items-center justify-center"
+            aria-label="انجامش نمی‌دهم"
+            title="انجامش نمی‌دهم"
+            ><aio-icon name="lucideCircleSlash" size="sm"
+          /></span>
         } @else {
           <aio-checkbox
             [checked]="task.done"

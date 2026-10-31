@@ -314,11 +314,11 @@ export class RecurrencesService {
       include: TASK_INCLUDE,
     });
     if (root.repeatFrom !== 'COMPLETION') return;
-    if (!done && current.status === 'DONE')
+    if (!done && current.status !== 'TODO')
       throw new BadRequestException(
         'بازکردن نوبت انجام‌شده در تکرار از زمان انجام پشتیبانی نمی‌شود؛ تاریخچه حفظ می‌شود',
       );
-    if (!done || current.status === 'DONE' || current.deletedAt) return;
+    if (!done || current.status !== 'TODO' || current.deletedAt) return;
     const completed = isoDateIn(new Date(), root.recurrenceTimezone);
     const key = current.occurrenceDate
       ? iso(current.occurrenceDate)
@@ -466,7 +466,7 @@ export class RecurrencesService {
         recurrenceTimezone: input.recurrenceTimezone ?? root.recurrenceTimezone,
         recurrenceEnd: end ? day(end) : null,
         excludedDates: future
-          .filter((t) => t.status === 'DONE' || t.deletedAt)
+          .filter((t) => t.status !== 'TODO' || t.deletedAt)
           .map((t) => iso(t.occurrenceDate!)),
       };
       if (input.tags) {

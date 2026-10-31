@@ -247,3 +247,12 @@ When the owner gives a new instruction, add it to this list in the same change.
 ## Native task recurrence (2026-10-31)
 
 33. **Recurring tasks are native planner tasks**, including TickTick RRULE compatibility, persisted completion history, retry-safe occurrence identities, timezone-aware Today/Calendar queries, MCP CRUD/batches and existing Spartan task UI controls. Reuse the task system and preserve imported task IDs. Never insert the owner's reference schedules into production or reconcile production tasks before showing the proposed changes. Use explicit source-ID mappings and the reviewed reconciliation digest; migrations must not reset existing data. See `docs/recurring-tasks.md`.
+
+## Won't Do and assistant memory (2026-11-01)
+
+35. **Tasks can be closed as "won't do"** (owner: a task I won't do stays not done, is recorded, and no longer shows
+    as overdue). Status `WONT_DO`: `done=true, wontDo=true` in the API (closed), kept in the completed history, reopened
+    with `wontDo=false`. Exposed as `wont_do_task` / `update_task wont_do` on the ChatGPT MCP and the assistant.
+36. **The assistant must remember what it did and speak Persian dates.** Each reply carries a tool log the client sends
+    back; the system prompt has a Gregorian↔Solar Hijri table around today. It never completes a task the user asked to
+    move, and uses `list_overdue_tasks` for «عقب‌افتاده».

@@ -39,7 +39,9 @@ import {
 } from '@all-in-one/ui';
 import { apiErrorMessage, faDate } from '@all-in-one/web/shared';
 import {
+  lucideCircleSlash,
   lucideFlag,
+  lucideRotateCcw,
   lucidePlus,
   lucideSend,
   lucideSparkles,
@@ -81,7 +83,9 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
   ],
   providers: [
     provideIcons({
+      lucideCircleSlash,
       lucideFlag,
+      lucideRotateCcw,
       lucidePlus,
       lucideSend,
       lucideSparkles,
@@ -470,6 +474,27 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
           <aio-icon name="lucideTimer" size="sm" />
           شروع تمرکز
         </button>
+        @if (t.wontDo) {
+          <button
+            aioBtn
+            variant="ghost"
+            type="button"
+            (click)="setWontDo(false)"
+          >
+            <aio-icon name="lucideRotateCcw" size="sm" />
+            بازکردن
+          </button>
+        } @else if (!t.done && t.kind === 'TASK') {
+          <button
+            aioBtn
+            variant="ghost"
+            type="button"
+            (click)="setWontDo(true)"
+          >
+            <aio-icon name="lucideCircleSlash" size="sm" />
+            انجامش نمی‌دهم
+          </button>
+        }
         <button
           aioBtn
           variant="ghost"
@@ -644,6 +669,11 @@ export class TaskDetail {
     } catch (error) {
       aioToast.error(apiErrorMessage(error));
     }
+  }
+
+  /** TickTick's "Won't Do": closed, not done, kept in history; false reopens. */
+  protected setWontDo(wontDo: boolean) {
+    void this.run(() => this.api.updateTask(this.task().id, { wontDo }));
   }
 
   private async run(call: () => Promise<PlannerTask>) {
