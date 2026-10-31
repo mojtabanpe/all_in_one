@@ -1,0 +1,42 @@
+{
+  "1-CORE-workout.pdf": [
+    "trx-torso-rotation",
+    "trx-crunch",
+    "trx-side-plank",
+    "trx-pike",
+    "trx-mountain-climber",
+    "trx-leg-lowering"
+  ],
+  "2-LEGS-HIPS.pdf": [
+    "trx-hip-press",
+    "trx-hamstring-curl",
+    "trx-suspended-lunge",
+    "trx-single-leg-squat",
+    "trx-cycle-jump",
+    "trx-squat"
+  ],
+  "3-ARMS-SHOULDERS.pdf": [
+    "trx-curl",
+    "trx-triceps-press",
+    "trx-y",
+    "trx-clutch-curl",
+    "trx-triceps-reverse",
+    "trx-w"
+  ],
+  "4-Stretch.pdf": [
+    "trx-chest-stretch",
+    "trx-wide-hip-opener",
+    "trx-hip-flexor-stretch",
+    "trx-quad-stretch",
+    "trx-figure-four",
+    "trx-low-back-stretch"
+  ],
+  "5-chest-and-back.pdf": [
+    "trx-chest",
+    "trx-clock-press",
+    "trx-chest-fly",
+    "trx-row",
+    "trx-mid-row",
+    "trx-high-row"
+  ]
+}

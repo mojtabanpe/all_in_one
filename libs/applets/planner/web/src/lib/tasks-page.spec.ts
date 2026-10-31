@@ -130,7 +130,8 @@ describe('TasksPage', () => {
     });
     const { el } = await setup([], [occurrence]);
     expect(el.textContent).toContain('تکرار امروز');
-    expect(el.textContent).toContain('تکرارشونده');
+    expect(el.textContent).not.toContain('تکرارشونده');
+    expect(el.querySelector('[aria-label="کار تکراری"]')).not.toBeNull();
   });
 
   it('shows an empty state for a free day', async () => {

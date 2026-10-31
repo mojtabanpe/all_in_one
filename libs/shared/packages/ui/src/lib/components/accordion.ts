@@ -19,6 +19,8 @@ export class AioAccordionTrigger {}
   selector: 'aio-accordion-content',
   host: { class: 'contents' },
   imports: [HlmAccordionContent],
-  template: `<hlm-accordion-content><ng-content /></hlm-accordion-content>`,
+  template: `<hlm-accordion-content class="[&_a[data-slot=button]]:no-underline"
+    ><ng-content
+  /></hlm-accordion-content>`,
 })
 export class AioAccordionContent {}

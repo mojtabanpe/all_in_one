@@ -70,8 +70,10 @@ let nextSelectId = 0;
 @Component({
   selector: 'aio-native-select',
   imports: [HlmNativeSelect],
+  host: { class: 'block w-full min-w-0 max-w-full' },
   template: `
     <hlm-native-select
+      class="block w-full min-w-0 max-w-full"
       [value]="value()"
       (valueChange)="value.set($event ?? '')"
       [disabled]="disabled()"

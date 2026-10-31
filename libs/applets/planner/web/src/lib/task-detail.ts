@@ -90,14 +90,18 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
       lucideX,
     }),
   ],
+  host: { class: 'block min-w-0 w-full' },
   template: `
     @let t = task();
-    <div class="flex flex-col gap-5 pb-2">
+    <div
+      class="flex min-w-0 flex-col gap-5 pb-2 [overflow-wrap:anywhere] [&_[data-slot=field]]:min-w-0 [&_[data-slot=field]]:gap-2"
+    >
       <div aioField>
         <label aioFieldLabel for="task-title">عنوان</label>
         <input
           aioInput
           id="task-title"
+          dir="auto"
           [value]="t.title"
           (change)="saveTitle($any($event.target).value)"
         />
@@ -109,20 +113,24 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
           aioTextarea
           id="task-content"
           rows="3"
+          dir="auto"
+          class="min-w-0 resize-y leading-7"
           placeholder="جزئیات، لینک، یادداشت…"
           [value]="t.content"
           (change)="save({ content: $any($event.target).value })"
         ></textarea>
       </div>
 
-      <div class="flex flex-col gap-2">
-        <span class="text-sm font-medium">تاریخ</span>
-        <div class="grid grid-cols-2 gap-2 min-[400px]:grid-cols-4">
+      <fieldset aioFieldSet class="min-w-0 gap-3 border-t border-border pt-5">
+        <legend aioFieldLegend class="text-sm">زمان‌بندی</legend>
+        <div class="grid min-w-0 grid-cols-4 gap-2">
           @for (d of quickDates; track d.label) {
             <button
               aioBtn
               type="button"
               size="sm"
+              class="min-w-0 rounded-[12px] px-1 text-xs shadow-none"
+              [attr.aria-pressed]="t.date === d.date()"
               [variant]="t.date === d.date() ? 'default' : 'outline'"
               (click)="save({ date: d.date() })"
             >
@@ -130,28 +138,38 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
             </button>
           }
         </div>
-        <div class="grid min-w-0 grid-cols-1 gap-2 min-[400px]:grid-cols-2">
-          <aio-date-input
-            contentClass="applet-planner"
-            class="min-w-0 max-w-full"
-            aria-label="تاریخ دلخواه"
-            [value]="t.date ?? ''"
-            (valueChange)="save({ date: $event || null })"
-          />
-          <input
-            aioInput
-            class="min-w-0 max-w-full"
-            type="time"
-            aria-label="ساعت"
-            [disabled]="!t.date"
-            [value]="t.time ?? ''"
-            (change)="save({ time: $any($event.target).value || null })"
-          />
+        <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+          <div aioField>
+            <label aioFieldLabel for="task-date">تاریخ</label>
+            <aio-date-input
+              contentClass="applet-planner"
+              class="min-w-0 max-w-full"
+              aria-label="تاریخ دلخواه"
+              inputId="task-date"
+              [value]="t.date ?? ''"
+              (valueChange)="save({ date: $event || null })"
+            />
+          </div>
+          <div aioField>
+            <label aioFieldLabel for="task-time">ساعت</label>
+            <input
+              aioInput
+              class="w-full min-w-0 max-w-full appearance-none"
+              id="task-time"
+              dir="ltr"
+              lang="fa-IR"
+              type="time"
+              aria-label="ساعت"
+              [disabled]="!t.date"
+              [value]="t.time ?? ''"
+              (change)="save({ time: $any($event.target).value || null })"
+            />
+          </div>
         </div>
         @if (t.date) {
           <p class="text-muted-foreground text-xs">{{ dateLabel(t.date) }}</p>
         }
-      </div>
+      </fieldset>
 
       <div aioField>
         <label aioFieldLabel for="task-reminder">یادآوری</label>
@@ -222,7 +240,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
         <div aioField>
           <label aioFieldLabel for="task-list">فهرست</label>
           <aio-native-select
@@ -441,7 +459,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
         </form>
       </div>
 
-      <div class="flex gap-2">
+      <div class="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
         <button
           aioBtn
           variant="outline"

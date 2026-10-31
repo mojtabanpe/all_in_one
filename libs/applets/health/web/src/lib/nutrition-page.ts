@@ -14,9 +14,10 @@ import {
   type MealLog,
   type MealLogInput,
   type MealPlan,
+  type PlanMealSuggestion,
   MEAL_TYPE_LABELS,
 } from '@all-in-one/applets/health/contracts';
-import { toIsoDate } from '@all-in-one/shared/schemas';
+import { toIsoDate, type AiStatus } from '@all-in-one/shared/schemas';
 import {
   AioAccordionContent,
   AioAccordionDirectives,
@@ -31,6 +32,8 @@ import {
   AioEmptyDirectives,
   AioIcon,
   AioItemDirectives,
+  AioFieldDirectives,
+  AioTextarea,
   aioToast,
   provideIcons,
 } from '@all-in-one/ui';
@@ -61,6 +64,8 @@ import { MealForm } from './meal-form';
     AioEmptyDirectives,
     AioIcon,
     AioItemDirectives,
+    AioFieldDirectives,
+    AioTextarea,
     DietChooser,
     MealForm,
     RouterLink,
@@ -115,6 +120,19 @@ import { MealForm } from './meal-form';
                 : 'تغییر رژیم'
             }}
           </button>
+          @if (hasActiveDiet()) {
+            <button
+              aioBtn
+              type="button"
+              variant="ghost"
+              size="sm"
+              [attr.aria-expanded]="browsingDiets()"
+              aria-controls="diet-suggestions"
+              (click)="browsingDiets.set(!browsingDiets())"
+            >
+              {{ browsingDiets() ? 'بستن پیشنهادها' : 'بررسی رژیم‌های دیگر' }}
+            </button>
+          }
         </div>
         @if (diet(); as d) {
           <div
@@ -127,33 +145,35 @@ import { MealForm } from './meal-form';
         }
       </section>
 
-      <section aioCard>
-        <div aioCardHeader>
-          <h2 aioCardTitle>کدام رژیم به سلیقه شما نزدیک‌تر است؟</h2>
-          <p aioCardDescription>
-            پیشنهادهای اولیه برای مقایسه؛ انتخاب رژیم را خودتان انجام می‌دهید.
-          </p>
-        </div>
-        <div aioCardContent class="flex flex-col gap-3">
-          @for (
-            suggestion of suggestions.value()?.suggestions ?? [];
-            track suggestion.slug
-          ) {
-            <div>
-              <strong>{{ suggestion.name }}</strong>
-              <p class="text-muted-foreground text-sm">
-                {{ suggestion.reason }}
-              </p>
-            </div>
-          }
-          <button aioBtn variant="outline" (click)="choosing.set(true)">
-            مقایسه و انتخاب رژیم
-          </button>
-          <a aioBtn variant="link" routerLink="../profile"
-            >تنظیم مواد غذایی مستثنا</a
-          >
-        </div>
-      </section>
+      @if (showDietSuggestions()) {
+        <section aioCard id="diet-suggestions">
+          <div aioCardHeader>
+            <h2 aioCardTitle>کدام رژیم به سلیقه شما نزدیک‌تر است؟</h2>
+            <p aioCardDescription>
+              پیشنهادهای اولیه برای مقایسه؛ انتخاب رژیم را خودتان انجام می‌دهید.
+            </p>
+          </div>
+          <div aioCardContent class="flex flex-col gap-3">
+            @for (
+              suggestion of suggestions.value()?.suggestions ?? [];
+              track suggestion.slug
+            ) {
+              <div>
+                <strong>{{ suggestion.name }}</strong>
+                <p class="text-muted-foreground text-sm">
+                  {{ suggestion.reason }}
+                </p>
+              </div>
+            }
+            <button aioBtn variant="outline" (click)="choosing.set(true)">
+              مقایسه و انتخاب رژیم
+            </button>
+            <a aioBtn variant="link" routerLink="../profile"
+              >تنظیم مواد غذایی مستثنا</a
+            >
+          </div>
+        </section>
+      }
 
       <section class="flex flex-col gap-3">
         <div class="flex items-center justify-between">
@@ -262,31 +282,43 @@ import { MealForm } from './meal-form';
                   >
                 </aio-accordion-trigger>
                 <aio-accordion-content>
-                  <ul class="flex flex-col gap-2">
+                  <ul class="divide-border flex min-w-0 flex-col divide-y">
                     @for (meal of day.meals; track meal.mealType) {
                       @let r = p.recipes[meal.recipeSlug];
-                      <li class="flex items-center justify-between gap-2">
-                        <span>
-                          <span class="text-muted-foreground text-xs"
-                            >{{ mealTypeLabels[meal.mealType] }}:</span
+                      <li
+                        class="flex min-w-0 flex-col gap-3 py-4 first:pt-0 last:pb-0"
+                      >
+                        <div
+                          class="flex items-center justify-between gap-2 text-xs text-muted-foreground"
+                        >
+                          <span>{{ mealTypeLabels[meal.mealType] }}</span>
+                          <span>{{ fa(meal.servings ?? 1) }} سهم</span>
+                        </div>
+                        <div
+                          class="min-w-0 text-sm leading-7 [overflow-wrap:anywhere]"
+                        >
+                          {{ r.title }}
+                        </div>
+                        <div class="grid min-w-0 grid-cols-2 gap-2">
+                          <button
+                            aioBtn
+                            type="button"
+                            variant="outline"
+                            class="h-11 min-w-0 w-full"
+                            [attr.aria-label]="'جایگزین کردن ' + r.title"
+                            (click)="openSwap(day.date, meal.mealType)"
                           >
-                          {{ r.title }}، {{ fa(meal.servings ?? 1) }} سهم
-                        </span>
-                        <button
-                          aioBtn
-                          variant="outline"
-                          size="sm"
-                          (click)="openSwap(day.date, meal.mealType)"
-                        >
-                          جایگزین
-                        </button>
-                        <a
-                          aioBtn
-                          variant="link"
-                          size="sm"
-                          [routerLink]="['recipes', r.slug]"
-                          >دستور پخت</a
-                        >
+                            جایگزین
+                          </button>
+                          <a
+                            aioBtn
+                            variant="outline"
+                            class="h-11 min-w-0 w-full no-underline hover:no-underline"
+                            [attr.aria-label]="'دستور پخت ' + r.title"
+                            [routerLink]="['recipes', r.slug]"
+                            >دستور پخت</a
+                          >
+                        </div>
                       </li>
                     }
                   </ul>
@@ -320,39 +352,158 @@ import { MealForm } from './meal-form';
       >
     </aio-dialog>
     <aio-dialog
-      contentClass="applet-health health-calm"
+      contentClass="applet-health health-calm sm:max-w-lg"
       [(open)]="swapOpen"
       title="جایگزینی وعده"
       description="فقط غذاهای سازگار با نوع وعده، رژیم برنامه و مواد مستثنا نمایش داده می‌شوند."
     >
       <ng-template aioDialogBody
-        ><div class="flex flex-col gap-3">
-          @if (recipes.isLoading()) {
-            <p role="status">در حال دریافت غذاها…</p>
-          }
-          @if (recipes.error()) {
-            <p role="alert">دریافت غذاها ممکن نشد.</p>
-            <button aioBtn variant="outline" (click)="recipes.reload()">
-              تلاش دوباره
-            </button>
-          }
-          @for (recipe of swapOptions(); track recipe.slug) {
-            <button
-              aioBtn
-              variant="outline"
-              [disabled]="swapping()"
-              (click)="swapRecipe(recipe.slug)"
-            >
-              {{ recipe.title }}، {{ fa(recipe.calories) }} کالری در سهم پایه
-            </button>
-          }
-          @if (
-            !recipes.isLoading() && !recipes.error() && !swapOptions().length
-          ) {
-            <p>غذای جایگزین سازگار موجود نیست.</p>
-          }
+        ><div class="flex min-w-0 flex-col gap-5 pb-3">
+          <section
+            class="flex min-w-0 flex-col gap-3"
+            aria-label="پیشنهاد هوش مصنوعی"
+          >
+            <h3 class="text-sm font-semibold">با هوش مصنوعی انتخاب کن</h3>
+            <p class="text-muted-foreground text-sm leading-6">
+              خواسته‌ات را بنویس تا از غذاهای سازگار پیشنهاد بگیری. جایگزینی با
+              انتخاب خودت انجام می‌شود.
+            </p>
+            @if (swapAiStatus.isLoading()) {
+              <p role="status" class="text-muted-foreground text-sm">
+                در حال بررسی اتصال هوش مصنوعی…
+              </p>
+            } @else if (swapAiStatus.error()) {
+              <p class="text-sm">وضعیت هوش مصنوعی دریافت نشد.</p>
+              <button aioBtn variant="outline" (click)="swapAiStatus.reload()">
+                بررسی دوباره
+              </button>
+            } @else if (!swapAiStatus.value()?.chat) {
+              <p class="text-muted-foreground text-sm">
+                برای پیشنهاد شخصی، سرویس گفتگوی خودت را در حساب کاربری تنظیم کن.
+              </p>
+              <a aioBtn variant="outline" routerLink="/account"
+                >تنظیم هوش مصنوعی</a
+              >
+            } @else {
+              <div aioField class="min-w-0 gap-2">
+                <label aioFieldLabel for="swap-preference"
+                  >چه غذایی دوست داری؟ (اختیاری)</label
+                >
+                <textarea
+                  aioTextarea
+                  id="swap-preference"
+                  rows="2"
+                  maxlength="500"
+                  class="min-w-0 resize-y"
+                  placeholder="مثلاً غذای سریع و بدون گوشت"
+                  [disabled]="aiSuggesting() || swapping()"
+                  [value]="swapPreference()"
+                  (input)="
+                    swapPreference.set($any($event.target).value);
+                    aiMealSuggestions.set([])
+                  "
+                ></textarea>
+              </div>
+              <button
+                aioBtn
+                type="button"
+                class="min-h-11 w-full"
+                [disabled]="aiSuggesting() || swapping()"
+                (click)="suggestSwap()"
+              >
+                {{
+                  aiSuggesting()
+                    ? 'در حال پیدا کردن پیشنهاد…'
+                    : 'پیشنهاد با هوش مصنوعی'
+                }}
+              </button>
+            }
+            @if (aiSuggesting()) {
+              <p role="status" class="text-muted-foreground text-sm">
+                هوش مصنوعی در حال بررسی غذاهای سازگار است…
+              </p>
+            }
+            @if (swapAiError()) {
+              <p role="alert" class="text-destructive text-sm">
+                {{ swapAiError() }}
+              </p>
+            }
+            @for (
+              suggestion of aiMealSuggestions();
+              track suggestion.recipe.slug
+            ) {
+              <div
+                class="flex min-w-0 flex-col gap-2 rounded-2xl border border-border p-4"
+              >
+                <strong class="text-sm [overflow-wrap:anywhere]">{{
+                  suggestion.recipe.title
+                }}</strong>
+                <p class="text-muted-foreground text-xs">
+                  {{ fa(suggestion.recipe.calories) }} کالری در سهم پایه
+                </p>
+                <p class="text-sm leading-6 [overflow-wrap:anywhere]">
+                  {{ suggestion.reason }}
+                </p>
+                <button
+                  aioBtn
+                  variant="outline"
+                  class="min-h-11 w-full"
+                  [disabled]="swapping()"
+                  (click)="swapRecipe(suggestion.recipe.slug)"
+                >
+                  انتخاب این پیشنهاد
+                </button>
+              </div>
+            }
+          </section>
+          <section
+            class="flex min-w-0 flex-col gap-3 border-t border-border pt-4"
+            aria-label="انتخاب از غذاها"
+          >
+            <h3 class="text-sm font-semibold">یا خودت انتخاب کن</h3>
+            @if (recipes.isLoading()) {
+              <p role="status">در حال دریافت غذاها…</p>
+            }
+            @if (recipes.error()) {
+              <p role="alert">دریافت غذاها ممکن نشد.</p>
+              <button aioBtn variant="outline" (click)="recipes.reload()">
+                تلاش دوباره
+              </button>
+            }
+            @for (recipe of swapOptions(); track recipe.slug) {
+              <button
+                aioBtn
+                variant="outline"
+                class="h-auto min-h-14 w-full min-w-0 flex-col items-start gap-1 whitespace-normal px-4 py-3 text-start"
+                [disabled]="swapping()"
+                (click)="swapRecipe(recipe.slug)"
+              >
+                <span class="text-sm leading-6 [overflow-wrap:anywhere]">{{
+                  recipe.title
+                }}</span>
+                <span class="text-muted-foreground text-xs"
+                  >{{ fa(recipe.calories) }} کالری در سهم پایه</span
+                >
+              </button>
+            }
+            @if (
+              !recipes.isLoading() && !recipes.error() && !swapOptions().length
+            ) {
+              <p>غذای جایگزین سازگار موجود نیست.</p>
+            }
+          </section>
         </div></ng-template
       >
+      <ng-template aioDialogActions>
+        <button
+          aioBtn
+          variant="outline"
+          class="min-h-11 w-full"
+          (click)="swapOpen.set(false)"
+        >
+          بستن
+        </button>
+      </ng-template>
     </aio-dialog>
     <aio-dialog
       contentClass="applet-health health-calm"
@@ -408,6 +559,16 @@ export class NutritionPage {
   protected readonly profile = httpResource<HealthProfile>(
     () => `${this.api.base}/profile`,
   );
+  protected readonly browsingDiets = signal(false);
+  protected readonly hasActiveDiet = computed(() => {
+    const mode = this.profile.value()?.dietMode;
+    return mode !== undefined && mode !== 'NONE';
+  });
+  protected readonly showDietSuggestions = computed(
+    () =>
+      this.profile.hasValue() &&
+      (!this.hasActiveDiet() || this.browsingDiets()),
+  );
   protected readonly diets = httpResource<Diet[]>(
     () => `${this.api.base}/diets`,
   );
@@ -420,7 +581,11 @@ export class NutritionPage {
 
   protected readonly suggestions = httpResource<{
     suggestions: DietSuggestion[];
-  }>(() => `${this.api.base}/diet-suggestions`);
+  }>(() =>
+    this.showDietSuggestions()
+      ? `${this.api.base}/diet-suggestions`
+      : undefined,
+  );
   protected readonly recipes = httpResource<Recipe[]>(() =>
     this.swapOpen() ? `${this.api.base}/recipes` : undefined,
   );
@@ -428,22 +593,70 @@ export class NutritionPage {
   protected readonly shoppingBusy = signal(false);
   protected readonly shoppingItems = signal<ShoppingItem[]>([]);
   protected readonly swapOpen = signal(false);
+  protected readonly swapAiStatus = httpResource<AiStatus>(() =>
+    this.swapOpen() ? this.api.aiStatusUrl : undefined,
+  );
+  protected readonly swapPreference = signal('');
+  protected readonly aiSuggesting = signal(false);
+  protected readonly aiMealSuggestions = signal<PlanMealSuggestion[]>([]);
+  protected readonly swapAiError = signal('');
+  private swapSuggestionRequest = 0;
   protected readonly swapping = signal(false);
   private readonly swapTarget = signal<{
     date: string;
     mealType: MealType;
   } | null>(null);
+  protected readonly swapCurrentSlug = computed(() => {
+    const target = this.swapTarget();
+    return this.plan
+      .value()
+      ?.days.find((d) => d.date === target?.date)
+      ?.meals.find((m) => m.mealType === target?.mealType)?.recipeSlug;
+  });
   protected readonly swapOptions = computed(() =>
     (this.recipes.value() ?? []).filter(
       (r) =>
+        r.slug !== this.swapCurrentSlug() &&
         r.mealType === this.swapTarget()?.mealType &&
         r.diets.includes(this.plan.value()?.dietSlug ?? '') &&
         recipeAllowed(r, this.profile.value()?.excludedIngredients ?? []),
     ),
   );
   protected openSwap(date: string, mealType: MealType) {
+    this.swapSuggestionRequest++;
+    this.aiSuggesting.set(false);
+    this.aiMealSuggestions.set([]);
+    this.swapAiError.set('');
+    this.swapPreference.set('');
     this.swapTarget.set({ date, mealType });
     this.swapOpen.set(true);
+  }
+  protected async suggestSwap() {
+    const target = this.swapTarget();
+    if (
+      !target ||
+      this.aiSuggesting() ||
+      this.swapping() ||
+      !this.swapAiStatus.value()?.chat
+    )
+      return;
+    const request = ++this.swapSuggestionRequest;
+    this.aiSuggesting.set(true);
+    this.swapAiError.set('');
+    this.aiMealSuggestions.set([]);
+    try {
+      const suggestions = await this.api.suggestPlanMeal({
+        ...target,
+        preference: this.swapPreference().trim(),
+      });
+      if (request === this.swapSuggestionRequest && this.swapOpen())
+        this.aiMealSuggestions.set(suggestions);
+    } catch (error) {
+      if (request === this.swapSuggestionRequest && this.swapOpen())
+        this.swapAiError.set(apiErrorMessage(error));
+    } finally {
+      if (request === this.swapSuggestionRequest) this.aiSuggesting.set(false);
+    }
   }
   protected async showShopping() {
     if (this.shoppingBusy()) return;
@@ -500,6 +713,7 @@ export class NutritionPage {
 
   protected onProfileSaved(profile: HealthProfile) {
     this.profile.set(profile);
+    this.browsingDiets.set(false);
     this.choosing.set(false);
     if (profile.dietMode === 'APP_PLAN') void this.makePlan();
   }

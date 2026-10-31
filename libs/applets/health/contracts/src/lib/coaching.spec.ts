@@ -38,6 +38,28 @@ const input: GenerateRoutineInput = {
   minutes: 30,
 };
 describe('independent training coach', () => {
+  it('keeps stretches out of generated strength sessions', () => {
+    const stretch: Exercise = {
+      ...catalog[0],
+      slug: 'stretch',
+      equipment: 'trx',
+      guide: {
+        kind: 'stretch',
+        imageUrl: 'assets/trx/stretch.webp',
+        source: 'stretch.pdf',
+        page: 4,
+        sets: 2,
+        reps: 0,
+        seconds: 30,
+        restSeconds: 15,
+        eachSide: false,
+      },
+    };
+    const days = buildRoutine(input, [stretch, ...catalog]);
+    expect(
+      days.flatMap((day) => day.exercises).map((e) => e.exerciseSlug),
+    ).not.toContain('stretch');
+  });
   it('only prescribes available equipment and known exercise IDs with bounded beginner volume', () => {
     const days = buildRoutine(input, catalog);
     expect(days).toHaveLength(3);

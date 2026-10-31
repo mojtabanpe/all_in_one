@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { RecurrenceEditor } from './recurrence-editor';
+import { RecurrenceEditor, recurrencePreset } from './recurrence-editor';
 
 describe('RecurrenceEditor', () => {
   afterEach(() => TestBed.resetTestingModule());
@@ -29,7 +29,11 @@ describe('RecurrenceEditor', () => {
     fixture.detectChanges();
     select('repeat-end', 'COUNT');
     input('input[aria-label="تعداد نوبت‌ها"]', '4');
-    (el.querySelector('button[aioBtn]') as HTMLButtonElement).click();
+    (
+      [...el.querySelectorAll('button')].find((button) =>
+        button.textContent?.includes('ثبت تنظیمات تکرار'),
+      ) as HTMLButtonElement
+    ).click();
     expect(emitted).toHaveBeenCalledWith(
       expect.objectContaining({
         repeatRule: 'RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=SA;COUNT=4',
@@ -49,19 +53,48 @@ describe('RecurrenceEditor', () => {
     const emitted = vi.fn();
     fixture.componentInstance.changed.subscribe(emitted);
     const el = fixture.nativeElement as HTMLElement;
-    (el.querySelector('button[aioBtn]') as HTMLButtonElement).click();
+    (
+      [...el.querySelectorAll('button')].find((button) =>
+        button.textContent?.includes('ثبت تنظیمات تکرار'),
+      ) as HTMLButtonElement
+    ).click();
     expect(emitted).toHaveBeenCalledWith(
       expect.objectContaining({ repeatRule: 'RRULE:FREQ=MONTHLY;BYDAY=-1FR' }),
     );
+    (
+      [...el.querySelectorAll('button')].find(
+        (button) => button.textContent?.trim() === 'تنظیمات پیشرفته',
+      ) as HTMLButtonElement
+    ).click();
+    fixture.detectChanges();
     const zone = el.querySelector('#repeat-zone') as HTMLInputElement;
     zone.value = 'not-a-zone';
     zone.dispatchEvent(new Event('input'));
     fixture.detectChanges();
     expect(
-      (el.querySelector('button[aioBtn]') as HTMLButtonElement).disabled,
+      (
+        [...el.querySelectorAll('button')].find((button) =>
+          button.textContent?.includes('ثبت تنظیمات تکرار'),
+        ) as HTMLButtonElement
+      ).disabled,
     ).toBe(true);
     expect(el.querySelector('[role=alert]')?.textContent).toContain(
       'منطقه زمانی',
     );
+  });
+});
+
+describe('recurrence preset recognition', () => {
+  it.each([
+    [null, 'NONE'],
+    ['RRULE:FREQ=DAILY', 'DAILY'],
+    ['RRULE:FREQ=WEEKLY;BYDAY=SA,MO;COUNT=4', 'WEEKLY'],
+    ['RRULE:FREQ=WEEKLY;BYDAY=SA,SU,MO,TU,WE', 'WORKDAYS'],
+    ['RRULE:FREQ=MONTHLY;BYDAY=-1FR', 'CUSTOM'],
+    ['RRULE:FREQ=DAILY;INTERVAL=2', 'CUSTOM'],
+    ['RRULE:FREQ=DAILY;UNTIL=20261201T000000Z', 'CUSTOM'],
+    ['RRULE:FREQ=YEARLY;BYMONTH=3', 'CUSTOM'],
+  ])('classifies %s without discarding advanced clauses', (rule, expected) => {
+    expect(recurrencePreset(rule)).toBe(expected);
   });
 });

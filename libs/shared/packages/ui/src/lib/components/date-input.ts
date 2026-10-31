@@ -118,7 +118,7 @@ export function jalaliToIso(value: JalaliDate): string {
       aioBtn
       type="button"
       variant="outline"
-      class="min-h-11 w-full min-w-0 justify-between gap-2 font-normal motion-safe:active:scale-[0.96]"
+      class="min-h-11 w-full min-w-0 justify-between gap-2 rounded-[12px] font-normal motion-safe:active:scale-[0.96]"
       [id]="inputId()"
       [disabled]="disabled() || readonly()"
       [attr.aria-label]="ariaLabel() || null"

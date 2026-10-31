@@ -8,6 +8,16 @@ export const swapPlanMealSchema = z.object({
   recipeSlug: z.string().check(z.minLength(1), z.maxLength(64)),
 });
 export type SwapPlanMealInput = z.infer<typeof swapPlanMealSchema>;
+export const suggestPlanMealSchema = z.object({
+  date: z.iso.date(),
+  mealType: z.enum(MEAL_TYPES),
+  preference: z._default(z.string().check(z.trim(), z.maxLength(500)), ''),
+});
+export type SuggestPlanMealInput = z.infer<typeof suggestPlanMealSchema>;
+export interface PlanMealSuggestion {
+  recipe: Recipe;
+  reason: string;
+}
 export interface ShoppingItem {
   item: string;
   amountPerServing: string;

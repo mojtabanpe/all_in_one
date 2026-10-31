@@ -727,6 +727,34 @@ type CategoryFilter = ActivityCategory | 'all';
                 }
               </p>
             }
+            @if (e.guide; as guide) {
+              <figure class="flex flex-col gap-2">
+                <img
+                  [src]="guide.imageUrl"
+                  [alt]="'مراحل اجرای ' + e.name"
+                  width="1400"
+                  height="700"
+                  loading="lazy"
+                  class="h-auto max-h-80 w-full rounded-lg bg-white object-contain"
+                />
+                <figcaption class="text-muted-foreground text-sm">
+                  تصویر از راهنمای TRX، صفحه {{ fa(guide.page) }}
+                </figcaption>
+              </figure>
+              <p class="text-sm">
+                در برنامهٔ مرجع: {{ fa(guide.sets) }} ست،
+                @if (guide.seconds) {
+                  {{ fa(guide.seconds) }} ثانیه
+                } @else {
+                  {{ fa(guide.reps) }} تکرار
+                }
+                @if (guide.eachSide) {
+                  برای هر سمت
+                }
+                ؛ {{ fa(guide.restSeconds) }} ثانیه استراحت. حجم تمرین را با سطح
+                و توان خود تنظیم کنید.
+              </p>
+            }
             <h3 class="font-semibold">روش اجرا</h3>
             <ol class="list-inside list-decimal">
               @for (step of e.instructions; track step) {

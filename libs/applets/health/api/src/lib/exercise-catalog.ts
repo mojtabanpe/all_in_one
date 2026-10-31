@@ -1,7 +1,8 @@
 import type { Exercise } from '@all-in-one/applets/health/contracts';
+import { TRX_ADDITIONAL_EXERCISES, TRX_GUIDES } from './trx-catalog';
 
-/** Original Persian catalog; no third-party API or media dependency. */
-export const EXERCISES: Exercise[] = [
+/** Persian catalog with self-hosted illustrations; no external API dependency. */
+const BASE_EXERCISES: Exercise[] = [
   {
     slug: 'body-squat',
     name: 'اسکات با وزن بدن',
@@ -615,3 +616,8 @@ export const EXERCISES: Exercise[] = [
     videoUrl: 'https://www.aparat.com/v/aR0mw',
   },
 ];
+
+export const EXERCISES: Exercise[] = [
+  ...BASE_EXERCISES,
+  ...TRX_ADDITIONAL_EXERCISES,
+].map((exercise) => ({ ...exercise, guide: TRX_GUIDES[exercise.slug] }));

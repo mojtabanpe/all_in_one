@@ -8,6 +8,7 @@ import {
   DIET_MODES,
   FOOD_GROUPS,
   generatePlanSchema,
+  suggestPlanMealSchema,
   HEALTH_GOALS,
   healthProfileSchema,
   INTENSITIES,
@@ -213,6 +214,17 @@ export function healthTools(
       input: { description: z.string().min(2).max(500) },
     },
     (a) => s.ai.estimateMeal(user, a.description),
+  );
+  kit.tool(
+    'suggest_meal_plan_alternatives',
+    {
+      description:
+        "Use the user's configured AI to recommend up to 3 compatible recipes for a current planned meal, using date, mealType and optional preference. Returns a preview with Persian reasons; does not change or log a meal. Apply a selected recipe with swap_meal_plan_meal.",
+      scope: read,
+      kind: 'read',
+      input: z.fromJSONSchema(z.toJSONSchema(suggestPlanMealSchema)),
+    },
+    (a) => s.ai.suggestPlanMeal(user, parseWith(suggestPlanMealSchema, a)),
   );
   kit.tool(
     'list_diets',

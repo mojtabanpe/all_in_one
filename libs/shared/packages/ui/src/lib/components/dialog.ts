@@ -52,14 +52,16 @@ export class AioDialogActions {
         <hlm-drawer-content
           *hlmDrawerPortal="let ctx"
           [class]="
-            'overflow-hidden pb-[env(safe-area-inset-bottom)] data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-1rem)] ' +
+            'mx-auto w-full min-w-0 max-w-full overflow-hidden pb-[calc(1rem+env(safe-area-inset-bottom,0px))] data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-1rem)] ' +
             contentClass()
           "
         >
-          <hlm-drawer-header class="relative shrink-0 pe-24">
-            <h2 hlmDrawerTitle>{{ title() }}</h2>
+          <hlm-drawer-header class="relative min-w-0 shrink-0 pe-24 text-start">
+            <h2 hlmDrawerTitle class="min-w-0 break-words">{{ title() }}</h2>
             @if (description()) {
-              <p hlmDrawerDescription>{{ description() }}</p>
+              <p hlmDrawerDescription class="min-w-0 break-words">
+                {{ description() }}
+              </p>
             }
             <button
               hlmBtn
@@ -73,7 +75,7 @@ export class AioDialogActions {
           </hlm-drawer-header>
           @if (body(); as b) {
             <div
-              class="min-h-0 min-w-0 overflow-y-auto overscroll-contain px-4 pb-2"
+              class="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-4 pb-4"
               data-slot="dialog-body"
               tabindex="0"
               role="region"
@@ -95,7 +97,7 @@ export class AioDialogActions {
           *hlmDialogPortal="let ctx"
           closeLabel="بستن"
           [class]="
-            'flex max-h-[calc(100dvh-2rem)] flex-col overflow-hidden ' +
+            'flex min-w-0 max-h-[calc(100dvh-2rem)] flex-col overflow-hidden ' +
             contentClass()
           "
         >
@@ -107,7 +109,7 @@ export class AioDialogActions {
           </hlm-dialog-header>
           @if (body(); as b) {
             <div
-              class="min-h-0 min-w-0 overflow-y-auto overscroll-contain"
+              class="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain"
               data-slot="dialog-body"
               tabindex="0"
               role="region"

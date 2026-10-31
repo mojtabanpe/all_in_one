@@ -3,12 +3,42 @@ import type { PrismaService } from '@all-in-one/api/db';
 import type { HealthService } from './health.service';
 import { TrainingService } from './training.service';
 import { EXERCISES } from './exercise-catalog';
+import { TRX_GUIDES } from './trx-catalog';
 import {
   buildRoutine,
   type GenerateRoutineInput,
 } from '@all-in-one/applets/health/contracts';
 
 describe('training owner isolation and catalog', () => {
+  it('covers every supplied TRX illustration and keeps the two lunge variants distinct', () => {
+    const trx = EXERCISES.filter((e) => e.equipment === 'trx');
+    expect(trx).toHaveLength(32);
+    expect(Object.keys(TRX_GUIDES)).toHaveLength(30);
+    expect(trx.filter((e) => e.guide?.kind === 'stretch')).toHaveLength(6);
+    expect(trx.find((e) => e.slug === 'trx-lunge')?.guide).toBeUndefined();
+    expect(
+      trx.find((e) => e.slug === 'trx-suspended-lunge')?.guide,
+    ).toBeDefined();
+    for (const slug of Object.keys(TRX_GUIDES)) {
+      const exercise = trx.find((e) => e.slug === slug);
+      expect(exercise?.guide?.imageUrl).toBe(`assets/trx/${slug}.webp`);
+      expect(exercise?.timed).toBe(Boolean(exercise?.guide?.seconds));
+    }
+  });
+  it('attaches illustration guidance to database catalog and detail responses', async () => {
+    const { guide, ...row } = EXERCISES.find((e) => e.slug === 'trx-squat')!;
+    const service = new TrainingService(
+      {
+        healthExercise: {
+          findMany: vi.fn().mockResolvedValue([row]),
+          findUnique: vi.fn().mockResolvedValue(row),
+        },
+      } as unknown as PrismaService,
+      {} as HealthService,
+    );
+    expect((await service.exercises())[0].guide).toEqual(guide);
+    expect((await service.exercise(row.slug)).guide).toEqual(guide);
+  });
   const input: GenerateRoutineInput = {
     title: 'من',
     goal: 'fitness',

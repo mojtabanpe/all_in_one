@@ -14,6 +14,8 @@ import type {
   LogSessionInput,
   ShoppingItem,
   SwapPlanMealInput,
+  SuggestPlanMealInput,
+  PlanMealSuggestion,
   GeneratePlanInput,
   HealthProfile,
   HealthProfileInput,
@@ -31,6 +33,16 @@ import { firstValueFrom } from 'rxjs';
 export class HealthApi {
   private readonly http = inject(HttpClient);
   readonly base = `${inject(API_BASE_URL)}/health`;
+  readonly aiStatusUrl = `${inject(API_BASE_URL)}/ai/status`;
+
+  suggestPlanMeal(input: SuggestPlanMealInput): Promise<PlanMealSuggestion[]> {
+    return firstValueFrom(
+      this.http.post<PlanMealSuggestion[]>(
+        `${this.base}/ai/suggest-plan-meal`,
+        input,
+      ),
+    );
+  }
 
   generateRoutine(input: GenerateRoutineInput): Promise<WorkoutRoutine> {
     return firstValueFrom(

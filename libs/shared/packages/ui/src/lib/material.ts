@@ -55,7 +55,7 @@ export function buttonMaterial(button: HlmButton): void {
 
 /** Inset porcelain field, 44px tall. */
 const FIELD =
-  'h-11 border-input bg-card px-3.5 shadow-input focus-visible:shadow-none';
+  'h-11 w-full min-w-0 max-w-full border-input bg-card px-3.5 shadow-input focus-visible:shadow-none';
 
 export function inputMaterial(_input: HlmInput): void {
   classes(() => FIELD);
@@ -69,7 +69,9 @@ export function textareaMaterial(_textarea: HlmTextarea): void {
 }
 
 export function inputGroupMaterial(_group: HlmInputGroup): void {
-  classes(() => 'h-11 border-transparent bg-card shadow-input');
+  // Helm's inline add-ons use negative margins; inset them so RTL groups stay
+  // inside the field rather than extending past the dialog's scroll container.
+  classes(() => 'h-11 border-transparent bg-card px-1 shadow-input');
 }
 
 /** Porcelain glass card: soft surface shadow, white edge, 20px padding. */
@@ -82,4 +84,4 @@ export function cardMaterial(_card: HlmCard): void {
 
 /** For `aio-native-select`, which passes it to spartan's `selectClass`. */
 export const NATIVE_SELECT_MATERIAL =
-  'h-11 border-input bg-card ps-3.5 shadow-input';
+  'h-11 w-full min-w-0 max-w-full truncate border-input bg-card ps-3.5 shadow-input';

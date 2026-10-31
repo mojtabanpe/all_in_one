@@ -7,6 +7,8 @@ import { DIETS, RECIPES } from './seed-nutrition';
 export async function seedHealth(prisma: PrismaClient): Promise<void> {
   for (const e of EXERCISES) {
     const { videoUrl, ...data } = e;
+    // Reference media is versioned with the app, rather than stored in Prisma.
+    delete data.guide;
     await prisma.healthExercise.upsert({
       where: { slug: e.slug },
       create: { ...data, videoUrl },

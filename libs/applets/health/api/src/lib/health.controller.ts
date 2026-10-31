@@ -28,6 +28,8 @@ import {
   type LogSessionInput,
   logSessionSchema,
   swapPlanMealSchema,
+  suggestPlanMealSchema,
+  type SuggestPlanMealInput,
   type SwapPlanMealInput,
   type ActivityType,
   type Diet,
@@ -197,6 +199,14 @@ export class HealthController {
     @Body({ schema: swapPlanMealSchema }) input: SwapPlanMealInput,
   ) {
     return this.health.swapPlanMeal(user.id, input);
+  }
+
+  @Post('ai/suggest-plan-meal')
+  suggestPlanMeal(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: suggestPlanMealSchema }) input: SuggestPlanMealInput,
+  ) {
+    return this.ai.suggestPlanMeal(user.id, input);
   }
 
   // ---------- profile ----------

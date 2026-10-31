@@ -194,9 +194,12 @@ const MEAL_ICONS: Record<MealType, string> = {
                 <span class="health-icon-disc" [style.color]="macro.color"
                   ><aio-icon [name]="macro.icon" size="sm"
                 /></span>
-                <div class="min-w-0">
-                  <p class="text-muted-foreground text-xs">{{ macro.label }}</p>
-                  <strong class="text-sm"
+                <div class="flex min-w-0 flex-col items-center gap-1">
+                  <p class="text-muted-foreground whitespace-nowrap text-xs">
+                    {{ macro.label }}
+                  </p>
+                  <strong
+                    class="inline-flex items-baseline justify-center gap-1 whitespace-nowrap text-sm"
                     >{{ macro.value }}
                     <span class="font-normal text-xs">گرم</span></strong
                   >
@@ -489,8 +492,12 @@ export class HealthOverview {
   protected readonly selectedDate = signal(this.today);
   protected readonly dateLabel = (date: string) =>
     faDate(date, { day: 'numeric', month: 'long' });
+  private readonly weekStart = addDays(
+    this.today,
+    -((new Date(`${this.today}T12:00:00Z`).getUTCDay() + 1) % 7),
+  );
   protected readonly days = Array.from({ length: 7 }, (_, i) => {
-    const date = addDays(this.today, i - 6);
+    const date = addDays(this.weekStart, i);
     return {
       date,
       label: faDate(date, { weekday: 'short' }),

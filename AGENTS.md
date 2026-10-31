@@ -241,3 +241,39 @@ When the owner gives a new instruction, add it to this list in the same change.
 38. Deploy through GitHub CI/CD. Never transfer local project files, local configuration files, or locally built artifacts directly to production over SSH, SCP, or rsync.
 
 39. Provide opt-in native push notifications for the Android and macOS WebView apps, using the same task, habit and language review reminders and account controls as the PWA.
+
+## TRX exercise references (2026-10-31)
+
+40. Use the five owner-supplied TRX PDFs (Core, Legs & Hips, Arms & Shoulders, Stretch, Chest and Back) as references for expanding the exercise library, including their exercise images and guidance. Display only the exercise illustration cropped from each page, never the complete English page; adapt the remaining instructions, repetitions and rest times into Persian guidance.
+
+41. Fix and refine the planner task-detail sheet for phones: controls must stay within the viewport, long content must scroll with closing actions accessible, date/time controls must fit, and recurrence settings must have a clear, compact Persian layout.
+
+42. In the nutrition meal plan, show both “replace” and “recipe” actions as matching, clearly visible Spartan buttons. Keep the meal text and actions in separate, readable areas on phones.
+
+43. Provide AI assistance in the nutrition meal-replacement sheet using the user's configured AI. Keep meal selection clear and give the options comfortable bottom spacing and an accessible closing action on phones.
+
+44. When a user has an active diet, hide the diet-recommendation section by default. Show other diets only when the user explicitly asks to browse or choose another diet.
+
+45. Supply a macOS installer without native notifications when requested; keep the notification-enabled Android and future macOS variants available separately.
+
+46. Publish both Android APK and macOS DMG installers in GitHub Releases so users can download them there, rather than relying only on temporary Actions artifacts.
+
+47. When a planner task is marked done, show a short success notification inside the app after the save succeeds, using the shared Spartan Sonner toast.
+
+48. In-app notifications must use the same Vazirmatn Variable font and Persian digit shaping as the rest of the app, including notification action buttons.
+
+49. Habit reminder delete buttons must have their own clear space beside each time input, without overlap or inset positioning on phones.
+
+50. Remove the visible “تکرارشونده” label beside tasks and use a recurrence icon distinct from a reload symbol, with an accessible label.
+
+51. Planner navigation order is tasks, habits, calendar, focus, countdowns (swap the former calendar and habits positions).
+
+52. The habit week strip must show the current calendar week from Saturday through Friday, with Saturday first on the right in RTL.
+
+53. The health overview week strip must also show the current week from Saturday on the right through Friday on the left.
+
+54. Keep health macro cards aligned and readable on phones: separate the icon from the label/value vertically and keep each numeric value with its gram unit on one line.
+
+55. All bottom sheets must have shared bottom breathing room in addition to the device safe-area inset, including the assistant composer and sheets without footer actions. Apply this in the shared dialog wrapper.
+
+56. Display large dashboard and health statistics with compact proportional Persian digits, avoiding the wide spacing of tabular numerals while retaining Vazirmatn and Persian digit shaping.

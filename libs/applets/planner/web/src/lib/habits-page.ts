@@ -386,8 +386,10 @@ const emptyDraft = (): Draft => ({
               هدف روزانه، یادآوری‌های همان روز متوقف می‌شوند.
             </p>
             @for (time of d.reminders; track $index; let i = $index) {
-              <div class="flex min-w-0 items-end gap-2">
-                <div aioField class="min-w-0 flex-1">
+              <div
+                class="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-3"
+              >
+                <div aioField class="min-w-0 gap-2">
                   <label aioFieldLabel [for]="'habit-reminder-' + i"
                     >ساعت یادآوری {{ fa(i + 1) }}</label
                   >
@@ -395,7 +397,7 @@ const emptyDraft = (): Draft => ({
                     aioInput
                     type="time"
                     required
-                    class="min-w-0 max-w-full"
+                    class="w-full min-w-0 max-w-full appearance-none"
                     [id]="'habit-reminder-' + i"
                     [value]="time"
                     aria-describedby="habit-reminder-help"
@@ -405,8 +407,8 @@ const emptyDraft = (): Draft => ({
                 <button
                   aioBtn
                   type="button"
-                  variant="ghost"
-                  class="min-h-11 shrink-0"
+                  variant="outline"
+                  class="h-11 min-w-16 shrink-0 px-3"
                   [attr.aria-label]="'حذف یادآوری ' + fa(i + 1)"
                   (click)="removeReminder(i)"
                 >
@@ -495,8 +497,12 @@ export class HabitsPage {
   private readonly confirm = inject(AioConfirm);
 
   protected readonly today = toIsoDate(new Date());
+  private readonly weekStart = addDays(
+    this.today,
+    -((new Date(`${this.today}T12:00:00Z`).getUTCDay() + 1) % 7),
+  );
   protected readonly days = Array.from({ length: 7 }, (_, i) =>
-    addDays(this.today, i - 6),
+    addDays(this.weekStart, i),
   );
   protected readonly day = signal(this.today);
   protected readonly week = WEEK;

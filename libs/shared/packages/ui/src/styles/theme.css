@@ -25,6 +25,13 @@
   font-display: swap;
 }
 
+/* Sonner ships its own system-font stack; keep app notifications on Vazirmatn. */
+[data-sonner-toaster],
+[data-sonner-toaster] button {
+  font-family: var(--font-sans) !important;
+  font-feature-settings: 'ss01' 1;
+}
+
 /* Tailwind only scans files under the working directory by default; be explicit
    so classes in libs/ are always picked up. */
 @source '../../../../../../apps';
@@ -421,7 +428,11 @@
     font-size: 2.5rem;
     font-weight: 700;
     line-height: 1;
-    font-variant-numeric: tabular-nums;
+    font-variant-numeric: proportional-nums;
+    font-feature-settings:
+      'ss01' 1,
+      'tnum' 0;
+    letter-spacing: -0.025em;
   }
   .aio-task-row {
     display: flex;
@@ -609,16 +620,24 @@ textarea {
   overflow: hidden;
 }
 .health-number {
-  font-size: clamp(36px, 6vw, 56px);
+  font-size: clamp(32px, 5vw, 48px);
   line-height: 1.2;
-  font-weight: 750;
-  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-variant-numeric: proportional-nums;
+  font-feature-settings:
+    'ss01' 1,
+    'tnum' 0;
+  letter-spacing: -0.025em;
 }
 .health-small-number {
   font-size: 28px;
   line-height: 1.4;
   font-weight: 700;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: proportional-nums;
+  font-feature-settings:
+    'ss01' 1,
+    'tnum' 0;
+  letter-spacing: -0.025em;
 }
 .health-helper-art {
   width: 100px;
@@ -650,7 +669,9 @@ textarea {
   border-radius: 24px;
   padding: 16px 12px;
   display: flex;
+  flex-direction: column;
   align-items: center;
+  text-align: center;
   gap: 10px;
   min-width: 0;
 }

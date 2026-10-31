@@ -58,13 +58,13 @@ import {
 export class PlannerShell {
   protected readonly links = [
     { path: '.', label: 'کارها', icon: 'lucideListChecks', exact: true },
+    { path: 'habits', label: 'عادت‌ها', icon: 'lucideRepeat', exact: false },
     {
       path: 'calendar',
       label: 'تقویم',
       icon: 'lucideCalendarDays',
       exact: false,
     },
-    { path: 'habits', label: 'عادت‌ها', icon: 'lucideRepeat', exact: false },
     { path: 'focus', label: 'تمرکز', icon: 'lucideTimer', exact: false },
     {
       path: 'countdowns',

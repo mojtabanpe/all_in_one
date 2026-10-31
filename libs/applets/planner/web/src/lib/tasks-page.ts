@@ -30,6 +30,7 @@ import {
   AioConfirm,
   AioDialog,
   AioDialogBody,
+  AioDialogActions,
   AioEmptyDirectives,
   AioIcon,
   AioInputGroupDirectives,
@@ -52,6 +53,7 @@ import {
   lucideMenu,
   lucidePlus,
   lucideRotateCcw,
+  lucideRepeat2,
   lucideStickyNote,
   lucideTrash2,
 } from '@ng-icons/lucide';
@@ -93,6 +95,7 @@ const DONE_DAYS = 30;
     AioCollapsibleDirectives,
     AioDialog,
     AioDialogBody,
+    AioDialogActions,
     AioEmptyDirectives,
     AioIcon,
     AioInputGroupDirectives,
@@ -113,6 +116,7 @@ const DONE_DAYS = 30;
       lucideMenu,
       lucidePlus,
       lucideRotateCcw,
+      lucideRepeat2,
       lucideStickyNote,
       lucideTrash2,
     }),
@@ -392,10 +396,16 @@ const DONE_DAYS = 30;
             }
           </span>
           <span
-            class="text-muted-foreground shrink-0 text-xs"
+            class="text-muted-foreground flex shrink-0 items-center gap-1 text-xs"
             [class.text-destructive]="isOverdue(task)"
-            >{{ when(task) }}</span
           >
+            {{ when(task) }}
+            @if (task.repeatRule && !task.recurrenceNeedsReview) {
+              <span role="img" aria-label="کار تکراری" title="کار تکراری"
+                ><aio-icon name="lucideRepeat2" size="xs"
+              /></span>
+            }
+          </span>
         </button>
       </li>
     </ng-template>
@@ -423,7 +433,7 @@ const DONE_DAYS = 30;
     <aio-dialog
       [open]="!!selected()"
       (openChange)="$event || selectedId.set(null)"
-      [title]="selected()?.title ?? ''"
+      title="جزئیات کار"
       [description]="selected() ? listName(selected()!.listId) : ''"
       contentClass="applet-planner sm:max-w-lg"
     >
@@ -437,6 +447,17 @@ const DONE_DAYS = 30;
             (focusRequested)="startFocus($event)"
           />
         }
+      </ng-template>
+      <ng-template aioDialogActions>
+        <button
+          aioBtn
+          type="button"
+          variant="outline"
+          class="w-full rounded-[12px]"
+          (click)="selectedId.set(null)"
+        >
+          بستن جزئیات
+        </button>
       </ng-template>
     </aio-dialog>
 
@@ -837,8 +858,7 @@ export class TasksPage {
             : faDate(task.date, { day: 'numeric', month: 'short' }),
       );
     if (task.time) parts.push(this.faTime(task.time));
-    if (task.recurrenceNeedsReview) parts.push('↻ نیازمند تأیید برنامه تکرار');
-    else if (task.repeatRule) parts.push('↻ تکرارشونده');
+    if (task.recurrenceNeedsReview) parts.push('نیازمند تأیید برنامه تکرار');
     if (task.durationMin)
       parts.push(task.durationMin.toLocaleString('fa-IR') + ' دقیقه');
     return parts.join('، ');
@@ -918,6 +938,7 @@ export class TasksPage {
     });
     try {
       this.replace(await this.api.updateTask(task.id, { done }));
+      if (done) aioToast.success('کار انجام شد', task.title);
       this.listsRes.reload();
       if (task.repeatRule) {
         this.openRes.reload();

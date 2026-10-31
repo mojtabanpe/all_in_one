@@ -38,6 +38,37 @@ const days = [
   ['TH', 'پنجشنبه'],
   ['FR', 'جمعه'],
 ];
+/** Recognize only rules the preset controls can reproduce without losing clauses. */
+export function recurrencePreset(rule: string | null | undefined): string {
+  if (!rule) return 'NONE';
+  const parts = Object.fromEntries(
+    rule
+      .replace(/^RRULE:/, '')
+      .split(';')
+      .map((part) => part.split('=')),
+  );
+  if (
+    Object.keys(parts).some(
+      (key) => !['FREQ', 'INTERVAL', 'BYDAY', 'COUNT'].includes(key),
+    ) ||
+    (parts['INTERVAL'] && parts['INTERVAL'] !== '1')
+  )
+    return 'CUSTOM';
+  const frequency = parts['FREQ'];
+  if (!['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'].includes(frequency))
+    return 'CUSTOM';
+  if (parts['BYDAY']) {
+    if (
+      frequency !== 'WEEKLY' ||
+      !/^(SA|SU|MO|TU|WE|TH|FR)(,(SA|SU|MO|TU|WE|TH|FR))*$/.test(parts['BYDAY'])
+    )
+      return 'CUSTOM';
+    if (parts['BYDAY'].split(',').sort().join(',') === 'MO,SA,SU,TU,WE')
+      return 'WORKDAYS';
+  }
+  return frequency;
+}
+
 /** Feature form composed entirely from existing UI wrappers; emits one validated patch. */
 @Component({
   selector: 'planner-recurrence-editor',
@@ -50,172 +81,222 @@ const days = [
     AioNativeSelect,
     AioNativeSelectDirectives,
   ],
-  template: ` <div class="bg-muted/40 flex flex-col gap-3 rounded-2xl p-4">
-    <label aioFieldLabel [for]="prefix() + 'preset'">تکرار</label>
-    <aio-native-select
-      [selectId]="prefix() + 'preset'"
-      [value]="preset()"
-      (valueChange)="preset.set($event)"
-    >
-      <option aioNativeSelectOption value="NONE">تکرار نمی‌شود</option>
-      <option aioNativeSelectOption value="DAILY">هر روز</option>
-      <option aioNativeSelectOption value="WORKDAYS">
-        روزهای کاری (شنبه تا چهارشنبه)
-      </option>
-      <option aioNativeSelectOption value="WEEKLY">هر هفته</option>
-      <option aioNativeSelectOption value="MONTHLY">هر ماه</option>
-      <option aioNativeSelectOption value="YEARLY">هر سال</option>
-      <option aioNativeSelectOption value="CUSTOM">دلخواه</option>
-    </aio-native-select>
-    @if (preset() !== 'NONE') {
-      @if (preset() === 'CUSTOM') {
-        <label aioFieldLabel [for]="prefix() + 'freq'">واحد تکرار</label>
+  host: { class: 'block min-w-0 w-full' },
+  template: `
+    <fieldset aioFieldSet class="min-w-0 gap-4 border-t border-border pt-5">
+      <div aioField class="min-w-0 gap-2">
+        <label aioFieldLabel [for]="prefix() + 'preset'">تکرار</label>
         <aio-native-select
-          [selectId]="prefix() + 'freq'"
-          [value]="frequency()"
-          (valueChange)="frequency.set($event); raw.set('')"
+          [selectId]="prefix() + 'preset'"
+          [value]="preset()"
+          (valueChange)="preset.set($event)"
         >
-          <option aioNativeSelectOption value="DAILY">روز</option>
-          <option aioNativeSelectOption value="WEEKLY">هفته</option>
-          <option aioNativeSelectOption value="MONTHLY">ماه</option>
-          <option aioNativeSelectOption value="YEARLY">سال</option>
+          <option aioNativeSelectOption value="NONE">تکرار نمی‌شود</option>
+          <option aioNativeSelectOption value="DAILY">هر روز</option>
+          <option aioNativeSelectOption value="WORKDAYS">
+            روزهای کاری (شنبه تا چهارشنبه)
+          </option>
+          <option aioNativeSelectOption value="WEEKLY">هر هفته</option>
+          <option aioNativeSelectOption value="MONTHLY">هر ماه</option>
+          <option aioNativeSelectOption value="YEARLY">هر سال</option>
+          <option aioNativeSelectOption value="CUSTOM">دلخواه</option>
         </aio-native-select>
-        <label aioFieldLabel [for]="prefix() + 'interval'">هر چند واحد؟</label>
-        <input
-          aioInput
-          type="number"
-          min="1"
-          max="10000"
-          [id]="prefix() + 'interval'"
-          [value]="interval()"
-          (input)="interval.set(+$any($event.target).value); raw.set('')"
-        />
-      }
-      @if (
-        preset() === 'WEEKLY' ||
-        (preset() === 'CUSTOM' && frequency() === 'WEEKLY')
-      ) {
-        <span class="text-sm">روزهای هفته (انتخاب خالی: روز تاریخ شروع)</span>
-        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          @for (d of weekdays; track d[0]) {
-            <label
-              [for]="prefix() + 'day-' + d[0]"
-              class="flex min-h-11 items-center gap-2"
-              ><aio-checkbox
-                [inputId]="prefix() + 'day-' + d[0]"
-                [checked]="selectedDays().includes(d[0])"
-                (checkedChange)="toggleDay(d[0], $event)"
-                [aria-label]="d[1]"
-              />{{ d[1] }}</label
-            >
+      </div>
+      @if (preset() !== 'NONE') {
+        @if (preset() === 'CUSTOM') {
+          <div class="grid min-w-0 grid-cols-2 gap-3">
+            <div aioField class="min-w-0 gap-2">
+              <label aioFieldLabel [for]="prefix() + 'freq'">واحد تکرار</label>
+              <aio-native-select
+                [selectId]="prefix() + 'freq'"
+                [value]="frequency()"
+                (valueChange)="frequency.set($event); raw.set('')"
+              >
+                <option aioNativeSelectOption value="DAILY">روز</option>
+                <option aioNativeSelectOption value="WEEKLY">هفته</option>
+                <option aioNativeSelectOption value="MONTHLY">ماه</option>
+                <option aioNativeSelectOption value="YEARLY">سال</option>
+              </aio-native-select>
+            </div>
+            <div aioField class="min-w-0 gap-2">
+              <label aioFieldLabel [for]="prefix() + 'interval'"
+                >فاصلهٔ تکرار</label
+              >
+              <input
+                aioInput
+                type="number"
+                min="1"
+                max="10000"
+                [id]="prefix() + 'interval'"
+                [value]="interval()"
+                (input)="interval.set(+$any($event.target).value); raw.set('')"
+              />
+            </div>
+          </div>
+        }
+        @if (
+          preset() === 'WEEKLY' ||
+          (preset() === 'CUSTOM' && frequency() === 'WEEKLY')
+        ) {
+          <fieldset aioFieldSet class="min-w-0 gap-2">
+            <legend aioFieldLegend class="text-sm">روزهای هفته</legend>
+            <p class="text-muted-foreground text-xs">
+              اگر روزی انتخاب نکنی، روز تاریخ شروع تکرار می‌شود.
+            </p>
+            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              @for (d of weekdays; track d[0]) {
+                <label
+                  [for]="prefix() + 'day-' + d[0]"
+                  class="flex min-h-11 items-center gap-2"
+                >
+                  <aio-checkbox
+                    [inputId]="prefix() + 'day-' + d[0]"
+                    [checked]="selectedDays().includes(d[0])"
+                    (checkedChange)="toggleDay(d[0], $event)"
+                    [aria-label]="d[1]"
+                  />{{ d[1] }}
+                </label>
+              }
+            </div>
+          </fieldset>
+        }
+        <div aioField class="min-w-0 gap-2">
+          <label aioFieldLabel [for]="prefix() + 'end'">پایان تکرار</label>
+          <aio-native-select
+            [selectId]="prefix() + 'end'"
+            [value]="ending()"
+            (valueChange)="ending.set($event); endTouched.set(true)"
+          >
+            <option aioNativeSelectOption value="NEVER">بدون پایان</option>
+            <option aioNativeSelectOption value="DATE">در تاریخ</option>
+            <option aioNativeSelectOption value="COUNT">پس از چند نوبت</option>
+          </aio-native-select>
+          @if (ending() === 'DATE') {
+            <aio-date-input
+              contentClass="applet-planner"
+              aria-label="تاریخ پایان تکرار"
+              [value]="until()"
+              (valueChange)="until.set($event)"
+            />
+          }
+          @if (ending() === 'COUNT') {
+            <input
+              aioInput
+              type="number"
+              aria-label="تعداد نوبت‌ها"
+              min="1"
+              max="10000"
+              [value]="count()"
+              (input)="count.set(+$any($event.target).value)"
+            />
           }
         </div>
       }
-      <label aioFieldLabel [for]="prefix() + 'end'">پایان تکرار</label>
-      <aio-native-select
-        [selectId]="prefix() + 'end'"
-        [value]="ending()"
-        (valueChange)="ending.set($event); endTouched.set(true)"
+      <button
+        aioBtn
+        type="button"
+        variant="ghost"
+        class="min-w-0 self-start px-0 text-muted-foreground"
+        [attr.aria-expanded]="advanced()"
+        [attr.aria-controls]="prefix() + 'advanced'"
+        (click)="advanced.set(!advanced())"
       >
-        <option aioNativeSelectOption value="NEVER">بدون پایان</option>
-        <option aioNativeSelectOption value="DATE">در تاریخ</option>
-        <option aioNativeSelectOption value="COUNT">پس از چند نوبت</option>
-      </aio-native-select>
-      @if (ending() === 'DATE') {
-        <aio-date-input
-          contentClass="applet-planner"
-          aria-label="تاریخ پایان تکرار"
-          [value]="until()"
-          (valueChange)="until.set($event)"
-        />
+        {{ advanced() ? 'بستن تنظیمات پیشرفته' : 'تنظیمات پیشرفته' }}
+      </button>
+      @if (advanced()) {
+        <div [id]="prefix() + 'advanced'" class="flex min-w-0 flex-col gap-4">
+          @if (preset() !== 'NONE') {
+            <div aioField class="min-w-0 gap-2">
+              <label aioFieldLabel [for]="prefix() + 'from'">مبنای تکرار</label>
+              <aio-native-select
+                [selectId]="prefix() + 'from'"
+                [value]="repeatFrom()"
+                (valueChange)="repeatFrom.set($event)"
+              >
+                <option aioNativeSelectOption value="SCHEDULE">
+                  تاریخ برنامه‌ریزی‌شده
+                </option>
+                <option aioNativeSelectOption value="COMPLETION">
+                  زمان انجام نوبت قبلی
+                </option>
+              </aio-native-select>
+            </div>
+            <div aioField class="min-w-0 gap-2">
+              <label aioFieldLabel [for]="prefix() + 'zone'"
+                >منطقهٔ زمانی</label
+              >
+              <input
+                aioInput
+                dir="ltr"
+                [id]="prefix() + 'zone'"
+                [value]="zone()"
+                (input)="zone.set($any($event.target).value)"
+              />
+              <p aioFieldDescription>
+                زمان شروع بر اساس این منطقه است. نمایش روزانه با تهران هماهنگ
+                می‌شود.
+              </p>
+            </div>
+            @if (preset() === 'CUSTOM') {
+              <div aioField class="min-w-0 gap-2">
+                <label aioFieldLabel [for]="prefix() + 'rule'"
+                  >قانون RRULE (اختیاری)</label
+                >
+                <input
+                  aioInput
+                  dir="ltr"
+                  [id]="prefix() + 'rule'"
+                  [value]="raw()"
+                  (input)="raw.set($any($event.target).value)"
+                  placeholder="RRULE:FREQ=MONTHLY;BYDAY=-1FR"
+                />
+              </div>
+            }
+          }
+          <div aioField class="min-w-0 gap-2">
+            <label aioFieldLabel [for]="prefix() + 'duration'"
+              >مدت کار (دقیقه، اختیاری)</label
+            >
+            <input
+              aioInput
+              type="number"
+              min="1"
+              max="10080"
+              [id]="prefix() + 'duration'"
+              [value]="duration() ?? ''"
+              (input)="
+                duration.set(
+                  $any($event.target).value ? +$any($event.target).value : null
+                )
+              "
+            />
+          </div>
+        </div>
       }
-      @if (ending() === 'COUNT') {
-        <input
-          aioInput
-          type="number"
-          aria-label="تعداد نوبت‌ها"
-          min="1"
-          max="10000"
-          [value]="count()"
-          (input)="count.set(+$any($event.target).value)"
-        />
+      @if (error()) {
+        <p role="alert" class="text-destructive text-sm">{{ error() }}</p>
       }
-      <label aioFieldLabel [for]="prefix() + 'from'">مبنای تکرار</label>
-      <aio-native-select
-        [selectId]="prefix() + 'from'"
-        [value]="repeatFrom()"
-        (valueChange)="repeatFrom.set($event)"
+      <button
+        aioBtn
+        type="button"
+        variant="outline"
+        class="w-full min-w-0"
+        [disabled]="!!error()"
+        (click)="apply()"
       >
-        <option aioNativeSelectOption value="SCHEDULE">
-          تاریخ برنامه‌ریزی‌شده
-        </option>
-        <option aioNativeSelectOption value="COMPLETION">
-          زمان انجام نوبت قبلی
-        </option>
-      </aio-native-select>
-      <label aioFieldLabel [for]="prefix() + 'zone'">منطقه زمانی برنامه</label>
-      <input
-        aioInput
-        dir="ltr"
-        [id]="prefix() + 'zone'"
-        [value]="zone()"
-        (input)="zone.set($any($event.target).value)"
-      />
-      <p class="text-muted-foreground text-xs">
-        تاریخ و ساعت شروع سری در این منطقه است؛ نمایش روزانه با زمان تهران
-        هماهنگ می‌شود.
-      </p>
-      @if (preset() === 'CUSTOM') {
-        <label aioFieldLabel [for]="prefix() + 'rule'"
-          >قانون پیشرفته RRULE (اختیاری)</label
-        >
-        <input
-          aioInput
-          dir="ltr"
-          [id]="prefix() + 'rule'"
-          [value]="raw()"
-          (input)="raw.set($any($event.target).value)"
-          placeholder="RRULE:FREQ=MONTHLY;BYDAY=-1FR"
-        />
-      }
-    }
-    <label aioFieldLabel [for]="prefix() + 'duration'"
-      >مدت کار (دقیقه، اختیاری)</label
-    >
-    <input
-      aioInput
-      type="number"
-      min="1"
-      max="10080"
-      [id]="prefix() + 'duration'"
-      [value]="duration() ?? ''"
-      (input)="
-        duration.set(
-          $any($event.target).value ? +$any($event.target).value : null
-        )
-      "
-    />
-    @if (error()) {
-      <p role="alert" class="text-destructive text-sm">{{ error() }}</p>
-    }
-    <button
-      aioBtn
-      type="button"
-      variant="outline"
-      [disabled]="!!error()"
-      (click)="apply()"
-    >
-      ثبت تنظیمات تکرار
-    </button>
-  </div>`,
+        ثبت تنظیمات تکرار
+      </button>
+    </fieldset>
+  `,
 })
 export class RecurrenceEditor {
   readonly value = input<Settings>({});
   readonly prefix = input('repeat-');
   readonly changed = output<Settings>();
   protected readonly weekdays = days;
+  protected readonly advanced = signal(false);
   protected readonly preset = linkedSignal<string>(() =>
-    this.value().repeatRule ? 'CUSTOM' : 'NONE',
+    recurrencePreset(this.value().repeatRule),
   );
   protected readonly raw = linkedSignal(() => this.value().repeatRule ?? '');
   protected readonly frequency = linkedSignal(

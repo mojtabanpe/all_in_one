@@ -59,6 +59,18 @@ export const TRAINING_GOAL_LABELS: Record<TrainingGoal, string> = {
   fitness: 'آمادگی عمومی',
   weight_loss: 'کاهش وزن',
 };
+/** Volume in the supplied reference workout, not a personalized prescription. */
+export interface ExerciseGuide {
+  imageUrl: string;
+  source: string;
+  page: number;
+  kind: 'strength' | 'stretch';
+  sets: number;
+  reps: number;
+  seconds: number;
+  restSeconds: number;
+  eachSide: boolean;
+}
 export interface Exercise {
   slug: string;
   name: string;
@@ -71,6 +83,7 @@ export interface Exercise {
   alternatives: string[];
   videoUrl: string | null;
   timed: boolean;
+  guide?: ExerciseGuide;
 }
 export const exerciseFilterSchema = z.object({
   search: z.optional(z.string().check(z.trim(), z.maxLength(100))),
@@ -181,7 +194,10 @@ export function buildRoutine(
 ): RoutineDay[] {
   const ranks = { beginner: 0, intermediate: 1, advanced: 2 };
   const suitable = catalog.filter(
-    (e) => ranks[e.level] <= ranks[input.level] && e.muscle !== 'cardio',
+    (e) =>
+      ranks[e.level] <= ranks[input.level] &&
+      e.muscle !== 'cardio' &&
+      e.guide?.kind !== 'stretch',
   );
   const chosen = suitable.filter((e) => input.equipment.includes(e.equipment));
   // Everyone has their own body: bodyweight moves fill groups the chosen equipment can't cover.

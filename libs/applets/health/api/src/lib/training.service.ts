@@ -16,6 +16,7 @@ import {
   type WorkoutRoutine,
 } from '@all-in-one/applets/health/contracts';
 import { HealthService } from './health.service';
+import { TRX_GUIDES } from './trx-catalog';
 
 const GUIDANCE = {
   warmup: [
@@ -59,21 +60,25 @@ export class TrainingService {
       orderBy: { name: 'asc' },
       take: 200,
     });
-    return rows as Exercise[];
+    return rows.map((row) => ({
+      ...row,
+      guide: TRX_GUIDES[row.slug],
+    })) as Exercise[];
   }
   async exercise(slug: string): Promise<Exercise> {
     const row = await this.prisma.healthExercise.findUnique({
       where: { slug },
     });
     if (!row) throw new NotFoundException('حرکت پیدا نشد');
-    return row as Exercise;
+    return { ...row, guide: TRX_GUIDES[row.slug] } as Exercise;
   }
   async video(slug: string, videoUrl: string | null): Promise<Exercise> {
     await this.exercise(slug);
-    return (await this.prisma.healthExercise.update({
+    const row = await this.prisma.healthExercise.update({
       where: { slug },
       data: { videoUrl },
-    })) as Exercise;
+    });
+    return { ...row, guide: TRX_GUIDES[row.slug] } as Exercise;
   }
   async alternatives(
     slug: string,
