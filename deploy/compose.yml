@@ -17,6 +17,9 @@ services:
       MCP_PUBLIC_URL: https://${APP_DOMAIN}
       DATABASE_URL: postgresql://aio:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@127.0.0.1:15433/all_in_one
       REDIS_URL: redis://127.0.0.1:16380
+      # Supplied by the production GitHub Environment secret at release time.
+      # Never stored in images, the checkout, or copied from a developer machine.
+      FCM_SERVICE_ACCOUNT_JSON: ${FCM_SERVICE_ACCOUNT_JSON:-}
     depends_on:
       postgres:
         condition: service_healthy

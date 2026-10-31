@@ -4,13 +4,13 @@
 
 ## وضعیت فعال‌سازی
 
-در زمان پیاده‌سازی، مالک پروژه حساب Firebase یا Apple Developer ندارد. بنابراین کد اتصال آماده است، اما ارسال واقعی بومی فعال و روی دستگاه واقعی آزمایش نشده است. Web Push فعلی مستقل است و کار می‌کند. ساخت قبلی macOS با امضای ad-hoc، صلاحیت APNs ندارد.
+پروژهٔ Firebase با شناسهٔ `poshtetgarm` و Sender ID برابر `255033746187` ساخته و اپ Android با پکیج صحیح ثبت شده است. تنظیمات عمومی فایل `google-services.json` در `firebase.android.json` پوسته قرار گرفته‌اند. فعال‌شدن ارسال سرور به secret حساب سرویس و دریافت واقعی به ساخت و نصب نسخهٔ جدید Android وابسته است؛ هنوز دریافت روی دستگاه واقعی تأیید نشده است. حساب Apple Developer موجود نیست. Web Push فعلی مستقل است و کار می‌کند. ساخت قبلی macOS با امضای ad-hoc، صلاحیت APNs ندارد.
 
 ## پیش‌نیازها
 
 1. یک پروژهٔ Firebase بسازید؛ Cloud Messaging در طرح رایگان ارائه می‌شود. اپ اندروید با شناسهٔ `ir.poshtetgarm.poshtetgarm_hybrid` را ثبت کنید.
 2. برای مک، اپ Apple با شناسهٔ `ir.poshtetgarm.poshtetgarmHybrid` ثبت شود. حساب Apple Developer، App ID با Push Notifications، گواهی و provisioning profile معتبر لازم است. کلید APNs را در تنظیمات Cloud Messaging پروژهٔ Firebase وارد کنید. Release از محیط `production` و Debug/Profile از `development` استفاده می‌کند.
-3. حساب سرویس با دسترسی ارسال FCM ساخته و JSON آن را فقط در محیط امن API با نام `FCM_SERVICE_ACCOUNT_JSON` قرار دهید. فایل کلید را در مخزن، Flutter، فایل عمومی یا لاگ قرار ندهید. تنظیمات تولید باید از فرایند مدیریت امن/CI انجام شود؛ فایل محلی یا خروجی ساخت با SSH/SCP/rsync منتقل نشود.
+3. حساب سرویس با دسترسی ارسال FCM بسازید. در GitHub مخزن `all_in_one`، مسیر Settings → Environments → production → Add environment secret، نام `FCM_SERVICE_ACCOUNT_JSON` را وارد و کل JSON خصوصی حساب سرویس را به‌عنوان مقدار ذخیره کنید. مرحلهٔ Start release این secret را فقط در محیط اجرا به Compose و سپس API می‌دهد؛ در checkout یا خروجی ساخت ذخیره نمی‌شود. فایل کلید را در مخزن، Flutter، فایل عمومی، چت یا لاگ قرار ندهید. فایل محلی یا خروجی ساخت با SSH/SCP/rsync منتقل نشود. نبودن این secret اعلان بومی را خاموش نگه می‌دارد و روی VAPID/PWA تأثیر ندارد. پس از افزودن یا تغییر secret، فرایند Deploy را دوباره اجرا کنید.
 4. تنظیمات **عمومی اپ Firebase** را در فایل محلی `firebase.android.json` یا `firebase.macos.json` در پوسته قرار دهید. فایل نمونه در پوسته موجود است؛ هر پلتفرم `appId` خودش را دارد. این فایل کلید حساب سرویس نیست.
 
 ```sh

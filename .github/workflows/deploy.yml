@@ -71,4 +71,6 @@ jobs:
         run: gunzip -c images.tar.gz | docker load && rm images.tar.gz
 
       - name: Start release
+        env:
+          FCM_SERVICE_ACCOUNT_JSON: ${{ secrets.FCM_SERVICE_ACCOUNT_JSON }}
         run: sh deploy/release.sh "${{ needs.build.outputs.release }}"
