@@ -1,3 +1,4 @@
+import { persianBirthYear, gregorianBirthYear } from './birth-year';
 import { httpResource } from '@angular/common/http';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import {
@@ -168,7 +169,7 @@ import {
           </div>
           <div class="grid grid-cols-3 gap-3">
             <div aioField>
-              <label aioFieldLabel for="birthYear">سال تولد (میلادی)</label>
+              <label aioFieldLabel for="birthYear">سال تولد (شمسی)</label>
               <input
                 aioInput
                 id="birthYear"
@@ -309,7 +310,7 @@ export class ProfilePage {
           },
           {
             label: 'سال تولد',
-            value: value(p?.birthYear, 'میلادی'),
+            value: value(persianBirthYear(p?.birthYear), 'شمسی'),
             icon: 'lucideUserRound',
             color: 'var(--health-orange)',
           },
@@ -381,11 +382,13 @@ export class ProfilePage {
     goal: 'MAINTAIN' as HealthGoal,
   });
   protected readonly profileForm = form(this.model, (path) => {
-    min(path.birthYear, 1920, {
-      message: 'سال را میلادی وارد کنید (مثلاً ۱۹۹۴).',
+    min(path.birthYear, 1299, {
+      message: 'سال را شمسی وارد کنید (مثلاً ۱۳۷۳).',
       when: ({ value }) => value() !== 0,
     });
-    max(path.birthYear, 2020);
+    max(path.birthYear, 1399, {
+      message: 'سال تولد باید بین ۱۲۹۹ و ۱۳۹۹ باشد.',
+    });
     min(path.heightCm, 100, {
       message: 'بین ۱۰۰ تا ۲۵۰',
       when: ({ value }) => value() !== 0,
@@ -405,7 +408,7 @@ export class ProfilePage {
       this.model.set({
         excludedIngredients: (p.excludedIngredients ?? []).join('، '),
         sex: p.sex ?? '',
-        birthYear: p.birthYear ?? 0,
+        birthYear: persianBirthYear(p.birthYear),
         heightCm: p.heightCm ?? 0,
         weightKg: p.weightKg ?? 0,
         activityLevel: p.activityLevel,
@@ -430,7 +433,7 @@ export class ProfilePage {
             .map((s) => s.trim())
             .filter(Boolean),
           sex: m.sex || null,
-          birthYear: m.birthYear || null,
+          birthYear: gregorianBirthYear(m.birthYear),
           heightCm: m.heightCm || null,
           weightKg: m.weightKg || null,
           activityLevel: m.activityLevel,
