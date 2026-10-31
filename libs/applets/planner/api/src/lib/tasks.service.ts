@@ -1,3 +1,4 @@
+import { nativeTaskInput } from './task-input';
 import {
   BadRequestException,
   ForbiddenException,
@@ -7,7 +8,9 @@ import {
 import { type Prisma, PrismaService } from '@all-in-one/api/db';
 import {
   addDays,
-  type ChecklistItem,
+  normalizeRepeatRule,
+  OCCURRENCE_ID,
+  zonedInstant,
   compareTasks,
   type CreateTaskInput,
   daysBetween,
@@ -23,59 +26,18 @@ import {
 } from '@all-in-one/applets/planner/contracts';
 import { PlannerAccess } from './access.service';
 
-export const TASK_INCLUDE = {
-  tags: { include: { tag: { select: { name: true } } } },
-  checklist: { orderBy: [{ sortOrder: 'asc' }, { id: 'asc' }] },
-  _count: { select: { comments: true } },
-} satisfies Prisma.PlannerTaskInclude;
-
-type DbTask = Prisma.PlannerTaskGetPayload<{ include: typeof TASK_INCLUDE }>;
-
+import { TASK_INCLUDE, toTask } from './task-mapping';
+export { TASK_INCLUDE, toTask } from './task-mapping';
+import { RecurrencesService } from './recurrences.service';
 const day = (iso: string) => new Date(`${iso}T00:00:00Z`);
 const isoOf = (date: Date) => date.toISOString().slice(0, 10);
-/** Start of a Tehran calendar day (Iran keeps +03:30 all year). */
-const dayStart = (iso: string) => new Date(`${iso}T00:00:00+03:30`);
-
-function toItem(i: DbTask['checklist'][number]): ChecklistItem {
-  return {
-    id: i.id,
-    title: i.title,
-    done: i.done,
-    completedAt: i.completedAt?.toISOString() ?? null,
-    sortOrder: i.sortOrder,
-  };
-}
-
-export function toTask(t: DbTask): PlannerTask {
-  return {
-    id: t.id,
-    listId: t.listId,
-    sectionId: t.sectionId,
-    title: t.title,
-    content: t.content,
-    kind: t.kind,
-    date: t.date ? isoOf(t.date) : null,
-    time: t.time,
-    priority: t.priority,
-    done: t.status === 'DONE',
-    completedAt: t.completedAt?.toISOString() ?? null,
-    externalSourceId: t.externalSourceId,
-    recurrenceRule: t.recurrenceRule,
-    reminders: t.reminders,
-    timeZone: t.timeZone,
-    endTime: t.endTime,
-    deletedAt: t.deletedAt?.toISOString() ?? null,
-    tags: t.tags
-      .map((x) => x.tag.name)
-      .sort((a, b) => a.localeCompare(b, 'fa')),
-    checklist: t.checklist.map(toItem),
-    assigneeId: t.assigneeId,
-    createdById: t.userId,
-    commentCount: t._count.comments,
-    sortOrder: t.sortOrder,
-    createdAt: t.createdAt.toISOString(),
-  };
-}
+const dayStart = (iso: string) => {
+  const start =
+    zonedInstant(iso, '00:00', 'Asia/Tehran') ??
+    zonedInstant(iso, '01:00', 'Asia/Tehran');
+  if (!start) throw new BadRequestException('تاریخ معتبر نیست');
+  return start;
+};
 
 function checkRange(from: string, to: string, max: number, what: string) {
   const span = daysBetween(from, to);
@@ -97,7 +59,12 @@ export class TasksService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly access: PlannerAccess,
+    private readonly recurrence: RecurrencesService,
   ) {}
+
+  recurring(userId: string) {
+    return this.recurrence.series(userId);
+  }
 
   // ---------------------------------------------------------------- queries
 
@@ -111,6 +78,8 @@ export class TasksService {
     const where: Prisma.PlannerTaskWhereInput = {
       listId: { in: listIds },
       deletedAt: null,
+      isSeries: false,
+      OR: [{ seriesId: null }, { series: { deletedAt: null } }],
       AND: and,
     };
 
@@ -184,12 +153,45 @@ export class TasksService {
       orderBy: [{ date: 'asc' }, { time: 'asc' }, { sortOrder: 'asc' }],
       take: f.limit ?? PLANNER_LIMITS.results,
     });
-    let tasks = rows.map(toTask);
+    const virtual = await this.recurrence.projected(
+      listIds,
+      { ...f, status },
+      from,
+      to,
+    );
+    let tasks = [
+      ...rows.map(toTask),
+      ...virtual.map(toTask).filter((t) => {
+        if (
+          f.q &&
+          ![t.title, t.content, ...t.checklist.map((i) => i.title)].some((x) =>
+            x.toLocaleLowerCase().includes(f.q!.toLocaleLowerCase()),
+          )
+        )
+          return false;
+        if (f.tags?.length && !t.tags.some((tag) => f.tags!.includes(tag)))
+          return false;
+        if (f.priorities?.length && !f.priorities.includes(t.priority))
+          return false;
+        if (f.kind && t.kind !== f.kind) return false;
+        if (
+          f.assigneeId &&
+          t.assigneeId !==
+            (f.assigneeId === 'me'
+              ? userId
+              : f.assigneeId === 'none'
+                ? null
+                : f.assigneeId)
+        )
+          return false;
+        return true;
+      }),
+    ];
     if (window?.after || window?.before) {
       const cut = window;
       tasks = tasks.filter((t) => inWindow(t, cut));
     }
-    return tasks.sort(compareTasks);
+    return tasks.sort(compareTasks).slice(0, f.limit ?? PLANNER_LIMITS.results);
   }
 
   /** Undone tasks due in a date range of at most 14 days. */
@@ -199,7 +201,9 @@ export class TasksService {
   }
 
   async get(userId: string, id: string): Promise<PlannerTask> {
-    await this.access.task(userId, id);
+    if (OCCURRENCE_ID.test(id))
+      return toTask(await this.recurrence.read(userId, id));
+    id = (await this.access.task(userId, id)).id;
     return toTask(
       await this.prisma.plannerTask.findUniqueOrThrow({
         where: { id },
@@ -211,6 +215,7 @@ export class TasksService {
   // ---------------------------------------------------------------- writes
 
   async create(userId: string, input: CreateTaskInput): Promise<PlannerTask> {
+    input = nativeTaskInput(input);
     if (input.externalSourceId) {
       const existing = await this.prisma.plannerTask.findUnique({
         where: {
@@ -230,10 +235,35 @@ export class TasksService {
     const tagIds = await this.tagIds(userId, input.tags ?? []);
     const count = await this.prisma.plannerTask.count({ where: { listId } });
     const date = input.date ?? null;
-    const task = await this.prisma.plannerTask.create({
+    if (input.repeatRule && (!date || input.kind === 'NOTE'))
+      throw new BadRequestException('تکرار به تاریخ شروع و نوع کار نیاز دارد');
+    if (input.recurrenceEnd && date && input.recurrenceEnd < date)
+      throw new BadRequestException('پایان تکرار قبل از شروع است');
+    if (input.idempotencyKey) {
+      const existing = await this.prisma.plannerTask.findUnique({
+        where: {
+          userId_idempotencyKey: {
+            userId,
+            idempotencyKey: input.idempotencyKey,
+          },
+        },
+        include: TASK_INCLUDE,
+      });
+      if (existing) return toTask(existing);
+    }
+    const createArgs = {
       data: {
         userId,
         listId,
+        idempotencyKey: input.idempotencyKey,
+        isSeries: !!input.repeatRule,
+        repeatRule: input.repeatRule
+          ? normalizeRepeatRule(input.repeatRule)
+          : null,
+        repeatFrom: input.repeatFrom,
+        recurrenceEnd: input.recurrenceEnd ? day(input.recurrenceEnd) : null,
+        recurrenceTimezone: input.recurrenceTimezone,
+        durationMin: input.durationMin,
         sectionId: input.sectionId ?? null,
         assigneeId: input.assigneeId ?? null,
         title: input.title,
@@ -247,7 +277,7 @@ export class TasksService {
         reminders: input.reminders ?? [],
         timeZone: input.timeZone ?? null,
         endTime: input.endTime ?? null,
-        ...(input.completedAt
+        ...(input.completedAt && !input.repeatRule
           ? {
               status: 'DONE' as const,
               completedAt: new Date(input.completedAt),
@@ -265,7 +295,85 @@ export class TasksService {
         },
       },
       include: TASK_INCLUDE,
-    });
+    } satisfies Prisma.PlannerTaskCreateArgs;
+    const unique = input.externalSourceId
+      ? {
+          userId_externalSourceId: {
+            userId,
+            externalSourceId: input.externalSourceId,
+          },
+        }
+      : input.idempotencyKey
+        ? {
+            userId_idempotencyKey: {
+              userId,
+              idempotencyKey: input.idempotencyKey,
+            },
+          }
+        : undefined;
+    const task = await this.prisma
+      .$transaction(async (tx) => {
+        const created = unique
+          ? await tx.plannerTask.upsert({
+              where: unique,
+              create: createArgs.data,
+              update: {},
+              include: TASK_INCLUDE,
+            })
+          : await tx.plannerTask.create(createArgs);
+        if (input.completedAt && input.repeatRule && date) {
+          const occurrenceDate = day(date);
+          const existing = await tx.plannerTask.findUnique({
+            where: {
+              seriesId_occurrenceDate: { seriesId: created.id, occurrenceDate },
+            },
+          });
+          if (!existing) {
+            await tx.plannerTask.create({
+              data: this.recurrence.snapshot(
+                {
+                  ...created,
+                  status: 'DONE',
+                  completedAt: new Date(input.completedAt),
+                },
+                created.id,
+                date,
+              ),
+            });
+            if (input.repeatFrom === 'COMPLETION')
+              await tx.plannerTask.update({
+                where: { id: created.id },
+                data: this.recurrence.initialCompletion(
+                  new Date(input.completedAt),
+                  input.repeatRule,
+                  input.time ?? null,
+                  input.recurrenceTimezone ?? 'Asia/Tehran',
+                  input.recurrenceEnd ?? null,
+                  date,
+                ),
+              });
+          }
+        }
+        return created;
+      })
+      .catch(async (error) => {
+        if (unique && error.code === 'P2002')
+          return this.prisma.plannerTask.findFirstOrThrow({
+            where: {
+              userId,
+              OR: [
+                ...(input.externalSourceId
+                  ? [{ externalSourceId: input.externalSourceId }]
+                  : []),
+                ...(input.idempotencyKey
+                  ? [{ idempotencyKey: input.idempotencyKey }]
+                  : []),
+              ],
+            },
+            include: TASK_INCLUDE,
+          });
+        throw error;
+      });
     return toTask(task);
   }
 
@@ -283,7 +391,59 @@ export class TasksService {
     id: string,
     input: UpdateTaskInput,
   ): Promise<PlannerTask> {
-    const task = await this.access.task(userId, id);
+    if (input.recurrenceScope === 'SERIES' && OCCURRENCE_ID.test(id)) {
+      const occurrence = await this.recurrence.read(userId, id);
+      id = occurrence.seriesId ?? occurrence.id;
+    }
+    let task = await this.access.task(userId, id);
+    id = task.id;
+    input = nativeTaskInput(input, task);
+    if (task.seriesId) {
+      const root = await this.prisma.plannerTask.findUniqueOrThrow({
+        where: { id: task.seriesId },
+      });
+      if (root.deletedAt) throw new BadRequestException('سری در سطل زباله است');
+    }
+    if (task.isSeries && input.recurrenceScope === 'FUTURE')
+      throw new BadRequestException('برای تغییر آینده، یک نوبت را انتخاب کن');
+    if (task.seriesId && input.recurrenceScope === 'FUTURE') {
+      if (input.done !== undefined)
+        throw new BadRequestException(
+          'انجام نوبت و تغییر سری را جداگانه انجام بده',
+        );
+      const targetList = input.listId ?? task.listId;
+      await this.access.list(userId, targetList);
+      if (input.sectionId)
+        await this.access.section(targetList, input.sectionId);
+      if (input.assigneeId)
+        await this.access.member(targetList, input.assigneeId);
+      if (input.date === null || input.kind === 'NOTE')
+        throw new BadRequestException('سری به تاریخ شروع و نوع کار نیاز دارد');
+      const occurrence = await this.prisma.plannerTask.findUniqueOrThrow({
+        where: { id },
+        include: TASK_INCLUDE,
+      });
+      const forkId = await this.recurrence.fork(userId, occurrence, input);
+      return this.get(userId, forkId);
+    }
+    if (task.seriesId && input.recurrenceScope === 'SERIES') {
+      id = task.seriesId;
+      task = await this.access.task(userId, id);
+    }
+    const recurrenceEdit = [
+      'repeatRule',
+      'repeatFrom',
+      'recurrenceEnd',
+      'recurrenceTimezone',
+    ].some((k) => Object.hasOwn(input, k));
+    if (task.seriesId && recurrenceEdit)
+      throw new BadRequestException(
+        'تنظیم تکرار را برای کل سری یا این نوبت و آینده تغییر بده',
+      );
+    if (task.isSeries && input.done !== undefined)
+      throw new BadRequestException(
+        'برای انجام یا بازکردن، شناسه یک نوبت را انتخاب کن',
+      );
     if (task.deletedAt)
       throw new BadRequestException('این کار در سطل زباله است؛ اول برش گردان');
     const listId = input.listId ?? task.listId;
@@ -314,7 +474,47 @@ export class TasksService {
         : task.date
           ? isoOf(task.date)
           : null;
+    const repeatRule =
+      input.repeatRule !== undefined ? input.repeatRule : task.repeatRule;
+    const end =
+      input.recurrenceEnd !== undefined
+        ? input.recurrenceEnd
+        : task.recurrenceEnd
+          ? isoOf(task.recurrenceEnd)
+          : null;
+    if (
+      repeatRule &&
+      !task.seriesId &&
+      (!date || (input.kind ?? task.kind) === 'NOTE')
+    )
+      throw new BadRequestException('تکرار به تاریخ شروع و نوع کار نیاز دارد');
+    if (end && date && end < date)
+      throw new BadRequestException('پایان تکرار قبل از شروع است');
     const data: Prisma.PlannerTaskUncheckedUpdateInput = {
+      ...(input.repeatRule !== undefined
+        ? {
+            repeatRule: input.repeatRule
+              ? normalizeRepeatRule(input.repeatRule)
+              : null,
+            isSeries: task.isSeries || !!input.repeatRule,
+          }
+        : {}),
+      ...(input.repeatFrom !== undefined
+        ? { repeatFrom: input.repeatFrom }
+        : {}),
+      ...(input.recurrenceTimezone !== undefined
+        ? { recurrenceTimezone: input.recurrenceTimezone }
+        : {}),
+      ...(input.recurrenceEnd !== undefined
+        ? {
+            recurrenceEnd: input.recurrenceEnd
+              ? day(input.recurrenceEnd)
+              : null,
+          }
+        : {}),
+      ...(input.durationMin !== undefined
+        ? { durationMin: input.durationMin }
+        : {}),
       listId,
       sectionId,
       assigneeId,
@@ -338,7 +538,127 @@ export class TasksService {
     }
 
     await this.prisma.$transaction(async (tx) => {
+      if (task.isSeries) {
+        await tx.$queryRaw`SELECT id FROM planner_tasks WHERE id=${id}::uuid FOR UPDATE`;
+        if (
+          input.repeatFrom &&
+          input.repeatFrom !== task.repeatFrom &&
+          (await tx.plannerTask.count({ where: { seriesId: id } }))
+        )
+          throw new BadRequestException(
+            'پس از ثبت نوبت‌ها، مبنای تکرار را با گزینه این نوبت و آینده تغییر بده',
+          );
+      }
+      if (input.done !== undefined) {
+        await this.recurrence.complete(tx, id, input.done);
+        // Preserve the first completion timestamp when a completion is retried.
+        if (input.done) {
+          const current = await tx.plannerTask.findUniqueOrThrow({
+            where: { id },
+          });
+          data.status = 'DONE';
+          data.completedAt = current.completedAt ?? new Date();
+        }
+      }
+      if (
+        !task.isSeries &&
+        !task.seriesId &&
+        input.repeatRule &&
+        task.status === 'DONE'
+      ) {
+        const original = await tx.plannerTask.findUniqueOrThrow({
+          where: { id },
+          include: TASK_INCLUDE,
+        });
+        await tx.plannerTask.create({
+          data: this.recurrence.snapshot(
+            { ...original, repeatRule: input.repeatRule },
+            id,
+            original.date ? isoOf(original.date) : date!,
+          ),
+        });
+        data.status = 'TODO';
+        data.completedAt = null;
+        if ((input.repeatFrom ?? task.repeatFrom) === 'COMPLETION')
+          Object.assign(
+            data,
+            this.recurrence.initialCompletion(
+              original.completedAt ?? new Date(),
+              input.repeatRule,
+              input.time !== undefined ? input.time : task.time,
+              input.recurrenceTimezone ?? task.recurrenceTimezone,
+              end,
+              original.date ? isoOf(original.date) : (date ?? undefined),
+            ),
+          );
+      }
       await tx.plannerTask.update({ where: { id }, data });
+      if (task.isSeries) {
+        const inherited: Prisma.PlannerTaskUncheckedUpdateManyInput = {};
+        for (const key of [
+          'title',
+          'content',
+          'kind',
+          'priority',
+          'time',
+          'durationMin',
+          'recurrenceRule',
+          'timeZone',
+          'endTime',
+          'reminders',
+          'repeatRule',
+          'repeatFrom',
+          'recurrenceEnd',
+          'recurrenceTimezone',
+          'listId',
+          'sectionId',
+          'assigneeId',
+        ] as const) {
+          if (input[key] !== undefined)
+            Object.assign(inherited, { [key]: data[key] });
+        }
+        if (input.listId !== undefined)
+          Object.assign(inherited, {
+            sectionId: data.sectionId,
+            assigneeId: data.assigneeId,
+          });
+        if (input.repeatRule === null) inherited.deletedAt = new Date();
+        await tx.plannerTask.updateMany({
+          where: { seriesId: id, status: 'TODO', deletedAt: null },
+          data: inherited,
+        });
+        if (input.tags || input.checklist) {
+          const pending = await tx.plannerTask.findMany({
+            where: { seriesId: id, status: 'TODO', deletedAt: null },
+            select: { id: true },
+          });
+          for (const child of pending) {
+            if (input.tags) {
+              const ids = await this.tagIds(userId, input.tags, tx);
+              await tx.plannerTaskTag.deleteMany({
+                where: { taskId: child.id },
+              });
+              await tx.plannerTaskTag.createMany({
+                data: ids.map((tagId) => ({ taskId: child.id, tagId })),
+              });
+            }
+            if (input.checklist) {
+              await tx.plannerChecklistItem.deleteMany({
+                where: { taskId: child.id },
+              });
+              await tx.plannerChecklistItem.createMany({
+                data: input.checklist.map((item, i) => ({
+                  taskId: child.id,
+                  title: item.title,
+                  done: item.done ?? false,
+                  completedAt: item.done ? new Date() : null,
+                  sortOrder: i,
+                })),
+              });
+            }
+          }
+        }
+      }
       if (input.tags) {
         const tagIds = await this.tagIds(userId, input.tags, tx);
         await tx.plannerTaskTag.deleteMany({ where: { taskId: id } });
@@ -379,25 +699,45 @@ export class TasksService {
     taskIds: string[],
   ): Promise<{ completed: number }> {
     await this.access.list(userId, listId);
-    const { count } = await this.prisma.plannerTask.updateMany({
-      where: { id: { in: taskIds }, listId, status: 'TODO', deletedAt: null },
-      data: { status: 'DONE', completedAt: new Date() },
-    });
-    return { completed: count };
+    let completed = 0;
+    for (const id of [...new Set(taskIds)]) {
+      const task = await this.access.task(userId, id);
+      if (task.listId !== listId)
+        throw new BadRequestException('کار در این فهرست نیست');
+      if (task.status !== 'DONE' && !task.deletedAt) {
+        await this.update(userId, id, { done: true });
+        completed++;
+      }
+    }
+    return { completed };
   }
 
   // ---------------------------------------------------------------- trash
 
   async trash(userId: string, id: string): Promise<void> {
-    await this.access.task(userId, id);
-    await this.prisma.plannerTask.update({
-      where: { id },
-      data: { deletedAt: new Date() },
+    id = (await this.access.task(userId, id)).id;
+    await this.prisma.$transaction(async (tx) => {
+      await this.recurrence.complete(tx, id, true);
+      const current = await tx.plannerTask.findUniqueOrThrow({ where: { id } });
+      await tx.plannerTask.update({
+        where: { id },
+        data: { deletedAt: current.deletedAt ?? new Date() },
+      });
     });
   }
 
   async restore(userId: string, id: string): Promise<PlannerTask> {
-    await this.access.task(userId, id);
+    const task = await this.access.task(userId, id);
+    id = task.id;
+    if (task.seriesId && task.deletedAt && task.status === 'TODO') {
+      const root = await this.prisma.plannerTask.findUniqueOrThrow({
+        where: { id: task.seriesId },
+      });
+      if (root.repeatFrom === 'COMPLETION')
+        throw new BadRequestException(
+          'نوبت ردشده به آینده منتقل شده؛ بازگردانی مبنای تکرار را تغییر می‌دهد',
+        );
+    }
     await this.prisma.plannerTask.update({
       where: { id },
       data: { deletedAt: null },
@@ -422,17 +762,38 @@ export class TasksService {
   async purge(userId: string, id?: string): Promise<void> {
     if (id) {
       const task = await this.access.task(userId, id);
+      id = task.id;
       if (!task.deletedAt)
         throw new BadRequestException(
           'فقط کارهای سطل زباله برای همیشه حذف می‌شوند',
         );
     }
-    await this.prisma.plannerTask.deleteMany({
-      where: {
-        ...(id ? { id } : {}),
-        listId: { in: await this.access.listIds(userId) },
-        deletedAt: { not: null },
-      },
+    const listIds = await this.access.listIds(userId);
+    await this.prisma.$transaction(async (tx) => {
+      const rows = await tx.plannerTask.findMany({
+        where: {
+          ...(id ? { id } : {}),
+          listId: { in: listIds },
+          deletedAt: { not: null },
+        },
+      });
+      const ids = rows.map((t) => t.id);
+      for (const row of rows)
+        if (row.seriesId && row.occurrenceDate && !ids.includes(row.seriesId)) {
+          await tx.$queryRaw`SELECT id FROM planner_tasks WHERE id=${row.seriesId}::uuid FOR UPDATE`;
+          const root = await tx.plannerTask.findUniqueOrThrow({
+            where: { id: row.seriesId },
+          });
+          await tx.plannerTask.update({
+            where: { id: root.id },
+            data: {
+              excludedDates: [
+                ...new Set([...root.excludedDates, isoOf(row.occurrenceDate)]),
+              ],
+            },
+          });
+        }
+      await tx.plannerTask.deleteMany({ where: { id: { in: ids } } });
     });
   }
 
@@ -443,7 +804,7 @@ export class TasksService {
     taskId: string,
     title: string,
   ): Promise<PlannerTask> {
-    await this.access.task(userId, taskId);
+    taskId = (await this.access.task(userId, taskId)).id;
     const count = await this.prisma.plannerChecklistItem.count({
       where: { taskId },
     });
@@ -460,6 +821,7 @@ export class TasksService {
     itemId: string,
     input: UpdateChecklistItemInput,
   ): Promise<PlannerTask> {
+    taskId = (await this.access.task(userId, taskId)).id;
     await this.item(userId, taskId, itemId);
     await this.prisma.plannerChecklistItem.update({
       where: { id: itemId },
@@ -478,13 +840,14 @@ export class TasksService {
     taskId: string,
     itemId: string,
   ): Promise<PlannerTask> {
+    taskId = (await this.access.task(userId, taskId)).id;
     await this.item(userId, taskId, itemId);
     await this.prisma.plannerChecklistItem.delete({ where: { id: itemId } });
     return this.get(userId, taskId);
   }
 
   private async item(userId: string, taskId: string, itemId: string) {
-    await this.access.task(userId, taskId);
+    taskId = (await this.access.task(userId, taskId)).id;
     const found = await this.prisma.plannerChecklistItem.count({
       where: { id: itemId, taskId },
     });
@@ -494,7 +857,11 @@ export class TasksService {
   // ---------------------------------------------------------------- comments
 
   async comments(userId: string, taskId: string): Promise<PlannerComment[]> {
-    await this.access.task(userId, taskId);
+    if (OCCURRENCE_ID.test(taskId)) {
+      const task = await this.recurrence.read(userId, taskId);
+      if (task.id.includes('@')) return [];
+      taskId = task.id;
+    } else taskId = (await this.access.task(userId, taskId)).id;
     const rows = await this.prisma.plannerComment.findMany({
       where: { taskId },
       include: { user: { select: { name: true, email: true } } },
@@ -516,7 +883,7 @@ export class TasksService {
     taskId: string,
     body: string,
   ): Promise<PlannerComment[]> {
-    await this.access.task(userId, taskId);
+    taskId = (await this.access.task(userId, taskId)).id;
     await this.prisma.plannerComment.create({ data: { taskId, userId, body } });
     return this.comments(userId, taskId);
   }

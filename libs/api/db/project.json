@@ -33,6 +33,10 @@
     },
     "typecheck": {
       "dependsOn": ["prisma-generate"]
+    },
+    "test-recurrence-migrations": {
+      "command": "node tools/scripts/check-recurrence-migration.mjs",
+      "cache": false
     }
   }
 }

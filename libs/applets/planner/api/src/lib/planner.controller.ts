@@ -1,3 +1,10 @@
+import { TickTickReconciliationService } from './ticktick-reconciliation.service';
+import {
+  tickTickReconciliationSchema,
+  taskIdSchema,
+  applyTickTickReconciliationSchema,
+  type TickTickReconciliation,
+} from '@all-in-one/applets/planner/contracts';
 import {
   Body,
   Controller,
@@ -234,6 +241,7 @@ export class PlannerListsController {
 export class PlannerTasksController {
   constructor(
     private readonly tasks: TasksService,
+    private readonly reconciliation: TickTickReconciliationService,
     private readonly ai: PlannerAiService,
   ) {}
 
@@ -241,8 +249,29 @@ export class PlannerTasksController {
   @Post('tasks/:id/ai-subtasks')
   @HttpCode(200)
   @Throttle({ default: { limit: 20, ttl: 60000 } })
-  aiSubtasks(@CurrentUser() user: AuthUser, @Id() id: string) {
+  aiSubtasks(
+    @CurrentUser() user: AuthUser,
+    @Param('id', { schema: taskIdSchema }) id: string,
+  ) {
     return this.ai.subtasks(user.id, id);
+  }
+
+  @Post('ticktick/preview')
+  previewTickTick(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: tickTickReconciliationSchema })
+    input: TickTickReconciliation,
+  ) {
+    return this.reconciliation.preview(user.id, input);
+  }
+
+  @Post('ticktick/apply')
+  applyTickTick(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: applyTickTickReconciliationSchema })
+    input: TickTickReconciliation & { approvedDigest: string },
+  ) {
+    return this.reconciliation.apply(user.id, input, input.approvedDigest);
   }
 
   @Get('tasks')
@@ -272,8 +301,16 @@ export class PlannerTasksController {
     });
   }
 
+  @Get('tasks/recurring')
+  recurring(@CurrentUser() user: AuthUser) {
+    return this.tasks.recurring(user.id);
+  }
+
   @Get('tasks/:id')
-  get(@CurrentUser() user: AuthUser, @Id() id: string) {
+  get(
+    @CurrentUser() user: AuthUser,
+    @Param('id', { schema: taskIdSchema }) id: string,
+  ) {
     return this.tasks.get(user.id, id);
   }
 
@@ -313,7 +350,7 @@ export class PlannerTasksController {
   @Patch('tasks/:id')
   update(
     @CurrentUser() user: AuthUser,
-    @Id() id: string,
+    @Param('id', { schema: taskIdSchema }) id: string,
     @Body({ schema: updateTaskSchema }) input: UpdateTaskInput,
   ) {
     return this.tasks.update(user.id, id, input);
@@ -321,7 +358,10 @@ export class PlannerTasksController {
 
   @Post('tasks/:id/complete')
   @HttpCode(200)
-  complete(@CurrentUser() user: AuthUser, @Id() id: string) {
+  complete(
+    @CurrentUser() user: AuthUser,
+    @Param('id', { schema: taskIdSchema }) id: string,
+  ) {
     return this.tasks.update(user.id, id, { done: true });
   }
 
@@ -329,7 +369,7 @@ export class PlannerTasksController {
   @HttpCode(200)
   move(
     @CurrentUser() user: AuthUser,
-    @Id() id: string,
+    @Param('id', { schema: taskIdSchema }) id: string,
     @Body({ schema: moveTaskSchema }) input: MoveTaskInput,
   ) {
     return this.tasks.update(user.id, id, input);
@@ -339,7 +379,7 @@ export class PlannerTasksController {
   @HttpCode(200)
   assign(
     @CurrentUser() user: AuthUser,
-    @Id() id: string,
+    @Param('id', { schema: taskIdSchema }) id: string,
     @Body({ schema: assignSchema }) input: { assigneeId: string | null },
   ) {
     return this.tasks.update(user.id, id, input);
@@ -348,20 +388,26 @@ export class PlannerTasksController {
   /** Moves the task to the trash. */
   @Delete('tasks/:id')
   @HttpCode(204)
-  trash(@CurrentUser() user: AuthUser, @Id() id: string) {
+  trash(
+    @CurrentUser() user: AuthUser,
+    @Param('id', { schema: taskIdSchema }) id: string,
+  ) {
     return this.tasks.trash(user.id, id);
   }
 
   @Post('tasks/:id/restore')
   @HttpCode(200)
-  restore(@CurrentUser() user: AuthUser, @Id() id: string) {
+  restore(
+    @CurrentUser() user: AuthUser,
+    @Param('id', { schema: taskIdSchema }) id: string,
+  ) {
     return this.tasks.restore(user.id, id);
   }
 
   @Post('tasks/:id/checklist')
   addItem(
     @CurrentUser() user: AuthUser,
-    @Id() id: string,
+    @Param('id', { schema: taskIdSchema }) id: string,
     @Body({ schema: checklistItemSchema }) input: { title: string },
   ) {
     return this.tasks.addItem(user.id, id, input.title);
@@ -370,7 +416,7 @@ export class PlannerTasksController {
   @Patch('tasks/:id/checklist/:itemId')
   updateItem(
     @CurrentUser() user: AuthUser,
-    @Id() id: string,
+    @Param('id', { schema: taskIdSchema }) id: string,
     @Param('itemId', ParseUUIDPipe) itemId: string,
     @Body({ schema: updateChecklistItemSchema })
     input: UpdateChecklistItemInput,
@@ -381,21 +427,24 @@ export class PlannerTasksController {
   @Delete('tasks/:id/checklist/:itemId')
   removeItem(
     @CurrentUser() user: AuthUser,
-    @Id() id: string,
+    @Param('id', { schema: taskIdSchema }) id: string,
     @Param('itemId', ParseUUIDPipe) itemId: string,
   ) {
     return this.tasks.removeItem(user.id, id, itemId);
   }
 
   @Get('tasks/:id/comments')
-  comments(@CurrentUser() user: AuthUser, @Id() id: string) {
+  comments(
+    @CurrentUser() user: AuthUser,
+    @Param('id', { schema: taskIdSchema }) id: string,
+  ) {
     return this.tasks.comments(user.id, id);
   }
 
   @Post('tasks/:id/comments')
   addComment(
     @CurrentUser() user: AuthUser,
-    @Id() id: string,
+    @Param('id', { schema: taskIdSchema }) id: string,
     @Body({ schema: commentSchema }) input: { body: string },
   ) {
     return this.tasks.addComment(user.id, id, input.body);
@@ -403,7 +452,10 @@ export class PlannerTasksController {
 
   @Delete('comments/:id')
   @HttpCode(204)
-  removeComment(@CurrentUser() user: AuthUser, @Id() id: string) {
+  removeComment(
+    @CurrentUser() user: AuthUser,
+    @Param('id', { schema: taskIdSchema }) id: string,
+  ) {
     return this.tasks.removeComment(user.id, id);
   }
 
@@ -420,7 +472,10 @@ export class PlannerTasksController {
 
   @Delete('trash/:id')
   @HttpCode(204)
-  purge(@CurrentUser() user: AuthUser, @Id() id: string) {
+  purge(
+    @CurrentUser() user: AuthUser,
+    @Param('id', { schema: taskIdSchema }) id: string,
+  ) {
     return this.tasks.purge(user.id, id);
   }
 }

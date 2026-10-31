@@ -136,7 +136,30 @@ model PlannerTask {
   comments    PlannerComment[]
   focuses     PlannerFocus[]
 
+  /// Recurring templates and persisted occurrence exceptions share the native task table.
+  isSeries           Boolean       @default(false)
+  repeatRule         String?       @db.VarChar(1000)
+  repeatFrom         String        @default("SCHEDULE") @db.VarChar(16)
+  recurrenceEnd      DateTime?     @db.Date
+  recurrenceTimezone String        @default("Asia/Tehran") @db.VarChar(100)
+  durationMin        Int?
+  seriesId           String?       @db.Uuid
+  series             PlannerTask?  @relation("TaskOccurrences", fields: [seriesId], references: [id], onDelete: Cascade)
+  occurrences        PlannerTask[] @relation("TaskOccurrences")
+  occurrenceDate     DateTime?     @db.Date
+  seriesUntil        DateTime?     @db.Date
+  excludedDates      String[]      @default([])
+  completionAnchor   DateTime?     @db.Date
+  completionCount    Int           @default(0)
+  idempotencyKey     String?       @db.VarChar(200)
+  sourceProvider     String?       @db.VarChar(30)
+  sourceId           String?       @db.VarChar(200)
+
   @@unique([userId, externalSourceId])
+  @@unique([seriesId, occurrenceDate])
+  @@unique([userId, idempotencyKey])
+  @@unique([userId, sourceProvider, sourceId])
+  @@index([isSeries, listId])
   @@index([userId, date])
   @@index([listId, status])
   @@index([assigneeId])

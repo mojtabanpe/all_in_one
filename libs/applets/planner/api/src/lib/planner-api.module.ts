@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { TickTickReconciliationService } from './ticktick-reconciliation.service';
+import { RecurrencesService } from './recurrences.service';
 import { PlannerAccess } from './access.service';
 import { PlannerAiService } from './planner-ai.service';
 import { CalendarsService } from './calendars.service';
@@ -15,6 +17,8 @@ import { TagsService } from './tags.service';
 import { TasksService } from './tasks.service';
 
 const SERVICES = [
+  RecurrencesService,
+  TickTickReconciliationService,
   PlannerAccess,
   ListsService,
   TasksService,

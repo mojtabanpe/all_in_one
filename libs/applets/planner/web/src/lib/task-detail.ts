@@ -1,3 +1,4 @@
+import { RecurrenceEditor } from './recurrence-editor';
 import { httpResource } from '@angular/common/http';
 import {
   Component,
@@ -62,6 +63,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
 @Component({
   selector: 'planner-task-detail',
   imports: [
+    RecurrenceEditor,
     AioButton,
     AioCheckbox,
     AioFieldDirectives,
@@ -147,6 +149,31 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
           <p class="text-muted-foreground text-xs">{{ dateLabel(t.date) }}</p>
         }
       </div>
+
+      @if (t.repeatRule || t.seriesId || t.isSeries) {
+        <div aioField>
+          <label aioFieldLabel for="task-edit-scope">این تغییر برای</label>
+          <aio-native-select
+            selectId="task-edit-scope"
+            [value]="editScope()"
+            (valueChange)="setEditScope($event)"
+          >
+            <option aioNativeSelectOption value="OCCURRENCE">
+              فقط این نوبت
+            </option>
+            <option aioNativeSelectOption value="FUTURE">
+              این نوبت و نوبت‌های بعد
+            </option>
+            <option aioNativeSelectOption value="SERIES">
+              کل سری (تاریخچه حفظ می‌شود)
+            </option>
+          </aio-native-select>
+        </div>
+      }
+      <planner-recurrence-editor
+        [value]="recurrenceValue()"
+        (changed)="saveRecurrence($event)"
+      />
 
       <div class="flex flex-col gap-2">
         <span class="text-sm font-medium">اولویت</span>
@@ -420,6 +447,26 @@ export class TaskDetail {
   readonly trashed = output<PlannerTask>();
   readonly focusRequested = output<PlannerTask>();
 
+  protected readonly recurrenceValue = computed(() => ({
+    ...this.task(),
+    repeatRule: this.task().repeatRule ?? this.task().recurrenceRule,
+    recurrenceTimezone: this.task().timeZone ?? this.task().recurrenceTimezone,
+  }));
+  protected readonly editScope = signal<'OCCURRENCE' | 'FUTURE' | 'SERIES'>(
+    'OCCURRENCE',
+  );
+  protected setEditScope(value: string) {
+    this.editScope.set(value as 'OCCURRENCE' | 'FUTURE' | 'SERIES');
+  }
+  protected saveRecurrence(input: UpdateTaskInput) {
+    void this.save({
+      ...input,
+      ...(!this.task().seriesId && !this.task().isSeries
+        ? { date: this.task().date ?? this.today }
+        : {}),
+      recurrenceScope: this.editScope() === 'FUTURE' ? 'FUTURE' : 'SERIES',
+    });
+  }
   protected readonly priorities = [...TASK_PRIORITIES].reverse();
   protected readonly priorityLabels = TASK_PRIORITY_LABELS;
   protected readonly flag = PRIORITY_FLAG;
@@ -490,7 +537,12 @@ export class TaskDetail {
   }
 
   protected async save(change: UpdateTaskInput) {
-    await this.run(() => this.api.updateTask(this.task().id, change));
+    await this.run(() =>
+      this.api.updateTask(this.task().id, {
+        recurrenceScope: this.editScope(),
+        ...change,
+      }),
+    );
   }
 
   protected addTag() {

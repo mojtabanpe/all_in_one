@@ -1,4 +1,11 @@
 import * as z from 'zod/mini';
+import {
+  isRepeatRule,
+  validTimeZone,
+  REPEAT_FROM,
+  RECURRENCE_SCOPES,
+  OCCURRENCE_ID,
+} from './recurrence';
 import { addDays } from '@all-in-one/shared/schemas';
 
 export { addDays, toIsoDate } from '@all-in-one/shared/schemas';
@@ -11,7 +18,8 @@ export { addDays, toIsoDate } from '@all-in-one/shared/schemas';
  */
 
 /** Dates are calendar days in this zone (the app is Persian). */
-export const PLANNER_TIME_ZONE = 'Asia/Tehran';
+export { PLANNER_TIME_ZONE, isoDateIn, timeIn } from './planner-time';
+import { isoDateIn, timeIn } from './planner-time';
 
 // ---------------------------------------------------------------- limits
 
@@ -191,6 +199,15 @@ export interface PlannerTask {
   commentCount: number;
   sortOrder: number;
   createdAt: string;
+  recurrenceNeedsReview?: boolean;
+  repeatRule?: string | null;
+  repeatFrom?: 'SCHEDULE' | 'COMPLETION';
+  recurrenceEnd?: string | null;
+  recurrenceTimezone?: string;
+  durationMin?: number | null;
+  seriesId?: string | null;
+  occurrenceDate?: string | null;
+  isSeries?: boolean;
 }
 
 export interface PlannerComment {
@@ -347,7 +364,30 @@ const checklistInput = z.object({
   done: z.optional(z.boolean()),
 });
 
+export const taskIdSchema = z.union([
+  z.uuid(),
+  z.string().check(z.regex(OCCURRENCE_ID)),
+]);
+const recurrenceFields = {
+  repeatRule: z.optional(
+    z.nullable(
+      z.string().check(z.refine(isRepeatRule, 'Invalid or unsupported RRULE')),
+    ),
+  ),
+  repeatFrom: z.optional(z.enum(REPEAT_FROM)),
+  recurrenceEnd: z.optional(z.nullable(isoDate)),
+  recurrenceTimezone: z.optional(
+    z.string().check(z.refine(validTimeZone, 'Invalid IANA timezone')),
+  ),
+  durationMin: z.optional(
+    z.nullable(z.int().check(z.minimum(1), z.maximum(10080))),
+  ),
+};
 export const createTaskSchema = z.object({
+  ...recurrenceFields,
+  idempotencyKey: z.optional(
+    z.string().check(z.minLength(1), z.maxLength(200)),
+  ),
   title,
   content: z.optional(content),
   kind: z.optional(z.enum(TASK_KINDS)),
@@ -375,6 +415,8 @@ export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 
 export const updateTaskSchema = z.partial(
   z.object({
+    ...recurrenceFields,
+    recurrenceScope: z.enum(RECURRENCE_SCOPES),
     title,
     content,
     kind: z.enum(TASK_KINDS),
@@ -408,7 +450,7 @@ export type BatchCreateTasksInput = z.infer<typeof batchCreateTasksSchema>;
 
 export const batchUpdateTasksSchema = z.object({
   tasks: z
-    .array(z.extend(updateTaskSchema, { id: uuid }))
+    .array(z.extend(updateTaskSchema, { id: taskIdSchema }))
     .check(z.minLength(1), z.maxLength(PLANNER_LIMITS.batch)),
 });
 export type BatchUpdateTasksInput = z.infer<typeof batchUpdateTasksSchema>;
@@ -416,7 +458,7 @@ export type BatchUpdateTasksInput = z.infer<typeof batchUpdateTasksSchema>;
 export const completeInListSchema = z.object({
   listId: uuid,
   taskIds: z
-    .array(uuid)
+    .array(taskIdSchema)
     .check(z.minLength(1), z.maxLength(PLANNER_LIMITS.completeBatch)),
 });
 export type CompleteInListInput = z.infer<typeof completeInListSchema>;
@@ -565,7 +607,7 @@ export type EventsQuery = z.infer<typeof eventsQuerySchema>;
 const isoDateTime = z.iso.datetime({ offset: true });
 
 export const createFocusSchema = z.object({
-  taskId: z.optional(z.nullable(uuid)),
+  taskId: z.optional(z.nullable(taskIdSchema)),
   kind: z.optional(z.enum(FOCUS_KINDS)),
   startAt: isoDateTime,
   endAt: isoDateTime,
@@ -576,7 +618,7 @@ export type CreateFocusInput = z.infer<typeof createFocusSchema>;
 /** The duration is fixed: moving `startAt` moves `endAt` with it. */
 export const updateFocusSchema = z.partial(
   z.object({
-    taskId: z.nullable(uuid),
+    taskId: z.nullable(taskIdSchema),
     startAt: isoDateTime,
     note: z.string().check(z.trim(), z.maxLength(1000)),
   }),
@@ -620,26 +662,6 @@ export const updateCountdownSchema = z.partial(createCountdownSchema);
 export type UpdateCountdownInput = z.infer<typeof updateCountdownSchema>;
 
 // ---------------------------------------------------------------- logic
-
-/** YYYY-MM-DD of `date` in a time zone. */
-export function isoDateIn(date: Date, timeZone = PLANNER_TIME_ZONE): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(date);
-}
-
-/** "HH:mm" of `date` in a time zone. */
-export function timeIn(date: Date, timeZone = PLANNER_TIME_ZONE): string {
-  return new Intl.DateTimeFormat('en-GB', {
-    timeZone,
-    hour: '2-digit',
-    minute: '2-digit',
-    hourCycle: 'h23',
-  }).format(date);
-}
 
 /** Whole days from `from` to `to` (YYYY-MM-DD). */
 export function daysBetween(from: string, to: string): number {

@@ -11,6 +11,22 @@ permissions:
 jobs:
   main:
     runs-on: ubuntu-latest
+    services:
+      planner-postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: recurrence-ci-only
+          POSTGRES_DB: aio_recurrence
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d aio_recurrence"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PLANNER_TEST_DATABASE_URL: postgresql://postgres:recurrence-ci-only@127.0.0.1:5432/aio_recurrence
     steps:
       - uses: actions/checkout@v5
         with:
@@ -28,4 +44,8 @@ jobs:
       - uses: nrwl/nx-set-shas@v4
 
       - run: pnpm nx format:check
+      - name: Migrate isolated planner integration database
+        run: pnpm nx run api-db:prisma-deploy
+        env:
+          DATABASE_URL: ${{ env.PLANNER_TEST_DATABASE_URL }}
       - run: pnpm nx affected -t lint test build typecheck

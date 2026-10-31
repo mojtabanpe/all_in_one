@@ -233,3 +233,7 @@ When the owner gives a new instruction, add it to this list in the same change.
 29. **Persian variable font (2026-10-30):** Use Vazirmatn Variable as the primary font across the apps, with Persian digit glyphs everywhere in the UI. The full self-hosted official font supports weights 100–900; enable its `ss01` feature for display without rewriting numeric values in storage or APIs.
 
 30. **Health companion reference (2026-10-30):** The owner supplied Gordool screenshots and authorized redesigning the health applet for their comfortable, everyday companion feel: light-gray canvas, white generous rounded cards, asymmetrical metric tiles, colorful line icons, short actions, visual meal detail sheets and approachable training cards. Keep the existing features functional; do not invent water/fasting/challenge data or copy another app's character. Other applets retain the shared workspace design.
+
+## Native task recurrence (2026-10-31)
+
+33. **Recurring tasks are native planner tasks**, including TickTick RRULE compatibility, persisted completion history, retry-safe occurrence identities, timezone-aware Today/Calendar queries, MCP CRUD/batches and existing Spartan task UI controls. Reuse the task system and preserve imported task IDs. Never insert the owner's reference schedules into production or reconcile production tasks before showing the proposed changes. Use explicit source-ID mappings and the reviewed reconciliation digest; migrations must not reset existing data. See `docs/recurring-tasks.md`.

@@ -1,3 +1,4 @@
+import { RecurrenceEditor } from './recurrence-editor';
 import { NgTemplateOutlet } from '@angular/common';
 import { httpResource } from '@angular/common/http';
 import {
@@ -86,6 +87,7 @@ const DONE_DAYS = 30;
 @Component({
   selector: 'planner-tasks-page',
   imports: [
+    RecurrenceEditor,
     AioButton,
     AioCheckbox,
     AioCollapsibleDirectives,
@@ -166,6 +168,23 @@ const DONE_DAYS = 30;
           aria-label="عنوان کار جدید"
         />
       </form>
+      <button
+        aioBtn
+        variant="ghost"
+        type="button"
+        class="self-start"
+        [attr.aria-expanded]="recurrenceOpen()"
+        (click)="recurrenceOpen.set(!recurrenceOpen())"
+      >
+        ↻ تنظیم تکرار کار جدید
+      </button>
+      @if (recurrenceOpen()) {
+        <planner-recurrence-editor
+          prefix="quick-repeat-"
+          [value]="quickRecurrence()"
+          (changed)="quickRecurrence.set($event)"
+        />
+      }
     }
 
     @if (loading()) {
@@ -476,6 +495,8 @@ export class TasksPage {
   protected readonly settingsListId = signal<string | null>(null);
   protected readonly editingTag = signal<PlannerTag | null>(null);
   protected readonly quickTitle = signal('');
+  protected readonly recurrenceOpen = signal(false);
+  protected readonly quickRecurrence = signal<Partial<CreateTaskInput>>({});
   protected readonly showCompleted = signal(false);
 
   private readonly base = this.api.base;
@@ -491,6 +512,21 @@ export class TasksPage {
   private readonly openRes = httpResource<PlannerTask[]>(() =>
     this.api.url('/tasks', { status: 'open', limit: '500' }),
   );
+  private readonly datedRes = httpResource<PlannerTask[]>(() => {
+    const view = this.view();
+    if (!['today', 'tomorrow', 'week'].includes(view)) return undefined;
+    return this.api.url('/tasks', {
+      status: 'open',
+      from: view === 'tomorrow' ? this.tomorrow : this.today,
+      to:
+        view === 'week'
+          ? this.weekEnd
+          : view === 'tomorrow'
+            ? this.tomorrow
+            : this.today,
+      limit: '500',
+    });
+  });
   private readonly doneRes = httpResource<PlannerTask[]>(() =>
     this.api.url('/tasks/completed', {
       from: addDays(this.today, -DONE_DAYS),
@@ -516,7 +552,11 @@ export class TasksPage {
 
   /** Open tasks plus the last 30 days' completed ones; edited in place. */
   private readonly tasks = linkedSignal<PlannerTask[]>(() => {
-    const open = this.openRes.hasValue() ? this.openRes.value() : [];
+    const allOpen = [
+      ...(this.openRes.hasValue() ? this.openRes.value() : []),
+      ...(this.datedRes.hasValue() ? this.datedRes.value() : []),
+    ];
+    const open = [...new Map(allOpen.map((t) => [t.id, t])).values()];
     const done = this.doneRes.hasValue() ? this.doneRes.value() : [];
     const seen = new Set(open.map((t) => t.id));
     return [...open, ...done.filter((t) => !seen.has(t.id))];
@@ -766,6 +806,10 @@ export class TasksPage {
             : faDate(task.date, { day: 'numeric', month: 'short' }),
       );
     if (task.time) parts.push(this.faTime(task.time));
+    if (task.recurrenceNeedsReview) parts.push('↻ نیازمند تأیید برنامه تکرار');
+    else if (task.repeatRule) parts.push('↻ تکرارشونده');
+    if (task.durationMin)
+      parts.push(task.durationMin.toLocaleString('fa-IR') + ' دقیقه');
     return parts.join('، ');
   }
 
@@ -787,7 +831,10 @@ export class TasksPage {
     const parsed = parseQuickAdd(this.quickTitle(), this.today);
     if (!parsed.title) return;
     const v = this.view();
-    const input: CreateTaskInput = { title: parsed.title };
+    const input: CreateTaskInput = {
+      ...this.quickRecurrence(),
+      title: parsed.title,
+    };
     const date =
       parsed.date ??
       (v === 'today' || v === 'week'
@@ -796,6 +843,7 @@ export class TasksPage {
           ? this.tomorrow
           : undefined);
     if (date) input.date = date;
+    else if (input.repeatRule) input.date = this.today;
     if (parsed.priority) input.priority = parsed.priority;
     const tags = [
       ...parsed.tags,
@@ -812,6 +860,12 @@ export class TasksPage {
       const task = await this.api.createTask(input);
       this.tasks.update((list) => [...list, task]);
       this.quickTitle.set('');
+      this.quickRecurrence.set({});
+      this.recurrenceOpen.set(false);
+      if (task.isSeries) {
+        this.openRes.reload();
+        this.datedRes.reload();
+      }
       if (!this.matches(task, this.view()))
         aioToast.success(
           task.date
@@ -834,6 +888,11 @@ export class TasksPage {
     try {
       this.replace(await this.api.updateTask(task.id, { done }));
       this.listsRes.reload();
+      if (task.repeatRule) {
+        this.openRes.reload();
+        this.datedRes.reload();
+        this.doneRes.reload();
+      }
     } catch (error) {
       this.replace(task);
       aioToast.error(apiErrorMessage(error));
@@ -841,6 +900,13 @@ export class TasksPage {
   }
 
   protected replace(task: PlannerTask) {
+    if (task.isSeries) {
+      this.selectedId.set(null);
+      this.openRes.reload();
+      this.datedRes.reload();
+      this.doneRes.reload();
+      return;
+    }
     this.tasks.update((list) => list.map((t) => (t.id === task.id ? task : t)));
   }
 

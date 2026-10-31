@@ -17,6 +17,7 @@ import {
   ListsService,
   TagsService,
   TasksService,
+  TickTickReconciliationService,
 } from '@all-in-one/applets/planner/api';
 import { englishTools } from './english-tools';
 import { healthCoachTools } from './health-coach-tools';
@@ -36,6 +37,7 @@ export class ToolsService {
     private readonly texts: TextsService,
     private readonly lists: ListsService,
     private readonly tasks: TasksService,
+    private readonly reconciliation: TickTickReconciliationService,
     private readonly tags: TagsService,
     private readonly habits: HabitsService,
     private readonly focus: FocusService,
@@ -55,6 +57,7 @@ export class ToolsService {
     plannerTools(sink, {
       lists: this.lists,
       tasks: this.tasks,
+      reconciliation: this.reconciliation,
       tags: this.tags,
       habits: this.habits,
       focus: this.focus,

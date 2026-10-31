@@ -309,7 +309,7 @@ export class CalendarPage {
       if (!t.date) continue;
       add(t.date, {
         key: t.id,
-        title: t.done ? `✓ ${t.title}` : t.title,
+        title: (t.done ? '✓ ' : '') + (t.repeatRule ? '↻ ' : '') + t.title,
         time: t.time ? t.time.replace(/\d/g, (d) => faNumber(Number(d))) : '',
         dot: 'bg-primary',
         kind: 'task',

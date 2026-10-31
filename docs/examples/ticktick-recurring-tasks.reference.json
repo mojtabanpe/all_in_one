@@ -1,0 +1,75 @@
+{
+  "referenceOnly": true,
+  "tasks": [
+    {
+      "id": "reference-reading",
+      "title": "Reading",
+      "startDate": "2026-10-30T10:00:00+0330",
+      "dueDate": "2026-10-30T10:15:00+0330",
+      "timeZone": "Asia/Tehran",
+      "repeatFlag": "RRULE:FREQ=DAILY",
+      "repeatFrom": "0"
+    },
+    {
+      "id": "reference-listening",
+      "title": "Listening",
+      "startDate": "2026-10-30T10:15:00+0330",
+      "dueDate": "2026-10-30T10:30:00+0330",
+      "timeZone": "Asia/Tehran",
+      "repeatFlag": "RRULE:FREQ=DAILY",
+      "repeatFrom": "0"
+    },
+    {
+      "id": "reference-writing",
+      "title": "Writing",
+      "startDate": "2026-10-30T12:30:00+0330",
+      "dueDate": "2026-10-30T12:45:00+0330",
+      "timeZone": "Asia/Tehran",
+      "repeatFlag": "RRULE:FREQ=DAILY",
+      "repeatFrom": "0"
+    },
+    {
+      "id": "reference-speaking",
+      "title": "Speaking",
+      "startDate": "2026-10-30T12:45:00+0330",
+      "dueDate": "2026-10-30T13:00:00+0330",
+      "timeZone": "Asia/Tehran",
+      "repeatFlag": "RRULE:FREQ=DAILY",
+      "repeatFrom": "0"
+    },
+    {
+      "id": "reference-java",
+      "title": "Java Study",
+      "startDate": "2026-10-30T14:00:00+0330",
+      "dueDate": "2026-10-30T14:30:00+0330",
+      "timeZone": "Asia/Tehran",
+      "repeatFlag": "RRULE:FREQ=DAILY",
+      "repeatFrom": "0"
+    },
+    {
+      "id": "reference-devops",
+      "title": "DevOps Course",
+      "startDate": "2026-10-30T14:30:00+0330",
+      "dueDate": "2026-10-30T15:00:00+0330",
+      "timeZone": "Asia/Tehran",
+      "repeatFlag": "RRULE:FREQ=DAILY",
+      "repeatFrom": "0"
+    },
+    {
+      "id": "reference-english-saturday",
+      "title": "English Class",
+      "startDate": "2026-10-31T09:00:00+0330",
+      "timeZone": "Asia/Tehran",
+      "repeatFlag": "RRULE:FREQ=WEEKLY;BYDAY=SA",
+      "repeatFrom": "0"
+    },
+    {
+      "id": "reference-english-wednesday",
+      "title": "English Class",
+      "startDate": "2026-11-04T18:00:00+0330",
+      "timeZone": "Asia/Tehran",
+      "repeatFlag": "RRULE:FREQ=WEEKLY;BYDAY=WE",
+      "repeatFrom": "0"
+    }
+  ]
+}

@@ -7,9 +7,16 @@ import type {
   ListsService,
   TagsService,
   TasksService,
+  TickTickReconciliationService,
 } from '@all-in-one/applets/planner/api';
 import {
   checkinSchema,
+  tickTickReconciliationSchema,
+  OCCURRENCE_ID,
+  REPEAT_FROM,
+  RECURRENCE_SCOPES,
+  isRepeatRule,
+  validTimeZone,
   COUNTDOWN_KINDS,
   createCalendarSchema,
   createCountdownSchema,
@@ -38,6 +45,7 @@ import { parseWith, type ToolSink } from './tool-kit';
 export interface PlannerServices {
   lists: ListsService;
   tasks: TasksService;
+  reconciliation: TickTickReconciliationService;
   tags: TagsService;
   habits: HabitsService;
   focus: FocusService;
@@ -59,6 +67,11 @@ function camel(value: unknown): unknown {
 }
 
 const id = z.uuid();
+const taskId = z
+  .union([id, z.string().regex(OCCURRENCE_ID)])
+  .describe(
+    'Native task UUID or stable recurring occurrence handle from task queries',
+  );
 const date = z.iso.date().describe('YYYY-MM-DD');
 const dateTime = z.iso
   .datetime({ offset: true })
@@ -70,7 +83,84 @@ const tag = z
   .max(50)
   .regex(/^[^\s#,]+$/, 'No spaces, # or commas');
 
+const recurrenceFields = {
+  repeat_rule: z
+    .string()
+    .refine(isRepeatRule, 'Invalid RRULE')
+    .nullable()
+    .optional()
+    .describe(
+      'RFC5545 RRULE, e.g. RRULE:FREQ=WEEKLY;BYDAY=SA,WE. null stops the series; daily-or-coarser rules only.',
+    ),
+  repeat_from: z
+    .enum(REPEAT_FROM)
+    .optional()
+    .describe(
+      'SCHEDULE keeps the calendar cadence; COMPLETION schedules the next occurrence after actual completion.',
+    ),
+  recurrence_end: date
+    .nullable()
+    .optional()
+    .describe(
+      'Inclusive end date in the recurrence timezone; COUNT/UNTIL may also be in the RRULE.',
+    ),
+  recurrence_timezone: z
+    .string()
+    .refine(validTimeZone)
+    .optional()
+    .describe(
+      'IANA zone; defaults to Asia/Tehran. date/time are local in this zone for a series.',
+    ),
+  duration_min: z.number().int().min(1).max(10080).nullable().optional(),
+};
 const taskFields = {
+  external_source_id: z
+    .string()
+    .min(1)
+    .max(120)
+    .optional()
+    .describe(
+      'Stable existing TickTick import ID; retries return the same root task.',
+    ),
+  recurrence_rule: z
+    .string()
+    .max(500)
+    .nullable()
+    .optional()
+    .describe(
+      'Legacy REST/import alias of repeat_rule; use one consistent rule.',
+    ),
+  reminders: z
+    .array(z.string().max(150))
+    .max(30)
+    .optional()
+    .describe('Preserved TickTick reminder metadata'),
+  time_zone: z
+    .string()
+    .max(80)
+    .nullable()
+    .optional()
+    .describe('Legacy import alias of recurrence_timezone'),
+  end_time: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+    .nullable()
+    .optional()
+    .describe('Legacy local end clock; duration_min is inferred when omitted'),
+  completed_at: dateTime
+    .optional()
+    .describe(
+      'Import a historical completion; recurring series retain it as an occurrence snapshot',
+    ),
+  ...recurrenceFields,
+  idempotency_key: z
+    .string()
+    .min(1)
+    .max(200)
+    .optional()
+    .describe(
+      'Reuse the same key when retrying creation; returns the original task instead of duplicating it.',
+    ),
   title: z.string().min(1).max(200),
   content: z.string().max(10000).optional().describe('Description / notes'),
   kind: z.enum(TASK_KINDS).optional().describe('TASK (checkable) or NOTE'),
@@ -108,8 +198,18 @@ const taskFields = {
 };
 const createTask = z.object(taskFields);
 const updateTask = createTask
+  .omit({ idempotency_key: true, external_source_id: true, completed_at: true })
   .partial()
-  .extend({ task_id: id, done: z.boolean().optional() });
+  .extend({
+    task_id: taskId,
+    done: z.boolean().optional(),
+    recurrence_scope: z
+      .enum(RECURRENCE_SCOPES)
+      .optional()
+      .describe(
+        'Default: OCCURRENCE for occurrence handles, SERIES for series IDs. FUTURE splits at this occurrence; completed history is retained.',
+      ),
+  });
 
 function range(from: string, to: string, max: number, what: string) {
   const span = daysBetween(from, to);
@@ -128,6 +228,59 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
   const user = kit.user;
   const read = 'planner:read' as const;
   const write = 'planner:write' as const;
+
+  const ticktickTasks = z
+    .array(
+      z.object({
+        id: z.string().min(1).max(200),
+        existing_task_id: id.optional(),
+        title: z.string().max(200).optional(),
+        start_date: z.string().max(50),
+        due_date: z.string().max(50).nullable().optional(),
+        time_zone: z.string().refine(validTimeZone).optional(),
+        repeat_flag: z.string().max(1000),
+        repeat_from: z
+          .union([z.enum(['0', '1']), z.literal(0), z.literal(1)])
+          .optional(),
+      }),
+    )
+    .min(1)
+    .max(50);
+  kit.tool(
+    'preview_ticktick_reconciliation',
+    {
+      description:
+        'Read-only preview of recurrence updates to already imported tasks. Requires stable TickTick source IDs and explicit native task IDs for first binding. Never matches by title and never creates tasks. Show the changes to the user before applying.',
+      scope: read,
+      kind: 'read',
+      input: { tasks: ticktickTasks },
+    },
+    (a) =>
+      s.reconciliation.preview(
+        user,
+        parseWith(tickTickReconciliationSchema, camel(a)),
+      ),
+  );
+  kit.tool(
+    'apply_ticktick_reconciliation',
+    {
+      description:
+        'Apply the exact reconciliation preview approved by the user. Requires its digest; refuses stale previews. Do not invoke before showing proposed changes and receiving user approval. Creates zero tasks.',
+      assistant: false,
+      scope: write,
+      kind: 'update',
+      input: {
+        tasks: ticktickTasks,
+        approved_digest: z.string().regex(/^[a-f0-9]{64}$/),
+      },
+    },
+    (a) =>
+      s.reconciliation.apply(
+        user,
+        parseWith(tickTickReconciliationSchema, camel({ tasks: a.tasks })),
+        a.approved_digest,
+      ),
+  );
 
   // ---------------------------------------------------------------- task queries
   kit.tool(
@@ -150,7 +303,7 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
       description: 'Read one task with its checklist, tags and assignee.',
       scope: read,
       kind: 'read',
-      input: { task_id: id },
+      input: { task_id: taskId },
     },
     (a) => s.tasks.get(user, a.task_id),
   );
@@ -233,6 +386,45 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
       input: {},
     },
     () => s.tasks.trashed(user),
+  );
+
+  kit.tool(
+    'list_recurring_tasks',
+    {
+      description:
+        'List recurring series and their recurrence configuration (not occurrence completions). Query date ranges for occurrence handles.',
+      scope: read,
+      kind: 'read',
+      input: {},
+    },
+    () => s.tasks.recurring(user),
+  );
+  kit.tool(
+    'get_task_recurrence',
+    {
+      description:
+        'Read recurrence configuration and series ID for a native task or occurrence.',
+      scope: read,
+      kind: 'read',
+      input: { task_id: taskId },
+    },
+    (a) => s.tasks.get(user, a.task_id),
+  );
+  kit.tool(
+    'update_task_recurrence',
+    {
+      description:
+        'Change a series schedule. Use SERIES or FUTURE scope; history is retained. Does not complete tasks.',
+      scope: write,
+      kind: 'update',
+      input: {
+        task_id: taskId,
+        ...recurrenceFields,
+        recurrence_scope: z.enum(['SERIES', 'FUTURE']).default('SERIES'),
+      },
+    },
+    ({ task_id, ...patch }) =>
+      s.tasks.update(user, task_id, parseWith(updateTaskSchema, camel(patch))),
   );
 
   // ---------------------------------------------------------------- lists, sections, folders, members
@@ -401,7 +593,7 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
     'create_task',
     {
       description:
-        'Create a task or note. Non-idempotent: retrying creates another task.',
+        'Create a native task, note or recurring series. A recurring task needs date; use idempotency_key for safe retries. Query tasks to obtain occurrence handles before completing them.',
       scope: write,
       kind: 'create',
       input: createTask,
@@ -454,10 +646,11 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
   kit.tool(
     'complete_task',
     {
-      description: 'Mark a task done.',
+      description:
+        'Mark one occurrence or one-off task done. Retry-safe: completing the same occurrence again never completes its successor. A series UUID is not a completion target.',
       scope: write,
       kind: 'update',
-      input: { task_id: id },
+      input: { task_id: taskId },
     },
     (a) => s.tasks.update(user, a.task_id, { done: true }),
   );
@@ -469,7 +662,7 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
       kind: 'update',
       input: {
         list_id: id,
-        task_ids: z.array(id).min(1).max(PLANNER_LIMITS.completeBatch),
+        task_ids: z.array(taskId).min(1).max(PLANNER_LIMITS.completeBatch),
       },
     },
     (a) => s.tasks.completeInList(user, a.list_id, a.task_ids),
@@ -481,7 +674,11 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
         'Move a task to another list (and optionally a section there).',
       scope: write,
       kind: 'update',
-      input: { task_id: id, list_id: id, section_id: id.nullable().optional() },
+      input: {
+        task_id: taskId,
+        list_id: id,
+        section_id: id.nullable().optional(),
+      },
     },
     (a) =>
       s.tasks.update(user, a.task_id, {
@@ -495,7 +692,7 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
       description: 'Move a task to the trash (restorable with restore_task).',
       scope: write,
       kind: 'delete',
-      input: { task_id: id },
+      input: { task_id: taskId },
     },
     (a) => s.tasks.trash(user, a.task_id),
   );
@@ -505,7 +702,7 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
       description: 'Bring a task back from the trash.',
       scope: write,
       kind: 'update',
-      input: { task_id: id },
+      input: { task_id: taskId },
     },
     (a) => s.tasks.restore(user, a.task_id),
   );
@@ -515,7 +712,7 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
       description: 'Add a checklist (sub-task) item to a task.',
       scope: write,
       kind: 'create',
-      input: { task_id: id, title: z.string().min(1).max(200) },
+      input: { task_id: taskId, title: z.string().min(1).max(200) },
     },
     (a) => s.tasks.addItem(user, a.task_id, a.title),
   );
@@ -526,7 +723,7 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
       scope: write,
       kind: 'update',
       input: {
-        task_id: id,
+        task_id: taskId,
         item_id: id,
         title: z.string().min(1).max(200).optional(),
         done: z.boolean().optional(),
@@ -544,7 +741,7 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
       description: 'Remove a checklist item.',
       scope: write,
       kind: 'delete',
-      input: { task_id: id, item_id: id },
+      input: { task_id: taskId, item_id: id },
     },
     (a) => s.tasks.removeItem(user, a.task_id, a.item_id),
   );
@@ -555,7 +752,7 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
         'Assign a task in a shared list to a member (user_id from get_list), or null to unassign.',
       scope: write,
       kind: 'update',
-      input: { task_id: id, assignee_id: id.nullable() },
+      input: { task_id: taskId, assignee_id: id.nullable() },
     },
     (a) => s.tasks.update(user, a.task_id, { assigneeId: a.assignee_id }),
   );
@@ -565,7 +762,7 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
       description: 'Comments on a task.',
       scope: read,
       kind: 'read',
-      input: { task_id: id },
+      input: { task_id: taskId },
     },
     (a) => s.tasks.comments(user, a.task_id),
   );
@@ -575,7 +772,7 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
       description: 'Comment on a task.',
       scope: write,
       kind: 'create',
-      input: { task_id: id, body: z.string().trim().min(1).max(2000) },
+      input: { task_id: taskId, body: z.string().trim().min(1).max(2000) },
     },
     (a) => s.tasks.addComment(user, a.task_id, a.body),
   );
@@ -789,7 +986,7 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
         start_at: dateTime,
         end_at: dateTime,
         kind: z.enum(FOCUS_KINDS).optional(),
-        task_id: id.nullable().optional(),
+        task_id: taskId.nullable().optional(),
         note: z.string().max(1000).optional(),
       },
     },
@@ -805,7 +1002,7 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
       input: {
         focus_id: id,
         note: z.string().max(1000).optional(),
-        task_id: id.nullable().optional(),
+        task_id: taskId.nullable().optional(),
         start_at: dateTime.optional(),
       },
     },

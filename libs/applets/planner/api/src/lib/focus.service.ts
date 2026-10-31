@@ -77,7 +77,11 @@ export class FocusService {
       throw new BadRequestException('تمرکز حداکثر ۱۲ ساعت است');
     if (endAt.getTime() > Date.now() + 60_000)
       throw new BadRequestException('پایان تمرکز در آینده است');
-    if (input.taskId) await this.access.task(userId, input.taskId);
+    if (input.taskId)
+      input = {
+        ...input,
+        taskId: (await this.access.task(userId, input.taskId)).id,
+      };
     const focus = await this.prisma.plannerFocus.create({
       data: {
         userId,
@@ -100,7 +104,11 @@ export class FocusService {
     input: UpdateFocusInput,
   ): Promise<PlannerFocus> {
     const focus = await this.owned(userId, id);
-    if (input.taskId) await this.access.task(userId, input.taskId);
+    if (input.taskId)
+      input = {
+        ...input,
+        taskId: (await this.access.task(userId, input.taskId)).id,
+      };
     const data: Prisma.PlannerFocusUncheckedUpdateInput = {
       ...(input.note !== undefined ? { note: input.note } : {}),
       ...(input.taskId !== undefined ? { taskId: input.taskId } : {}),

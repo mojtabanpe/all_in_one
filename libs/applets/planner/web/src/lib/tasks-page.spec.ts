@@ -35,6 +35,11 @@ const task = (over: Partial<PlannerTask>): PlannerTask => ({
   sectionId: null,
   title: 'خرید میوه',
   content: '',
+  externalSourceId: null,
+  recurrenceRule: null,
+  reminders: [],
+  timeZone: null,
+  endTime: null,
   kind: 'TASK',
   date: today,
   time: '18:00',
@@ -53,7 +58,7 @@ const task = (over: Partial<PlannerTask>): PlannerTask => ({
 });
 
 describe('TasksPage', () => {
-  async function setup(open: PlannerTask[]) {
+  async function setup(open: PlannerTask[], dated: PlannerTask[] = open) {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -73,9 +78,10 @@ describe('TasksPage', () => {
       .flush([list(INBOX, 'صندوق ورودی', true), list(WORK, 'کار')]);
     http.expectOne('/api/planner/folders').flush([]);
     http.expectOne('/api/planner/tags').flush([]);
-    http
-      .expectOne((r) => r.url.startsWith('/api/planner/tasks?status=open'))
-      .flush(open);
+    for (const req of http.match((r) =>
+      r.url.startsWith('/api/planner/tasks?status=open'),
+    ))
+      req.flush(req.request.url.includes('from=') ? dated : open);
     http
       .expectOne((r) => r.url.startsWith('/api/planner/tasks/completed'))
       .flush([]);
@@ -112,6 +118,19 @@ describe('TasksPage', () => {
     expect(text).toContain('کار دیروز');
     expect(text).not.toContain('کار فردا');
     expect(text).not.toContain('بی‌تاریخ');
+  });
+
+  it('shows a recurring occurrence from the dedicated Today query even when the global query is full', async () => {
+    const occurrence = task({
+      id: 'series@' + today,
+      title: 'تکرار امروز',
+      repeatRule: 'RRULE:FREQ=DAILY',
+      seriesId: 'series',
+      occurrenceDate: today,
+    });
+    const { el } = await setup([], [occurrence]);
+    expect(el.textContent).toContain('تکرار امروز');
+    expect(el.textContent).toContain('تکرارشونده');
   });
 
   it('shows an empty state for a free day', async () => {

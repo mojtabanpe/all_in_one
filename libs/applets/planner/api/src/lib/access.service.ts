@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { RecurrencesService } from './recurrences.service';
 import { type PlannerList as DbList, PrismaService } from '@all-in-one/api/db';
 import type { ListRole } from '@all-in-one/applets/planner/contracts';
 
@@ -14,7 +15,10 @@ export const INBOX_NAME = 'صندوق ورودی';
  */
 @Injectable()
 export class PlannerAccess {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly recurrence: RecurrencesService,
+  ) {}
 
   async inbox(userId: string): Promise<DbList> {
     const found = await this.prisma.plannerList.findFirst({
@@ -60,6 +64,7 @@ export class PlannerAccess {
 
   /** A task the user can reach through its list (trashed ones too). */
   async task(userId: string, taskId: string) {
+    taskId = await this.recurrence.resolve(userId, taskId);
     const task = await this.prisma.plannerTask.findFirst({
       where: { id: taskId, list: { members: { some: { userId } } } },
     });
