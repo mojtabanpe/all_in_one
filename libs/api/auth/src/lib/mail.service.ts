@@ -54,7 +54,7 @@ export class MailService {
       await this.transport.sendMail({
         from:
           this.config.get<string>('MAIL_FROM') ||
-          'همه در یک <no-reply@localhost>',
+          'پشتت گرم <no-reply@localhost>',
         ...mail,
       });
     } else if (this.env === 'test') {

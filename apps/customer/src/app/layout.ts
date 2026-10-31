@@ -52,7 +52,7 @@ import {
     }),
   ],
   template: `
-    <aio-app-shell appName="همه در یک" [navItems]="nav">
+    <aio-app-shell appName="پشتت گرم" [navItems]="nav">
       <web-assistant aioShellActions [context]="assistantContext()" />
       @if (pwa.canInstall()) {
         <button

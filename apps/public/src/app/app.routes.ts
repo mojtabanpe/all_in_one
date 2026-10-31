@@ -3,7 +3,7 @@ import type { Route } from '@angular/router';
 export const appRoutes: Route[] = [
   {
     path: '',
-    title: 'همه در یک',
+    title: 'پشتت گرم',
     loadComponent: () => import('./pages/home').then((m) => m.Home),
   },
   {

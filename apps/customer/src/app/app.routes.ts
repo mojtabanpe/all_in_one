@@ -15,7 +15,7 @@ export const appRoutes: Route[] = [
     component: LoginPage,
     canActivate: [guestGuard],
     title: 'ورود',
-    data: { appName: 'همه در یک', allowRegister: true },
+    data: { appName: 'پشتت گرم', allowRegister: true },
   },
   {
     path: 'forgot-password',
@@ -34,7 +34,7 @@ export const appRoutes: Route[] = [
       {
         path: '',
         loadComponent: () => import('./home/home').then((m) => m.Home),
-        title: 'همه در یک',
+        title: 'پشتت گرم',
       },
       {
         path: 'planner',

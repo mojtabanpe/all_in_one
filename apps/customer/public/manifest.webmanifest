@@ -1,6 +1,6 @@
 {
-  "name": "همه در یک: برنامه‌ریز، انگلیسی، سلامت",
-  "short_name": "همه در یک",
+  "name": "پشتت گرم: برنامه‌ریز، انگلیسی، سلامت",
+  "short_name": "پشتت گرم",
   "description": "کارها و عادت‌ها، کارت‌های انگلیسی و مربی سلامت در یک اپ.",
   "id": "./",
   "start_url": "./",
@@ -31,29 +31,38 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    },
-    {
-      "src": "icons/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
     }
   ],
   "shortcuts": [
     {
       "name": "برنامه‌ریز",
       "url": "./planner",
-      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "انگلیسی",
       "url": "./english",
-      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "سلامت",
       "url": "./health",
-      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }

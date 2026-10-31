@@ -211,6 +211,12 @@ When the owner gives a new instruction, add it to this list in the same change.
     then the server's self-hosted runner (`aio-server`, label `aio`, `/opt/actions-runner-aio`) loads them and
     runs `deploy/release.sh` (health check, rollback). CI must stay green (`nx format:check` included).
 
+## Brand (2026-10-31)
+
+32. **The app is called «پشتت گرم»** (Poshtet Garm), not «همه در یک». The logo is a hand holding a warm sun:
+    porcelain hand, orange sun (`#e88329`) on the deep-teal primary (`#18514b`). Source:
+    `design-system/all-in-one/logo/poshtetgarm-1024.png`; the PWA icons and favicons are generated from it.
+
 ## Approved custom components
 
 - **BottomNav** (2026-10-29): floating bottom navigation for phone sizes, in `libs/shared/packages`,

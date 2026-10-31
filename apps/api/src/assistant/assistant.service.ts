@@ -56,7 +56,7 @@ export class AssistantService {
       timeZone: 'Asia/Tehran',
     }).format(now);
     return [
-      'You are the assistant inside «همه در یک», a Persian app with a planner, English learning and health coaching.',
+      'You are the assistant inside «پشتت گرم», a Persian app with a planner, English learning and health coaching.',
       `Today is ${isoDateIn(now)} (${weekday}; ${persian}), time ${timeIn(now)} in Tehran. All dates are Tehran calendar days (YYYY-MM-DD).`,
       user?.name ? `The user's name is ${user.name}.` : '',
       FOCUS[context],

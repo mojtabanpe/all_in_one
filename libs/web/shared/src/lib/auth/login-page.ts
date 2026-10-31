@@ -152,7 +152,7 @@ export class LoginPage {
   // Route data binds these (withComponentInputBinding sets undefined when absent).
   readonly appName = input<string | undefined>();
   readonly allowRegister = input<boolean | undefined>();
-  protected readonly name = computed(() => this.appName() ?? 'همه در یک');
+  protected readonly name = computed(() => this.appName() ?? 'پشتت گرم');
   protected readonly canRegister = computed(() => this.allowRegister() ?? true);
 
   private readonly auth = inject(AuthStore);

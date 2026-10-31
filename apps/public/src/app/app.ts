@@ -21,7 +21,7 @@ import {
   ],
   selector: 'public-root',
   template: `
-    <aio-app-shell appName="همه در یک" [navItems]="nav">
+    <aio-app-shell appName="پشتت گرم" [navItems]="nav">
       <router-outlet />
     </aio-app-shell>
     <aio-toaster />
