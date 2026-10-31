@@ -58,9 +58,41 @@ model HealthProfile {
   diet          Diet?         @relation(fields: [dietSlug], references: [slug])
   ownDietNotes  String?       @db.VarChar(2000)
   excludedIngredients String[] @default([])
+  /// Weight goal: reach targetWeightKg by targetDate, measured from the start weight
+  targetWeightKg    Float?
+  targetDate        DateTime? @db.Date
+  goalStartWeightKg Float?
+  goalStartDate     DateTime? @db.Date
   updatedAt     DateTime      @updatedAt
 
   @@map("health_profiles")
+}
+
+/// One weigh-in per Tehran day; the latest also sets HealthProfile.weightKg.
+model HealthWeightLog {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+  weightKg  Float
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date])
+  @@map("health_weight_logs")
+}
+
+/// Intermittent fasting; endedAt null means the fast is running (one at a time).
+model HealthFast {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  userId      String    @db.Uuid
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt   DateTime
+  endedAt     DateTime?
+  targetHours Int
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, startedAt])
+  @@map("health_fasts")
 }
 
 // ---------- fitness ----------

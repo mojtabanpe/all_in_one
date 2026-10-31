@@ -50,6 +50,9 @@ A token holds all of them by default (`POST /api/mcp/keys` accepts `scopes` to n
   `delete_meal`, `estimate_meal` (uses the user's own AI), `list_diets`, `list_recipes`, `get_recipe`,
   `get_meal_plan`, `generate_meal_plan`, `list_activities`, `list_workout_programs`, `list_workouts`,
   `get_fitness_week`, `log_workout`, `update_workout`, `delete_workout`.
+- **Weight and fasting:** `get_weight_progress`, `log_weight`, `delete_weight`, `set_weight_goal` (target weight by a
+  date, with the weekly pace and daily calorie change it needs), `get_fasting`, `start_fast`, `end_fast`,
+  `update_fast`, `delete_fast`.
 
 The same tools (minus `delete_deck`, `delete_list`, `delete_habit`, list sharing and calendar subscription)
 power the in-app assistant («دستیار» in the app header), which runs on the user's own AI settings.

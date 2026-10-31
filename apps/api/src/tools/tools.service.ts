@@ -5,6 +5,7 @@ import {
   TextsService,
 } from '@all-in-one/applets/english-learning/api';
 import {
+  BodyService,
   HealthAiService,
   HealthService,
   TrainingService,
@@ -20,6 +21,7 @@ import {
   TickTickReconciliationService,
 } from '@all-in-one/applets/planner/api';
 import { englishTools } from './english-tools';
+import { healthBodyTools } from './health-body-tools';
 import { healthCoachTools } from './health-coach-tools';
 import { healthTools } from './health-tools';
 import { plannerTools } from './planner-tools';
@@ -46,6 +48,7 @@ export class ToolsService {
     private readonly health: HealthService,
     private readonly training: TrainingService,
     private readonly healthAi: HealthAiService,
+    private readonly body: BodyService,
   ) {}
 
   register(sink: ToolSink): void {
@@ -66,5 +69,6 @@ export class ToolsService {
     });
     healthCoachTools(sink, { health: this.health, training: this.training });
     healthTools(sink, { health: this.health, ai: this.healthAi });
+    healthBodyTools(sink, { body: this.body });
   }
 }

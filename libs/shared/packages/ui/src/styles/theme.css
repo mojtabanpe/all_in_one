@@ -746,6 +746,84 @@ textarea {
 .health-calm [data-slot='progress-indicator'] {
   background: var(--health-blue);
 }
+/* Fasting + weight goal cards on the health overview. */
+.health-body-grid {
+  display: grid;
+  gap: 14px;
+}
+@media (min-width: 640px) {
+  .health-body-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.health-body-card {
+  justify-content: flex-start;
+  min-width: 0;
+}
+.health-body-card .health-number {
+  font-size: clamp(36px, 9vw, 48px);
+}
+.health-calm .health-fast-progress [data-slot='progress-indicator'] {
+  background: var(--health-orange);
+}
+.health-calm .health-body-card [data-slot='progress-indicator'] {
+  transition: transform 300ms ease-out;
+}
+/* Pace badge: dark text on a tint (contrast ≥ 7:1); the dot carries the colour. */
+.health-pace {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #29292e;
+  background: #f0f0f4;
+}
+.health-pace::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.health-pace[data-pace='safe'],
+.health-pace[data-pace='done'] {
+  background: #e6f4ef;
+}
+.health-pace[data-pace='safe']::before,
+.health-pace[data-pace='done']::before {
+  background: var(--health-green);
+}
+.health-pace[data-pace='fast'] {
+  background: #fdf0e8;
+}
+.health-pace[data-pace='fast']::before {
+  background: var(--health-orange);
+}
+.health-pace[data-pace='too-fast'],
+.health-pace[data-pace='overdue'] {
+  background: #fdeaea;
+}
+.health-pace[data-pace='too-fast']::before,
+.health-pace[data-pace='overdue']::before {
+  background: #c43d3d;
+}
+.health-goal-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 22px;
+  background: #f6f6f9;
+}
+@media (prefers-reduced-motion: reduce) {
+  .health-calm .health-body-card [data-slot='progress-indicator'] {
+    transition: none;
+  }
+}
 @media (min-width: 1024px) {
   .health-overview-layout {
     display: grid;

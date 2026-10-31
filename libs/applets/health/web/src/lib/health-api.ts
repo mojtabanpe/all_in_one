@@ -1,6 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import type {
+  EndFastInput,
+  FastingState,
+  LogWeightInput,
+  StartFastInput,
+  UpdateFastInput,
+  WeightGoalInput,
+  WeightProgress,
   GenerateRoutineInput,
   SaveRoutineInput,
   WorkoutRoutine,
@@ -53,6 +60,43 @@ export class HealthApi {
   swapMeal(input: SwapPlanMealInput): Promise<MealPlan> {
     return firstValueFrom(
       this.http.patch<MealPlan>(`${this.base}/meal-plans/current/meal`, input),
+    );
+  }
+
+  logWeight(input: LogWeightInput): Promise<WeightProgress> {
+    return firstValueFrom(
+      this.http.post<WeightProgress>(`${this.base}/weight`, input),
+    );
+  }
+  removeWeight(id: string): Promise<WeightProgress> {
+    return firstValueFrom(
+      this.http.delete<WeightProgress>(`${this.base}/weight/${id}`),
+    );
+  }
+  setWeightGoal(input: WeightGoalInput): Promise<WeightProgress> {
+    return firstValueFrom(
+      this.http.put<WeightProgress>(`${this.base}/weight/goal`, input),
+    );
+  }
+
+  startFast(input: StartFastInput): Promise<FastingState> {
+    return firstValueFrom(
+      this.http.post<FastingState>(`${this.base}/fasting/start`, input),
+    );
+  }
+  endFast(input: EndFastInput): Promise<FastingState> {
+    return firstValueFrom(
+      this.http.post<FastingState>(`${this.base}/fasting/end`, input),
+    );
+  }
+  updateFast(id: string, input: UpdateFastInput): Promise<FastingState> {
+    return firstValueFrom(
+      this.http.patch<FastingState>(`${this.base}/fasting/${id}`, input),
+    );
+  }
+  removeFast(id: string): Promise<FastingState> {
+    return firstValueFrom(
+      this.http.delete<FastingState>(`${this.base}/fasting/${id}`),
     );
   }
 

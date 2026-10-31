@@ -66,6 +66,9 @@ export interface HealthProfile {
   dietSlug: string | null;
   ownDietNotes: string | null;
   excludedIngredients?: string[];
+  /** Weight goal (see weightPlan); null when none is set */
+  targetWeightKg?: number | null;
+  targetDate?: string | null;
   /** Daily calories, when sex/age/height/weight are known */
   calorieTarget: number | null;
 }
@@ -87,6 +90,7 @@ const FLOOR: Record<Sex, number> = { FEMALE: 1200, MALE: 1500 };
 /**
  * Daily calorie target: Mifflin-St Jeor BMR × activity factor, adjusted for the
  * goal, never below a safe floor (1200 kcal women / 1500 kcal men).
+ * `goalCalories` (from a dated weight goal) replaces the fixed goal adjustment.
  */
 export function calorieTarget(
   p: Pick<
@@ -94,6 +98,7 @@ export function calorieTarget(
     'sex' | 'birthYear' | 'heightCm' | 'weightKg' | 'activityLevel' | 'goal'
   >,
   year: number,
+  goalCalories?: number,
 ): number | null {
   if (!p.sex || !p.birthYear || !p.heightCm || !p.weightKg) return null;
   const age = year - p.birthYear;
@@ -103,6 +108,7 @@ export function calorieTarget(
     5 * age +
     (p.sex === 'MALE' ? 5 : -161);
   const target =
-    bmr * ACTIVITY_FACTOR[p.activityLevel] + GOAL_ADJUSTMENT[p.goal];
+    bmr * ACTIVITY_FACTOR[p.activityLevel] +
+    (goalCalories ?? GOAL_ADJUSTMENT[p.goal]);
   return Math.round(Math.max(target, FLOOR[p.sex]) / 10) * 10;
 }

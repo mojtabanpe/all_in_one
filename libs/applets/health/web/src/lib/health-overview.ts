@@ -38,8 +38,10 @@ import {
   lucideSandwich,
   lucideSoup,
 } from '@ng-icons/lucide';
+import { FastingCard } from './fasting-card';
 import { HealthApi, scoreClass } from './health-api';
 import { MealForm } from './meal-form';
+import { WeightCard } from './weight-card';
 
 const MEAL_ICONS: Record<MealType, string> = {
   BREAKFAST: 'lucideCoffee',
@@ -48,7 +50,7 @@ const MEAL_ICONS: Record<MealType, string> = {
   SNACK: 'lucideApple',
 };
 
-/** Today at a glance (Gordool style): calories, meal score, weekly training, two-tap logging. */
+/** Today at a glance (Gordool style): calories, meal score, fasting, weight goal, weekly training, two-tap logging. */
 @Component({
   selector: 'health-overview',
   imports: [
@@ -60,8 +62,10 @@ const MEAL_ICONS: Record<MealType, string> = {
     AioIcon,
     AioProgressDirectives,
     AioSkeleton,
+    FastingCard,
     MealForm,
     RouterLink,
+    WeightCard,
   ],
   providers: [
     provideIcons({
@@ -207,6 +211,10 @@ const MEAL_ICONS: Record<MealType, string> = {
                 : 'برای دیدن درشت‌مغذی‌ها، وعده‌ای با اطلاعات تغذیه‌ای ثبت کن.'
             }}
           </p>
+          <div class="health-body-grid">
+            <health-fasting-card />
+            <health-weight-card (changed)="profile.reload()" />
+          </div>
         </div>
         <section
           class="flex min-w-0 flex-col gap-3"

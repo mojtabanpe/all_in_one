@@ -234,6 +234,16 @@ When the owner gives a new instruction, add it to this list in the same change.
 
 30. **Health companion reference (2026-10-30):** The owner supplied Gordool screenshots and authorized redesigning the health applet for their comfortable, everyday companion feel: light-gray canvas, white generous rounded cards, asymmetrical metric tiles, colorful line icons, short actions, visual meal detail sheets and approachable training cards. Keep the existing features functional; do not invent water/fasting/challenge data or copy another app's character. Other applets retain the shared workspace design.
 
+## Fasting and weight goal (2026-10-31)
+
+34. **Health has real fasting and a dated weight goal** (owner: "I don't see a fasting card… I can't set my goal, e.g.
+    reach 85 kg in 2 months, and my current weight"). This replaces the "do not invent fasting data" part of
+    directive 30: fasting is tracked from the user's own start/end times, never made up. The overview shows a fasting
+    card (elapsed time, target protocol, end time, history) and a weight card (current weight, target by a date,
+    weekly pace with a too-fast warning). A dated goal drives the daily calorie target (deficit ≤ 1,000 kcal,
+    surplus ≤ 500, safe floors kept). Weigh-ins are one per Tehran day; the latest is the profile weight.
+    Backend: `BodyService` (health api); tools in `apps/api/src/tools/health-body-tools.ts`.
+
 ## Native task recurrence (2026-10-31)
 
 33. **Recurring tasks are native planner tasks**, including TickTick RRULE compatibility, persisted completion history, retry-safe occurrence identities, timezone-aware Today/Calendar queries, MCP CRUD/batches and existing Spartan task UI controls. Reuse the task system and preserve imported task IDs. Never insert the owner's reference schedules into production or reconcile production tasks before showing the proposed changes. Use explicit source-ID mappings and the reviewed reconciliation digest; migrations must not reset existing data. See `docs/recurring-tasks.md`.

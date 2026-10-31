@@ -45,6 +45,8 @@ import {
   type WorkoutLog,
   type WorkoutLogInput,
   type WorkoutProgram,
+  tehranDate,
+  weightPlan,
 } from '@all-in-one/applets/health/contracts';
 import { addDays } from '@all-in-one/shared/schemas';
 
@@ -102,6 +104,23 @@ function toMealLog(m: DbMealLog): MealLog {
   };
 }
 
+/**
+ * Daily calories a dated weight goal asks for (deficit < 0), replacing the
+ * goal's fixed adjustment; undefined without a goal or once it is overdue.
+ */
+function goalCalories(p: DbProfile | null, now: Date): number | undefined {
+  if (!p?.weightKg || !p.targetWeightKg || !p.targetDate) return undefined;
+  const plan = weightPlan({
+    currentKg: p.weightKg,
+    startKg: p.goalStartWeightKg ?? p.weightKg,
+    targetKg: p.targetWeightKg,
+    today: tehranDate(now),
+    targetDate: iso(p.targetDate),
+  });
+  if (plan.pace === 'overdue') return undefined;
+  return plan.dailyCalories;
+}
+
 @Injectable()
 export class HealthService {
   constructor(private readonly prisma: PrismaService) {}
@@ -118,10 +137,26 @@ export class HealthService {
     input: HealthProfileInput,
     now = new Date(),
   ): Promise<HealthProfile> {
-    const p = await this.prisma.healthProfile.upsert({
-      where: { userId },
-      create: { userId, ...input },
-      update: input,
+    const p = await this.prisma.$transaction(async (tx) => {
+      const before = await tx.healthProfile.findUnique({
+        where: { userId },
+        select: { weightKg: true },
+      });
+      const saved = await tx.healthProfile.upsert({
+        where: { userId },
+        create: { userId, ...input },
+        update: input,
+      });
+      // A changed weight is also today's weigh-in, so the weight chart follows it.
+      if (input.weightKg && input.weightKg !== before?.weightKg) {
+        const date = toDate(tehranDate(now));
+        await tx.healthWeightLog.upsert({
+          where: { userId_date: { userId, date } },
+          create: { userId, date, weightKg: input.weightKg },
+          update: { weightKg: input.weightKg },
+        });
+      }
+      return saved;
     });
     return this.toProfile(p, now);
   }
@@ -139,9 +174,17 @@ export class HealthService {
       ownDietNotes: p?.ownDietNotes ?? null,
       excludedIngredients: p?.excludedIngredients ?? [],
     } as const;
+    const targetDate = p?.targetDate ? iso(p.targetDate) : null;
+    const targetWeightKg = p?.targetWeightKg ?? null;
     return {
       ...profile,
-      calorieTarget: calorieTarget(profile, now.getUTCFullYear()),
+      targetWeightKg,
+      targetDate,
+      calorieTarget: calorieTarget(
+        profile,
+        now.getUTCFullYear(),
+        goalCalories(p, now),
+      ),
     };
   }
 

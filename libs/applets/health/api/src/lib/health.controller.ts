@@ -55,9 +55,22 @@ import {
   updateMealSchema,
   type UpdateWorkoutInput,
   updateWorkoutSchema,
+  type EndFastInput,
+  endFastSchema,
+  type FastingState,
+  type LogWeightInput,
+  logWeightSchema,
+  type StartFastInput,
+  startFastSchema,
+  type UpdateFastInput,
+  updateFastSchema,
+  type WeightGoalInput,
+  weightGoalSchema,
+  type WeightProgress,
 } from '@all-in-one/applets/health/contracts';
 import { Throttle } from '@nestjs/throttler';
 import * as z from 'zod/mini';
+import { BodyService } from './body.service';
 import { HealthAiService } from './health-ai.service';
 import { TrainingService } from './training.service';
 import { HealthService } from './health.service';
@@ -75,6 +88,7 @@ export class HealthController {
     private readonly health: HealthService,
     private readonly training: TrainingService,
     private readonly ai: HealthAiService,
+    private readonly body: BodyService,
   ) {}
 
   @Get('exercises')
@@ -198,6 +212,77 @@ export class HealthController {
     @Body({ schema: healthProfileSchema }) input: HealthProfileInput,
   ): Promise<HealthProfile> {
     return this.health.saveProfile(user.id, input);
+  }
+
+  // ---------- weight + goal ----------
+
+  @Get('weight')
+  weight(@CurrentUser() user: AuthUser): Promise<WeightProgress> {
+    return this.body.weight(user.id);
+  }
+
+  @Post('weight')
+  logWeight(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: logWeightSchema }) input: LogWeightInput,
+  ): Promise<WeightProgress> {
+    return this.body.logWeight(user.id, input);
+  }
+
+  @Delete('weight/:id')
+  removeWeight(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<WeightProgress> {
+    return this.body.removeWeight(user.id, id);
+  }
+
+  @Put('weight/goal')
+  setWeightGoal(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: weightGoalSchema }) input: WeightGoalInput,
+  ): Promise<WeightProgress> {
+    return this.body.setGoal(user.id, input);
+  }
+
+  // ---------- fasting ----------
+
+  @Get('fasting')
+  fasting(@CurrentUser() user: AuthUser): Promise<FastingState> {
+    return this.body.fasting(user.id);
+  }
+
+  @Post('fasting/start')
+  startFast(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: startFastSchema }) input: StartFastInput,
+  ): Promise<FastingState> {
+    return this.body.startFast(user.id, input);
+  }
+
+  @Post('fasting/end')
+  endFast(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: endFastSchema }) input: EndFastInput,
+  ): Promise<FastingState> {
+    return this.body.endFast(user.id, input);
+  }
+
+  @Patch('fasting/:id')
+  updateFast(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body({ schema: updateFastSchema }) input: UpdateFastInput,
+  ): Promise<FastingState> {
+    return this.body.updateFast(user.id, id, input);
+  }
+
+  @Delete('fasting/:id')
+  removeFast(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<FastingState> {
+    return this.body.removeFast(user.id, id);
   }
 
   // ---------- fitness (catalog is public) ----------

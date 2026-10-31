@@ -53,6 +53,8 @@ model User {
   healthProfile   HealthProfile?
   workoutLogs     WorkoutLog[]
   healthRoutines  HealthRoutine[]
+  healthWeights   HealthWeightLog[]
+  healthFasts     HealthFast[]
   mealLogs        MealLog[]
   mealPlans       MealPlan[]
   aiSettings      UserAiSettings?
