@@ -272,9 +272,7 @@ class NativePush {
           /* Keep the failed opt-in off. */
         }
       }
-      reply['error'] = error is StateError
-          ? error.message
-          : 'اتصال اعلان‌های اپ برقرار نشد. دوباره تلاش کن.';
+      reply['error'] = pushErrorMessage(error);
     }
     if (_nonce != nonce) return;
     final current = Uri.tryParse(await controller.currentUrl() ?? '');
@@ -310,4 +308,27 @@ class NativePush {
       await subscription.cancel();
     }
   }
+}
+
+/// A user-facing reason for a failed opt-in. Only error codes are shown:
+/// never provider messages, credentials or tokens.
+String pushErrorMessage(Object error) {
+  if (error is StateError) return error.message;
+  if (error is TimeoutException) {
+    return 'سرور اعلان گوگل (Firebase) جواب نداد. اینترنت یا فیلترشکن را بررسی کن و دوباره تلاش کن. (timeout)';
+  }
+  if (error is FirebaseException) {
+    final code = error.code.toUpperCase();
+    if (code.contains('SERVICE_NOT_AVAILABLE') ||
+        code.contains('UNAVAILABLE') ||
+        code.contains('IO_ERROR')) {
+      return 'به سرویس اعلان گوگل وصل نشدیم؛ شاید دسترسی به Google از این شبکه بسته باشد. با فیلترشکن دوباره امتحان کن. (${error.code})';
+    }
+    if (code.contains('MISSING_INSTANCEID_SERVICE') ||
+        code.contains('PLAY')) {
+      return 'سرویس‌های Google Play روی این دستگاه در دسترس نیست. (${error.code})';
+    }
+    return 'اتصال اعلان‌های اپ برقرار نشد. (${error.code})';
+  }
+  return 'اتصال اعلان‌های اپ برقرار نشد. دوباره تلاش کن. (${error.runtimeType})';
 }
