@@ -1183,12 +1183,10 @@ export class FitnessPage {
   });
   protected readonly routineForm = form(this.routineModel, (path) => {
     required(path.title);
-    min(path.daysPerWeek, 2);
-    max(path.daysPerWeek, 6);
+    min(path.daysPerWeek, 1);
+    max(path.daysPerWeek, 7);
     min(path.weeks, 1);
-    max(path.weeks, 12);
-    min(path.minutes, 20);
-    max(path.minutes, 90);
+    min(path.minutes, 1);
   });
   protected readonly sessionOpen = signal(false);
   protected readonly sessionModel = signal({
@@ -1248,7 +1246,7 @@ export class FitnessPage {
     const parsed = generateRoutineSchema.safeParse(this.routineModel());
     if (!parsed.success) {
       this.trainingError.set(
-        'نام، تجهیزات و بازه اعداد را بررسی کنید: ۲ تا ۶ جلسه، ۱ تا ۱۲ هفته و ۲۰ تا ۹۰ دقیقه.',
+        'نام و تجهیزات را بررسی کنید؛ جلسه‌ها ۱ تا ۷ در هفته‌اند و هفته و دقیقه باید دست‌کم ۱ باشند.',
       );
       return;
     }

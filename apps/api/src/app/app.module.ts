@@ -13,6 +13,7 @@ import { AssistantModule } from '../assistant/assistant.module';
 import { McpModule } from '../mcp/mcp.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { CatalogSeeder } from './catalog-seeder';
 
 @Module({
   imports: [
@@ -30,6 +31,6 @@ import { AppService } from './app.service';
     AssistantModule,
   ],
   controllers: [AppController, HealthController, AdminController],
-  providers: [AppService],
+  providers: [AppService, CatalogSeeder],
 })
 export class AppModule {}

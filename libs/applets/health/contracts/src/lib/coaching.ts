@@ -95,9 +95,10 @@ export const generateRoutineSchema = z.object({
   goal: z.enum(TRAINING_GOALS),
   level: z.enum(TRAINING_LEVELS),
   equipment: z.array(z.enum(EQUIPMENT)).check(z.minLength(1), z.maxLength(7)),
-  daysPerWeek: z.int().check(z.gte(2), z.lte(6)),
-  weeks: z.int().check(z.gte(1), z.lte(12)),
-  minutes: z.int().check(z.gte(20), z.lte(90)),
+  // Only what a weekly plan needs; the bounds above that are technical, not coaching advice.
+  daysPerWeek: z.int().check(z.gte(1), z.lte(7)),
+  weeks: z.int().check(z.gte(1), z.lte(520)),
+  minutes: z.int().check(z.gte(1), z.lte(600)),
 });
 export type GenerateRoutineInput = z.infer<typeof generateRoutineSchema>;
 export const routineExerciseSchema = z.object({
@@ -117,7 +118,7 @@ export const routineDaySchema = z.object({
 export type RoutineDay = z.infer<typeof routineDaySchema>;
 export const saveRoutineSchema = z
   .extend(generateRoutineSchema, {
-    days: z.array(routineDaySchema).check(z.minLength(2), z.maxLength(6)),
+    days: z.array(routineDaySchema).check(z.minLength(1), z.maxLength(7)),
   })
   .check(
     z.refine(
