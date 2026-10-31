@@ -237,3 +237,5 @@ When the owner gives a new instruction, add it to this list in the same change.
 36. Use the `better-ui` skill when refining UI details, including the shared Persian calendar/date controls.
 
 37. Provide an opt-in daily language-deck review notification with a configurable Tehran time. Send only when the user has non-suspended cards due for review; expose the setting to the assistant and ChatGPT tools too.
+
+38. Deploy through GitHub CI/CD. Never transfer local project files, local configuration files, or locally built artifacts directly to production over SSH, SCP, or rsync.
