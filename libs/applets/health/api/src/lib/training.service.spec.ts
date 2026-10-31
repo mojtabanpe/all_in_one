@@ -24,7 +24,10 @@ describe('training owner isolation and catalog', () => {
     for (const exercise of EXERCISES) {
       expect(exercise.instructions.length).toBeGreaterThanOrEqual(3);
       expect(exercise.mistakes.length).toBeGreaterThan(0);
-      expect(exercise.videoUrl).toBeNull();
+      if (exercise.videoUrl)
+        expect(exercise.videoUrl).toMatch(
+          /^https:\/\/www\.(aparat\.com\/v|youtube\.com\/watch\?v=)/,
+        );
       for (const slug of exercise.alternatives)
         expect(slugs.has(slug)).toBe(true);
     }

@@ -17,7 +17,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['جمع شدن زانو به داخل', 'جدا شدن پاشنه از زمین'],
     alternatives: ['reverse-lunge', 'trx-squat', 'goblet-squat', 'leg-press'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/4GRKD',
   },
   {
     slug: 'reverse-lunge',
@@ -34,7 +34,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['قدم خیلی کوتاه', 'خم شدن کمر'],
     alternatives: ['body-squat', 'trx-squat', 'goblet-squat', 'leg-press'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/d041a57',
   },
   {
     slug: 'wall-pushup',
@@ -51,7 +51,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['افتادگی کمر', 'باز شدن بیش از حد آرنج'],
     alternatives: ['pushup', 'trx-chest', 'db-floor-press', 'cable-press'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/ayvqqfq',
   },
   {
     slug: 'pushup',
@@ -68,7 +68,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['افتادن لگن', 'بالا بردن شانه‌ها'],
     alternatives: ['wall-pushup', 'trx-chest', 'db-floor-press', 'cable-press'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/o27cy80',
   },
   {
     slug: 'glute-bridge',
@@ -85,7 +85,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['قوس زیاد کمر', 'فشار دادن گردن'],
     alternatives: ['trx-lunge', 'db-rdl'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/xpfnc75',
   },
   {
     slug: 'bird-dog',
@@ -102,7 +102,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['چرخش لگن', 'بالا بردن پا بیش از خط بدن'],
     alternatives: ['prone-w', 'trx-row', 'db-row', 'lat-pulldown'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/u06216y',
   },
   {
     slug: 'prone-w',
@@ -119,7 +119,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['عقب بردن گردن', 'بالا کشیدن شانه‌ها'],
     alternatives: ['bird-dog', 'trx-row', 'db-row', 'lat-pulldown'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/g75qnjk',
   },
   {
     slug: 'dead-bug',
@@ -136,7 +136,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['قوس زیاد کمر', 'حرکت سریع'],
     alternatives: ['plank', 'trx-plank', 'cable-pallof'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/qhe9794',
   },
   {
     slug: 'plank',
@@ -153,7 +153,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['حبس نفس', 'بالا یا پایین افتادن لگن'],
     alternatives: ['dead-bug', 'trx-plank', 'cable-pallof'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/b040408',
   },
   {
     slug: 'wall-slide',
@@ -170,7 +170,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['قوس کمر', 'بالا بردن دست در دامنه دردناک'],
     alternatives: ['trx-y', 'db-press'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/u84wz64',
   },
   {
     slug: 'march',
@@ -187,7 +187,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['فرود محکم', 'حبس نفس'],
     alternatives: [],
-    videoUrl: null,
+    videoUrl: 'https://www.youtube.com/watch?v=9wl_AiNhYP0',
   },
   {
     slug: 'trx-squat',
@@ -204,7 +204,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['آویزان شدن کامل به دست‌ها', 'شل شدن بندها'],
     alternatives: ['body-squat', 'reverse-lunge', 'goblet-squat', 'leg-press'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/dzb02yc',
   },
   {
     slug: 'trx-row',
@@ -221,7 +221,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['افتادگی لگن', 'بالا کشیدن شانه'],
     alternatives: ['bird-dog', 'prone-w', 'db-row', 'lat-pulldown'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/LMb4d',
   },
   {
     slug: 'trx-chest',
@@ -238,7 +238,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['قوس کمر', 'باز کردن زیاد آرنج'],
     alternatives: ['wall-pushup', 'pushup', 'db-floor-press', 'cable-press'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/73uUF',
   },
   {
     slug: 'trx-lunge',
@@ -255,7 +255,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['کشیدن بدن با بازو', 'جمع شدن زانو به داخل'],
     alternatives: ['glute-bridge', 'db-rdl'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/k572x63',
   },
   {
     slug: 'trx-curl',
@@ -272,7 +272,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['جابجایی آرنج', 'حرکت دادن لگن'],
     alternatives: ['db-curl'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/1utKl',
   },
   {
     slug: 'trx-y',
@@ -289,7 +289,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['شیب زیاد بدن', 'بالا کشیدن شانه'],
     alternatives: ['wall-slide', 'db-press'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/KBG6p',
   },
   {
     slug: 'trx-plank',
@@ -306,7 +306,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['قوس کمر', 'شروع با بند نامطمئن'],
     alternatives: ['dead-bug', 'plank', 'cable-pallof'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/iM4mO',
   },
   {
     slug: 'goblet-squat',
@@ -323,7 +323,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['دور شدن دمبل از بدن', 'گرد شدن کمر'],
     alternatives: ['body-squat', 'reverse-lunge', 'trx-squat', 'leg-press'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/n6226a3',
   },
   {
     slug: 'db-row',
@@ -340,7 +340,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['چرخش تنه', 'تاب دادن وزنه'],
     alternatives: ['bird-dog', 'prone-w', 'trx-row', 'lat-pulldown'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/e0064ov',
   },
   {
     slug: 'db-floor-press',
@@ -357,7 +357,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['برخورد شدید بازو به زمین', 'خم شدن مچ'],
     alternatives: ['wall-pushup', 'pushup', 'trx-chest', 'cable-press'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/m49v0e5',
   },
   {
     slug: 'db-rdl',
@@ -374,7 +374,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['گرد شدن کمر', 'پایین رفتن بیشتر از دامنه کنترل'],
     alternatives: ['glute-bridge', 'trx-lunge'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/m00nt4f',
   },
   {
     slug: 'db-press',
@@ -391,7 +391,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['قوس دادن کمر', 'وزنه بیش از توان'],
     alternatives: ['wall-slide', 'trx-y'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/U3wMd',
   },
   {
     slug: 'db-curl',
@@ -408,7 +408,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['تاب دادن بدن', 'جلو آمدن آرنج'],
     alternatives: ['trx-curl'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/dkyxlpx',
   },
   {
     slug: 'lat-pulldown',
@@ -425,7 +425,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['کشیدن پشت گردن', 'تاب دادن تنه'],
     alternatives: ['bird-dog', 'prone-w', 'trx-row', 'db-row'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/fr1JI',
   },
   {
     slug: 'cable-press',
@@ -442,7 +442,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['چرخش تنه', 'قفل کردن آرنج'],
     alternatives: ['wall-pushup', 'pushup', 'trx-chest', 'db-floor-press'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/r2697eg',
   },
   {
     slug: 'cable-pallof',
@@ -459,7 +459,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['چرخش لگن', 'وزنه زیاد'],
     alternatives: ['dead-bug', 'plank', 'trx-plank'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/x19bwqt',
   },
   {
     slug: 'leg-press',
@@ -476,7 +476,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['جدا شدن لگن از صندلی', 'قفل کردن زانو'],
     alternatives: ['body-squat', 'reverse-lunge', 'trx-squat', 'goblet-squat'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/daq972b',
   },
   {
     slug: 'machine-chest',
@@ -493,7 +493,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['بالا کشیدن شانه', 'رها کردن وزنه'],
     alternatives: ['wall-pushup', 'pushup', 'trx-chest', 'db-floor-press'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/c79rpp0',
   },
   {
     slug: 'machine-row',
@@ -510,7 +510,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['کشیدن با کمر', 'بالا کشیدن شانه'],
     alternatives: ['bird-dog', 'prone-w', 'trx-row', 'db-row'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/c67lg90',
   },
   {
     slug: 'barbell-squat',
@@ -527,7 +527,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['نبود پایه ایمنی', 'از دست دادن فرم زیر بار'],
     alternatives: ['body-squat', 'reverse-lunge', 'trx-squat', 'goblet-squat'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/CI2KM',
   },
   {
     slug: 'barbell-row',
@@ -544,7 +544,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['تاب دادن کمر', 'وزنه زیاد'],
     alternatives: ['bird-dog', 'prone-w', 'trx-row', 'db-row'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/mwf3phh',
   },
   {
     slug: 'barbell-bench',
@@ -561,7 +561,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['نبود ایمنی زیر وزنه', 'باز کردن بیش از حد آرنج'],
     alternatives: ['wall-pushup', 'pushup', 'trx-chest', 'db-floor-press'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/7DWUl',
   },
   {
     slug: 'band-row',
@@ -578,7 +578,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['اتصال نامطمئن کش', 'رها کردن ناگهانی'],
     alternatives: ['bird-dog', 'prone-w', 'trx-row', 'db-row'],
-    videoUrl: null,
+    videoUrl: 'https://www.youtube.com/watch?v=WkNuYbWZ8g8',
   },
   {
     slug: 'band-squat',
@@ -595,7 +595,7 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['کش آسیب‌دیده', 'جمع شدن زانوها'],
     alternatives: ['body-squat', 'reverse-lunge', 'trx-squat', 'goblet-squat'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/q9991y0',
   },
   {
     slug: 'band-chest',
@@ -612,6 +612,6 @@ export const EXERCISES: Exercise[] = [
     ],
     mistakes: ['اتصال نامطمئن', 'باز شدن زیاد آرنج'],
     alternatives: ['wall-pushup', 'pushup', 'trx-chest', 'db-floor-press'],
-    videoUrl: null,
+    videoUrl: 'https://www.aparat.com/v/aR0mw',
   },
 ];

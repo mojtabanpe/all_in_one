@@ -12,6 +12,12 @@ export async function seedHealth(prisma: PrismaClient): Promise<void> {
       create: { ...data, videoUrl },
       update: data,
     });
+    // A video set by hand wins; the catalog's only fills an empty one.
+    if (videoUrl)
+      await prisma.healthExercise.updateMany({
+        where: { slug: e.slug, videoUrl: null },
+        data: { videoUrl },
+      });
   }
   for (const [sortOrder, a] of ACTIVITY_TYPES.entries()) {
     await prisma.activityType.upsert({

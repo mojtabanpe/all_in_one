@@ -736,13 +736,19 @@ type CategoryFilter = ActivityCategory | 'all';
               <p class="text-sm">{{ mistake }}</p>
             }
             @if (e.videoUrl) {
+              @let site = videoSite(e.videoUrl);
               <a
                 aioBtn
                 [href]="e.videoUrl"
                 target="_blank"
                 rel="noopener noreferrer"
-                >دیدن ویدئوی آموزش</a
+                >دیدن ویدئوی آموزش{{ site ? ' در ' + site : '' }}</a
               >
+              @if (site === 'یوتیوب') {
+                <p class="text-muted-foreground text-sm">
+                  یوتیوب در ایران فقط با فیلترشکن باز می‌شود.
+                </p>
+              }
             } @else {
               <p class="text-muted-foreground text-sm">
                 ویدئو هنوز اضافه نشده؛ می‌توانید با مراحل بالا حرکت را بشناسید.
@@ -1231,6 +1237,13 @@ export class FitnessPage {
         ...m,
         equipment: value.filter((e): e is Equipment => EQUIPMENT.includes(e)),
       }));
+  }
+  /** YouTube needs a VPN in Iran, so the button names where the video plays. */
+  protected videoSite(url: string): 'آپارات' | 'یوتیوب' | null {
+    const host = new URL(url).hostname.replace(/^www\./, '');
+    if (host === 'aparat.com') return 'آپارات';
+    if (host === 'youtube.com' || host === 'youtu.be') return 'یوتیوب';
+    return null;
   }
   protected exerciseName(slug: string) {
     return (
