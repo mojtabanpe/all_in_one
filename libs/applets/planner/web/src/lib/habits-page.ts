@@ -205,8 +205,10 @@ const emptyDraft = (): Draft => ({
                 class="flex min-w-0 flex-1 flex-col items-start text-start"
                 (click)="openEdit(h)"
               >
-                <span class="truncate font-semibold">{{ h.name }}</span>
-                <span class="text-muted-foreground text-xs">
+                <span class="line-clamp-2 w-full font-semibold wrap-anywhere">{{
+                  h.name
+                }}</span>
+                <span class="text-muted-foreground w-full text-xs">
                   @if (!due) {
                     امروز لازم نیست
                   } @else if (h.goal > 1) {
