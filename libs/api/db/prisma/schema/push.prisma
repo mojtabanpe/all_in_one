@@ -21,3 +21,12 @@ model PushDelivery {
   @@index([createdAt])
   @@map("push_deliveries")
 }
+
+/// One daily reminder shared across the user's subscribed devices.
+model ReviewReminderSetting {
+  userId String @id @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enabled Boolean @default(false)
+  time String @default("20:00") @db.VarChar(5)
+  @@map("review_reminder_settings")
+}

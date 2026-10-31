@@ -235,3 +235,5 @@ When the owner gives a new instruction, add it to this list in the same change.
 35. All app dates, including date selection controls, must use the Persian Solar Hijri (شمسی) calendar and Persian digits. Keep Gregorian ISO date values in storage and APIs; use the shared Spartan Jalali wrapper for date inputs.
 
 36. Use the `better-ui` skill when refining UI details, including the shared Persian calendar/date controls.
+
+37. Provide an opt-in daily language-deck review notification with a configurable Tehran time. Send only when the user has non-suspended cards due for review; expose the setting to the assistant and ChatGPT tools too.

@@ -5,6 +5,8 @@ import { PrismaModule } from '@all-in-one/api/db';
 import { PlannerApiModule } from '@all-in-one/applets/planner/api';
 import {
   pushSubscriptionSchema,
+  reviewReminderSchema,
+  type ReviewReminderSettings,
   removePushSchema,
   type PushSubscriptionInput,
 } from '@all-in-one/shared/schemas';
@@ -13,6 +15,15 @@ import { PushService } from './push.service';
 @Controller('push')
 class PushController {
   constructor(private readonly push: PushService) {}
+  @Get('review-settings') reviewSettings(@CurrentUser() user: AuthUser) {
+    return this.push.reviewSettings(user.id);
+  }
+  @Put('review-settings') updateReviewSettings(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: reviewReminderSchema }) input: ReviewReminderSettings,
+  ) {
+    return this.push.updateReviewSettings(user.id, input);
+  }
   @Get('status') status() {
     return this.push.status();
   }

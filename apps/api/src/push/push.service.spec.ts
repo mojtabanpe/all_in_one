@@ -1,7 +1,10 @@
 import { ConfigService } from '@nestjs/config';
 import type { PrismaService } from '@all-in-one/api/db';
 import type { TasksService } from '@all-in-one/applets/planner/api';
-import { pushSubscriptionSchema } from '@all-in-one/shared/schemas';
+import {
+  pushSubscriptionSchema,
+  reviewReminderSchema,
+} from '@all-in-one/shared/schemas';
 import { PushService, reminderOffset } from './push.service';
 
 describe('Web Push reminders', () => {
@@ -29,6 +32,7 @@ describe('Web Push reminders', () => {
   it('deduplicates sends, ignores stale sessions, and rechecks current task state', async () => {
     const keys = new Set<string>();
     const db = {
+      reviewReminderSetting: { findMany: vi.fn().mockResolvedValue([]) },
       plannerHabit: { findMany: vi.fn().mockResolvedValue([]) },
       pushSubscription: {
         findMany: vi.fn().mockResolvedValue([
@@ -82,6 +86,7 @@ describe('Web Push reminders', () => {
   });
   it('skips overdue and unrequested reminders', async () => {
     const db = {
+      reviewReminderSetting: { findMany: vi.fn().mockResolvedValue([]) },
       plannerHabit: { findMany: vi.fn().mockResolvedValue([]) },
       pushSubscription: {
         findMany: vi.fn().mockResolvedValue([
@@ -136,6 +141,7 @@ describe('habit reminders', () => {
       checkins: [] as { date: Date; value: number }[],
     };
     const db = {
+      reviewReminderSetting: { findMany: vi.fn().mockResolvedValue([]) },
       pushSubscription: {
         findMany: vi.fn().mockResolvedValue([
           {
@@ -198,5 +204,132 @@ describe('habit reminders', () => {
     habit.reminders = ['23:59', '24:00', 'legacy metadata'];
     await service.tick(new Date('2026-10-31T20:31:00Z')); // Sunday 00:01 Tehran, previous Saturday reminder.
     expect(send).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('language review reminders', () => {
+  function fixture(count = 3) {
+    const sentKeys = new Set<string>();
+    const db = {
+      pushSubscription: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: 'active',
+            userId: 'u1',
+            sessionVersion: 1,
+            user: { sessionVersion: 1 },
+          },
+          {
+            id: 'expired',
+            userId: 'u1',
+            sessionVersion: 0,
+            user: { sessionVersion: 1 },
+          },
+        ]),
+      },
+      plannerHabit: { findMany: vi.fn().mockResolvedValue([]) },
+      reviewReminderSetting: {
+        findMany: vi
+          .fn()
+          .mockResolvedValue([{ userId: 'u1', enabled: true, time: '20:00' }]),
+        findUnique: vi.fn().mockResolvedValue(null),
+        upsert: vi.fn(async ({ create }) => create),
+      },
+      englishCard: { count: vi.fn().mockResolvedValue(count) },
+      pushDelivery: {
+        createMany: vi.fn(async ({ data }) => {
+          const key = data[0].subscriptionId + data[0].key;
+          if (sentKeys.has(key)) return { count: 0 };
+          sentKeys.add(key);
+          return { count: 1 };
+        }),
+        deleteMany: vi.fn(async ({ where }) => {
+          if (where.key) sentKeys.delete(where.subscriptionId + where.key);
+          return { count: 1 };
+        }),
+      },
+    };
+    const service = new PushService(
+      db as unknown as PrismaService,
+      new ConfigService(),
+      { filter: vi.fn().mockResolvedValue([]) } as unknown as TasksService,
+    );
+    const send = vi.spyOn(service, 'send').mockResolvedValue(true);
+    return { service, send, db };
+  }
+  it('validates 24-hour times and defaults to off without writing settings', async () => {
+    const { service, db } = fixture();
+    expect(
+      reviewReminderSchema.safeParse({ enabled: true, time: '24:00' }).success,
+    ).toBe(false);
+    expect(
+      reviewReminderSchema.safeParse({ enabled: true, time: '09:30' }).success,
+    ).toBe(true);
+    expect(await service.reviewSettings('u1')).toEqual({
+      enabled: false,
+      time: '20:00',
+    });
+    expect(db.reviewReminderSetting.upsert).not.toHaveBeenCalled();
+    await service.updateReviewSettings('u1', { enabled: true, time: '09:30' });
+    expect(db.reviewReminderSetting.upsert).toHaveBeenCalledWith({
+      where: { userId: 'u1' },
+      create: { userId: 'u1', enabled: true, time: '09:30' },
+      update: { enabled: true, time: '09:30' },
+    });
+  });
+  it('sends only at the selected Tehran time, once per day, and excludes expired sessions', async () => {
+    const { service, send, db } = fixture();
+    await service.tick(new Date('2026-10-31T16:29:00Z'));
+    expect(send).not.toHaveBeenCalled();
+    await service.tick(new Date('2026-10-31T16:30:05Z'));
+    await service.tick(new Date('2026-10-31T16:30:35Z'));
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][2]).toBe('/app/english');
+    expect(db.englishCard.count).toHaveBeenCalledWith({
+      where: {
+        userId: 'u1',
+        suspended: false,
+        dueAt: { lte: new Date('2026-10-31T16:30:35Z') },
+        deck: { userId: 'u1' },
+      },
+    });
+    db.reviewReminderSetting.findMany.mockResolvedValue([
+      { userId: 'u1', enabled: true, time: '21:00' },
+    ]);
+    await service.tick(new Date('2026-10-31T17:30:05Z'));
+    expect(send).toHaveBeenCalledTimes(1);
+    await service.tick(new Date('2026-11-01T17:30:05Z'));
+    expect(send).toHaveBeenCalledTimes(2);
+  });
+  it('does not notify when there are no due cards or the reminder is disabled', async () => {
+    const { service, send, db } = fixture(0);
+    await service.tick(new Date('2026-10-31T16:30:05Z'));
+    expect(send).not.toHaveBeenCalled();
+    expect(db.pushDelivery.createMany).not.toHaveBeenCalled();
+    db.reviewReminderSetting.findMany.mockResolvedValue([]);
+    db.englishCard.count.mockClear();
+    await service.tick(new Date('2026-10-31T16:30:35Z'));
+    expect(db.englishCard.count).not.toHaveBeenCalled();
+    expect(db.reviewReminderSetting.findMany).toHaveBeenCalledWith({
+      where: { userId: { in: ['u1'] }, enabled: true },
+    });
+  });
+  it('retries failed sends within the grace period without sending stale reminders', async () => {
+    const { service, send } = fixture();
+    send.mockResolvedValueOnce(false).mockResolvedValue(true);
+    await service.tick(new Date('2026-10-31T16:30:05Z'));
+    await service.tick(new Date('2026-10-31T16:30:35Z'));
+    expect(send).toHaveBeenCalledTimes(2);
+    await service.tick(new Date('2026-11-01T16:36:00Z'));
+    expect(send).toHaveBeenCalledTimes(2);
+  });
+  it('checks the previous Tehran day when the retry window crosses midnight', async () => {
+    const { service, send, db } = fixture();
+    db.reviewReminderSetting.findMany.mockResolvedValue([
+      { userId: 'u1', enabled: true, time: '23:59' },
+    ]);
+    await service.tick(new Date('2026-10-31T20:31:00Z'));
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][3]).toBe('review:2026-10-31');
   });
 });

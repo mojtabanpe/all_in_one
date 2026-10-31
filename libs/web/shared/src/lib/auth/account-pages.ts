@@ -7,6 +7,7 @@ import {
   AioFieldDirectives,
   AioInput,
   AioSpinner,
+  AioSwitch,
   aioToast,
 } from '@all-in-one/ui';
 import { apiErrorMessage } from './auth.guards';
@@ -255,6 +256,7 @@ export class VerifyEmailPage implements OnInit {
   selector: 'web-account-page',
   imports: [
     AioButton,
+    AioSwitch,
     AioCardDirectives,
     AioFieldDirectives,
     AioInput,
@@ -351,6 +353,69 @@ export class VerifyEmailPage implements OnInit {
               پشتیبانی‌شده باز کن.
             </p>
           }
+          <form
+            class="border-border mt-2 flex flex-col gap-3 border-t pt-4"
+            (submit)="$event.preventDefault(); push.saveReview()"
+          >
+            <div class="flex min-h-11 items-center justify-between gap-3">
+              <label aioFieldLabel for="review-reminder-enabled"
+                >یادآوری مرور زبان</label
+              >
+              <aio-switch
+                inputId="review-reminder-enabled"
+                [checked]="push.reviewEnabled()"
+                (checkedChange)="push.reviewEnabled.set($event)"
+                [disabled]="push.reviewSaving() || !push.reviewLoaded()"
+              />
+            </div>
+            <div aioField>
+              <label aioFieldLabel for="review-reminder-time"
+                >ساعت یادآوری روزانه</label
+              >
+              <input
+                aioInput
+                id="review-reminder-time"
+                type="time"
+                required
+                class="min-w-0 max-w-full"
+                aria-describedby="review-reminder-description"
+                [value]="push.reviewTime()"
+                (input)="push.reviewTime.set($any($event.target).value)"
+                [disabled]="push.reviewSaving() || !push.reviewLoaded()"
+              />
+              <p
+                id="review-reminder-description"
+                class="text-muted-foreground text-xs"
+              >
+                به وقت تهران؛ برای دریافت یادآوری، اعلان‌های دستگاه را هم فعال
+                کن.
+              </p>
+            </div>
+            <p class="text-muted-foreground text-sm" role="status">
+              {{ push.reviewMessage() }}
+            </p>
+            @if (push.reviewLoaded()) {
+              <button
+                aioBtn
+                type="submit"
+                class="min-h-11 self-start"
+                [disabled]="push.reviewSaving()"
+              >
+                ذخیره یادآوری
+              </button>
+            } @else {
+              <button
+                aioBtn
+                type="button"
+                variant="outline"
+                class="min-h-11 self-start"
+                [disabled]="push.reviewSaving()"
+                (click)="push.loadReview()"
+              >
+                دریافت دوباره تنظیمات
+              </button>
+            }
+          </form>
         </div>
       </section>
       <web-ai-settings />
@@ -359,7 +424,10 @@ export class VerifyEmailPage implements OnInit {
     </div>
   `,
 })
-export class AccountPage {
+export class AccountPage implements OnInit {
+  ngOnInit() {
+    void this.push.loadReview();
+  }
   protected readonly push = inject(PushSettings);
   protected readonly auth = inject(AuthStore);
   protected readonly current = signal('');

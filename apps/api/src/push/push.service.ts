@@ -15,7 +15,10 @@ import {
   habitDueOn,
   zonedInstant,
 } from '@all-in-one/applets/planner/contracts';
-import type { PushSubscriptionInput } from '@all-in-one/shared/schemas';
+import type {
+  PushSubscriptionInput,
+  ReviewReminderSettings,
+} from '@all-in-one/shared/schemas';
 import * as webpush from 'web-push';
 
 export function reminderOffset(value: string): number | null {
@@ -57,6 +60,26 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
   onModuleDestroy() {
     if (this.timer) clearInterval(this.timer);
   }
+  async reviewSettings(userId: string): Promise<ReviewReminderSettings> {
+    const settings = await this.db.reviewReminderSetting.findUnique({
+      where: { userId },
+    });
+    return settings
+      ? { enabled: settings.enabled, time: settings.time }
+      : { enabled: false, time: '20:00' };
+  }
+  async updateReviewSettings(
+    userId: string,
+    input: ReviewReminderSettings,
+  ): Promise<ReviewReminderSettings> {
+    const settings = await this.db.reviewReminderSetting.upsert({
+      where: { userId },
+      create: { userId, ...input },
+      update: input,
+    });
+    return { enabled: settings.enabled, time: settings.time };
+  }
+
   async subscribe(userId: string, input: PushSubscriptionInput) {
     if (!this.status().enabled)
       throw new ServiceUnavailableException(
@@ -294,6 +317,57 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
                   where: { subscriptionId: sub.id, key },
                 });
             }
+          }
+        }
+      }
+      const reviewSettings = await this.db.reviewReminderSetting.findMany({
+        where: { userId: { in: users }, enabled: true },
+      });
+      for (const setting of reviewSettings) {
+        for (const date of [previousDay, today]) {
+          const due = zonedInstant(
+            date,
+            setting.time,
+            'Asia/Tehran',
+          )?.getTime();
+          if (
+            due === undefined ||
+            due > now.getTime() ||
+            due < now.getTime() - 300000
+          )
+            continue;
+          // Match the study queue: include new/due cards, but never suspended cards.
+          const count = await this.db.englishCard.count({
+            where: {
+              userId: setting.userId,
+              suspended: false,
+              dueAt: { lte: now },
+              deck: { userId: setting.userId },
+            },
+          });
+          if (!count) continue;
+          for (const sub of subscriptions.filter(
+            (s) =>
+              s.userId === setting.userId &&
+              s.sessionVersion === s.user.sessionVersion,
+          )) {
+            // One successful reminder per device/day, even if the time is changed later.
+            const key = `review:${date}`;
+            const claimed = await this.db.pushDelivery.createMany({
+              data: [{ subscriptionId: sub.id, key }],
+              skipDuplicates: true,
+            });
+            if (!claimed.count) continue;
+            const sent = await this.send(
+              sub,
+              `${count.toLocaleString('fa-IR')} کارت آمادهٔ مرور داری`,
+              '/app/english',
+              key,
+            );
+            if (!sent)
+              await this.db.pushDelivery.deleteMany({
+                where: { subscriptionId: sub.id, key },
+              });
           }
         }
       }

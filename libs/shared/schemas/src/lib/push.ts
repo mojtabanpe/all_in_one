@@ -30,3 +30,10 @@ export const pushSubscriptionSchema = z.object({
 });
 export const removePushSchema = z.object({ endpoint: pushEndpointSchema });
 export type PushSubscriptionInput = z.infer<typeof pushSubscriptionSchema>;
+
+/** Daily language reminder; times are Tehran wall-clock times. */
+export const reviewReminderSchema = z.object({
+  enabled: z.boolean(),
+  time: z.string().check(z.regex(/^([01]\d|2[0-3]):[0-5]\d$/)),
+});
+export type ReviewReminderSettings = z.infer<typeof reviewReminderSchema>;

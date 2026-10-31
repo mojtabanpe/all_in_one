@@ -30,6 +30,7 @@ model User {
   updatedAt    DateTime @updatedAt
 
   pushSubscriptions PushSubscription[]
+  reviewReminder ReviewReminderSetting?
   passwordResets     PasswordReset[]
   emailVerifications EmailVerification[]
   mcpKeys            McpKey[]

@@ -1,3 +1,5 @@
+import * as z from 'zod';
+import { reviewReminderSchema } from '@all-in-one/shared/schemas';
 import { PushService } from '../push/push.service';
 import { Injectable } from '@nestjs/common';
 import {
@@ -75,6 +77,36 @@ export class ToolsService {
         input: {},
       },
       async () => this.push.testDevices(sink.user),
+    );
+
+    sink.tool(
+      'get_review_reminder',
+      {
+        description:
+          'Read the user’s daily language review reminder setting. Time is HH:mm in Asia/Tehran.',
+        scope: 'cards:read',
+        kind: 'read',
+        input: {},
+      },
+      async () => this.push.reviewSettings(sink.user),
+    );
+    sink.tool(
+      'set_review_reminder',
+      {
+        description:
+          'Set or disable the user’s daily language reminder. Sends only if non-suspended cards are due. Time is HH:mm in Asia/Tehran. Device notification permission is managed by the user.',
+        scope: 'cards:write',
+        kind: 'update',
+        input: {
+          enabled: z.boolean(),
+          time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+        },
+      },
+      async (args) =>
+        this.push.updateReviewSettings(
+          sink.user,
+          reviewReminderSchema.parse(args),
+        ),
     );
 
     englishTools(sink, {
