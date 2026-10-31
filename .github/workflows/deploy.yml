@@ -73,4 +73,28 @@ jobs:
       - name: Start release
         env:
           FCM_SERVICE_ACCOUNT_JSON: ${{ secrets.FCM_SERVICE_ACCOUNT_JSON }}
-        run: sh deploy/release.sh "${{ needs.build.outputs.release }}"
+          RELEASE: ${{ needs.build.outputs.release }}
+        run: |
+          if [ -n "${FCM_SERVICE_ACCOUNT_JSON:-}" ]; then
+            docker run --rm --network host -e FCM_SERVICE_ACCOUNT_JSON \
+              --entrypoint node "all-in-one-api:$RELEASE" -e '
+                (async () => {
+                  const timer = setTimeout(() => {
+                    console.error("Firebase credential verification timed out");
+                    process.exit(1);
+                  }, 30000);
+                  try {
+                    const { cert } = require("firebase-admin/app");
+                    const account = JSON.parse(process.env.FCM_SERVICE_ACCOUNT_JSON);
+                    if (account.project_id !== "poshtetgarm") throw new Error();
+                    await cert(account).getAccessToken();
+                    clearTimeout(timer);
+                    console.log("Firebase server authentication verified");
+                  } catch {
+                    console.error("Firebase credential verification failed; check the production secret and server connectivity");
+                    process.exit(1);
+                  }
+                })();
+              '
+          fi
+          sh deploy/release.sh "$RELEASE"
