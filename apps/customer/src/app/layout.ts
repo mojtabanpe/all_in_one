@@ -54,7 +54,7 @@ import {
   template: `
     <aio-app-shell appName="پشتت گرم" [navItems]="nav">
       <web-assistant aioShellActions [context]="assistantContext()" />
-      @if (pwa.canInstall()) {
+      @if (pwa.installAvailable()) {
         <button
           aioShellActions
           aioBtn

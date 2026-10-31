@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import {
   Component,
+  computed,
   DestroyRef,
   inject,
   Injectable,
@@ -10,10 +11,17 @@ import { SwUpdate } from '@angular/service-worker';
 import {
   AioAlertDirectives,
   AioButton,
+  AioDialog,
+  AioDialogActions,
+  AioDialogBody,
   AioIcon,
   provideIcons,
 } from '@all-in-one/ui';
-import { lucideRefreshCw, lucideWifiOff } from '@ng-icons/lucide';
+import {
+  lucideDownload,
+  lucideRefreshCw,
+  lucideWifiOff,
+} from '@ng-icons/lucide';
 
 /** The non-standard event Chromium fires when the app can be installed. */
 interface InstallPromptEvent extends Event {
@@ -35,10 +43,32 @@ export class Pwa {
   readonly broken = signal(false);
   readonly canInstall = signal(false);
   readonly offline = signal(false);
+  readonly installed = signal(false);
+  readonly manualInstall = signal<'ios' | 'safari' | null>(null);
+  readonly installGuideOpen = signal(false);
+  readonly installAvailable = computed(
+    () =>
+      !this.installed() && (this.canInstall() || this.manualInstall() !== null),
+  );
 
   constructor() {
     const win = this.document.defaultView;
     if (!win) return;
+    const displayMode = win.matchMedia?.('(display-mode: standalone)');
+    const navigator = win.navigator as Navigator & { standalone?: boolean };
+    const syncInstalled = () => {
+      this.installed.set(
+        displayMode?.matches === true || navigator.standalone === true,
+      );
+    };
+    syncInstalled();
+    const ios =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+    const safari =
+      /Safari/.test(navigator.userAgent) &&
+      !/Chrome|Chromium|CriOS|FxiOS|Edg|OPR|Android/.test(navigator.userAgent);
+    this.manualInstall.set(ios ? 'ios' : safari ? 'safari' : null);
     this.offline.set(!win.navigator.onLine);
     const destroy = inject(DestroyRef);
     const listen = (
@@ -51,12 +81,16 @@ export class Pwa {
     };
     listen(win, 'online', () => this.offline.set(false));
     listen(win, 'offline', () => this.offline.set(true));
+    if (displayMode) listen(displayMode, 'change', syncInstalled);
     listen(win, 'beforeinstallprompt', (event) => {
+      if (this.installed()) return;
       event.preventDefault();
       this.installEvent = event as InstallPromptEvent;
       this.canInstall.set(true);
     });
     listen(win, 'appinstalled', () => {
+      this.installed.set(true);
+      this.installGuideOpen.set(false);
       this.installEvent = null;
       this.canInstall.set(false);
     });
@@ -82,11 +116,15 @@ export class Pwa {
   }
 
   async install() {
+    if (this.installed()) return;
     const event = this.installEvent;
-    if (!event) return;
+    if (!event) {
+      this.installGuideOpen.set(true);
+      return;
+    }
     this.installEvent = null;
     this.canInstall.set(false);
-    await event.prompt();
+    await event.prompt().catch(() => this.installGuideOpen.set(true));
   }
 
   async reload() {
@@ -103,13 +141,44 @@ export class Pwa {
 /** Offline notice and "new version" bar, floating above the bottom navigation. */
 @Component({
   selector: 'customer-pwa-bars',
-  imports: [AioAlertDirectives, AioButton, AioIcon],
-  providers: [provideIcons({ lucideRefreshCw, lucideWifiOff })],
+  imports: [
+    AioAlertDirectives,
+    AioButton,
+    AioIcon,
+    AioDialog,
+    AioDialogBody,
+    AioDialogActions,
+  ],
+  providers: [provideIcons({ lucideDownload, lucideRefreshCw, lucideWifiOff })],
   template: `
-    @if (pwa.offline() || pwa.updateReady() || pwa.broken()) {
+    @if (pwa.offline() || pwa.updateReady() || pwa.broken() || showInstall()) {
       <div
         class="pointer-events-none fixed inset-x-0 bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-40 flex flex-col items-center gap-2 px-4 md:bottom-6"
       >
+        @if (
+          showInstall() && !pwa.offline() && !pwa.updateReady() && !pwa.broken()
+        ) {
+          <div aioAlert class="glass pointer-events-auto w-full max-w-md">
+            <aio-icon name="lucideDownload" size="sm" />
+            <h2 aioAlertTitle>پشتت گرم روی دستگاه شما</h2>
+            <div aioAlertDescription>
+              <p>برنامه را نصب کنید و از صفحهٔ اصلی باز کنید.</p>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <button aioBtn class="min-h-11" (click)="pwa.install()">
+                  {{ pwa.canInstall() ? 'نصب برنامه' : 'راهنمای نصب' }}
+                </button>
+                <button
+                  aioBtn
+                  variant="ghost"
+                  class="min-h-11"
+                  (click)="installDismissed.set(true)"
+                >
+                  فعلاً نه
+                </button>
+              </div>
+            </div>
+          </div>
+        }
         @if (pwa.offline()) {
           <div
             aioAlert
@@ -119,7 +188,7 @@ export class Pwa {
             <aio-icon name="lucideWifiOff" size="sm" />
             <h2 aioAlertTitle>اینترنت قطع است</h2>
             <p aioAlertDescription>
-              صفحه‌های باز کار می‌کنند؛ ذخیره کردن بعد از وصل شدن.
+              تغییرات به اینترنت نیاز دارند. پس از وصل شدن دوباره تلاش کنید.
             </p>
           </div>
         }
@@ -156,8 +225,44 @@ export class Pwa {
         }
       </div>
     }
+    <aio-dialog [(open)]="pwa.installGuideOpen" title="نصب پشتت گرم">
+      <ng-template aioDialogBody>
+        <ol class="list-inside list-decimal space-y-3 text-sm leading-7">
+          @if (pwa.manualInstall() === 'ios') {
+            <li>این صفحه را در Safari باز کنید.</li>
+            <li>دکمهٔ اشتراک‌گذاری (Share) را بزنید.</li>
+            <li>
+              «افزودن به صفحهٔ اصلی» (Add to Home Screen) و سپس «افزودن» (Add)
+              را انتخاب کنید.
+            </li>
+          } @else if (pwa.manualInstall() === 'safari') {
+            <li>در Safari منوی File را باز کنید.</li>
+            <li>گزینهٔ Add to Dock را انتخاب کنید و Add را بزنید.</li>
+          } @else {
+            <li>این صفحه را در Chrome یا Edge باز کنید.</li>
+            <li>
+              از منوی مرورگر، گزینهٔ «نصب برنامه» یا «افزودن به صفحهٔ اصلی» را
+              انتخاب کنید.
+            </li>
+          }
+        </ol>
+      </ng-template>
+      <ng-template aioDialogActions>
+        <button
+          aioBtn
+          class="min-h-11"
+          (click)="pwa.installGuideOpen.set(false)"
+        >
+          متوجه شدم
+        </button>
+      </ng-template>
+    </aio-dialog>
   `,
 })
 export class PwaBars {
   protected readonly pwa = inject(Pwa);
+  protected readonly installDismissed = signal(false);
+  protected readonly showInstall = computed(
+    () => this.pwa.installAvailable() && !this.installDismissed(),
+  );
 }

@@ -88,3 +88,9 @@ pnpm nx graph
   Serve the apps and the api on the same site so the session cookie (`SameSite=Lax`) and
   CSRF protection work.
 - Health suggestions are general guidance, not medical advice (stated in the UI).
+
+## PWA installation
+
+The customer app at `/app/` uses Recall's Angular service-worker, install event, update notice and connectivity flow, with Poshtetgarm branding. Installation is available on the login page as well as after signing in. Chrome/Edge use the browser install prompt; Safari shows Add to Dock guidance on macOS and Add to Home Screen guidance on iPhone/iPad. Installed standalone windows hide the install offer.
+
+Build with `pnpm nx build customer` and deploy the complete `dist/apps/customer/browser` directory under `/app/` over HTTPS. Development builds do not register the service worker. The manifest, icons, `ngsw-worker.js` and `ngsw.json` must be served as files; the deployment nginx config supplies their content types and cache headers. The service worker caches the app shell, not API responses or offline edits.
