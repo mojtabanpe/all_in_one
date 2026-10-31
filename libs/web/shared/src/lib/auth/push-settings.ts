@@ -1,3 +1,4 @@
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { ReviewReminderSettings } from '@all-in-one/shared/schemas';
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, signal } from '@angular/core';
@@ -73,7 +74,9 @@ export class PushSettings {
   }
   readonly supported = !!this.sw?.isEnabled;
   constructor() {
-    this.sw?.subscription.subscribe((sub) => this.enabled.set(!!sub));
+    this.sw?.subscription
+      .pipe(takeUntilDestroyed())
+      .subscribe((sub) => this.enabled.set(!!sub));
   }
   private subscription() {
     if (!this.sw?.isEnabled)
