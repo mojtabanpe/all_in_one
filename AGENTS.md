@@ -277,3 +277,5 @@ When the owner gives a new instruction, add it to this list in the same change.
 55. All bottom sheets must have shared bottom breathing room in addition to the device safe-area inset, including the assistant composer and sheets without footer actions. Apply this in the shared dialog wrapper.
 
 56. Display large dashboard and health statistics with compact proportional Persian digits, avoiding the wide spacing of tabular numerals while retaining Vazirmatn and Persian digit shaping.
+
+57. Build and distribute separate Android APKs for ARM64, ARM32 and x86_64 to reduce download size, and push pending changes to master before starting this build.

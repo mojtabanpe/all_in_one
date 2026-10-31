@@ -2,12 +2,17 @@ name: Android APK
 
 on:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing release tag to receive architecture-specific APKs (optional)
+        required: false
+        type: string
   push:
     branches: [master]
     paths: ['native/poshtetgarm/**', '.github/workflows/android.yml']
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: android-${{ github.ref }}
@@ -37,10 +42,26 @@ jobs:
       - run: flutter analyze
       - run: flutter test --dart-define-from-file=firebase.android.json
       - name: Build APK
-        run: sh scripts/build-android.sh
+        run: sh scripts/build-android.sh --split-per-abi
       - uses: actions/upload-artifact@v4
         with:
           name: Poshtetgarm-Android-${{ github.sha }}
-          path: native/poshtetgarm/build/app/outputs/flutter-apk/app-release.apk
+          path: native/poshtetgarm/build/app/outputs/flutter-apk/app-*-release.apk
           if-no-files-found: error
           retention-days: 14
+      - name: Publish architecture-specific installers
+        if: github.event_name == 'workflow_dispatch' && inputs.release_tag != '' && github.ref == 'refs/heads/master'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -eu
+          gh release view "$RELEASE_TAG" > /dev/null
+          version=$(awk '/^version:/ {split($2, value, "+"); print value[1]}' pubspec.yaml)
+          mkdir -p dist/split
+          for abi in arm64-v8a armeabi-v7a x86_64; do
+            cp "build/app/outputs/flutter-apk/app-$abi-release.apk" "dist/split/Poshtetgarm-$version-$abi.apk"
+          done
+          (cd dist/split && sha256sum ./*.apk > SHA256SUMS-Android.txt)
+          gh release upload "$RELEASE_TAG" dist/split/*.apk dist/split/SHA256SUMS-Android.txt --clobber
