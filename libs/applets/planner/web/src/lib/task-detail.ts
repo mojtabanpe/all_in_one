@@ -115,7 +115,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
 
       <div class="flex flex-col gap-2">
         <span class="text-sm font-medium">تاریخ</span>
-        <div class="grid grid-cols-4 gap-2">
+        <div class="grid grid-cols-2 gap-2 min-[400px]:grid-cols-4">
           @for (d of quickDates; track d.label) {
             <button
               aioBtn
@@ -128,9 +128,10 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
             </button>
           }
         </div>
-        <div class="grid grid-cols-2 gap-2">
+        <div class="grid min-w-0 grid-cols-1 gap-2 min-[400px]:grid-cols-2">
           <input
             aioInput
+            class="min-w-0 max-w-full"
             type="date"
             aria-label="تاریخ دلخواه"
             [value]="t.date ?? ''"
@@ -138,6 +139,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
           />
           <input
             aioInput
+            class="min-w-0 max-w-full"
             type="time"
             aria-label="ساعت"
             [disabled]="!t.date"
@@ -148,6 +150,31 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
         @if (t.date) {
           <p class="text-muted-foreground text-xs">{{ dateLabel(t.date) }}</p>
         }
+      </div>
+
+      <div aioField>
+        <label aioFieldLabel for="task-reminder">یادآوری</label>
+        <aio-native-select
+          selectId="task-reminder"
+          [disabled]="!t.date || !t.time"
+          [value]="t.reminders[0] ?? ''"
+          (valueChange)="save({ reminders: $event ? [$event] : [] })"
+        >
+          <option aioNativeSelectOption value="">بدون یادآوری</option>
+          <option aioNativeSelectOption value="TRIGGER:PT0M">سر ساعت</option>
+          <option aioNativeSelectOption value="TRIGGER:-PT5M">
+            ۵ دقیقه قبل
+          </option>
+          <option aioNativeSelectOption value="TRIGGER:-PT15M">
+            ۱۵ دقیقه قبل
+          </option>
+          <option aioNativeSelectOption value="TRIGGER:-PT60M">
+            ۱ ساعت قبل
+          </option>
+        </aio-native-select>
+        <p class="text-muted-foreground text-xs">
+          تاریخ و ساعت را تعیین کن و اعلان‌ها را در حساب کاربری فعال کن.
+        </p>
       </div>
 
       @if (t.repeatRule || t.seriesId || t.isSeries) {

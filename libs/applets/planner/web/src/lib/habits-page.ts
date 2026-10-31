@@ -93,6 +93,8 @@ interface Draft {
   weekdays: number[];
   sectionId: string;
   newSection: string;
+  reminders: string[];
+  reminderMetadata: string[];
 }
 
 const emptyDraft = (): Draft => ({
@@ -104,6 +106,8 @@ const emptyDraft = (): Draft => ({
   weekdays: [0, 1, 2, 3, 4, 5, 6],
   sectionId: '',
   newSection: '',
+  reminders: [],
+  reminderMetadata: [],
 });
 
 /** TickTick habits: a week strip, check-ins in one tap, streak flames, sections. */
@@ -375,6 +379,57 @@ const emptyDraft = (): Draft => ({
               }
             </div>
           </div>
+          <div class="flex min-w-0 flex-col gap-3">
+            <h3 class="text-sm font-medium">یادآوری‌ها</h3>
+            <p class="text-muted-foreground text-xs" id="habit-reminder-help">
+              ساعت‌ها به وقت تهران و برای روزهای انتخاب‌شده‌اند. بعد از رسیدن به
+              هدف روزانه، یادآوری‌های همان روز متوقف می‌شوند.
+            </p>
+            @for (time of d.reminders; track $index; let i = $index) {
+              <div class="flex min-w-0 items-end gap-2">
+                <div aioField class="min-w-0 flex-1">
+                  <label aioFieldLabel [for]="'habit-reminder-' + i"
+                    >ساعت یادآوری {{ fa(i + 1) }}</label
+                  >
+                  <input
+                    aioInput
+                    type="time"
+                    required
+                    class="min-w-0 max-w-full"
+                    [id]="'habit-reminder-' + i"
+                    [value]="time"
+                    aria-describedby="habit-reminder-help"
+                    (input)="setReminder(i, $any($event.target).value)"
+                  />
+                </div>
+                <button
+                  aioBtn
+                  type="button"
+                  variant="ghost"
+                  class="min-h-11 shrink-0"
+                  [attr.aria-label]="'حذف یادآوری ' + fa(i + 1)"
+                  (click)="removeReminder(i)"
+                >
+                  حذف
+                </button>
+              </div>
+            } @empty {
+              <p class="text-muted-foreground text-sm">یادآوری ندارد.</p>
+            }
+            <button
+              aioBtn
+              type="button"
+              variant="outline"
+              class="min-h-11 self-start"
+              [disabled]="d.reminders.length + d.reminderMetadata.length >= 30"
+              (click)="addReminder()"
+            >
+              افزودن ساعت یادآوری
+            </button>
+            <p class="text-muted-foreground text-xs">
+              دریافت اعلان را از حساب کاربری، بخش اعلان‌ها فعال کن.
+            </p>
+          </div>
           <div aioField>
             <label aioFieldLabel for="habit-section">بخش</label>
             <aio-native-select
@@ -554,6 +609,10 @@ export class HabitsPage {
       weekdays: h.weekdays,
       sectionId: h.sectionId ?? '',
       newSection: '',
+      reminders: h.reminders.filter((t) => /^([01]\d|2[0-3]):[0-5]\d$/.test(t)),
+      reminderMetadata: h.reminders.filter(
+        (t) => !/^([01]\d|2[0-3]):[0-5]\d$/.test(t),
+      ),
     });
     this.editing.set(true);
   }
@@ -567,10 +626,34 @@ export class HabitsPage {
       this.patch({ weekdays: value.map(Number).sort() });
   }
 
+  protected addReminder() {
+    this.patch({ reminders: [...this.draft().reminders, '09:00'] });
+  }
+  protected setReminder(index: number, value: string) {
+    this.patch({
+      reminders: this.draft().reminders.map((time, i) =>
+        i === index ? value : time,
+      ),
+    });
+  }
+  protected removeReminder(index: number) {
+    this.patch({
+      reminders: this.draft().reminders.filter((_, i) => i !== index),
+    });
+  }
+
   protected async save() {
     const d = this.draft();
     if (!d.name.trim()) {
       aioToast.error('نام عادت را بنویس.');
+      return;
+    }
+    if (d.reminders.some((time) => !/^([01]\d|2[0-3]):[0-5]\d$/.test(time))) {
+      aioToast.error('ساعت هر یادآوری را مشخص کن.');
+      return;
+    }
+    if (new Set(d.reminders).size !== d.reminders.length) {
+      aioToast.error('ساعت‌های یادآوری نباید تکراری باشند.');
       return;
     }
     this.saving.set(true);
@@ -588,6 +671,7 @@ export class HabitsPage {
         goal: Math.min(100, Math.max(1, Math.round(d.goal))),
         unit: d.unit.trim(),
         weekdays: d.weekdays,
+        reminders: [...d.reminders.sort(), ...d.reminderMetadata],
         sectionId,
       };
       if (d.id) this.replace(await this.api.updateHabit(d.id, input));

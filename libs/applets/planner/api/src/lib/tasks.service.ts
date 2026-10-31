@@ -68,7 +68,11 @@ export class TasksService {
 
   // ---------------------------------------------------------------- queries
 
-  async filter(userId: string, f: TaskFilter): Promise<PlannerTask[]> {
+  async filter(
+    userId: string,
+    f: TaskFilter,
+    forReminders = false,
+  ): Promise<PlannerTask[]> {
     const lists = await this.access.listIds(userId);
     const listIds = f.listIds
       ? lists.filter((id) => f.listIds?.includes(id))
@@ -151,7 +155,7 @@ export class TasksService {
       where,
       include: TASK_INCLUDE,
       orderBy: [{ date: 'asc' }, { time: 'asc' }, { sortOrder: 'asc' }],
-      take: f.limit ?? PLANNER_LIMITS.results,
+      take: forReminders ? undefined : (f.limit ?? PLANNER_LIMITS.results),
     });
     const virtual = await this.recurrence.projected(
       listIds,
@@ -191,7 +195,9 @@ export class TasksService {
       const cut = window;
       tasks = tasks.filter((t) => inWindow(t, cut));
     }
-    return tasks.sort(compareTasks).slice(0, f.limit ?? PLANNER_LIMITS.results);
+    return tasks
+      .sort(compareTasks)
+      .slice(0, forReminders ? undefined : (f.limit ?? PLANNER_LIMITS.results));
   }
 
   /** Undone tasks due in a date range of at most 14 days. */

@@ -1,3 +1,4 @@
+import { PushModule } from '../push/push.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AiModule } from '@all-in-one/api/ai';
@@ -19,6 +20,7 @@ import { CatalogSeeder } from './catalog-seeder';
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validationSchema: envSchema }),
     PrismaModule,
+    PushModule,
     AuthModule,
     // Per-user AI services (profile settings) for every applet
     AiModule,

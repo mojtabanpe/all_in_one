@@ -491,7 +491,9 @@ export class TasksPage {
   protected readonly view = computed(() => this.query()?.get('v') || 'today');
 
   protected readonly listsOpen = signal(false);
-  protected readonly selectedId = signal<string | null>(null);
+  protected readonly selectedId = linkedSignal(
+    () => this.query()?.get('task') ?? null,
+  );
   protected readonly settingsListId = signal<string | null>(null);
   protected readonly editingTag = signal<PlannerTag | null>(null);
   protected readonly quickTitle = signal('');
@@ -586,8 +588,19 @@ export class TasksPage {
       : this.openRes.isLoading() && !this.openRes.hasValue(),
   );
 
+  private readonly selectedRes = httpResource<PlannerTask>(() => {
+    const id = this.selectedId();
+    return id && !this.tasks().some((t) => t.id === id)
+      ? `${this.base}/tasks/${encodeURIComponent(id)}`
+      : undefined;
+  });
+
   protected readonly selected = computed(
-    () => this.tasks().find((t) => t.id === this.selectedId()) ?? null,
+    () =>
+      this.tasks().find((t) => t.id === this.selectedId()) ??
+      (this.selectedId() && this.selectedRes.hasValue()
+        ? this.selectedRes.value()
+        : null),
   );
   protected readonly currentList = computed(() => {
     const v = this.view();
@@ -925,6 +938,8 @@ export class TasksPage {
       this.doneRes.reload();
       return;
     }
+    if (this.selectedRes.hasValue() && this.selectedRes.value().id === task.id)
+      this.selectedRes.value.set(task);
     this.tasks.update((list) => list.map((t) => (t.id === task.id ? task : t)));
   }
 

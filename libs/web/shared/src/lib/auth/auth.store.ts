@@ -1,3 +1,4 @@
+import { PushSettings } from './push-settings';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import type {
@@ -39,6 +40,7 @@ const unreachable = (error: unknown) =>
 /** Session state. The session itself is an httpOnly cookie set by the api. */
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
+  private readonly push = inject(PushSettings);
   private readonly http = inject(HttpClient);
   private readonly api = inject(API_BASE_URL);
   private pending: Promise<User | null> | null = null;
@@ -126,6 +128,7 @@ export class AuthStore {
   }
 
   async logout(): Promise<void> {
+    await this.push.disconnect();
     await firstValueFrom(
       this.http.post<void>(`${this.api}/auth/logout`, {}),
     ).catch(() => undefined);

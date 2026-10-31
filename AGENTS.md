@@ -224,3 +224,10 @@ When the owner gives a new instruction, add it to this list in the same change.
 ## Overlay scrolling (2026-10-31)
 
 32. Dialogs and bottom sheets must stay within the viewport and scroll long content while keeping their title and actions accessible. Phones always use bottom sheets, including in landscape; never open a desktop modal on a phone.
+
+## PWA notifications (2026-10-31)
+
+33. Provide opt-in Web Push notifications for the customer PWA: per-device subscriptions,
+    account settings with test/disable controls, and server-side planner reminders.
+
+34. Habits support one or multiple reminder times, editable per habit, delivered through PWA Web Push on the habit's scheduled weekdays.

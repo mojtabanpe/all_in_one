@@ -6,6 +6,9 @@ export const envSchema = z.object({
     .default('development'),
   API_PORT: z.coerce.number().int().positive().default(3333),
   /** Interface to listen on; 127.0.0.1 behind a reverse proxy. */
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().optional(),
   API_HOST: z.string().optional(),
   DATABASE_URL: z.url(),
   JWT_SECRET: z.string().min(32),

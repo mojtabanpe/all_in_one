@@ -1,0 +1,23 @@
+model PushSubscription {
+  id String @id @default(uuid(7)) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint String @unique
+  p256dh String
+  auth String
+  sessionVersion Int
+  createdAt DateTime @default(now())
+  deliveries PushDelivery[]
+  @@index([userId])
+  @@map("push_subscriptions")
+}
+
+model PushDelivery {
+  subscriptionId String @db.Uuid
+  subscription PushSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  key String
+  createdAt DateTime @default(now())
+  @@id([subscriptionId, key])
+  @@index([createdAt])
+  @@map("push_deliveries")
+}

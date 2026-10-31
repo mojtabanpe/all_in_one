@@ -844,6 +844,13 @@ export function plannerTools(kit: ToolSink, s: PlannerServices) {
       .optional()
       .describe('0 = Sunday … 6 = Saturday'),
     section_id: id.nullable().optional(),
+    reminders: z
+      .array(z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/))
+      .max(30)
+      .optional()
+      .describe(
+        'Daily reminder times in HH:mm, Asia/Tehran, only on scheduled weekdays; [] disables reminders.',
+      ),
   };
   kit.tool(
     'list_habits',

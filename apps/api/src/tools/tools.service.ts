@@ -1,3 +1,4 @@
+import { PushService } from '../push/push.service';
 import { Injectable } from '@nestjs/common';
 import {
   CardsService,
@@ -34,6 +35,7 @@ import type { ToolSink } from './tool-kit';
 @Injectable()
 export class ToolsService {
   constructor(
+    private readonly push: PushService,
     private readonly decks: DecksService,
     private readonly cards: CardsService,
     private readonly texts: TextsService,
@@ -52,6 +54,29 @@ export class ToolsService {
   ) {}
 
   register(sink: ToolSink): void {
+    sink.tool(
+      'push_status',
+      {
+        description:
+          'Check whether the server supports PWA push notifications. Enabling device permission must be done by the user in account settings.',
+        scope: 'planner:read',
+        kind: 'read',
+        input: {},
+      },
+      async () => ({ enabled: this.push.status().enabled }),
+    );
+    sink.tool(
+      'push_test',
+      {
+        description:
+          'Send a fixed test notification to this user’s subscribed devices. Only use when the user requests a test notification.',
+        scope: 'planner:write',
+        kind: 'create',
+        input: {},
+      },
+      async () => this.push.testDevices(sink.user),
+    );
+
     englishTools(sink, {
       decks: this.decks,
       cards: this.cards,

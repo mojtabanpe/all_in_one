@@ -1,3 +1,4 @@
+import { PushSettings } from './push-settings';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
@@ -309,6 +310,49 @@ export class VerifyEmailPage implements OnInit {
           </button>
         </form>
       </section>
+      <section aioCard>
+        <div aioCardHeader>
+          <h2 aioCardTitle>اعلان‌ها</h2>
+          <p aioCardDescription>
+            یادآوری کارهای زمان‌دار، حتی وقتی برنامه باز نیست.
+          </p>
+        </div>
+        <div aioCardContent class="flex flex-col gap-3">
+          <p class="text-muted-foreground text-sm" role="status">
+            {{ push.message() }}
+          </p>
+          @if (push.supported) {
+            <div class="flex flex-wrap gap-2">
+              <button aioBtn [disabled]="push.busy()" (click)="push.enable()">
+                {{ push.enabled() ? 'تازه‌سازی اتصال' : 'فعال‌کردن اعلان‌ها' }}
+              </button>
+              @if (push.enabled()) {
+                <button
+                  aioBtn
+                  variant="outline"
+                  [disabled]="push.busy()"
+                  (click)="push.test()"
+                >
+                  ارسال آزمایشی
+                </button>
+                <button
+                  aioBtn
+                  variant="ghost"
+                  [disabled]="push.busy()"
+                  (click)="push.disable()"
+                >
+                  غیرفعال‌کردن
+                </button>
+              }
+            </div>
+          } @else {
+            <p class="text-muted-foreground text-sm">
+              اعلان در این نسخه در دسترس نیست؛ برنامه را با HTTPS و مرورگر
+              پشتیبانی‌شده باز کن.
+            </p>
+          }
+        </div>
+      </section>
       <web-ai-settings />
       <web-chatgpt-connection />
       <ng-content />
@@ -316,6 +360,7 @@ export class VerifyEmailPage implements OnInit {
   `,
 })
 export class AccountPage {
+  protected readonly push = inject(PushSettings);
   protected readonly auth = inject(AuthStore);
   protected readonly current = signal('');
   protected readonly next = signal('');

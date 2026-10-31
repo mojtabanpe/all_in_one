@@ -29,6 +29,7 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  pushSubscriptions PushSubscription[]
   passwordResets     PasswordReset[]
   emailVerifications EmailVerification[]
   mcpKeys            McpKey[]

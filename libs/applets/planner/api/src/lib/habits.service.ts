@@ -105,7 +105,7 @@ export class HabitsService {
         unit: input.unit ?? '',
         externalSourceId: input.externalSourceId ?? null,
         repeatRule: input.repeatRule ?? null,
-        reminders: input.reminders ?? [],
+        reminders: [...new Set(input.reminders ?? [])].sort(),
         weekdays: input.weekdays
           ? [...new Set(input.weekdays)].sort()
           : undefined,
@@ -127,6 +127,9 @@ export class HabitsService {
       where: { id },
       data: {
         ...input,
+        ...(input.reminders
+          ? { reminders: [...new Set(input.reminders)].sort() }
+          : {}),
         ...(input.weekdays
           ? { weekdays: [...new Set(input.weekdays)].sort() }
           : {}),
