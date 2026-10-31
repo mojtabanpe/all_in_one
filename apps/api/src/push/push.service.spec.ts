@@ -137,16 +137,14 @@ describe('habit reminders', () => {
     };
     const db = {
       pushSubscription: {
-        findMany: vi
-          .fn()
-          .mockResolvedValue([
-            {
-              id: 's1',
-              userId: 'u1',
-              sessionVersion: 0,
-              user: { sessionVersion: 0 },
-            },
-          ]),
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: 's1',
+            userId: 'u1',
+            sessionVersion: 0,
+            user: { sessionVersion: 0 },
+          },
+        ]),
       },
       plannerHabit: { findMany: vi.fn().mockResolvedValue([habit]) },
       pushDelivery: {
