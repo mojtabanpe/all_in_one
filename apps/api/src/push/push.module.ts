@@ -9,6 +9,8 @@ import {
   type ReviewReminderSettings,
   removePushSchema,
   type PushSubscriptionInput,
+  nativePushSchema,
+  type NativePushInput,
 } from '@all-in-one/shared/schemas';
 import { PushService } from './push.service';
 
@@ -38,6 +40,12 @@ class PushController {
     @Body({ schema: removePushSchema }) input: { endpoint: string },
   ) {
     return this.push.remove(user.id, input.endpoint);
+  }
+  @Put('native/subscription') subscribeNative(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: nativePushSchema }) input: NativePushInput,
+  ) {
+    return this.push.subscribeNative(user.id, input);
   }
   @Post('test')
   @Throttle({ default: { limit: 3, ttl: 60000 } })

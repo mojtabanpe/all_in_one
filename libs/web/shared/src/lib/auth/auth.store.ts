@@ -1,6 +1,7 @@
 import { PushSettings } from './push-settings';
+import { NativePush } from './native-push';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import type {
   ChangePasswordInput,
   LoginInput,
@@ -40,6 +41,7 @@ const unreachable = (error: unknown) =>
 /** Session state. The session itself is an httpOnly cookie set by the api. */
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
+  private readonly nativePush = inject(NativePush);
   private readonly push = inject(PushSettings);
   private readonly http = inject(HttpClient);
   private readonly api = inject(API_BASE_URL);
@@ -48,6 +50,10 @@ export class AuthStore {
   /** `undefined` until the first `load()`; `null` when logged out. */
   readonly user = signal<User | null | undefined>(undefined);
   readonly loggedIn = computed(() => !!this.user());
+
+  constructor() {
+    effect(() => this.nativePush.setUser(this.user()?.id ?? null));
+  }
 
   /** Loads the current user once (deduplicated). */
   load(): Promise<User | null> {

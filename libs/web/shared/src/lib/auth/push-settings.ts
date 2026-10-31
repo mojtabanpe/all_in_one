@@ -1,13 +1,15 @@
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { ReviewReminderSettings } from '@all-in-one/shared/schemas';
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable, signal } from '@angular/core';
+import { effect, inject, Injectable, signal } from '@angular/core';
 import { SwPush } from '@angular/service-worker';
 import { firstValueFrom, take, timeout } from 'rxjs';
 import { API_BASE_URL } from '../api/api-base-url';
+import { NativePush } from './native-push';
 
 @Injectable({ providedIn: 'root' })
 export class PushSettings {
+  private readonly native = inject(NativePush);
   private readonly sw = inject(SwPush, { optional: true });
   private readonly http = inject(HttpClient);
   private readonly api = inject(API_BASE_URL);
@@ -72,11 +74,16 @@ export class PushSettings {
       this.reviewSaving.set(false);
     }
   }
-  readonly supported = !!this.sw?.isEnabled;
+  get supported() {
+    return this.native.available() || !!this.sw?.isEnabled;
+  }
   constructor() {
-    this.sw?.subscription
-      .pipe(takeUntilDestroyed())
-      .subscribe((sub) => this.enabled.set(!!sub));
+    effect(() => {
+      if (this.native.available()) this.enabled.set(this.native.enabled());
+    });
+    this.sw?.subscription.pipe(takeUntilDestroyed()).subscribe((sub) => {
+      if (!this.native.available()) this.enabled.set(!!sub);
+    });
   }
   private subscription() {
     if (!this.sw?.isEnabled)
@@ -86,6 +93,15 @@ export class PushSettings {
     return firstValueFrom(this.sw.subscription.pipe(take(1), timeout(15000)));
   }
   async enable() {
+    if (this.native.available()) {
+      await this.run(async () => {
+        await this.native.enable();
+        this.message.set(
+          'اعلان‌های اپ فعال شد. برای اطمینان یک اعلان آزمایشی بفرست.',
+        );
+      });
+      return;
+    }
     const permission =
       typeof Notification !== 'undefined'
         ? Notification.requestPermission()
@@ -123,6 +139,10 @@ export class PushSettings {
     });
   }
   async disconnect() {
+    if (this.native.available()) {
+      await this.native.disconnect();
+      return;
+    }
     if (!this.sw?.isEnabled) return;
     const sub = await this.subscription();
     if (sub) {
@@ -138,6 +158,11 @@ export class PushSettings {
   }
   async test() {
     await this.run(async () => {
+      if (this.native.available()) {
+        await this.native.test();
+        this.message.set('اعلان آزمایشی ارسال شد.');
+        return;
+      }
       const sub = await this.subscription();
       if (!sub) throw new Error('ابتدا اعلان‌ها را فعال کن.');
       await firstValueFrom(

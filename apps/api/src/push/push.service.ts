@@ -18,8 +18,11 @@ import {
 import type {
   PushSubscriptionInput,
   ReviewReminderSettings,
+  NativePushInput,
 } from '@all-in-one/shared/schemas';
 import * as webpush from 'web-push';
+import { createHash } from 'node:crypto';
+import { NativePush } from './native-push';
 
 export function reminderOffset(value: string): number | null {
   const match = /^(?:TRIGGER:)?-?PT(?:(\d+)H)?(?:(\d+)M)?$/.exec(value);
@@ -32,11 +35,14 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PushService.name);
   private timer?: ReturnType<typeof setInterval>;
   private running = false;
+  private readonly native: NativePush;
   constructor(
     private readonly db: PrismaService,
     private readonly config: ConfigService,
     private readonly tasks: TasksService,
-  ) {}
+  ) {
+    this.native = new NativePush(config);
+  }
   status() {
     const publicKey = this.config.get<string>('VAPID_PUBLIC_KEY');
     return {
@@ -46,10 +52,11 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
         this.config.get('VAPID_SUBJECT')
       ),
       publicKey: publicKey ?? null,
+      nativeEnabled: this.native.enabled,
     };
   }
   onModuleInit() {
-    if (this.status().enabled) {
+    if (this.status().enabled || this.native.enabled) {
       this.timer = setInterval(() => {
         void this.tick();
       }, 30000);
@@ -108,6 +115,38 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
     });
     return { ok: true };
   }
+  async subscribeNative(userId: string, input: NativePushInput) {
+    if (!this.native.enabled)
+      throw new ServiceUnavailableException(
+        'اعلان‌های اپ هنوز روی سرور تنظیم نشده‌اند.',
+      );
+    const endpoint = `native:${createHash('sha256').update(input.token).digest('hex')}`;
+    const user = await this.db.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
+    const existing = await this.db.pushSubscription.findUnique({
+      where: { endpoint },
+    });
+    if (existing && existing.userId !== userId)
+      throw new ConflictException(
+        'ابتدا اعلان‌های حساب قبلی را در این اپ غیرفعال کن.',
+      );
+    const data = {
+      userId,
+      endpoint,
+      platform: input.platform,
+      fcmToken: input.token,
+      p256dh: '',
+      auth: '',
+      sessionVersion: user.sessionVersion,
+    };
+    await this.db.pushSubscription.upsert({
+      where: { endpoint },
+      create: data,
+      update: data,
+    });
+    return { ok: true, endpoint };
+  }
   async remove(userId: string, endpoint: string) {
     await this.db.pushSubscription.deleteMany({ where: { userId, endpoint } });
     return { ok: true };
@@ -118,12 +157,19 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
       endpoint: string;
       p256dh: string;
       auth: string;
+      platform?: string;
+      fcmToken?: string | null;
     },
     title: string,
     url: string,
     tag: string,
   ) {
     try {
+      if (subscription.platform && subscription.platform !== 'WEB') {
+        if (!subscription.fcmToken) return false;
+        await this.native.send(subscription.fcmToken, title, url, tag);
+        return true;
+      }
       await webpush.sendNotification(
         {
           endpoint: subscription.endpoint,
@@ -157,7 +203,13 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
       return true;
     } catch (error) {
       const status = (error as { statusCode?: number }).statusCode;
-      if (status === 404 || status === 410)
+      const code = (error as { code?: string }).code;
+      if (
+        status === 404 ||
+        status === 410 ||
+        code === 'messaging/registration-token-not-registered' ||
+        code === 'messaging/invalid-registration-token'
+      )
         await this.db.pushSubscription.deleteMany({
           where: { id: subscription.id },
         });
@@ -167,10 +219,6 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
     }
   }
   async test(userId: string, endpoint: string) {
-    if (!this.status().enabled)
-      throw new ServiceUnavailableException(
-        'اعلان‌های سرور هنوز تنظیم نشده‌اند.',
-      );
     const sub = await this.db.pushSubscription.findFirst({
       where: { userId, endpoint },
       include: { user: true },

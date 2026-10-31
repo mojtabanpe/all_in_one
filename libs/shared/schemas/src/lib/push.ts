@@ -28,7 +28,19 @@ export const pushSubscriptionSchema = z.object({
     auth: z.string().check(z.regex(/^[A-Za-z0-9_-]{22}={0,2}$/)),
   }),
 });
-export const removePushSchema = z.object({ endpoint: pushEndpointSchema });
+export const nativePushSchema = z.object({
+  platform: z.enum(['ANDROID', 'MACOS']),
+  token: z
+    .string()
+    .check(z.minLength(20), z.maxLength(4096), z.regex(/^[A-Za-z0-9_:.-]+$/)),
+});
+export type NativePushInput = z.infer<typeof nativePushSchema>;
+export const removePushSchema = z.object({
+  endpoint: z.union([
+    pushEndpointSchema,
+    z.string().check(z.regex(/^native:[a-f0-9]{64}$/)),
+  ]),
+});
 export type PushSubscriptionInput = z.infer<typeof pushSubscriptionSchema>;
 
 /** Daily language reminder; times are Tehran wall-clock times. */

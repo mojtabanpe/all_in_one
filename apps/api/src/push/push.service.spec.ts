@@ -4,8 +4,140 @@ import type { TasksService } from '@all-in-one/applets/planner/api';
 import {
   pushSubscriptionSchema,
   reviewReminderSchema,
+  nativePushSchema,
+  removePushSchema,
 } from '@all-in-one/shared/schemas';
 import { PushService, reminderOffset } from './push.service';
+import { NativePush } from './native-push';
+
+describe('Native push', () => {
+  const token = 'device-token:'.repeat(5);
+  function setup(owner = 'u1') {
+    const db = {
+      user: {
+        findUniqueOrThrow: vi.fn().mockResolvedValue({ sessionVersion: 7 }),
+      },
+      pushSubscription: {
+        findUnique: vi.fn().mockResolvedValue(owner ? { userId: owner } : null),
+        upsert: vi.fn().mockResolvedValue({}),
+        deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+    };
+    const service = new PushService(
+      db as unknown as PrismaService,
+      new ConfigService({ FCM_SERVICE_ACCOUNT_JSON: '{}' }),
+      {} as TasksService,
+    );
+    return { db, service };
+  }
+  it('validates native tokens and never accepts native endpoints as Web Push URLs', () => {
+    expect(
+      nativePushSchema.safeParse({ token, platform: 'MACOS' }).success,
+    ).toBe(true);
+    expect(
+      nativePushSchema.safeParse({ token: 'x', platform: 'ANDROID' }).success,
+    ).toBe(false);
+    expect(nativePushSchema.safeParse({ token, platform: 'WEB' }).success).toBe(
+      false,
+    );
+    const endpoint = `native:${'a'.repeat(64)}`;
+    expect(removePushSchema.safeParse({ endpoint }).success).toBe(true);
+    expect(
+      pushSubscriptionSchema.safeParse({
+        endpoint,
+        keys: { p256dh: 'a'.repeat(87), auth: 'a'.repeat(22) },
+      }).success,
+    ).toBe(false);
+  });
+  it('registers per-user native devices with a stable hashed endpoint and session version', async () => {
+    const { db, service } = setup('');
+    const result = await service.subscribeNative('u1', {
+      token,
+      platform: 'ANDROID',
+    });
+    expect(result.endpoint).toMatch(/^native:[a-f0-9]{64}$/);
+    expect(result.endpoint).not.toContain(token);
+    expect(db.pushSubscription.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          userId: 'u1',
+          platform: 'ANDROID',
+          fcmToken: token,
+          sessionVersion: 7,
+        }),
+      }),
+    );
+    const again = await service.subscribeNative('u1', {
+      token,
+      platform: 'ANDROID',
+    });
+    expect(again.endpoint).toBe(result.endpoint);
+  });
+  it('rejects stealing another account’s token', async () => {
+    const { db, service } = setup('other-user');
+    await expect(
+      service.subscribeNative('u1', { token, platform: 'MACOS' }),
+    ).rejects.toThrow('حساب قبلی');
+    expect(db.pushSubscription.upsert).not.toHaveBeenCalled();
+  });
+  it('uses FCM for native devices and removes unregistered tokens', async () => {
+    const { db, service } = setup();
+    const send = vi
+      .spyOn(NativePush.prototype, 'send')
+      .mockResolvedValue(undefined);
+    const subscription = {
+      id: 's1',
+      endpoint: 'native:hash',
+      p256dh: '',
+      auth: '',
+      platform: 'MACOS',
+      fcmToken: token,
+    };
+    try {
+      expect(
+        await service.send(
+          subscription,
+          'یادآوری',
+          '/app/english',
+          'review:today',
+        ),
+      ).toBe(true);
+      expect(send).toHaveBeenCalledWith(
+        token,
+        'یادآوری',
+        '/app/english',
+        'review:today',
+      );
+      send.mockRejectedValue({
+        code: 'messaging/registration-token-not-registered',
+      });
+      expect(
+        await service.send(
+          subscription,
+          'یادآوری',
+          '/app/english',
+          'review:today',
+        ),
+      ).toBe(false);
+      expect(db.pushSubscription.deleteMany).toHaveBeenCalledWith({
+        where: { id: 's1' },
+      });
+      db.pushSubscription.deleteMany.mockClear();
+      send.mockRejectedValue({ code: 'messaging/server-unavailable' });
+      expect(
+        await service.send(
+          subscription,
+          'یادآوری',
+          '/app/english',
+          'review:today',
+        ),
+      ).toBe(false);
+      expect(db.pushSubscription.deleteMany).not.toHaveBeenCalled();
+    } finally {
+      send.mockRestore();
+    }
+  });
+});
 
 describe('Web Push reminders', () => {
   it('rejects private addresses and malformed keys', () => {
