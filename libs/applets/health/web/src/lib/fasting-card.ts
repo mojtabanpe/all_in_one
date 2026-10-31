@@ -17,6 +17,7 @@ import {
 } from '@all-in-one/applets/health/contracts';
 import {
   AioButton,
+  AioDateInput,
   AioConfirm,
   AioDialog,
   AioDialogActions,
@@ -50,6 +51,7 @@ const HOUR = 3_600_000;
   host: { class: 'flex min-w-0' },
   imports: [
     AioButton,
+    AioDateInput,
     AioDialog,
     AioDialogActions,
     AioDialogBody,
@@ -234,14 +236,23 @@ const HOUR = 3_600_000;
           </div>
           <div aioField>
             <label aioFieldLabel for="fast-start">از کی چیزی نخورده‌ای؟</label>
+            <aio-date-input
+              inputId="fast-start"
+              [minDate]="minStart().slice(0, 10)"
+              [maxDate]="nowInput().slice(0, 10)"
+              [value]="startInput().slice(0, 10)"
+              (valueChange)="startInput.set($event + startInput().slice(10))"
+            />
             <input
               aioInput
-              id="fast-start"
-              type="datetime-local"
-              [min]="minStart()"
-              [max]="nowInput()"
-              [value]="startInput()"
-              (change)="startInput.set($any($event.target).value)"
+              type="time"
+              aria-label="ساعت شروع فستینگ"
+              [value]="startInput().slice(11, 16)"
+              (change)="
+                startInput.set(
+                  startInput().slice(0, 11) + $any($event.target).value
+                )
+              "
               [attr.aria-invalid]="!!startError()"
               aria-describedby="fast-start-hint"
             />

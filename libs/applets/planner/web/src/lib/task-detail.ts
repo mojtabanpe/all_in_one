@@ -22,6 +22,7 @@ import {
 } from '@all-in-one/applets/planner/contracts';
 import {
   AioButton,
+  AioDateInput,
   AioCheckbox,
   AioFieldDirectives,
   AioIcon,
@@ -65,6 +66,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
   imports: [
     RecurrenceEditor,
     AioButton,
+    AioDateInput,
     AioCheckbox,
     AioFieldDirectives,
     AioIcon,
@@ -129,13 +131,11 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
           }
         </div>
         <div class="grid min-w-0 grid-cols-1 gap-2 min-[400px]:grid-cols-2">
-          <input
-            aioInput
+          <aio-date-input
             class="min-w-0 max-w-full"
-            type="date"
             aria-label="تاریخ دلخواه"
             [value]="t.date ?? ''"
-            (change)="save({ date: $any($event.target).value || null })"
+            (valueChange)="save({ date: $event || null })"
           />
           <input
             aioInput

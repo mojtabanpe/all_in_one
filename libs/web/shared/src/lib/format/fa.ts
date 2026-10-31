@@ -5,12 +5,17 @@ export function faDate(
   iso: string,
   options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' },
 ): string {
-  const key = JSON.stringify(options);
+  const formatOptions: Intl.DateTimeFormatOptions = {
+    timeZone: iso.length === 10 ? 'UTC' : 'Asia/Tehran',
+    ...options,
+    calendar: 'persian',
+    numberingSystem: 'arabext',
+  };
+  const key = JSON.stringify(formatOptions);
   let formatter = dateFormatters.get(key);
   if (!formatter) {
     formatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
-      timeZone: 'UTC',
-      ...options,
+      ...formatOptions,
     });
     dateFormatters.set(key, formatter);
   }

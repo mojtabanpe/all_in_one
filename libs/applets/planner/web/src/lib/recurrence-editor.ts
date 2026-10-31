@@ -13,6 +13,7 @@ import {
 } from '@all-in-one/applets/planner/contracts';
 import {
   AioButton,
+  AioDateInput,
   AioCheckbox,
   AioFieldDirectives,
   AioInput,
@@ -42,6 +43,7 @@ const days = [
   selector: 'planner-recurrence-editor',
   imports: [
     AioButton,
+    AioDateInput,
     AioCheckbox,
     AioFieldDirectives,
     AioInput,
@@ -120,12 +122,10 @@ const days = [
         <option aioNativeSelectOption value="COUNT">پس از چند نوبت</option>
       </aio-native-select>
       @if (ending() === 'DATE') {
-        <input
-          aioInput
-          type="date"
+        <aio-date-input
           aria-label="تاریخ پایان تکرار"
           [value]="until()"
-          (input)="until.set($any($event.target).value)"
+          (valueChange)="until.set($event)"
         />
       }
       @if (ending() === 'COUNT') {

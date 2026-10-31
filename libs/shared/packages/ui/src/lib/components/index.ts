@@ -6,3 +6,4 @@ export * from './dialog';
 export * from './feedback';
 export * from './icon';
 export * from './media';
+export * from './date-input';

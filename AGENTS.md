@@ -231,3 +231,7 @@ When the owner gives a new instruction, add it to this list in the same change.
     account settings with test/disable controls, and server-side planner reminders.
 
 34. Habits support one or multiple reminder times, editable per habit, delivered through PWA Web Push on the habit's scheduled weekdays.
+
+35. All app dates, including date selection controls, must use the Persian Solar Hijri (شمسی) calendar and Persian digits. Keep Gregorian ISO date values in storage and APIs; use the shared Spartan Jalali wrapper for date inputs.
+
+36. Use the `better-ui` skill when refining UI details, including the shared Persian calendar/date controls.

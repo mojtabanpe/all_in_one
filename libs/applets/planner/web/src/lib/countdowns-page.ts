@@ -11,6 +11,7 @@ import {
 } from '@all-in-one/applets/planner/contracts';
 import {
   AioButton,
+  AioDateInput,
   AioConfirm,
   AioDialog,
   AioDialogActions,
@@ -50,6 +51,7 @@ const emptyDraft = (): Draft => ({
   selector: 'planner-countdowns-page',
   imports: [
     AioButton,
+    AioDateInput,
     AioDialog,
     AioDialogActions,
     AioDialogBody,
@@ -156,12 +158,10 @@ const emptyDraft = (): Draft => ({
           <div class="grid grid-cols-2 gap-3">
             <div aioField>
               <label aioFieldLabel for="cd-date">تاریخ</label>
-              <input
-                aioInput
-                id="cd-date"
-                type="date"
+              <aio-date-input
+                inputId="cd-date"
                 [value]="d.date"
-                (change)="patch({ date: $any($event.target).value })"
+                (valueChange)="patch({ date: $event })"
               />
             </div>
             <div aioField>

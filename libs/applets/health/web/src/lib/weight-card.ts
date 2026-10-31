@@ -17,6 +17,7 @@ import {
 import { addDays, toIsoDate } from '@all-in-one/shared/schemas';
 import {
   AioButton,
+  AioDateInput,
   AioConfirm,
   AioDialog,
   AioDialogActions,
@@ -55,6 +56,7 @@ function addMonths(iso: string, months: number): string {
   host: { class: 'flex min-w-0' },
   imports: [
     AioButton,
+    AioDateInput,
     AioDialog,
     AioDialogActions,
     AioDialogBody,
@@ -203,11 +205,9 @@ function addMonths(iso: string, months: number): string {
             </div>
             <div aioField>
               <label aioFieldLabel for="weigh-date">روز</label>
-              <input
-                aioInput
-                id="weigh-date"
-                type="date"
-                [max]="today"
+              <aio-date-input
+                inputId="weigh-date"
+                [maxDate]="today"
                 [formField]="weighForm.date"
               />
               <p aioFieldDescription>{{ dateLabel(weighModel().date) }}</p>
@@ -330,11 +330,9 @@ function addMonths(iso: string, months: number): string {
             <label aioFieldLabel for="goal-date" class="mt-2"
               >یا تاریخ دلخواه</label
             >
-            <input
-              aioInput
-              id="goal-date"
-              type="date"
-              [min]="minDate"
+            <aio-date-input
+              inputId="goal-date"
+              [minDate]="minDate"
               [formField]="goalForm.targetDate"
             />
             <p aioFieldDescription>

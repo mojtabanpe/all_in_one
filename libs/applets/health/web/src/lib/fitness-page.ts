@@ -45,6 +45,7 @@ import {
   AioAccordionTrigger,
   AioBadge,
   AioButton,
+  AioDateInput,
   AioCardDirectives,
   AioConfirm,
   AioDialog,
@@ -92,6 +93,7 @@ type CategoryFilter = ActivityCategory | 'all';
     AioAccordionTrigger,
     AioBadge,
     AioButton,
+    AioDateInput,
     AioCardDirectives,
     AioDialog,
     AioDialogActions,
@@ -782,10 +784,8 @@ type CategoryFilter = ActivityCategory | 'all';
           <div class="grid grid-cols-2 gap-3">
             <div aioField>
               <label aioFieldLabel for="session-date">تاریخ</label
-              ><input
-                aioInput
-                id="session-date"
-                type="date"
+              ><aio-date-input
+                inputId="session-date"
                 [formField]="sessionForm.date"
               />
             </div>
@@ -1006,12 +1006,7 @@ type CategoryFilter = ActivityCategory | 'all';
           <div class="grid grid-cols-2 gap-3">
             <div aioField>
               <label aioFieldLabel for="w-date">تاریخ</label>
-              <input
-                aioInput
-                id="w-date"
-                type="date"
-                [formField]="logForm.date"
-              />
+              <aio-date-input inputId="w-date" [formField]="logForm.date" />
             </div>
             <div aioField>
               <label aioFieldLabel for="w-min">مدت (دقیقه)</label>
