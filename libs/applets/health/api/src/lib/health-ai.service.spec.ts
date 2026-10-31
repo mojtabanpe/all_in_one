@@ -57,17 +57,15 @@ function setup(
     profile: vi
       .fn()
       .mockResolvedValue({ excludedIngredients: ['گردو'] } as HealthProfile),
-    recipes: vi
-      .fn()
-      .mockResolvedValue([
-        current,
-        allowed,
-        recipe('excluded', {
-          ingredients: [{ item: 'گردو', amount: 'یک قاشق' }],
-        }),
-        recipe('other-diet', { diets: ['keto'] }),
-        recipe('other-meal', { mealType: 'DINNER' }),
-      ]),
+    recipes: vi.fn().mockResolvedValue([
+      current,
+      allowed,
+      recipe('excluded', {
+        ingredients: [{ item: 'گردو', amount: 'یک قاشق' }],
+      }),
+      recipe('other-diet', { diets: ['keto'] }),
+      recipe('other-meal', { mealType: 'DINNER' }),
+    ]),
   };
   return {
     gateway,
