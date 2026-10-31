@@ -110,12 +110,7 @@ export function jalaliToIso(value: JalaliDate): string {
   host: { class: 'block min-w-0 w-full' },
   styles: `
     .jalali-calendar {
-      --cell-size: 2.25rem;
-    }
-    @media (min-width: 360px) {
-      .jalali-calendar {
-        --cell-size: 2.75rem;
-      }
+      --cell-size: 2.75rem;
     }
   `,
   template: `
@@ -145,12 +140,14 @@ export function jalaliToIso(value: JalaliDate): string {
     <aio-dialog
       [(open)]="open"
       title="انتخاب تاریخ شمسی"
-      [contentClass]="'sm:max-w-sm ' + contentClass()"
+      [contentClass]="
+        'sm:max-w-sm [&_[data-slot=dialog-body]]:px-1 ' + contentClass()
+      "
     >
       <ng-template aioDialogBody>
         <div class="flex justify-center" dir="rtl">
           <hlm-calendar
-            class="jalali-calendar"
+            class="jalali-calendar p-0 [&_button]:min-h-11 [&_button]:min-w-11"
             [date]="date()"
             [defaultFocusedDate]="date() ?? today"
             [min]="parsedMin()"
