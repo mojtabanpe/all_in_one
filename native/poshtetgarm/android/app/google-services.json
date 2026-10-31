@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "255033746187",
+    "project_id": "poshtetgarm",
+    "storage_bucket": "poshtetgarm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:255033746187:android:6caa0f8b28a606abbd380e",
+        "android_client_info": {
+          "package_name": "ir.poshtetgarm.poshtetgarm_hybrid"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAiWCHRe4CquaSn8UwZH6KxFmh8XwFrIwQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

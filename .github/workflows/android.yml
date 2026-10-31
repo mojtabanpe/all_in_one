@@ -1,0 +1,46 @@
+name: Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths: ['native/poshtetgarm/**', '.github/workflows/android.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: native/poshtetgarm
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.6'
+          channel: stable
+          cache: true
+      - name: Configure Firebase app
+        run: python3 scripts/configure-android.py
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test --dart-define-from-file=firebase.android.json
+      - name: Build APK
+        run: sh scripts/build-android.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Poshtetgarm-Android-${{ github.sha }}
+          path: native/poshtetgarm/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 14

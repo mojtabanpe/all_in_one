@@ -1,0 +1,3 @@
+{
+  "FIREBASE_OPTIONS": "{\"apiKey\":\"YOUR_PUBLIC_FIREBASE_API_KEY\",\"appId\":\"YOUR_PLATFORM_SPECIFIC_APP_ID\",\"messagingSenderId\":\"YOUR_SENDER_ID\",\"projectId\":\"YOUR_PROJECT_ID\",\"iosBundleId\":\"ir.poshtetgarm.poshtetgarmHybrid\"}"
+}
