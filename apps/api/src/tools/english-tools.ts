@@ -1,6 +1,7 @@
 import type {
   CardsService,
   DecksService,
+  EnglishAiService,
   TextsService,
 } from '@all-in-one/applets/english-learning/api';
 import {
@@ -8,6 +9,9 @@ import {
   createDeckSchema,
   createTextSchema,
   DECK_COLORS,
+  CONVERSATION_SITUATIONS,
+  READING_LEVELS,
+  practiceRequestSchema,
   RATINGS,
   updateCardSchema,
   updateDeckSchema,
@@ -21,9 +25,32 @@ const id = z.uuid();
 /** Recall's 20 tools: decks, cards (with review) and reading passages. */
 export function englishTools(
   kit: ToolSink,
-  s: { decks: DecksService; cards: CardsService; texts: TextsService },
+  s: {
+    decks: DecksService;
+    cards: CardsService;
+    texts: TextsService;
+    ai: EnglishAiService;
+  },
 ) {
   const user = kit.user;
+
+  kit.tool(
+    'generate_shadowing_practice',
+    {
+      description:
+        'Generate an English dialogue for sentence-by-sentence shadowing using this user’s configured AI. Listen, then repeat just behind the speaker, matching rhythm and intonation. The app’s English practice page (?mode=shadowing) provides slow/normal speech and optional device-local recording; this tool returns text only and does not save progress or recordings.',
+      scope: 'readings:write',
+      kind: 'create',
+      input: {
+        situation: z.enum(CONVERSATION_SITUATIONS.map((s) => s.id)),
+        level: z.enum(READING_LEVELS.map((l) => l.id)).optional(),
+      },
+    },
+    (args) => {
+      const input = parseWith(practiceRequestSchema, args);
+      return s.ai.dialogue(user, input.situation, input.level);
+    },
+  );
 
   kit.tool(
     'list_decks',

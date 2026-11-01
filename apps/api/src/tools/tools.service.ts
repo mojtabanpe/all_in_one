@@ -5,6 +5,7 @@ import { Injectable } from '@nestjs/common';
 import {
   CardsService,
   DecksService,
+  EnglishAiService,
   TextsService,
 } from '@all-in-one/applets/english-learning/api';
 import {
@@ -41,6 +42,7 @@ export class ToolsService {
     private readonly decks: DecksService,
     private readonly cards: CardsService,
     private readonly texts: TextsService,
+    private readonly englishAi: EnglishAiService,
     private readonly lists: ListsService,
     private readonly tasks: TasksService,
     private readonly reconciliation: TickTickReconciliationService,
@@ -113,6 +115,7 @@ export class ToolsService {
       decks: this.decks,
       cards: this.cards,
       texts: this.texts,
+      ai: this.englishAi,
     });
     plannerTools(sink, {
       lists: this.lists,

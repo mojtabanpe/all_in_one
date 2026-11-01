@@ -45,8 +45,8 @@ import {
 import { EnglishApi, remember } from './english-api';
 import { Tts } from './tts';
 
-type Mode = 'writing' | 'speaking' | 'listening';
-const MODES: Mode[] = ['writing', 'speaking', 'listening'];
+type Mode = 'writing' | 'speaking' | 'listening' | 'shadowing';
+const MODES: Mode[] = ['writing', 'speaking', 'listening', 'shadowing'];
 const DECK_KEY = 'aio.english.practice.deck';
 const MAX_RECORDING = 1500 * 1024;
 
@@ -65,7 +65,7 @@ const freshTask = (): TaskState => ({
   level: 'B1',
 });
 
-/** Everyday-conversation practice (Recall practice page): writing, speaking, listening. */
+/** Everyday conversation, listening and sentence-by-sentence shadowing. */
 @Component({
   selector: 'english-learning-practice',
   imports: [
@@ -102,7 +102,7 @@ const freshTask = (): TaskState => ({
       <header>
         <h1 class="text-2xl font-bold">تمرین مکالمه</h1>
         <p class="text-muted-foreground text-sm">
-          انگلیسی روزمره: بنویس، بگو و گوش کن.
+          انگلیسی روزمره: بنویس، بگو، گوش کن و همراه گوینده تکرار کن.
         </p>
       </header>
 
@@ -110,7 +110,7 @@ const freshTask = (): TaskState => ({
         aioToggleGroup
         type="single"
         spacing="1"
-        class="lx-glass grid w-full grid-cols-3 rounded-2xl p-1"
+        class="lx-glass grid w-full grid-cols-2 rounded-2xl p-1 sm:grid-cols-4"
         aria-label="نوع تمرین"
         [value]="mode()"
         (valueChange)="setMode($event)"
@@ -158,7 +158,171 @@ const freshTask = (): TaskState => ({
         <p class="text-destructive text-sm" role="alert">{{ error() }}</p>
       }
 
-      @if (mode() === 'listening') {
+      @if (mode() === 'shadowing') {
+        <section
+          class="lx-glass flex flex-col gap-4 rounded-2xl p-4"
+          aria-labelledby="shadowing-title"
+        >
+          <h2 id="shadowing-title" class="text-lg font-bold">
+            همراه گوینده (Shadowing)
+          </h2>
+          <p class="text-muted-foreground text-sm leading-7">
+            اول جمله را گوش کن. دوباره پخش کن و با کمی تأخیر، هم‌زمان با گوینده
+            تکرار کن؛ ریتم و آهنگ صدایش را تقلید کن. برای شنیدن تفاوت‌ها، از
+            هدفون استفاده کن و صدایت را ضبط کن.
+          </p>
+          <button
+            aioBtn
+            size="lg"
+            [disabled]="busy() || recording() || recordingPending()"
+            (click)="newDialogue()"
+          >
+            @if (busy()) {
+              <aio-spinner /> در حال آماده کردن…
+            } @else {
+              <aio-icon name="lucideHeadphones" /> تمرین تازه
+            }
+          </button>
+          <p class="text-muted-foreground text-sm">
+            ساخت تمرین و صدای گوینده به تنظیمات چت و تبدیل متن به گفتار در حساب
+            کاربری ← هوش مصنوعی نیاز دارد.
+          </p>
+        </section>
+        @if (shadowLine(); as sentence) {
+          <section
+            class="lx-glass flex min-w-0 flex-col gap-4 rounded-2xl p-4"
+            aria-labelledby="shadow-sentence-title"
+          >
+            <h2
+              id="shadow-sentence-title"
+              class="font-semibold"
+              aria-live="polite"
+            >
+              جمله {{ persianNumber(shadowIndex() + 1) }} از
+              {{ persianNumber(dialogue()!.lines.length) }}
+            </h2>
+            @if (shadowFinished()) {
+              <p class="text-success font-semibold" role="status">
+                آفرین! همه جمله‌ها را تمرین کردی. برای روان‌تر شدن، یک دور دیگر
+                تکرار کن.
+              </p>
+            }
+            <div class="flex flex-wrap gap-2">
+              <div
+                aioToggleGroup
+                type="single"
+                variant="outline"
+                [value]="speedValue()"
+                (valueChange)="setShadowSpeed($event)"
+                aria-label="سرعت گوینده"
+              >
+                <button aioToggleGroupItem value="0.75" class="min-h-11">
+                  آهسته
+                </button>
+                <button aioToggleGroupItem value="1" class="min-h-11">
+                  عادی
+                </button>
+              </div>
+              <button
+                aioBtn
+                variant="ghost"
+                [attr.aria-pressed]="showText()"
+                (click)="showText.update((v) => !v)"
+              >
+                <aio-icon
+                  [name]="showText() ? 'lucideEyeOff' : 'lucideEye'"
+                  size="sm"
+                />
+                {{ showText() ? 'پنهان کردن متن' : 'نمایش متن' }}
+              </button>
+            </div>
+            @if (showText()) {
+              <p
+                dir="ltr"
+                lang="en"
+                class="text-start text-xl leading-9 wrap-anywhere"
+              >
+                {{ sentence.text }}
+              </p>
+            }
+            <div class="flex flex-wrap gap-3">
+              <button
+                aioBtn
+                [disabled]="recordingPending()"
+                (click)="playShadow()"
+              >
+                <aio-icon
+                  [name]="playing() ? 'lucideSquare' : 'lucidePlay'"
+                  size="sm"
+                />
+                {{ playing() ? 'توقف گوینده' : 'پخش جمله' }}
+              </button>
+              <button
+                aioBtn
+                variant="outline"
+                [disabled]="recordingPending()"
+                (click)="record()"
+              >
+                @if (recordingPending()) {
+                  <aio-spinner />
+                } @else {
+                  <aio-icon
+                    [name]="recording() ? 'lucideSquare' : 'lucideMic'"
+                    size="sm"
+                  />
+                }
+                {{ recording() ? 'پایان ضبط' : 'ضبط همراه گوینده' }}
+              </button>
+            </div>
+            <p class="text-muted-foreground text-sm" role="status">
+              {{
+                recording()
+                  ? 'در حال ضبط؛ جمله را پخش کن و همراهش تکرار کن. ضبط پس از یک دقیقه تمام می‌شود.'
+                  : 'صدای ضبط‌شده فقط روی همین دستگاه می‌ماند و با عوض کردن جمله پاک می‌شود.'
+              }}
+            </p>
+            @if (recordingUrl()) {
+              <div class="flex min-w-0 flex-col gap-2">
+                <span id="shadow-recording-label" class="text-sm font-medium"
+                  >صدای تو؛ با گوینده مقایسه کن</span
+                >
+                <audio
+                  [src]="recordingUrl()"
+                  controls
+                  class="h-12 w-full min-w-0"
+                  aria-labelledby="shadow-recording-label"
+                  (play)="stop()"
+                ></audio>
+              </div>
+            }
+            <div class="flex flex-wrap gap-3">
+              <button
+                aioBtn
+                variant="outline"
+                [disabled]="
+                  shadowIndex() === 0 || recording() || recordingPending()
+                "
+                (click)="moveShadow(-1)"
+              >
+                جمله قبلی
+              </button>
+              <button
+                aioBtn
+                [disabled]="recording() || recordingPending()"
+                (click)="moveShadow(1)"
+              >
+                {{
+                  shadowFinished()
+                    ? 'یک دور دیگر'
+                    : shadowIndex() === dialogue()!.lines.length - 1
+                      ? 'پایان تمرین'
+                      : 'تمرین کردم؛ جمله بعد'
+                }}
+              </button>
+            </div>
+          </section>
+        }
+      } @else if (mode() === 'listening') {
         <button
           aioBtn
           size="lg"
@@ -568,11 +732,13 @@ export class PracticePage {
     writing: 'نوشتن',
     speaking: 'گفتن',
     listening: 'شنیدن',
+    shadowing: 'همراهی',
   };
   protected readonly modeIcons: Record<Mode, string> = {
     writing: 'lucidePenLine',
     speaking: 'lucideMic',
     listening: 'lucideHeadphones',
+    shadowing: 'lucideVolume2',
   };
   protected readonly situations = CONVERSATION_SITUATIONS;
   protected readonly levels = READING_LEVELS;
@@ -590,10 +756,20 @@ export class PracticePage {
   });
   protected readonly current = computed(() => {
     const m = this.mode();
-    return m === 'listening' ? freshTask() : this.tasks()[m];
+    return m === 'listening' || m === 'shadowing'
+      ? freshTask()
+      : this.tasks()[m];
   });
 
   protected readonly dialogue = signal<Dialogue | null>(null);
+  protected readonly shadowIndex = signal(0);
+  protected readonly shadowFinished = signal(false);
+  protected readonly shadowLine = computed(
+    () => this.dialogue()?.lines[this.shadowIndex()],
+  );
+  protected readonly persianNumber = (value: number) =>
+    value.toLocaleString('fa-IR');
+  private playbackRun = 0;
   protected readonly playing = signal(false);
   protected readonly line = signal(-1);
   protected readonly showText = signal(false);
@@ -602,6 +778,7 @@ export class PracticePage {
   protected readonly speedValue = computed(() => String(this.speed()));
 
   protected readonly recording = signal(false);
+  protected readonly recordingPending = signal(false);
   protected readonly transcribing = signal(false);
   protected readonly recordingUrl = signal('');
   private recorder?: MediaRecorder;
@@ -634,7 +811,7 @@ export class PracticePage {
   }
 
   protected patch(change: Partial<TaskState>, mode = this.mode()) {
-    if (mode === 'listening') return;
+    if (mode === 'listening' || mode === 'shadowing') return;
     this.tasks.update((t) => ({ ...t, [mode]: { ...t[mode], ...change } }));
   }
 
@@ -705,14 +882,52 @@ export class PracticePage {
   }
 
   protected newDialogue() {
+    this.cancelRecording();
     return this.load(
       () => this.api.dialogue(this.situation(), this.level()),
       (dialogue) => {
         this.dialogue.set(dialogue);
         this.showText.set(false);
         this.choices.set({});
+        this.shadowIndex.set(0);
+        this.shadowFinished.set(false);
       },
     );
+  }
+
+  protected setShadowSpeed(value: unknown) {
+    this.stop();
+    this.setSpeed(value);
+  }
+
+  protected async playShadow() {
+    if (this.playing()) return this.stop();
+    const sentence = this.shadowLine();
+    if (!sentence) return;
+    const run = ++this.playbackRun;
+    this.tts.rate = this.speed();
+    this.playing.set(true);
+    try {
+      await this.tts.speak(sentence.text, this.speakerVoice(sentence.speaker));
+    } finally {
+      if (run === this.playbackRun) this.playing.set(false);
+    }
+  }
+
+  protected moveShadow(direction: number) {
+    const lines = this.dialogue()?.lines;
+    if (!lines?.length || this.recording() || this.recordingPending()) return;
+    this.stop();
+    this.cancelRecording();
+    if (this.shadowFinished() && direction === 1) {
+      this.shadowIndex.set(0);
+      this.shadowFinished.set(false);
+    } else if (this.shadowIndex() + direction >= lines.length) {
+      this.shadowFinished.set(true);
+    } else {
+      this.shadowIndex.set(Math.max(0, this.shadowIndex() + direction));
+      this.shadowFinished.set(false);
+    }
   }
 
   protected setSpeed(value: unknown) {
@@ -754,6 +969,7 @@ export class PracticePage {
   }
 
   protected stop() {
+    this.playbackRun++;
     this.tts.stop();
     this.tts.rate = 1;
     this.playing.set(false);
@@ -804,13 +1020,16 @@ export class PracticePage {
 
   /** Records up to a minute, then sends the audio to speech-to-text. */
   protected async record() {
+    if (this.recordingPending()) return;
     if (this.recording()) {
       this.recorder?.stop();
       return;
     }
-    this.stop();
+    const shadowing = this.mode() === 'shadowing';
+    if (!shadowing) this.stop();
     this.error.set('');
     const run = ++this.recordingRun;
+    this.recordingPending.set(true);
     try {
       if (
         !navigator.mediaDevices?.getUserMedia ||
@@ -823,6 +1042,7 @@ export class PracticePage {
         return;
       }
       this.stream = stream;
+      this.clearRecordingUrl();
       const mimeType = [
         'audio/webm;codecs=opus',
         'audio/mp4',
@@ -841,10 +1061,11 @@ export class PracticePage {
           recorder.stop();
       };
       recorder.onstop = () => {
-        clearTimeout(this.timer);
         stream.getTracks().forEach((t) => t.stop());
-        this.recording.set(false);
         if (run !== this.recordingRun) return;
+        clearTimeout(this.timer);
+        this.recording.set(false);
+        if (shadowing) this.stop();
         const audio = new Blob(chunks, { type: recorder.mimeType });
         if (!audio.size || audio.size > MAX_RECORDING) {
           this.error.set('ضبط کوتاه‌تری بگیر و دوباره امتحان کن.');
@@ -852,6 +1073,7 @@ export class PracticePage {
         }
         this.clearRecordingUrl();
         this.recordingUrl.set(URL.createObjectURL(audio));
+        if (shadowing) return;
         this.transcribing.set(true);
         this.api
           .transcribe(audio)
@@ -868,11 +1090,13 @@ export class PracticePage {
           });
       };
       recorder.start(1000);
+      this.recordingPending.set(false);
       this.recording.set(true);
       this.timer = setTimeout(() => {
         if (recorder.state !== 'inactive') recorder.stop();
       }, 60000);
     } catch (error) {
+      if (run !== this.recordingRun) return;
       this.error.set(
         (error as { name?: string })?.name === 'NotAllowedError'
           ? 'اجازه دسترسی به میکروفون را بده، یا پاسخ را بنویس.'
@@ -893,6 +1117,7 @@ export class PracticePage {
     if (this.recorder?.state === 'recording') this.recorder.stop();
     this.stream?.getTracks().forEach((t) => t.stop());
     this.recording.set(false);
+    this.recordingPending.set(false);
     this.transcribing.set(false);
     this.clearRecordingUrl();
   }

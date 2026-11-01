@@ -35,6 +35,12 @@ import { TextsService } from './texts.service';
     StarterDecksService,
     TextsService,
   ],
-  exports: [CardsService, DecksService, TextsService, StarterDecksService],
+  exports: [
+    AiService,
+    CardsService,
+    DecksService,
+    TextsService,
+    StarterDecksService,
+  ],
 })
 export class EnglishApiModule {}
