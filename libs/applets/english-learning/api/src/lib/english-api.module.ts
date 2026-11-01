@@ -8,6 +8,7 @@ import {
   EnglishCardsController,
   EnglishLibraryController,
   EnglishTextsController,
+  EnglishPresentationInterceptor,
 } from './english.controller';
 import { SpeechService } from './speech.service';
 import { StarterDecksService } from './starter-decks.service';
@@ -27,6 +28,7 @@ import { TextsService } from './texts.service';
     EnglishAiController,
   ],
   providers: [
+    EnglishPresentationInterceptor,
     AiService,
     AudioCacheService,
     CardsService,

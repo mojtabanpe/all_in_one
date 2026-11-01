@@ -29,7 +29,7 @@ export class Tts {
     } catch {
       if (generation === this.generation) {
         this.cancel();
-        aioToast.error('پخش تلفظ ممکن نشد.');
+        aioToast.error('Unable to play pronunciation.');
       }
     }
   }
@@ -62,7 +62,7 @@ export class Tts {
       }
     } catch {
       if (generation === this.generation)
-        aioToast.error('خواندن متن ممکن نشد.');
+        aioToast.error('Unable to read the text aloud.');
     } finally {
       if (generation === this.generation) this.cancel();
     }

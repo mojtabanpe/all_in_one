@@ -66,8 +66,8 @@ describe('SM-2 scheduling (Recall)', () => {
   });
 
   it('labels the next interval in Persian', () => {
-    expect(previewInterval(fresh, 'again')).toBe('۵ دقیقه');
-    expect(previewInterval(fresh, 'good')).toBe('۱ روز');
+    expect(previewInterval(fresh, 'again')).toBe('5 minutes');
+    expect(previewInterval(fresh, 'good')).toBe('1 day');
   });
 });
 

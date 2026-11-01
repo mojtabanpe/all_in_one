@@ -25,7 +25,10 @@ import {
   aioToast,
   provideIcons,
 } from '@all-in-one/ui';
-import { apiErrorMessage, faNumber } from '@all-in-one/web/shared';
+import {
+  englishErrorMessage as apiErrorMessage,
+  englishNumber as faNumber,
+} from './english-locale';
 import {
   lucideBookOpen,
   lucideListChecks,
@@ -68,6 +71,7 @@ const POINTS: Record<Rating, number> = {
 
 /** Study a deck's due cards (Recall study page) as a Duolingo-style session. */
 @Component({
+  host: { dir: 'ltr', lang: 'en' },
   selector: 'english-learning-study',
   imports: [
     AioButton,
@@ -99,7 +103,7 @@ const POINTS: Record<Rating, number> = {
           variant="ghost"
           size="icon"
           routerLink=".."
-          aria-label="پایان مرور"
+          aria-label="End review"
         >
           <aio-icon name="lucideX" />
         </a>
@@ -107,7 +111,7 @@ const POINTS: Record<Rating, number> = {
           aioProgress
           class="bg-muted h-4 flex-1 rounded-full"
           [value]="progress()"
-          aria-label="پیشرفت مرور"
+          aria-label="Review progress"
         >
           <div aioProgressIndicator class="rounded-full"></div>
         </div>
@@ -123,11 +127,11 @@ const POINTS: Record<Rating, number> = {
       } @else if (loadError()) {
         <div aioEmpty class="lx-glass rounded-3xl">
           <div aioEmptyHeader>
-            <h1 aioEmptyTitle>مرور باز نشد</h1>
+            <h1 aioEmptyTitle>Unable to load review</h1>
             <p aioEmptyDescription>{{ loadError() }}</p>
           </div>
           <div aioEmptyContent>
-            <button aioBtn (click)="load()">دوباره</button>
+            <button aioBtn (click)="load()">Again</button>
           </div>
         </div>
       } @else if (current(); as card) {
@@ -138,7 +142,7 @@ const POINTS: Record<Rating, number> = {
           type="button"
           class="lx-glass flex min-h-64 flex-col items-center justify-center gap-4 rounded-3xl p-6 text-center"
           (click)="toggle()"
-          [attr.aria-label]="flipped() ? 'نمایش رو' : 'نمایش جواب'"
+          [attr.aria-label]="flipped() ? 'Show front' : 'Show answer'"
           aria-live="polite"
         >
           @if (flipped()) {
@@ -149,7 +153,7 @@ const POINTS: Record<Rating, number> = {
                 >{{ u }}</span
               >
             }
-            <span dir="auto" class="text-xl font-semibold">{{
+            <span dir="ltr" class="text-xl font-semibold">{{
               parts(card).body
             }}</span>
           } @else {
@@ -165,7 +169,7 @@ const POINTS: Record<Rating, number> = {
             size="icon-lg"
             class="size-12 rounded-2xl [--primary:var(--gem)]"
             (click)="speak()"
-            aria-label="تلفظ"
+            aria-label="Pronunciation"
           >
             <aio-icon name="lucideVolume2" />
           </button>
@@ -177,7 +181,7 @@ const POINTS: Record<Rating, number> = {
               [attr.aria-expanded]="examplesOpen()"
             >
               <aio-icon name="lucideListChecks" size="sm" />
-              {{ examplesOpen() ? 'بستن مثال‌ها' : 'مثال‌ها' }}
+              {{ examplesOpen() ? 'Hide examples' : 'Examples' }}
             </button>
           }
           <button
@@ -186,7 +190,7 @@ const POINTS: Record<Rating, number> = {
             size="icon"
             class="text-destructive"
             (click)="deleteCurrent()"
-            aria-label="حذف این کارت"
+            aria-label="Delete this card"
           >
             <aio-icon name="lucideTrash2" size="sm" />
           </button>
@@ -205,11 +209,11 @@ const POINTS: Record<Rating, number> = {
 
         <div class="mt-auto flex flex-col gap-3">
           @if (flipped()) {
-            <p class="text-sm font-bold">چقدر یادت بود؟</p>
+            <p class="text-sm font-bold">How well did you remember?</p>
             <div
               class="grid grid-cols-2 gap-3"
               role="group"
-              aria-label="چقدر یادت بود؟"
+              aria-label="How well did you remember?"
             >
               @for (r of ratings; track r) {
                 <button
@@ -236,7 +240,7 @@ const POINTS: Record<Rating, number> = {
               class="h-14 w-full rounded-2xl"
               (click)="toggle()"
             >
-              نمایش جواب
+              Show answer
             </button>
           }
         </div>
@@ -251,9 +255,12 @@ const POINTS: Record<Rating, number> = {
             <aio-icon name="lucidePartyPopper" size="xl" />
           </div>
           <div class="flex flex-col gap-2">
-            <h1 class="text-primary text-3xl font-bold">آفرین! تمامش کردی</h1>
+            <h1 class="text-primary text-3xl font-bold">
+              Well done! You did it
+            </h1>
             <p class="text-muted-foreground">
-              مرور این دسته تمام شد. فردا برگرد تا شعله روشن بماند.
+              You finished reviewing this deck. Come back tomorrow to keep your
+              streak going.
             </p>
           </div>
           <div class="grid w-full grid-cols-3 gap-3">
@@ -281,7 +288,7 @@ const POINTS: Record<Rating, number> = {
             size="lg"
             class="mt-auto h-14 w-full rounded-2xl"
             routerLink=".."
-            >ادامه</a
+            >Continue</a
           >
         </section>
       } @else {
@@ -290,11 +297,11 @@ const POINTS: Record<Rating, number> = {
             <div aioEmptyMedia variant="icon" class="text-primary">
               <aio-icon name="lucideBookOpen" />
             </div>
-            <h1 aioEmptyTitle>فعلاً کارتی برای مرور نیست</h1>
-            <p aioEmptyDescription>کارت تازه اضافه کن یا بعداً برگرد.</p>
+            <h1 aioEmptyTitle>No cards due right now</h1>
+            <p aioEmptyDescription>Add new cards or come back later.</p>
           </div>
           <div aioEmptyContent>
-            <a aioBtn routerLink="..">بازگشت به دسته</a>
+            <a aioBtn routerLink="..">Back to deck</a>
           </div>
         </div>
       }
@@ -338,20 +345,20 @@ export class StudyPage {
   });
   protected readonly summary = computed(() => [
     {
-      label: 'امتیاز',
+      label: 'Points',
       value: faNumber(this.points()),
       icon: 'lucideZap',
       color: 'var(--streak)',
     },
     {
-      label: 'مرور',
+      label: 'Review',
       value: faNumber(this.reviewed()),
       icon: 'lucideBookOpen',
       color: 'var(--gem)',
     },
     {
-      label: 'یادت بود',
-      value: `٪${faNumber(Math.round((this.remembered() / Math.max(this.reviewed(), 1)) * 100))}`,
+      label: 'Recall',
+      value: `${faNumber(Math.round((this.remembered() / Math.max(this.reviewed(), 1)) * 100))}%`,
       icon: 'lucideTarget',
       color: 'var(--primary)',
     },
@@ -414,7 +421,9 @@ export class StudyPage {
       this.flipped.set(false);
       // A fresh leech leaves the queue instead of cycling back.
       if (updated.suspended) {
-        aioToast.info('این کارت چند بار فراموش شد و فعلاً کنار گذاشته شد');
+        aioToast.info(
+          'This card was repeatedly forgotten and has been paused.',
+        );
         this.queue.update((q) => q.slice(1));
         return;
       }
@@ -423,7 +432,7 @@ export class StudyPage {
         rating === 'again' ? [...q.slice(1), updated] : q.slice(1),
       );
     } catch (error) {
-      aioToast.error(apiErrorMessage(error, 'مرور ذخیره نشد.'));
+      aioToast.error(apiErrorMessage(error, 'Unable to save your review.'));
     } finally {
       this.busy.set(false);
     }
@@ -433,9 +442,10 @@ export class StudyPage {
     const card = this.current();
     if (!card || this.busy()) return;
     const ok = await this.confirm.ask({
-      title: 'این کارت حذف شود؟',
-      description: `«${card.front}» برای همیشه حذف می‌شود.`,
-      confirmText: 'حذف',
+      language: 'en',
+      title: 'Delete this card?',
+      description: `“${card.front}” will be permanently deleted.`,
+      confirmText: 'Delete',
       destructive: true,
     });
     if (!ok) return;
@@ -445,7 +455,7 @@ export class StudyPage {
       this.queue.update((q) => q.filter((c) => c.id !== card.id));
       this.startCount.update((n) => Math.max(0, n - 1));
       this.flipped.set(false);
-      aioToast.success('کارت حذف شد');
+      aioToast.success('Card deleted');
     } catch (error) {
       aioToast.error(apiErrorMessage(error));
     } finally {

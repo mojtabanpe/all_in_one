@@ -13,6 +13,10 @@ import { AioIcon } from './icon';
  * `aioShellActions`.
  */
 @Component({
+  host: {
+    '[attr.dir]': 'language() === "en" ? "ltr" : "rtl"',
+    '[attr.lang]': 'language()',
+  },
   selector: 'aio-app-shell',
   imports: [
     AioBottomNav,
@@ -24,7 +28,11 @@ import { AioIcon } from './icon';
   ],
   template: `
     <div hlmSidebarWrapper>
-      <hlm-sidebar side="right" variant="floating" collapsible="offcanvas">
+      <hlm-sidebar
+        [side]="language() === 'en' ? 'left' : 'right'"
+        variant="floating"
+        collapsible="offcanvas"
+      >
         <div hlmSidebarHeader class="flex-row items-center px-4 py-7">
           <a routerLink="/" class="flex flex-1 items-center gap-2 font-bold">
             <span class="aio-brand-mark"
@@ -35,12 +43,14 @@ import { AioIcon } from './icon';
           <!-- eslint-disable-next-line @angular-eslint/template/elements-content -->
           <button
             hlmSidebarTrigger
-            srOnlyText="بستن منو"
+            [srOnlyText]="language() === 'en' ? 'Close menu' : 'بستن منو'"
             class="text-muted-foreground size-11"
           ></button>
         </div>
         <div hlmSidebarContent class="aio-workspace-nav px-2">
-          <p class="aio-sidebar-caption px-4 pb-3">فضای شخصی شما</p>
+          <p class="aio-sidebar-caption px-4 pb-3">
+            {{ language() === 'en' ? 'Your workspace' : 'فضای شخصی شما' }}
+          </p>
           <div hlmSidebarGroup>
             <ul hlmSidebarMenu class="gap-2">
               @for (item of navItems(); track item.link) {
@@ -71,7 +81,7 @@ import { AioIcon } from './icon';
             <!-- eslint-disable-next-line @angular-eslint/template/elements-content -->
             <button
               hlmSidebarTrigger
-              srOnlyText="باز کردن منو"
+              [srOnlyText]="language() === 'en' ? 'Open menu' : 'باز کردن منو'"
               class="hidden size-11 md:inline-flex"
             ></button>
           }
@@ -90,7 +100,10 @@ import { AioIcon } from './icon';
       </main>
     </div>
 
-    <aio-bottom-nav [items]="navItems()" />
+    <aio-bottom-nav
+      [items]="navItems()"
+      [label]="language() === 'en' ? 'Main navigation' : 'ناوبری اصلی'"
+    />
     <aio-confirm-host />
   `,
 })
@@ -101,6 +114,7 @@ export class AioAppShell {
     () => this.sidebar.state() === 'collapsed',
   );
   readonly appName = input.required<string>();
+  readonly language = input<'fa' | 'en'>('fa');
   readonly brandIcon = input('lucideSparkles');
   readonly navItems = input.required<readonly AioNavItem[]>();
 }

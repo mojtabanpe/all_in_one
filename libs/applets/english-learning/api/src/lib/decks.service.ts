@@ -14,8 +14,10 @@ import type {
   ReadingText,
   UpdateDeckInput,
 } from '@all-in-one/applets/english-learning/contracts';
+import { englishStarterCard, englishStarterDeck } from './starter-data';
 
 export function toDeck(d: DbDeck): Deck {
+  d = englishStarterDeck(d);
   return {
     id: d.id,
     name: d.name,
@@ -27,6 +29,7 @@ export function toDeck(d: DbDeck): Deck {
 }
 
 export function toCard(c: DbCard): Card {
+  c = englishStarterCard(c);
   return {
     id: c.id,
     deckId: c.deckId,

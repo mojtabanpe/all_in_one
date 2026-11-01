@@ -18,12 +18,12 @@ export const DECK_COLORS = [
 ] as const;
 export type DeckColor = (typeof DECK_COLORS)[number];
 export const DECK_COLOR_LABELS: Record<DeckColor, string> = {
-  amber: 'کهربایی',
-  rose: 'صورتی',
-  sage: 'سبز',
-  sky: 'آبی',
-  violet: 'بنفش',
-  clay: 'سفالی',
+  amber: 'Amber',
+  rose: 'Rose',
+  sage: 'Sage',
+  sky: 'Sky',
+  violet: 'Violet',
+  clay: 'Clay',
 };
 
 export interface Deck {
@@ -122,10 +122,10 @@ export const RATINGS = ['again', 'hard', 'good', 'easy'] as const;
 /** How well the user recalled a card during review. */
 export type Rating = (typeof RATINGS)[number];
 export const RATING_LABELS: Record<Rating, string> = {
-  again: 'دوباره',
-  hard: 'سخت',
-  good: 'خوب',
-  easy: 'آسان',
+  again: 'Again',
+  hard: 'Hard',
+  good: 'Good',
+  easy: 'Easy',
 };
 
 export const reviewSchema = z.object({ rating: z.enum(RATINGS) });
@@ -213,18 +213,19 @@ export function schedule(
   };
 }
 
-/** When the card comes back after this rating, for the rating buttons (Persian). */
+/** When the card comes back after this rating, for the rating buttons (English). */
 export function previewInterval(
   card: Pick<Card, keyof SrsState>,
   rating: Rating,
 ): string {
-  if (rating === 'again') return '۵ دقیقه';
+  if (rating === 'again') return '5 minutes';
   const days = schedule(card, rating).intervalDays;
-  const fa = (n: number) => n.toLocaleString('fa-IR');
-  if (days < 1) return 'کمتر از یک روز';
-  if (days < 30) return `${fa(days)} روز`;
-  if (days < 365) return `${fa(Math.round(days / 30))} ماه`;
-  return `${fa(Math.round(days / 365))} سال`;
+  const duration = (n: number, unit: string) =>
+    `${n.toLocaleString('en-US')} ${unit}${n === 1 ? '' : 's'}`;
+  if (days < 1) return 'Less than a day';
+  if (days < 30) return duration(days, 'day');
+  if (days < 365) return duration(Math.round(days / 30), 'month');
+  return duration(Math.round(days / 365), 'year');
 }
 
 /* ---------------- Card text helpers ---------------- */

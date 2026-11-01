@@ -37,6 +37,13 @@
 @source '../../../../../../apps';
 @source '../../../../../../libs';
 
+/* English immersion uses Latin digit glyphs, including portalled overlays/toasts. */
+html[lang='en'] *,
+[lang='en'] *,
+[lang='en'] {
+  font-feature-settings: 'ss01' 0 !important;
+}
+
 @theme inline {
   /* Inter for Latin (and English-learning words), Vazirmatn for Persian. */
   --font-sans:

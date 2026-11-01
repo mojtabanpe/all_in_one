@@ -5,6 +5,7 @@ import {
   DestroyRef,
   inject,
   Injectable,
+  input,
   signal,
 } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
@@ -160,12 +161,27 @@ export class Pwa {
         ) {
           <div aioAlert class="glass pointer-events-auto w-full max-w-md">
             <aio-icon name="lucideDownload" size="sm" />
-            <h2 aioAlertTitle>پشتت گرم روی دستگاه شما</h2>
+            <h2 aioAlertTitle>
+              {{
+                copy('پشتت گرم روی دستگاه شما', 'Poshtetgarm on your device')
+              }}
+            </h2>
             <div aioAlertDescription>
-              <p>برنامه را نصب کنید و از صفحهٔ اصلی باز کنید.</p>
+              <p>
+                {{
+                  copy(
+                    'برنامه را نصب کنید و از صفحهٔ اصلی باز کنید.',
+                    'Install the app and open it from your home screen.'
+                  )
+                }}
+              </p>
               <div class="mt-3 flex flex-wrap gap-2">
                 <button aioBtn class="min-h-11" (click)="pwa.install()">
-                  {{ pwa.canInstall() ? 'نصب برنامه' : 'راهنمای نصب' }}
+                  {{
+                    pwa.canInstall()
+                      ? copy('نصب برنامه', 'Install app')
+                      : copy('راهنمای نصب', 'Installation guide')
+                  }}
                 </button>
                 <button
                   aioBtn
@@ -173,7 +189,7 @@ export class Pwa {
                   class="min-h-11"
                   (click)="installDismissed.set(true)"
                 >
-                  فعلاً نه
+                  {{ copy('فعلاً نه', 'Not now') }}
                 </button>
               </div>
             </div>
@@ -186,9 +202,16 @@ export class Pwa {
             role="status"
           >
             <aio-icon name="lucideWifiOff" size="sm" />
-            <h2 aioAlertTitle>اینترنت قطع است</h2>
+            <h2 aioAlertTitle>
+              {{ copy('اینترنت قطع است', 'You are offline') }}
+            </h2>
             <p aioAlertDescription>
-              تغییرات به اینترنت نیاز دارند. پس از وصل شدن دوباره تلاش کنید.
+              {{
+                copy(
+                  'تغییرات به اینترنت نیاز دارند. پس از وصل شدن دوباره تلاش کنید.',
+                  'Changes need an internet connection. Try again when you are online.'
+                )
+              }}
             </p>
           </div>
         }
@@ -202,13 +225,16 @@ export class Pwa {
             <h2 aioAlertTitle>
               {{
                 pwa.broken()
-                  ? 'این نسخه باید دوباره بارگذاری شود'
-                  : 'نسخه تازه آماده است'
+                  ? copy(
+                      'این نسخه باید دوباره بارگذاری شود',
+                      'Please reload this version'
+                    )
+                  : copy('نسخه تازه آماده است', 'An update is ready')
               }}
             </h2>
             <div aioAlertDescription class="mt-2 flex gap-2">
               <button aioBtn size="sm" (click)="pwa.reload()">
-                بارگذاری دوباره
+                {{ copy('بارگذاری دوباره', 'Reload') }}
               </button>
               @if (!pwa.broken()) {
                 <button
@@ -217,7 +243,7 @@ export class Pwa {
                   variant="ghost"
                   (click)="pwa.dismissUpdate()"
                 >
-                  بعداً
+                  {{ copy('بعداً', 'Later') }}
                 </button>
               }
             </div>
@@ -225,24 +251,68 @@ export class Pwa {
         }
       </div>
     }
-    <aio-dialog [(open)]="pwa.installGuideOpen" title="نصب پشتت گرم">
+    <aio-dialog
+      [(open)]="pwa.installGuideOpen"
+      [title]="copy('نصب پشتت گرم', 'Install Poshtetgarm')"
+      [language]="language()"
+    >
       <ng-template aioDialogBody>
         <ol class="list-inside list-decimal space-y-3 text-sm leading-7">
           @if (pwa.manualInstall() === 'ios') {
-            <li>این صفحه را در Safari باز کنید.</li>
-            <li>دکمهٔ اشتراک‌گذاری (Share) را بزنید.</li>
             <li>
-              «افزودن به صفحهٔ اصلی» (Add to Home Screen) و سپس «افزودن» (Add)
-              را انتخاب کنید.
+              {{
+                copy(
+                  'این صفحه را در Safari باز کنید.',
+                  'Open this page in Safari.'
+                )
+              }}
+            </li>
+            <li>
+              {{
+                copy('دکمهٔ اشتراک‌گذاری (Share) را بزنید.', 'Select Share.')
+              }}
+            </li>
+            <li>
+              {{
+                copy(
+                  '«افزودن به صفحهٔ اصلی» (Add to Home Screen) و سپس «افزودن» (Add) را انتخاب کنید.',
+                  'Select Add to Home Screen, then Add.'
+                )
+              }}
             </li>
           } @else if (pwa.manualInstall() === 'safari') {
-            <li>در Safari منوی File را باز کنید.</li>
-            <li>گزینهٔ Add to Dock را انتخاب کنید و Add را بزنید.</li>
-          } @else {
-            <li>این صفحه را در Chrome یا Edge باز کنید.</li>
             <li>
-              از منوی مرورگر، گزینهٔ «نصب برنامه» یا «افزودن به صفحهٔ اصلی» را
-              انتخاب کنید.
+              {{
+                copy(
+                  'در Safari منوی File را باز کنید.',
+                  'Open the File menu in Safari.'
+                )
+              }}
+            </li>
+            <li>
+              {{
+                copy(
+                  'گزینهٔ Add to Dock را انتخاب کنید و Add را بزنید.',
+                  'Select Add to Dock, then Add.'
+                )
+              }}
+            </li>
+          } @else {
+            <li>
+              {{
+                copy(
+                  'این صفحه را در Chrome یا Edge باز کنید.',
+                  'Open this page in Chrome or Edge.'
+                )
+              }}
+            </li>
+            <li>
+              {{
+                copy(
+                  'از منوی مرورگر، گزینهٔ «نصب برنامه» یا «افزودن به صفحهٔ اصلی» را انتخاب کنید.',
+                  'In the browser menu, choose Install app or Add to Home Screen.'
+                )
+              }}
             </li>
           }
         </ol>
@@ -253,13 +323,17 @@ export class Pwa {
           class="min-h-11"
           (click)="pwa.installGuideOpen.set(false)"
         >
-          متوجه شدم
+          {{ copy('متوجه شدم', 'Got it') }}
         </button>
       </ng-template>
     </aio-dialog>
   `,
 })
 export class PwaBars {
+  readonly language = input<'fa' | 'en'>('fa');
+  protected copy(fa: string, en: string): string {
+    return this.language() === 'en' ? en : fa;
+  }
   protected readonly pwa = inject(Pwa);
   protected readonly installDismissed = signal(false);
   protected readonly showInstall = computed(

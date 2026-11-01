@@ -5,6 +5,7 @@ import { lucideBookOpenText, lucideLayers, lucideMic } from '@ng-icons/lucide';
 
 /** English applet frame: ambient glass stage and the three main tabs. */
 @Component({
+  host: { dir: 'ltr', lang: 'en' },
   selector: 'english-learning-shell',
   imports: [AioButton, AioIcon, RouterLink, RouterLinkActive, RouterOutlet],
   providers: [provideIcons({ lucideBookOpenText, lucideLayers, lucideMic })],
@@ -13,12 +14,12 @@ import { lucideBookOpenText, lucideLayers, lucideMic } from '@ng-icons/lucide';
       class="applet-english lx-stage mx-auto flex w-full max-w-3xl min-w-0 flex-col gap-6 [&>router-outlet]:hidden"
     >
       <header>
-        <p class="aio-eyebrow">هر روز، یک قدم جلوتر</p>
-        <h1 class="aio-page-title">زبان، به ریتم خودت.</h1>
+        <p class="aio-eyebrow">One step forward, every day</p>
+        <h1 class="aio-page-title">English, at your own pace.</h1>
       </header>
       <nav
         class="lx-glass lx-tabs grid grid-cols-3 gap-1"
-        aria-label="بخش‌های انگلیسی"
+        aria-label="English sections"
       >
         @for (link of links; track link.path) {
           <a
@@ -42,13 +43,13 @@ import { lucideBookOpenText, lucideLayers, lucideMic } from '@ng-icons/lucide';
 })
 export class EnglishShell {
   protected readonly links = [
-    { path: '.', label: 'کارت‌ها', icon: 'lucideLayers', exact: true },
+    { path: '.', label: 'Cards', icon: 'lucideLayers', exact: true },
     {
       path: 'texts',
-      label: 'خواندن',
+      label: 'Reading',
       icon: 'lucideBookOpenText',
       exact: false,
     },
-    { path: 'practice', label: 'تمرین', icon: 'lucideMic', exact: false },
+    { path: 'practice', label: 'Exercise', icon: 'lucideMic', exact: false },
   ];
 }

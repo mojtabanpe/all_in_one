@@ -63,9 +63,9 @@ const SUGGESTIONS: Record<AssistantContext, string[]> = {
     '۴۵ دقیقه باشگاه با شدت زیاد ثبت کن',
   ],
   english: [
-    '۱۰ کارت برای لغات سفر بساز',
-    'کارت‌های امروزم چندتاست؟',
-    'یک متن B1 درباره ورزش بساز و ذخیره کن',
+    'Create 10 cards for travel vocabulary',
+    'How many cards are due today?',
+    'Create and save a B1 reading about sports',
   ],
 };
 
@@ -73,6 +73,7 @@ const SUGGESTIONS: Record<AssistantContext, string[]> = {
 @Injectable({ providedIn: 'root' })
 export class AssistantStore {
   readonly messages = signal<Message[]>([]);
+  readonly englishMessages = signal<Message[]>([]);
 }
 
 /**
@@ -105,18 +106,26 @@ export class AssistantStore {
       aioBtn
       variant="ghost"
       class="text-primary h-11"
-      aria-label="دستیار هوش مصنوعی"
+      [attr.aria-label]="copy('دستیار هوش مصنوعی', 'AI assistant')"
       (click)="open.set(true)"
     >
       <aio-icon name="lucideSparkles" size="sm" />
-      دستیار
+      <span [class.hidden]="english()" [class.sm:inline]="english()">{{
+        copy('دستیار', 'Assistant')
+      }}</span>
     </button>
 
     <aio-dialog
       [(open)]="open"
       (openChange)="$event || closed()"
-      title="دستیار"
-      description="بگو چه کار کنم؛ کارها، وعده‌ها، ورزش و کارت‌هایت را خودم تغییر می‌دهم."
+      [title]="copy('دستیار', 'Assistant')"
+      [language]="english() ? 'en' : 'fa'"
+      [description]="
+        copy(
+          'بگو چه کار کنم؛ کارها، وعده‌ها، ورزش و کارت‌هایت را خودم تغییر می‌دهم.',
+          'Ask me to manage tasks, meals, workouts and flashcards.'
+        )
+      "
       [contentClass]="'sm:max-w-lg ' + accent()"
     >
       <ng-template aioDialogBody>
@@ -124,14 +133,24 @@ export class AssistantStore {
           <div
             class="bg-accent text-accent-foreground mb-3 rounded-2xl p-4 text-sm"
           >
-            دستیار با سرویس هوش مصنوعی خودت کار می‌کند. اول در
+            {{
+              copy(
+                'دستیار با سرویس هوش مصنوعی خودت کار می‌کند. اول در',
+                'The assistant uses your own AI service. Open'
+              )
+            }}
             <a
               class="font-semibold underline"
               routerLink="/account"
               (click)="open.set(false)"
-              >حساب کاربری ← هوش مصنوعی</a
+              >{{ copy('حساب کاربری ← هوش مصنوعی', 'Account → AI') }}</a
             >
-            نشانی، مدل و کلید را بگذار.
+            {{
+              copy(
+                'نشانی، مدل و کلید را بگذار.',
+                'and configure your URL, model and API key.'
+              )
+            }}
           </div>
         }
         <div
@@ -139,7 +158,7 @@ export class AssistantStore {
           class="flex max-h-[50dvh] min-h-40 flex-col gap-3 overflow-y-auto pb-2"
           aria-live="polite"
         >
-          @for (m of store.messages(); track $index) {
+          @for (m of conversation(); track $index) {
             <div
               class="max-w-[85%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-line"
               [class]="
@@ -151,13 +170,16 @@ export class AssistantStore {
               {{ m.content }}
               @if (m.actions) {
                 <span class="mt-1 block text-xs opacity-70"
-                  >{{ fa(m.actions) }} کار انجام شد</span
+                  >{{ fa(m.actions) }}
+                  {{ copy('کار انجام شد', 'actions completed') }}</span
                 >
               }
             </div>
           } @empty {
             <div class="flex flex-col gap-2">
-              <span class="text-muted-foreground text-sm">مثلاً:</span>
+              <span class="text-muted-foreground text-sm">{{
+                copy('مثلاً:', 'Try asking:')
+              }}</span>
               @for (s of suggestions(); track s) {
                 <button
                   aioBtn
@@ -174,7 +196,8 @@ export class AssistantStore {
             <div
               class="bg-muted text-muted-foreground flex items-center gap-2 self-end rounded-2xl px-4 py-2.5 text-sm"
             >
-              <aio-spinner /> دارم انجامش می‌دهم…
+              <aio-spinner [aria-label]="copy('در حال بارگذاری', 'Loading')" />
+              {{ copy('دارم انجامش می‌دهم…', 'Working…') }}
             </div>
           }
         </div>
@@ -189,8 +212,10 @@ export class AssistantStore {
             name="assistant-message"
             autocomplete="off"
             enterkeyhint="send"
-            placeholder="بنویس یا با میکروفون بگو…"
-            aria-label="پیام به دستیار"
+            [placeholder]="
+              copy('بنویس یا با میکروفون بگو…', 'Type or use the microphone…')
+            "
+            [attr.aria-label]="copy('پیام به دستیار', 'Message the assistant')"
             [disabled]="busy()"
             [value]="draft()"
             (input)="draft.set($any($event.target).value)"
@@ -202,7 +227,11 @@ export class AssistantStore {
                 type="button"
                 size="icon-sm"
                 class="size-11"
-                [attr.aria-label]="recording() ? 'پایان ضبط' : 'گفتن با صدا'"
+                [attr.aria-label]="
+                  recording()
+                    ? copy('پایان ضبط', 'Stop recording')
+                    : copy('گفتن با صدا', 'Speak')
+                "
                 [attr.aria-pressed]="recording()"
                 [disabled]="busy()"
                 (click)="recording() ? stopRecording() : startRecording()"
@@ -219,14 +248,14 @@ export class AssistantStore {
               type="submit"
               size="icon-sm"
               class="size-11"
-              aria-label="فرستادن"
+              [attr.aria-label]="copy('فرستادن', 'Send')"
               [disabled]="busy() || !draft().trim()"
             >
               <aio-icon name="lucideSend" size="sm" />
             </button>
           </aio-input-group-addon>
         </form>
-        @if (store.messages().length) {
+        @if (conversation().length) {
           <button
             aioBtn
             variant="ghost"
@@ -234,7 +263,8 @@ export class AssistantStore {
             class="text-muted-foreground mt-2"
             (click)="store.messages.set([])"
           >
-            <aio-icon name="lucideTrash2" size="xs" /> گفتگوی تازه
+            <aio-icon name="lucideTrash2" size="xs" />
+            {{ copy('گفتگوی تازه', 'New conversation') }}
           </button>
         }
       </ng-template>
@@ -272,34 +302,48 @@ export class Assistant implements OnDestroy {
       })[this.context()],
   );
 
-  protected readonly fa = (n: number) => n.toLocaleString('fa-IR');
+  protected readonly english = computed(() => this.context() === 'english');
+  protected copy(fa: string, en: string): string {
+    return this.english() ? en : fa;
+  }
+  protected get conversation() {
+    return this.english() ? this.store.englishMessages : this.store.messages;
+  }
+  protected readonly fa = (n: number) =>
+    n.toLocaleString(this.english() ? 'en-US' : 'fa-IR');
+  private errorMessage(error: unknown): string {
+    return this.english()
+      ? 'Unable to complete the request. Check your AI settings and try again.'
+      : apiErrorMessage(error);
+  }
 
   protected async send(text: string) {
     const content = text.trim();
     if (!content || this.busy()) return;
+    const conversation = this.conversation;
+    const context = this.context();
     this.draft.set('');
-    this.store.messages.update((list) => [...list, { role: 'user', content }]);
+    conversation.update((list) => [...list, { role: 'user', content }]);
     this.busy.set(true);
     this.scroll();
     try {
       const result = await firstValueFrom(
         this.http.post<AssistantReply>(`${this.api}/assistant/chat`, {
-          messages: this.store
-            .messages()
+          messages: conversation()
             .slice(-20)
             .map(({ role, content, log }) => ({
               role,
               content: content.slice(0, 4000),
               log,
             })),
-          context: this.context(),
+          context,
         }),
       );
       if (result.changed) this.changed = true;
       const done = result.actions.filter(
         (a) => a.ok && a.kind !== 'read',
       ).length;
-      this.store.messages.update((list) => [
+      conversation.update((list) => [
         ...list,
         {
           role: 'assistant',
@@ -309,9 +353,9 @@ export class Assistant implements OnDestroy {
         },
       ]);
     } catch (error) {
-      this.store.messages.update((list) => [
+      conversation.update((list) => [
         ...list,
-        { role: 'assistant', content: apiErrorMessage(error) },
+        { role: 'assistant', content: this.errorMessage(error) },
       ]);
     } finally {
       this.busy.set(false);
@@ -357,7 +401,12 @@ export class Assistant implements OnDestroy {
       // Recordings are capped on the server (~1.5 MB): stop after 60 s.
       setTimeout(() => this.stopRecording(), 60_000);
     } catch {
-      aioToast.error('به میکروفون دسترسی نداریم.');
+      aioToast.error(
+        this.copy(
+          'به میکروفون دسترسی نداریم.',
+          'Unable to access the microphone.',
+        ),
+      );
     }
   }
 
@@ -384,7 +433,7 @@ export class Assistant implements OnDestroy {
       await this.send(text);
     } catch (error) {
       this.busy.set(false);
-      aioToast.error(apiErrorMessage(error));
+      aioToast.error(this.errorMessage(error));
     }
   }
 

@@ -52,7 +52,11 @@ import {
     }),
   ],
   template: `
-    <aio-app-shell appName="پشتت گرم" [navItems]="nav">
+    <aio-app-shell
+      [appName]="english() ? 'Poshtetgarm' : 'پشتت گرم'"
+      [navItems]="navigation()"
+      [language]="english() ? 'en' : 'fa'"
+    >
       <web-assistant aioShellActions [context]="assistantContext()" />
       @if (pwa.installAvailable()) {
         <button
@@ -63,7 +67,9 @@ import {
           (click)="pwa.install()"
         >
           <aio-icon name="lucideDownload" size="sm" />
-          نصب
+          <span [class.hidden]="english()" [class.sm:inline]="english()">{{
+            english() ? 'Install' : 'نصب'
+          }}</span>
         </button>
       }
       <a
@@ -73,7 +79,7 @@ import {
         size="icon"
         class="size-11"
         routerLink="/account"
-        aria-label="حساب کاربری"
+        [attr.aria-label]="english() ? 'Account' : 'حساب کاربری'"
       >
         <aio-icon name="lucideUserRound" size="sm" />
       </a>
@@ -82,11 +88,13 @@ import {
         aioBtn
         variant="ghost"
         class="size-11 md:w-auto"
-        aria-label="خروج از حساب"
+        [attr.aria-label]="english() ? 'Sign out' : 'خروج از حساب'"
         (click)="logout()"
       >
         <aio-icon name="lucideLogOut" size="sm" />
-        <span class="hidden md:inline">خروج</span>
+        <span class="hidden md:inline">{{
+          english() ? 'Sign out' : 'خروج'
+        }}</span>
       </button>
       <router-outlet />
     </aio-app-shell>
@@ -117,6 +125,17 @@ export class Layout {
     { label: 'انگلیسی', icon: 'lucideLanguages', link: '/english' },
     { label: 'سلامت', icon: 'lucideHeartPulse', link: '/health' },
   ];
+  protected readonly english = computed(
+    () => this.assistantContext() === 'english',
+  );
+  protected readonly navigation = computed(() =>
+    this.english()
+      ? this.nav.map((item, i) => ({
+          ...item,
+          label: ['Home', 'Planner', 'English', 'Health'][i],
+        }))
+      : this.nav,
+  );
 
   protected async logout() {
     await this.auth.logout();

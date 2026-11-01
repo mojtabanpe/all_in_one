@@ -84,19 +84,19 @@ describe('StudyPage (Recall study)', () => {
     ]);
     expect(el.textContent).toContain('take');
     expect(el.textContent).not.toContain('to carry');
-    button('نمایش جواب').click();
+    button('Show answer').click();
     await fixture.whenStable();
     expect(el.textContent).toContain('to carry');
-    expect(el.textContent).toContain('۱ روز');
+    expect(el.textContent).toContain('1 day');
 
-    button('خوب').click();
+    button('Good').click();
     const req = http.expectOne('/api/english/cards/c1/review');
     expect(req.request.body).toEqual({ rating: 'good' });
     req.flush(
       card('c1', 'take', 'to carry', { repetitions: 1, intervalDays: 1 }),
     );
     await settle();
-    expect(el.textContent).toContain('آفرین! تمامش کردی');
+    expect(el.textContent).toContain('Well done! You did it');
   });
 
   it('brings a failed card back later in the session', async () => {
@@ -104,17 +104,17 @@ describe('StudyPage (Recall study)', () => {
       card('c1', 'take', 'to carry'),
       card('c2', 'book', 'a written work'),
     ]);
-    button('نمایش جواب').click();
+    button('Show answer').click();
     await fixture.whenStable();
-    button('دوباره').click();
+    button('Again').click();
     http
       .expectOne('/api/english/cards/c1/review')
       .flush(card('c1', 'take', 'to carry', { lapses: 1 }));
     await settle();
     expect(el.textContent).toContain('book');
-    button('نمایش جواب').click();
+    button('Show answer').click();
     await fixture.whenStable();
-    button('خوب').click();
+    button('Good').click();
     http
       .expectOne('/api/english/cards/c2/review')
       .flush(card('c2', 'book', 'x'));
@@ -124,6 +124,6 @@ describe('StudyPage (Recall study)', () => {
 
   it('shows an empty state when nothing is due', async () => {
     const { el } = await setup([]);
-    expect(el.textContent).toContain('فعلاً کارتی برای مرور نیست');
+    expect(el.textContent).toContain('No cards due right now');
   });
 });

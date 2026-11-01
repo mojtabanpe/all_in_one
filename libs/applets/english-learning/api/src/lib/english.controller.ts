@@ -12,6 +12,11 @@ import {
   Req,
   Res,
   StreamableFile,
+  Injectable,
+  UseInterceptors,
+  type NestInterceptor,
+  type ExecutionContext,
+  type CallHandler,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
@@ -65,10 +70,41 @@ import { AiGateway } from '@all-in-one/api/ai';
 import { SpeechService } from './speech.service';
 import { StarterDecksService } from './starter-decks.service';
 import { TextsService } from './texts.service';
+import { defer, mergeMap } from 'rxjs';
+
+/** Localise English applet responses, including user-authored legacy content. */
+@Injectable()
+export class EnglishPresentationInterceptor implements NestInterceptor {
+  constructor(private readonly ai: AiService) {}
+  intercept(context: ExecutionContext, next: CallHandler) {
+    const request = context
+      .switchToHttp()
+      .getRequest<Request & { user: AuthUser }>();
+    return defer(async () => {
+      // Resolve translation before a write, so an unavailable AI cannot make a
+      // successful save look like a failed request and encourage duplicate saves.
+      if (
+        ['POST', 'PATCH'].includes(request.method) &&
+        request.body &&
+        !Buffer.isBuffer(request.body)
+      ) {
+        await this.ai.presentInEnglish(request.user.id, request.body);
+      }
+    }).pipe(
+      mergeMap(() => next.handle()),
+      mergeMap((value: unknown) =>
+        value instanceof StreamableFile
+          ? Promise.resolve(value)
+          : this.ai.presentInEnglish(request.user.id, value),
+      ),
+    );
+  }
+}
 
 const id = new ParseUUIDPipe();
 
 @Controller('english')
+@UseInterceptors(EnglishPresentationInterceptor)
 export class EnglishLibraryController {
   constructor(
     private readonly decks: DecksService,
@@ -134,6 +170,7 @@ export class EnglishLibraryController {
 }
 
 @Controller('english/cards')
+@UseInterceptors(EnglishPresentationInterceptor)
 export class EnglishCardsController {
   constructor(private readonly cards: CardsService) {}
 
@@ -217,6 +254,7 @@ export class EnglishCardsController {
 }
 
 @Controller('english/texts')
+@UseInterceptors(EnglishPresentationInterceptor)
 export class EnglishTextsController {
   constructor(private readonly texts: TextsService) {}
 
@@ -271,6 +309,7 @@ export class EnglishTextsController {
 }
 
 @Controller('english')
+@UseInterceptors(EnglishPresentationInterceptor)
 export class EnglishAiController {
   constructor(
     private readonly ai: AiService,

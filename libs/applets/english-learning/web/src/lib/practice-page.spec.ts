@@ -91,49 +91,49 @@ describe('Shadowing practice', () => {
       button.click();
       await fixture.whenStable();
     };
-    await click('تمرین تازه');
+    await click('New exercise');
     return { api, tts, fixture, el, click, getUserMedia, revoke };
   }
 
   it('practises each sentence at the chosen speed, hides the transcript and completes/restarts', async () => {
     const { api, tts, el, click } = await setup();
     expect(api.dialogue).toHaveBeenCalledWith('small-talk', 'B1');
-    expect(el.textContent).toContain('جمله ۱ از ۲');
+    expect(el.textContent).toContain('Sentence 1 of 2');
     expect(el.textContent).not.toContain('Could I have a coffee?');
-    await click('نمایش متن');
+    await click('Show transcript');
     expect(el.textContent).toContain('Could I have a coffee?');
-    await click('آهسته');
-    await click('پخش جمله');
+    await click('Slow');
+    await click('Play sentence');
     expect(tts.rate).toBe(0.75);
     expect(tts.speak).toHaveBeenLastCalledWith(
       'Could I have a coffee?',
       'primary',
     );
-    await click('جمله بعد');
-    expect(el.textContent).toContain('جمله ۲ از ۲');
-    await click('پخش جمله');
+    await click('next sentence');
+    expect(el.textContent).toContain('Sentence 2 of 2');
+    await click('Play sentence');
     expect(tts.speak).toHaveBeenLastCalledWith(
       'Of course. Anything else?',
       'secondary',
     );
-    await click('پایان تمرین');
-    expect(el.textContent).toContain('همه جمله‌ها را تمرین کردی');
-    await click('یک دور دیگر');
-    expect(el.textContent).toContain('جمله ۱ از ۲');
-    expect(el.textContent).not.toContain('همه جمله‌ها را تمرین کردی');
+    await click('Finish practice');
+    expect(el.textContent).toContain('You practised every sentence');
+    await click('Practise again');
+    expect(el.textContent).toContain('Sentence 1 of 2');
+    expect(el.textContent).not.toContain('You practised every sentence');
   });
 
   it('records alongside playback without STT and releases the recording on sentence change', async () => {
     const { api, tts, el, click, revoke } = await setup();
-    await click('ضبط همراه گوینده');
-    expect(el.textContent).toContain('در حال ضبط');
-    await click('پخش جمله');
+    await click('Record along with the speaker');
+    expect(el.textContent).toContain('Recording.');
+    await click('Play sentence');
     expect(tts.speak).toHaveBeenCalled();
-    await click('پایان ضبط');
+    await click('Stop recording');
     expect(el.querySelector('audio')?.getAttribute('src')).toBe('blob:voice');
     expect(api.transcribe).not.toHaveBeenCalled();
     expect(stopTrack).toHaveBeenCalled();
-    await click('جمله بعد');
+    await click('next sentence');
     expect(el.querySelector('audio')).toBeNull();
     expect(revoke).toHaveBeenCalledWith('blob:voice');
   });

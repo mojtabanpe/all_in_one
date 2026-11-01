@@ -51,6 +51,8 @@ export class AioDialogActions {
       >
         <hlm-drawer-content
           *hlmDrawerPortal="let ctx"
+          [attr.dir]="language() === 'en' ? 'ltr' : 'rtl'"
+          [attr.lang]="language()"
           [class]="
             'mx-auto w-full min-w-0 max-w-full overflow-hidden pb-[calc(1rem+env(safe-area-inset-bottom,0px))] data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-1rem)] ' +
             contentClass()
@@ -68,9 +70,9 @@ export class AioDialogActions {
               hlmDrawerClose
               variant="ghost"
               class="absolute end-4 top-2 min-h-11 min-w-11"
-              aria-label="بستن پنجره"
+              [attr.aria-label]="closeText()"
             >
-              بستن
+              {{ closeText() }}
             </button>
           </hlm-drawer-header>
           @if (body(); as b) {
@@ -95,7 +97,9 @@ export class AioDialogActions {
       <hlm-dialog [state]="state()" (closed)="open.set(false)">
         <hlm-dialog-content
           *hlmDialogPortal="let ctx"
-          closeLabel="بستن"
+          [closeLabel]="closeText()"
+          [attr.dir]="language() === 'en' ? 'ltr' : 'rtl'"
+          [attr.lang]="language()"
           [class]="
             'flex min-w-0 max-h-[calc(100dvh-2rem)] flex-col overflow-hidden ' +
             contentClass()
@@ -137,6 +141,10 @@ export class AioDialog {
    * pass the applet accent here (`contentClass="applet-planner"`) to keep its colours.
    */
   readonly contentClass = input('');
+  readonly language = input<'fa' | 'en'>('fa');
+  protected readonly closeText = computed(() =>
+    this.language() === 'en' ? 'Close' : 'بستن',
+  );
 
   protected readonly isMobile = injectIsMobile();
   protected readonly state = computed(() => (this.open() ? 'open' : 'closed'));
@@ -145,6 +153,7 @@ export class AioDialog {
 }
 
 export interface AioConfirmOptions {
+  language?: 'fa' | 'en';
   title: string;
   description?: string;
   confirmText?: string;
@@ -188,17 +197,24 @@ export class AioConfirm {
       (openChange)="!$event && confirm.settle(false)"
       [title]="request?.title ?? ''"
       [description]="request?.description"
+      [language]="request?.language ?? 'fa'"
     >
       <ng-template aioDialogActions>
         <button hlmBtn variant="outline" (click)="confirm.settle(false)">
-          {{ request?.cancelText ?? 'انصراف' }}
+          {{
+            request?.cancelText ??
+              (request?.language === 'en' ? 'Cancel' : 'انصراف')
+          }}
         </button>
         <button
           hlmBtn
           [variant]="request?.destructive ? 'destructive' : 'default'"
           (click)="confirm.settle(true)"
         >
-          {{ request?.confirmText ?? 'تأیید' }}
+          {{
+            request?.confirmText ??
+              (request?.language === 'en' ? 'Confirm' : 'تأیید')
+          }}
         </button>
       </ng-template>
     </aio-dialog>

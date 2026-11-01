@@ -26,7 +26,7 @@ import {
   AioToggleGroupDirectives,
   provideIcons,
 } from '@all-in-one/ui';
-import { apiErrorMessage } from '@all-in-one/web/shared';
+import { englishErrorMessage as apiErrorMessage } from './english-locale';
 import {
   lucideCheck,
   lucideEye,
@@ -67,6 +67,7 @@ const freshTask = (): TaskState => ({
 
 /** Everyday conversation, listening and sentence-by-sentence shadowing. */
 @Component({
+  host: { dir: 'ltr', lang: 'en' },
   selector: 'english-learning-practice',
   imports: [
     AioButton,
@@ -100,9 +101,9 @@ const freshTask = (): TaskState => ({
   template: `
     <div class="flex flex-col gap-6">
       <header>
-        <h1 class="text-2xl font-bold">تمرین مکالمه</h1>
+        <h1 class="text-2xl font-bold">Conversation practice</h1>
         <p class="text-muted-foreground text-sm">
-          انگلیسی روزمره: بنویس، بگو، گوش کن و همراه گوینده تکرار کن.
+          Everyday English: write, speak, listen and shadow.
         </p>
       </header>
 
@@ -111,7 +112,7 @@ const freshTask = (): TaskState => ({
         type="single"
         spacing="1"
         class="lx-glass grid w-full grid-cols-2 rounded-2xl p-1 sm:grid-cols-4"
-        aria-label="نوع تمرین"
+        aria-label="Practice mode"
         [value]="mode()"
         (valueChange)="setMode($event)"
       >
@@ -129,26 +130,30 @@ const freshTask = (): TaskState => ({
 
       <div class="grid grid-cols-2 gap-3">
         <div aioField>
-          <label aioFieldLabel for="practice-situation">موقعیت</label>
+          <label aioFieldLabel for="practice-situation">Situation</label>
           <aio-native-select
             selectId="practice-situation"
             [value]="situation()"
             (valueChange)="situation.set($any($event))"
           >
             @for (s of situations; track s.id) {
-              <option aioNativeSelectOption [value]="s.id">{{ s.fa }}</option>
+              <option aioNativeSelectOption [value]="s.id">
+                {{ s.label }}
+              </option>
             }
           </aio-native-select>
         </div>
         <div aioField>
-          <label aioFieldLabel for="practice-level">سطح</label>
+          <label aioFieldLabel for="practice-level">Level</label>
           <aio-native-select
             selectId="practice-level"
             [value]="level()"
             (valueChange)="level.set($any($event))"
           >
             @for (l of levels; track l.id) {
-              <option aioNativeSelectOption [value]="l.id">{{ l.fa }}</option>
+              <option aioNativeSelectOption [value]="l.id">
+                {{ l.label }}
+              </option>
             }
           </aio-native-select>
         </div>
@@ -163,13 +168,11 @@ const freshTask = (): TaskState => ({
           class="lx-glass flex flex-col gap-4 rounded-2xl p-4"
           aria-labelledby="shadowing-title"
         >
-          <h2 id="shadowing-title" class="text-lg font-bold">
-            همراه گوینده (Shadowing)
-          </h2>
+          <h2 id="shadowing-title" class="text-lg font-bold">Shadowing</h2>
           <p class="text-muted-foreground text-sm leading-7">
-            اول جمله را گوش کن. دوباره پخش کن و با کمی تأخیر، هم‌زمان با گوینده
-            تکرار کن؛ ریتم و آهنگ صدایش را تقلید کن. برای شنیدن تفاوت‌ها، از
-            هدفون استفاده کن و صدایت را ضبط کن.
+            Listen to the sentence first. Play it again and repeat just behind
+            the speaker, matching their rhythm and intonation. Use headphones
+            and record yourself to hear the difference.
           </p>
           <button
             aioBtn
@@ -178,14 +181,14 @@ const freshTask = (): TaskState => ({
             (click)="newDialogue()"
           >
             @if (busy()) {
-              <aio-spinner /> در حال آماده کردن…
+              <aio-spinner aria-label="Loading" /> Preparing…
             } @else {
-              <aio-icon name="lucideHeadphones" /> تمرین تازه
+              <aio-icon name="lucideHeadphones" /> New exercise
             }
           </button>
           <p class="text-muted-foreground text-sm">
-            ساخت تمرین و صدای گوینده به تنظیمات چت و تبدیل متن به گفتار در حساب
-            کاربری ← هوش مصنوعی نیاز دارد.
+            To generate exercises and audio, configure chat and text-to-speech
+            in Account → AI.
           </p>
         </section>
         @if (shadowLine(); as sentence) {
@@ -198,13 +201,13 @@ const freshTask = (): TaskState => ({
               class="font-semibold"
               aria-live="polite"
             >
-              جمله {{ persianNumber(shadowIndex() + 1) }} از
-              {{ persianNumber(dialogue()!.lines.length) }}
+              Sentence {{ number(shadowIndex() + 1) }} of
+              {{ number(dialogue()!.lines.length) }}
             </h2>
             @if (shadowFinished()) {
               <p class="text-success font-semibold" role="status">
-                آفرین! همه جمله‌ها را تمرین کردی. برای روان‌تر شدن، یک دور دیگر
-                تکرار کن.
+                Well done! You practised every sentence. Try another round to
+                build fluency.
               </p>
             }
             <div class="flex flex-wrap gap-2">
@@ -214,13 +217,13 @@ const freshTask = (): TaskState => ({
                 variant="outline"
                 [value]="speedValue()"
                 (valueChange)="setShadowSpeed($event)"
-                aria-label="سرعت گوینده"
+                aria-label="Speaker speed"
               >
                 <button aioToggleGroupItem value="0.75" class="min-h-11">
-                  آهسته
+                  Slow
                 </button>
                 <button aioToggleGroupItem value="1" class="min-h-11">
-                  عادی
+                  Normal
                 </button>
               </div>
               <button
@@ -233,7 +236,7 @@ const freshTask = (): TaskState => ({
                   [name]="showText() ? 'lucideEyeOff' : 'lucideEye'"
                   size="sm"
                 />
-                {{ showText() ? 'پنهان کردن متن' : 'نمایش متن' }}
+                {{ showText() ? 'Hide transcript' : 'Show transcript' }}
               </button>
             </div>
             @if (showText()) {
@@ -255,7 +258,7 @@ const freshTask = (): TaskState => ({
                   [name]="playing() ? 'lucideSquare' : 'lucidePlay'"
                   size="sm"
                 />
-                {{ playing() ? 'توقف گوینده' : 'پخش جمله' }}
+                {{ playing() ? 'Stop speaker' : 'Play sentence' }}
               </button>
               <button
                 aioBtn
@@ -264,27 +267,31 @@ const freshTask = (): TaskState => ({
                 (click)="record()"
               >
                 @if (recordingPending()) {
-                  <aio-spinner />
+                  <aio-spinner aria-label="Loading" />
                 } @else {
                   <aio-icon
                     [name]="recording() ? 'lucideSquare' : 'lucideMic'"
                     size="sm"
                   />
                 }
-                {{ recording() ? 'پایان ضبط' : 'ضبط همراه گوینده' }}
+                {{
+                  recording()
+                    ? 'Stop recording'
+                    : 'Record along with the speaker'
+                }}
               </button>
             </div>
             <p class="text-muted-foreground text-sm" role="status">
               {{
                 recording()
-                  ? 'در حال ضبط؛ جمله را پخش کن و همراهش تکرار کن. ضبط پس از یک دقیقه تمام می‌شود.'
-                  : 'صدای ضبط‌شده فقط روی همین دستگاه می‌ماند و با عوض کردن جمله پاک می‌شود.'
+                  ? 'Recording. Play the sentence and repeat along. Recording stops after one minute.'
+                  : 'Your recording stays on this device and is cleared when you change sentences.'
               }}
             </p>
             @if (recordingUrl()) {
               <div class="flex min-w-0 flex-col gap-2">
                 <span id="shadow-recording-label" class="text-sm font-medium"
-                  >صدای تو؛ با گوینده مقایسه کن</span
+                  >Your recording — compare it with the speaker</span
                 >
                 <audio
                   [src]="recordingUrl()"
@@ -304,7 +311,7 @@ const freshTask = (): TaskState => ({
                 "
                 (click)="moveShadow(-1)"
               >
-                جمله قبلی
+                Previous sentence
               </button>
               <button
                 aioBtn
@@ -313,10 +320,10 @@ const freshTask = (): TaskState => ({
               >
                 {{
                   shadowFinished()
-                    ? 'یک دور دیگر'
+                    ? 'Practise again'
                     : shadowIndex() === dialogue()!.lines.length - 1
-                      ? 'پایان تمرین'
-                      : 'تمرین کردم؛ جمله بعد'
+                      ? 'Finish practice'
+                      : 'Practised; next sentence'
                 }}
               </button>
             </div>
@@ -331,9 +338,9 @@ const freshTask = (): TaskState => ({
           (click)="newDialogue()"
         >
           @if (busy()) {
-            <aio-spinner /> در حال آماده کردن…
+            <aio-spinner aria-label="Loading" /> Preparing…
           } @else {
-            <aio-icon name="lucideHeadphones" /> گفت‌وگوی تازه
+            <aio-icon name="lucideHeadphones" /> New dialogue
           }
         </button>
 
@@ -356,7 +363,7 @@ const freshTask = (): TaskState => ({
                   [name]="playing() ? 'lucidePause' : 'lucidePlay'"
                   size="sm"
                 />
-                {{ playing() ? 'توقف' : 'پخش گفت‌وگو' }}
+                {{ playing() ? 'Stop' : 'Play dialogue' }}
               </button>
               <div
                 aioToggleGroup
@@ -364,10 +371,10 @@ const freshTask = (): TaskState => ({
                 variant="outline"
                 [value]="speedValue()"
                 (valueChange)="setSpeed($event)"
-                aria-label="سرعت"
+                aria-label="Speed"
               >
-                <button aioToggleGroupItem value="0.75">آهسته</button>
-                <button aioToggleGroupItem value="1">عادی</button>
+                <button aioToggleGroupItem value="0.75">Slow</button>
+                <button aioToggleGroupItem value="1">Normal</button>
               </div>
               <button
                 aioBtn
@@ -378,7 +385,7 @@ const freshTask = (): TaskState => ({
                   [name]="showText() ? 'lucideEyeOff' : 'lucideEye'"
                   size="sm"
                 />
-                {{ showText() ? 'پنهان کردن متن' : 'نمایش متن' }}
+                {{ showText() ? 'Hide transcript' : 'Show transcript' }}
               </button>
             </div>
             @if (showText()) {
@@ -392,7 +399,7 @@ const freshTask = (): TaskState => ({
                       type="button"
                       class="text-primary shrink-0 font-bold"
                       (click)="speak(l.text, speakerVoice(l.speaker))"
-                      [attr.aria-label]="'پخش جمله ' + l.speaker"
+                      [attr.aria-label]="'Play sentence ' + l.speaker"
                     >
                       {{ l.speaker }}:
                     </button>
@@ -408,7 +415,7 @@ const freshTask = (): TaskState => ({
               class="flex flex-col gap-3"
               aria-labelledby="questions-title"
             >
-              <h2 id="questions-title" class="text-lg font-bold">سؤال‌ها</h2>
+              <h2 id="questions-title" class="text-lg font-bold">Questions</h2>
               @for (q of d.questions; track $index; let qi = $index) {
                 <div
                   class="lx-glass flex flex-col gap-2 rounded-2xl p-4"
@@ -438,13 +445,13 @@ const freshTask = (): TaskState => ({
                         <aio-icon
                           name="lucideCheck"
                           size="sm"
-                          aria-label="درست"
+                          aria-label="Correct"
                         />
                       } @else if (choices()[qi] === oi) {
                         <aio-icon
                           name="lucideX"
                           size="sm"
-                          aria-label="نادرست"
+                          aria-label="Incorrect"
                         />
                       }
                     </button>
@@ -466,12 +473,12 @@ const freshTask = (): TaskState => ({
           (click)="newTask()"
         >
           @if (busy() && !current().task) {
-            <aio-spinner /> در حال آماده کردن…
+            <aio-spinner aria-label="Loading" /> Preparing…
           } @else {
             <aio-icon
               [name]="mode() === 'speaking' ? 'lucideMic' : 'lucidePenLine'"
             />
-            تمرین تازه
+            New exercise
           }
         </button>
 
@@ -480,7 +487,7 @@ const freshTask = (): TaskState => ({
             class="lx-glass flex flex-col gap-3 rounded-2xl p-4"
             aria-labelledby="task-title"
           >
-            <h2 id="task-title" class="sr-only">تمرین</h2>
+            <h2 id="task-title" class="sr-only">Exercise</h2>
             <p dir="ltr" lang="en" class="text-start">{{ task.scenario }}</p>
             @if (task.message) {
               <div
@@ -499,7 +506,7 @@ const freshTask = (): TaskState => ({
                   variant="ghost"
                   size="icon-sm"
                   (click)="speak(task.message)"
-                  aria-label="شنیدن پیام"
+                  aria-label="Listen to message"
                 >
                   <aio-icon name="lucideVolume2" size="sm" />
                 </button>
@@ -519,12 +526,12 @@ const freshTask = (): TaskState => ({
                   <aio-icon
                     [name]="recording() ? 'lucideSquare' : 'lucideMic'"
                   />
-                  {{ recording() ? 'پایان ضبط' : 'ضبط پاسخ' }}
+                  {{ recording() ? 'Stop recording' : 'Record answer' }}
                 </button>
                 @if (transcribing()) {
                   <span
                     class="text-muted-foreground flex items-center gap-2 text-sm"
-                    ><aio-spinner /> در حال تبدیل صدا به متن…</span
+                    ><aio-spinner aria-label="Loading" /> Transcribing…</span
                   >
                 }
                 @if (recordingUrl()) {
@@ -540,8 +547,8 @@ const freshTask = (): TaskState => ({
             <label for="practice-answer" class="text-sm font-medium">
               {{
                 mode() === 'speaking'
-                  ? 'آنچه گفتی (می‌توانی اصلاحش کنی)'
-                  : 'پاسخ تو'
+                  ? 'What you said (you can edit it)'
+                  : 'Your answer'
               }}
             </label>
             <textarea
@@ -562,11 +569,11 @@ const freshTask = (): TaskState => ({
               (click)="check()"
             >
               @if (busy()) {
-                <aio-spinner />
+                <aio-spinner aria-label="Loading" />
               } @else {
                 <aio-icon name="lucideCheck" size="sm" />
               }
-              بررسی
+              Check answer
             </button>
           </section>
 
@@ -575,7 +582,7 @@ const freshTask = (): TaskState => ({
               class="lx-glass flex flex-col gap-4 rounded-2xl p-4"
               aria-labelledby="feedback-title"
             >
-              <h2 id="feedback-title" class="text-lg font-bold">بازخورد</h2>
+              <h2 id="feedback-title" class="text-lg font-bold">Feedback</h2>
               @if (f.comment) {
                 <p
                   dir="ltr"
@@ -586,11 +593,11 @@ const freshTask = (): TaskState => ({
                 </p>
               }
               <div class="flex flex-col gap-1">
-                <span class="text-muted-foreground text-sm">اصلاح‌شده</span>
+                <span class="text-muted-foreground text-sm">Corrected</span>
                 <p dir="ltr" lang="en" class="text-start">{{ f.corrected }}</p>
               </div>
               <div class="flex flex-col gap-1">
-                <span class="text-muted-foreground text-sm">طبیعی‌تر</span>
+                <span class="text-muted-foreground text-sm">More natural</span>
                 <p
                   dir="ltr"
                   lang="en"
@@ -602,7 +609,7 @@ const freshTask = (): TaskState => ({
                     variant="ghost"
                     size="icon-sm"
                     (click)="speak(f.natural)"
-                    aria-label="شنیدن"
+                    aria-label="Listening"
                   >
                     <aio-icon name="lucideVolume2" size="sm" />
                   </button>
@@ -610,7 +617,7 @@ const freshTask = (): TaskState => ({
               </div>
               @if (f.mistakes.length) {
                 <div class="flex flex-col gap-2">
-                  <span class="text-muted-foreground text-sm">اشتباه‌ها</span>
+                  <span class="text-muted-foreground text-sm">Corrections</span>
                   <ul dir="ltr" lang="en" class="flex flex-col gap-2">
                     @for (m of f.mistakes; track $index) {
                       <li class="bg-background/60 rounded-xl p-3 text-start">
@@ -640,11 +647,15 @@ const freshTask = (): TaskState => ({
           <div aioEmpty class="lx-glass rounded-2xl">
             <div aioEmptyHeader>
               <h2 aioEmptyTitle>
-                {{ mode() === 'speaking' ? 'بلند جواب بده' : 'کوتاه بنویس' }}
+                {{
+                  mode() === 'speaking'
+                    ? 'Answer aloud'
+                    : 'Write a short answer'
+                }}
               </h2>
               <p aioEmptyDescription>
-                موقعیت را انتخاب کن و «تمرین تازه» را بزن. بعد پاسخت را بررسی
-                می‌کنیم.
+                Choose a situation and select “New exercise”. Then check your
+                answer.
               </p>
             </div>
           </div>
@@ -656,9 +667,7 @@ const freshTask = (): TaskState => ({
       @if (phrases.length) {
         <section class="flex flex-col gap-3" aria-labelledby="phrases-title">
           <div class="flex items-center justify-between gap-3">
-            <h2 id="phrases-title" class="text-lg font-bold">
-              عبارت‌های کاربردی
-            </h2>
+            <h2 id="phrases-title" class="text-lg font-bold">Useful phrases</h2>
             @if (decks().length) {
               <aio-native-select
                 class="w-40"
@@ -694,7 +703,7 @@ const freshTask = (): TaskState => ({
                   variant="ghost"
                   size="icon"
                   (click)="speak(p.phrase)"
-                  [attr.aria-label]="'تلفظ ' + p.phrase"
+                  [attr.aria-label]="'Pronunciation ' + p.phrase"
                 >
                   <aio-icon name="lucideVolume2" size="sm" />
                 </button>
@@ -704,7 +713,7 @@ const freshTask = (): TaskState => ({
                   size="icon"
                   [disabled]="added().has(p.phrase)"
                   (click)="addPhrase(p)"
-                  [attr.aria-label]="'افزودن ' + p.phrase + ' به دسته'"
+                  [attr.aria-label]="'Add ' + p.phrase + ' to deck'"
                 >
                   <aio-icon
                     [name]="
@@ -729,10 +738,10 @@ export class PracticePage {
 
   protected readonly modes = MODES;
   protected readonly modeLabels: Record<Mode, string> = {
-    writing: 'نوشتن',
-    speaking: 'گفتن',
-    listening: 'شنیدن',
-    shadowing: 'همراهی',
+    writing: 'Writing',
+    speaking: 'Speaking',
+    listening: 'Listening',
+    shadowing: 'Shadowing',
   };
   protected readonly modeIcons: Record<Mode, string> = {
     writing: 'lucidePenLine',
@@ -767,8 +776,7 @@ export class PracticePage {
   protected readonly shadowLine = computed(
     () => this.dialogue()?.lines[this.shadowIndex()],
   );
-  protected readonly persianNumber = (value: number) =>
-    value.toLocaleString('fa-IR');
+  protected readonly number = (value: number) => value.toLocaleString('en-US');
   private playbackRun = 0;
   protected readonly playing = signal(false);
   protected readonly line = signal(-1);
@@ -866,7 +874,7 @@ export class PracticePage {
     const answer = state.answer.trim();
     if (!state.task) return;
     if (!answer) {
-      this.error.set('اول پاسخت را بنویس.');
+      this.error.set('Write your answer first.');
       return;
     }
     return this.load(
@@ -998,7 +1006,7 @@ export class PracticePage {
   protected async addPhrase(phrase: UsefulPhrase) {
     const deckId = this.deckId();
     if (!deckId) {
-      aioToast.error('اول یک دسته بساز تا عبارت‌ها را ذخیره کنی.');
+      aioToast.error('Create a deck before saving phrases.');
       return;
     }
     try {
@@ -1010,11 +1018,9 @@ export class PracticePage {
       remember(DECK_KEY, deckId);
       this.added.update((set) => new Set(set).add(phrase.phrase));
       const deck = this.decks().find((d) => d.id === deckId);
-      aioToast.success(
-        `«${phrase.phrase}» به ${deck?.name ?? 'دسته'} اضافه شد`,
-      );
+      aioToast.success(`“${phrase.phrase}” added to ${deck?.name ?? 'deck'}`);
     } catch (error) {
-      aioToast.error(apiErrorMessage(error, 'کارت اضافه نشد.'));
+      aioToast.error(apiErrorMessage(error, 'Unable to add the card.'));
     }
   }
 
@@ -1035,7 +1041,9 @@ export class PracticePage {
         !navigator.mediaDevices?.getUserMedia ||
         typeof MediaRecorder === 'undefined'
       )
-        throw new Error('ضبط صدا در این مرورگر ممکن نیست. پاسخ را بنویس.');
+        throw new Error(
+          'Recording is unavailable in this browser. Type your answer instead.',
+        );
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (run !== this.recordingRun) {
         stream.getTracks().forEach((t) => t.stop());
@@ -1068,7 +1076,7 @@ export class PracticePage {
         if (shadowing) this.stop();
         const audio = new Blob(chunks, { type: recorder.mimeType });
         if (!audio.size || audio.size > MAX_RECORDING) {
-          this.error.set('ضبط کوتاه‌تری بگیر و دوباره امتحان کن.');
+          this.error.set('Make a shorter recording and try again.');
           return;
         }
         this.clearRecordingUrl();
@@ -1099,8 +1107,8 @@ export class PracticePage {
       if (run !== this.recordingRun) return;
       this.error.set(
         (error as { name?: string })?.name === 'NotAllowedError'
-          ? 'اجازه دسترسی به میکروفون را بده، یا پاسخ را بنویس.'
-          : ((error as Error)?.message ?? 'میکروفون در دسترس نیست.'),
+          ? 'Allow microphone access or type your answer instead.'
+          : ((error as Error)?.message ?? 'The microphone is unavailable.'),
       );
       this.cancelRecording();
     }

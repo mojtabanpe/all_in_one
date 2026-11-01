@@ -285,3 +285,6 @@ When the owner gives a new instruction, add it to this list in the same change.
 59. **Habit text direction (2026-11-01):** Keep habit progress, user-entered units and streak text readable in Persian RTL, including English names/units. Isolate mixed-direction values and keep progress and streak in separate groups that wrap cleanly on phones.
 
 60. **Language shadowing (2026-11-01):** Include shadowing in language practice: sentence-by-sentence listening and repetition alongside the speaker, adjustable playback speed, optional transcript, and local voice recording for self-comparison. Use the user's AI settings and expose exercise generation to the assistant and ChatGPT tools.
+
+
+61. **English immersion (2026-11-01):** The entire English tab, including cards, definitions, examples, navigation, feedback, errors, dialogs and notifications, is English-only and LTR. This overrides Persian/RTL and Persian-digit defaults within English routes. Use English definitions for starter cards and translate legacy Persian content for display without losing original data or review schedules.

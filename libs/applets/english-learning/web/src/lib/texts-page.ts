@@ -26,7 +26,11 @@ import {
   aioToast,
   provideIcons,
 } from '@all-in-one/ui';
-import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
+import {
+  englishErrorMessage as apiErrorMessage,
+  englishDate as faDate,
+  englishNumber as faNumber,
+} from './english-locale';
 import {
   lucideFileText,
   lucidePlus,
@@ -38,6 +42,7 @@ import { EnglishApi } from './english-api';
 
 /** Reading texts (Recall texts page): paste your own or let AI write ~1,000 words. */
 @Component({
+  host: { dir: 'ltr', lang: 'en' },
   selector: 'english-learning-texts',
   imports: [
     AioButton,
@@ -66,16 +71,24 @@ import { EnglishApi } from './english-api';
   ],
   template: `
     <div class="flex flex-col gap-6">
+      @if (texts.error()) {
+        <p role="alert" class="text-destructive text-sm">
+          {{ errorMessage(texts.error()) }}
+        </p>
+        <button aioBtn variant="outline" (click)="texts.reload()">
+          Try again
+        </button>
+      }
       <header class="flex items-center justify-between gap-3">
         <div>
-          <h1 class="text-2xl font-bold">خواندن</h1>
+          <h1 class="text-2xl font-bold">Reading</h1>
           <p class="text-muted-foreground text-sm">
-            متن بخوان، بشنو و واژه‌های تازه را کارت کن.
+            Read, listen and turn new words into flashcards.
           </p>
         </div>
         <button aioBtn (click)="openNew()">
           <aio-icon name="lucidePlus" size="sm" />
-          متن جدید
+          New text
         </button>
       </header>
 
@@ -88,14 +101,13 @@ import { EnglishApi } from './english-api';
             <div aioEmptyMedia variant="icon" class="text-primary">
               <aio-icon name="lucideFileText" />
             </div>
-            <h2 aioEmptyTitle>هنوز متنی نداری</h2>
+            <h2 aioEmptyTitle>No reading texts yet</h2>
             <p aioEmptyDescription>
-              یک متن انگلیسی بچسبان یا بگذار هوش مصنوعی درباره موضوع دلخواهت
-              بنویسد.
+              Paste an English text or let AI write about a topic you choose.
             </p>
           </div>
           <div aioEmptyContent>
-            <button aioBtn (click)="openNew()">اولین متن</button>
+            <button aioBtn (click)="openNew()">Add your first text</button>
           </div>
         </div>
       } @else {
@@ -117,17 +129,17 @@ import { EnglishApi } from './english-api';
                 <span
                   class="text-muted-foreground flex items-center gap-2 text-sm"
                 >
-                  {{ fa(words(text)) }} واژه، {{ faDate(text.createdAt) }}
+                  {{ fa(words(text)) }} words, {{ faDate(text.createdAt) }}
                   @if (text.ai) {
                     <span
                       class="bg-accent text-accent-foreground rounded-full px-2 text-xs"
-                      >هوش مصنوعی</span
+                      >AI</span
                     >
                   }
                   @if (text.rating) {
                     <span
                       class="flex items-center gap-0.5 text-[var(--streak)]"
-                      [attr.aria-label]="fa(text.rating) + ' ستاره'"
+                      [attr.aria-label]="fa(text.rating) + ' stars'"
                     >
                       <aio-icon name="lucideStar" size="xs" />{{
                         fa(text.rating)
@@ -142,7 +154,7 @@ import { EnglishApi } from './english-api';
                 size="icon"
                 class="text-destructive"
                 (click)="remove(text)"
-                [attr.aria-label]="'حذف ' + text.title"
+                [attr.aria-label]="'Delete ' + text.title"
               >
                 <aio-icon name="lucideTrash2" size="sm" />
               </button>
@@ -155,9 +167,10 @@ import { EnglishApi } from './english-api';
     <aio-dialog
       [open]="modalOpen()"
       (openChange)="$event || closeModal()"
-      title="متن جدید"
-      description="متن خودت را بچسبان یا با هوش مصنوعی بنویس."
+      title="New text"
+      description="Paste your own text or generate one with AI."
       contentClass="applet-english"
+      language="en"
     >
       <ng-template aioDialogBody>
         <form
@@ -168,7 +181,7 @@ import { EnglishApi } from './english-api';
           <div class="lx-glass flex flex-col gap-3 rounded-2xl p-3">
             <div class="grid grid-cols-2 gap-3">
               <div aioField>
-                <label aioFieldLabel for="text-topic">موضوع</label>
+                <label aioFieldLabel for="text-topic">Topic</label>
                 <aio-native-select
                   selectId="text-topic"
                   [value]="topic()"
@@ -176,13 +189,13 @@ import { EnglishApi } from './english-api';
                 >
                   @for (t of topics; track t.id) {
                     <option aioNativeSelectOption [value]="t.id">
-                      {{ t.fa }}
+                      {{ t.label }}
                     </option>
                   }
                 </aio-native-select>
               </div>
               <div aioField>
-                <label aioFieldLabel for="text-level">سطح</label>
+                <label aioFieldLabel for="text-level">Level</label>
                 <aio-native-select
                   selectId="text-level"
                   [value]="level()"
@@ -190,7 +203,7 @@ import { EnglishApi } from './english-api';
                 >
                   @for (l of levels; track l.id) {
                     <option aioNativeSelectOption [value]="l.id">
-                      {{ l.fa }}
+                      {{ l.label }}
                     </option>
                   }
                 </aio-native-select>
@@ -204,24 +217,24 @@ import { EnglishApi } from './english-api';
               (click)="generate()"
             >
               @if (generating()) {
-                <aio-spinner />
-                در حال نوشتن (حدود یک دقیقه)…
+                <aio-spinner aria-label="Loading" />
+                Writing (about a minute)…
               } @else {
                 <aio-icon name="lucideSparkles" size="sm" />
-                نوشتن با هوش مصنوعی
+                Generate with AI
               }
             </button>
             @if (feedbackFrom()) {
               <p class="text-muted-foreground text-xs">
-                با توجه به امتیازی که به «<span dir="ltr">{{
+                Based on your feedback on “<span dir="ltr">{{
                   feedbackFrom()
                 }}</span
-                >» دادی نوشته شد.
+                >”.
               </p>
             }
           </div>
           <div aioField>
-            <label aioFieldLabel for="text-title">عنوان</label>
+            <label aioFieldLabel for="text-title">Title</label>
             <input
               aioInput
               id="text-title"
@@ -232,7 +245,7 @@ import { EnglishApi } from './english-api';
             />
           </div>
           <div aioField>
-            <label aioFieldLabel for="text-body">متن</label>
+            <label aioFieldLabel for="text-body">Text</label>
             <textarea
               aioTextarea
               id="text-body"
@@ -254,20 +267,21 @@ import { EnglishApi } from './english-api';
         </form>
       </ng-template>
       <ng-template aioDialogActions>
-        <button aioBtn variant="outline" (click)="closeModal()">انصراف</button>
+        <button aioBtn variant="outline" (click)="closeModal()">Cancel</button>
         <button
           aioBtn
           type="submit"
           form="english-text-form"
           [disabled]="saving() || generating()"
         >
-          ذخیره و خواندن
+          Save and read
         </button>
       </ng-template>
     </aio-dialog>
   `,
 })
 export class TextsPage {
+  protected readonly errorMessage = apiErrorMessage;
   private readonly api = inject(EnglishApi);
   private readonly confirm = inject(AioConfirm);
   private readonly router = inject(Router);
@@ -327,7 +341,9 @@ export class TextsPage {
       this.feedbackFrom.set(text.feedbackFrom ?? '');
     } catch (error) {
       if (run === this.generation)
-        this.formError.set(apiErrorMessage(error, 'متن نوشته نشد.'));
+        this.formError.set(
+          apiErrorMessage(error, 'Unable to generate the text.'),
+        );
     } finally {
       if (run === this.generation) this.generating.set(false);
     }
@@ -338,11 +354,11 @@ export class TextsPage {
     const title =
       this.title().trim() || body.split(/\s+/).slice(0, 6).join(' ');
     if (!body) {
-      this.formError.set('متنی که می‌خواهی بخوانی را بنویس یا بچسبان.');
+      this.formError.set('Type or paste the text you want to read.');
       return;
     }
     if (body.length > 50000) {
-      this.formError.set('متن باید کمتر از ۵۰٬۰۰۰ نویسه باشد.');
+      this.formError.set('Keep the text under 50,000 characters.');
       return;
     }
     this.saving.set(true);
@@ -357,7 +373,7 @@ export class TextsPage {
         relativeTo: this.route,
       });
     } catch (error) {
-      this.formError.set(apiErrorMessage(error, 'متن ذخیره نشد.'));
+      this.formError.set(apiErrorMessage(error, 'Unable to save the text.'));
     } finally {
       this.saving.set(false);
     }
@@ -365,16 +381,17 @@ export class TextsPage {
 
   protected async remove(text: ReadingText) {
     const ok = await this.confirm.ask({
-      title: 'این متن حذف شود؟',
-      description: 'کارت‌هایی که از آن ساختی در دسته‌هایشان می‌مانند.',
-      confirmText: 'حذف',
+      language: 'en',
+      title: 'Delete this text?',
+      description: 'Cards created from this text will stay in their decks.',
+      confirmText: 'Delete',
       destructive: true,
     });
     if (!ok) return;
     try {
       await this.api.removeText(text.id);
       this.texts.update((list) => (list ?? []).filter((t) => t.id !== text.id));
-      aioToast.success('متن حذف شد');
+      aioToast.success('Text deleted');
     } catch (error) {
       aioToast.error(apiErrorMessage(error));
     }

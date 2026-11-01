@@ -30,9 +30,9 @@ import {
   aioToast,
   provideIcons,
 } from '@all-in-one/ui';
-import { apiErrorMessage } from '@all-in-one/web/shared';
+import { englishErrorMessage as apiErrorMessage } from './english-locale';
 import {
-  lucideArrowRight,
+  lucideArrowLeft,
   lucidePause,
   lucidePlay,
   lucidePlus,
@@ -51,6 +51,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
  * AI-written texts so the next one fits better.
  */
 @Component({
+  host: { dir: 'ltr', lang: 'en' },
   selector: 'english-learning-reader',
   imports: [
     AioButton,
@@ -69,7 +70,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
   ],
   providers: [
     provideIcons({
-      lucideArrowRight,
+      lucideArrowLeft,
       lucidePause,
       lucidePlay,
       lucidePlus,
@@ -91,9 +92,9 @@ const UNIT_KEY = 'aio.english.reader.unit';
             variant="ghost"
             size="icon"
             routerLink="../../texts"
-            aria-label="بازگشت به متن‌ها"
+            aria-label="Back to texts"
           >
-            <aio-icon name="lucideArrowRight" />
+            <aio-icon name="lucideArrowLeft" />
           </a>
           <h1
             dir="ltr"
@@ -112,10 +113,10 @@ const UNIT_KEY = 'aio.english.reader.unit';
               [name]="reading() ? 'lucidePause' : 'lucidePlay'"
               size="sm"
             />
-            {{ reading() ? 'توقف' : 'خواندن با صدا' }}
+            {{ reading() ? 'Stop' : 'Read aloud' }}
           </button>
           <p class="text-muted-foreground text-xs">
-            روی هر واژه دو بار بزن تا معنی‌اش را ببینی و کارت بسازی.
+            Double-tap a word to see its meaning and create a card.
           </p>
         </div>
 
@@ -149,11 +150,11 @@ const UNIT_KEY = 'aio.english.reader.unit';
             class="lx-glass flex flex-col gap-3 rounded-2xl p-4"
             aria-labelledby="rate-title"
           >
-            <h2 id="rate-title" class="font-bold">این متن چطور بود؟</h2>
+            <h2 id="rate-title" class="font-bold">How was this text?</h2>
             <p class="text-muted-foreground text-sm">
-              امتیاز و یادداشتت، متن بعدی هوش مصنوعی را بهتر می‌کند.
+              Your rating and notes help improve the next AI-generated text.
             </p>
-            <div class="flex gap-1" role="radiogroup" aria-label="امتیاز">
+            <div class="flex gap-1" role="radiogroup" aria-label="Points">
               @for (s of stars; track s) {
                 <button
                   type="button"
@@ -162,7 +163,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
                   [class.text-[var(--streak)]]="s <= rating()"
                   [class.text-muted-foreground]="s > rating()"
                   [attr.aria-checked]="s === rating()"
-                  [attr.aria-label]="s + ' ستاره'"
+                  [attr.aria-label]="s + ' stars'"
                   (click)="rating.set(s)"
                 >
                   <aio-icon
@@ -172,12 +173,12 @@ const UNIT_KEY = 'aio.english.reader.unit';
                 </button>
               }
             </div>
-            <label for="rate-note" class="sr-only">یادداشت</label>
+            <label for="rate-note" class="sr-only">Notes</label>
             <textarea
               aioTextarea
               id="rate-note"
               rows="2"
-              placeholder="مثلاً: سخت‌تر باشد، گفت‌وگوی بیشتری داشته باشد…"
+              placeholder="For example: more challenging, with more dialogue…"
               [value]="note()"
               (input)="note.set($any($event.target).value)"
             ></textarea>
@@ -187,7 +188,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
               [disabled]="savingReview()"
               (click)="saveReview()"
             >
-              ثبت امتیاز
+              Save rating
             </button>
           </section>
         }
@@ -198,8 +199,9 @@ const UNIT_KEY = 'aio.english.reader.unit';
       [open]="!!lookup()"
       (openChange)="$event || close()"
       [title]="lookup()?.text ?? ''"
-      description="معنی در همین جمله"
+      description="Meaning in this sentence"
       contentClass="applet-english"
+      language="en"
     >
       <ng-template aioDialogBody>
         <form
@@ -209,7 +211,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
         >
           @if (looking()) {
             <p class="text-muted-foreground flex items-center gap-2 text-sm">
-              <aio-spinner /> در حال پیدا کردن معنی…
+              <aio-spinner aria-label="Loading" /> Finding a definition…
             </p>
           }
           @if (lookupError()) {
@@ -222,12 +224,12 @@ const UNIT_KEY = 'aio.english.reader.unit';
                 type="button"
                 (click)="define()"
               >
-                دوباره
+                Again
               </button>
             </p>
           }
           <div aioField>
-            <label aioFieldLabel for="lookup-front">رو</label>
+            <label aioFieldLabel for="lookup-front">Front</label>
             <div class="flex gap-2">
               <input
                 aioInput
@@ -243,30 +245,30 @@ const UNIT_KEY = 'aio.english.reader.unit';
                 variant="outline"
                 size="icon"
                 (click)="speak(front())"
-                aria-label="تلفظ"
+                aria-label="Pronunciation"
               >
                 <aio-icon name="lucideVolume2" size="sm" />
               </button>
             </div>
             @if (duplicate()) {
               <p class="text-xs text-[var(--streak)]">
-                این واژه از قبل در این دسته هست.
+                This word is already in this deck.
               </p>
             }
           </div>
           <div aioField>
-            <label aioFieldLabel for="lookup-back">معنی</label>
+            <label aioFieldLabel for="lookup-back">Definition</label>
             <textarea
               aioTextarea
               id="lookup-back"
-              dir="auto"
+              dir="ltr"
               rows="2"
               [value]="back()"
               (input)="back.set($any($event.target).value)"
             ></textarea>
           </div>
           <div aioField>
-            <label aioFieldLabel for="lookup-examples">مثال‌ها</label>
+            <label aioFieldLabel for="lookup-examples">Examples</label>
             <textarea
               aioTextarea
               id="lookup-examples"
@@ -279,7 +281,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
           </div>
           <div class="grid grid-cols-[1fr_6rem] gap-3">
             <div aioField>
-              <label aioFieldLabel for="lookup-deck">دسته</label>
+              <label aioFieldLabel for="lookup-deck">deck</label>
               <aio-native-select
                 selectId="lookup-deck"
                 [value]="deckId()"
@@ -293,7 +295,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
               </aio-native-select>
             </div>
             <div aioField>
-              <label aioFieldLabel for="lookup-unit">واحد</label>
+              <label aioFieldLabel for="lookup-unit">Unit</label>
               <input
                 aioInput
                 id="lookup-unit"
@@ -312,7 +314,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
         </form>
       </ng-template>
       <ng-template aioDialogActions>
-        <button aioBtn variant="outline" (click)="close()">بستن</button>
+        <button aioBtn variant="outline" (click)="close()">Close</button>
         <button
           aioBtn
           type="submit"
@@ -320,7 +322,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
           [disabled]="adding() || !decks().length"
         >
           <aio-icon name="lucidePlus" size="sm" />
-          افزودن کارت
+          Add card
         </button>
       </ng-template>
     </aio-dialog>
@@ -400,7 +402,7 @@ export class ReaderPage {
       this.doc.set(parseReading(text.body));
       this.decks.set(decks);
     } catch (error) {
-      aioToast.error(apiErrorMessage(error, 'این متن باز نشد.'));
+      aioToast.error(apiErrorMessage(error, 'Unable to load this text.'));
       await this.router.navigate(['../../texts'], { relativeTo: this.route });
     } finally {
       this.loading.set(false);
@@ -410,7 +412,7 @@ export class ReaderPage {
   protected async saveReview() {
     const text = this.text();
     if (!text || !this.rating()) {
-      aioToast.error('اول تعداد ستاره را انتخاب کن.');
+      aioToast.error('Choose a star rating first.');
       return;
     }
     this.savingReview.set(true);
@@ -418,7 +420,7 @@ export class ReaderPage {
       this.text.set(
         await this.api.rateText(text.id, this.rating(), this.note().trim()),
       );
-      aioToast.success('ممنون! متن بعدی را با این نظر می‌نویسیم.');
+      aioToast.success('Thanks! Your feedback will guide the next text.');
     } catch (error) {
       aioToast.error(apiErrorMessage(error));
     } finally {
@@ -519,7 +521,9 @@ export class ReaderPage {
       this.checkDuplicate();
     } catch (error) {
       if (seq === this.lookupSeq)
-        this.lookupError.set(apiErrorMessage(error, 'معنی پیدا نشد.'));
+        this.lookupError.set(
+          apiErrorMessage(error, 'Unable to find a definition.'),
+        );
     } finally {
       if (seq === this.lookupSeq) this.looking.set(false);
     }
@@ -570,15 +574,15 @@ export class ReaderPage {
     const unit = this.unit().trim().toLowerCase();
     if (!token || this.adding()) return;
     if (!this.deckId()) {
-      this.formError.set('یک دسته برای این کارت انتخاب کن.');
+      this.formError.set('Choose a deck for this card.');
       return;
     }
     if (!front || !back) {
-      this.formError.set('واژه و معنی آن را بنویس.');
+      this.formError.set('Enter the word and its definition.');
       return;
     }
     if (!/^(?:u\d+)?$/.test(unit)) {
-      this.formError.set('واحد را کوتاه بنویس، مثل u19.');
+      this.formError.set('Use a short unit code, such as u19.');
       return;
     }
     this.adding.set(true);
@@ -596,11 +600,11 @@ export class ReaderPage {
       this.saved.update((set) => new Set(set).add(token.text.toLowerCase()));
       const deck = this.decks().find((d) => d.id === this.deckId());
       aioToast.success(
-        `«${front.slice(0, 40)}» به ${deck?.name ?? 'دسته'} اضافه شد`,
+        `“${front.slice(0, 40)}” added to ${deck?.name ?? 'deck'}`,
       );
       this.close();
     } catch (error) {
-      this.formError.set(apiErrorMessage(error, 'کارت اضافه نشد.'));
+      this.formError.set(apiErrorMessage(error, 'Unable to add the card.'));
     } finally {
       this.adding.set(false);
     }

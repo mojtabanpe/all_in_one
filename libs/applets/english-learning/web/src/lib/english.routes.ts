@@ -12,18 +12,18 @@ export const englishLearningRoutes: Routes = [
     children: [
       {
         path: '',
-        title: 'انگلیسی',
+        title: 'English',
         loadComponent: () =>
           import('./library-page').then((m) => m.LibraryPage),
       },
       {
         path: 'texts',
-        title: 'خواندن',
+        title: 'Reading',
         loadComponent: () => import('./texts-page').then((m) => m.TextsPage),
       },
       {
         path: 'practice',
-        title: 'تمرین مکالمه',
+        title: 'Conversation practice',
         loadComponent: () =>
           import('./practice-page').then((m) => m.PracticePage),
       },
@@ -31,17 +31,17 @@ export const englishLearningRoutes: Routes = [
   },
   {
     path: 'deck/:id',
-    title: 'دسته',
+    title: 'deck',
     loadComponent: () => import('./deck-page').then((m) => m.DeckPage),
   },
   {
     path: 'deck/:id/study',
-    title: 'مرور',
+    title: 'Review',
     loadComponent: () => import('./study-page').then((m) => m.StudyPage),
   },
   {
     path: 'read/:id',
-    title: 'خواندن',
+    title: 'Reading',
     loadComponent: () => import('./reader-page').then((m) => m.ReaderPage),
   },
 ];

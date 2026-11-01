@@ -49,8 +49,8 @@ export class StarterDecksService {
           create: starter.words.map((w) => ({
             userId,
             front: w.term,
-            back: w.meaningFa,
-            examples: [w.example, w.exampleFa]
+            back: w.definition,
+            examples: [w.example]
               .filter(Boolean)
               .map((line) => '- ' + line)
               .join('\n'),
