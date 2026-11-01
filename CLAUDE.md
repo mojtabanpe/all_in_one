@@ -225,6 +225,11 @@ When the owner gives a new instruction, add it to this list in the same change.
 38. **The desktop/tablet sidebar can be closed completely** (`collapsible="offcanvas"`, header button or Ctrl/⌘+B,
     remembered in a cookie). The shell's `main` is `min-w-0` so wide content never slides under the sidebar.
 
+39. **Health is glass too, and the accents swapped** (2026-11-01, owner): health uses the green
+    (`--health: oklch(0.53 0.15 152)`), English moved to violet (`--english: oklch(0.52 0.2 293)`). Both applets sit
+    on `lx-stage` with their own ambient colours (`--lx-1..4` on the applet class); health keeps the companion
+    layout of directive 30, with glass cards (the `.health-calm` glass block at the end of `theme.css`).
+
 ## Approved custom components
 
 - **BottomNav** (2026-10-29): floating bottom navigation for phone sizes, in `libs/shared/packages`,

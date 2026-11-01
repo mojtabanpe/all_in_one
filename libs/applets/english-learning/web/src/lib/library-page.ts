@@ -76,7 +76,7 @@ import { EnglishApi } from './english-api';
           class="lx-glass flex flex-col gap-5 rounded-[28px] p-5 sm:p-7"
           aria-labelledby="today-title"
         >
-          <span class="lx-orb bg-emerald-400" aria-hidden="true"></span>
+          <span class="lx-orb bg-violet-400" aria-hidden="true"></span>
           <span
             class="lx-orb start-[-60px] end-auto top-auto bottom-[-70px] bg-sky-300"
             aria-hidden="true"

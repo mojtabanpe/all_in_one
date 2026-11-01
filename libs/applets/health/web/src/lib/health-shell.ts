@@ -8,7 +8,7 @@ import { AioButton } from '@all-in-one/ui';
   imports: [AioButton, RouterLink, RouterLinkActive, RouterOutlet],
   template: `
     <div
-      class="applet-health health-calm flex flex-col gap-6 [&>router-outlet]:hidden"
+      class="applet-health health-calm lx-stage flex min-w-0 flex-col gap-6 [&>router-outlet]:hidden"
     >
       <header>
         <p class="aio-eyebrow">با یک قدم کوچک، حال بهتر</p>
@@ -22,7 +22,7 @@ import { AioButton } from '@all-in-one/ui';
           <a
             aioBtn
             variant="ghost"
-            class="data-[active=true]:bg-primary data-[active=true]:text-primary-foreground h-11 rounded-xl"
+            class="h-11 rounded-xl"
             [routerLink]="link.path"
             routerLinkActive
             #rla="routerLinkActive"

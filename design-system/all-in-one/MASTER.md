@@ -110,13 +110,16 @@ Status colours always come with a label or an icon, never colour alone.
 
 ### Applet accents
 
-| Token       | Value           | Applet / meaning         | White text | As text on bg                |
-| ----------- | --------------- | ------------------------ | ---------- | ---------------------------- |
-| `--planner` | `0.54 0.19 258` | planner (TickTick blue)  | 5.2:1      | 4.7:1                        |
-| `--english` | `0.53 0.16 142` | english (Duolingo green) | 5.0:1      | 4.5:1                        |
-| `--health`  | `0.56 0.19 38`  | health (Gordool orange)  | 5.1:1      | 4.6:1                        |
-| `--streak`  | `0.56 0.14 62`  | streak flame (amber)     | 4.8:1      | 4.4:1 (bold/large text only) |
-| `--gem`     | `0.54 0.14 235` | learned words / gems     | 4.8:1      | 4.3:1 (bold/large text only) |
+| Token       | Value           | Applet / meaning        | White text | As text on bg                |
+| ----------- | --------------- | ----------------------- | ---------- | ---------------------------- |
+| `--planner` | `0.54 0.19 258` | planner (TickTick blue) | 5.2:1      | 4.7:1                        |
+| `--english` | `0.52 0.2 293`  | english (violet)        | 6.0:1      | 5.6:1                        |
+| `--health`  | `0.53 0.15 152` | health (green)          | 4.9:1      | 4.5:1                        |
+| `--streak`  | `0.56 0.14 62`  | streak flame (amber)    | 4.8:1      | 4.4:1 (bold/large text only) |
+| `--gem`     | `0.54 0.14 235` | learned words / gems    | 4.8:1      | 4.3:1 (bold/large text only) |
+
+English and health pages sit on `.lx-stage` (ambient light from the applet's `--lx-1..4`) with glass panels
+(`.lx-glass`; health's companion cards get the same material through `.health-calm`). 2026-11-01.
 
 The applet root carries `.applet-planner` / `.applet-english` / `.applet-health`, which sets `--primary`,
 `--ring` and `--accent`, so every spartan component inside follows the applet colour. Sheets and dialogs
