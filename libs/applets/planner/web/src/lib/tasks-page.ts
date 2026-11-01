@@ -133,11 +133,29 @@ const DONE_DAYS = 30;
         aria-label="انتخاب فهرست"
       >
         <aio-icon name="lucideMenu" class="text-primary" />
-        <span class="flex flex-col">
-          <span class="text-2xl font-bold">{{ title() }}</span>
-          <span class="text-muted-foreground text-sm font-normal">{{
-            subtitle()
-          }}</span>
+        <span class="flex min-w-0 flex-1 flex-col">
+          <span class="min-h-9 truncate text-2xl font-bold">
+            @if (loading()) {
+              <span
+                aioSkeleton
+                class="block h-8 w-44 rounded-lg"
+                aria-hidden="true"
+              ></span>
+            } @else {
+              {{ title() }}
+            }
+          </span>
+          <span class="text-muted-foreground min-h-6 text-sm font-normal">
+            @if (loading()) {
+              <span
+                aioSkeleton
+                class="block h-5 w-36 rounded-lg"
+                aria-hidden="true"
+              ></span>
+            } @else {
+              {{ subtitle() }}
+            }
+          </span>
         </span>
       </button>
       @if (currentList(); as l) {
@@ -613,11 +631,20 @@ export class TasksPage {
     return [...open, ...done.filter((t) => !seen.has(t.id))];
   });
 
-  protected readonly loading = computed(() =>
-    this.view() === 'trash'
-      ? this.trashRes.isLoading() && !this.trashRes.hasValue()
-      : this.openRes.isLoading() && !this.openRes.hasValue(),
-  );
+  protected readonly loading = computed(() => {
+    if (this.view() === 'trash')
+      return this.trashRes.isLoading() && !this.trashRes.hasValue();
+    if (this.view() === 'completed')
+      return this.doneRes.isLoading() && !this.doneRes.hasValue();
+    return (
+      (this.openRes.isLoading() && !this.openRes.hasValue()) ||
+      (this.datedRes.isLoading() && !this.datedRes.hasValue()) ||
+      (this.doneRes.isLoading() && !this.doneRes.hasValue()) ||
+      (this.listsRes.isLoading() && !this.listsRes.hasValue()) ||
+      (this.foldersRes.isLoading() && !this.foldersRes.hasValue()) ||
+      (this.tagsRes.isLoading() && !this.tagsRes.hasValue())
+    );
+  });
 
   private readonly selectedRes = httpResource<PlannerTask>(() => {
     const id = this.selectedId();

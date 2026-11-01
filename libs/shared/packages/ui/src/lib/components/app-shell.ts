@@ -27,9 +27,10 @@ import { AioIcon } from './icon';
     RouterLinkActive,
   ],
   template: `
-    <div hlmSidebarWrapper>
+    <div hlmSidebarWrapper dir="rtl">
       <hlm-sidebar
-        [side]="language() === 'en' ? 'left' : 'right'"
+        side="right"
+        [attr.dir]="language() === 'en' ? 'ltr' : 'rtl'"
         variant="floating"
         collapsible="offcanvas"
       >
@@ -78,7 +79,11 @@ import { AioIcon } from './icon';
         </div>
       </hlm-sidebar>
 
-      <main hlmSidebarInset class="min-w-0 bg-transparent">
+      <main
+        hlmSidebarInset
+        class="min-w-0 bg-transparent"
+        [attr.dir]="language() === 'en' ? 'ltr' : 'rtl'"
+      >
         <header class="aio-app-header flex items-center gap-2 px-5 md:px-8">
           <!-- spartan's trigger component renders its own icon and sr-only label -->
           @if (collapsed()) {

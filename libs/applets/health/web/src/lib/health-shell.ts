@@ -26,9 +26,7 @@ import {
   ],
   imports: [AioAppletHeader, RouterOutlet],
   template: `
-    <div
-      class="applet-health health-calm lx-stage flex min-w-0 flex-col gap-6 [&>router-outlet]:hidden"
-    >
+    <div class="applet-health health-calm lx-stage aio-applet-layout">
       <aio-applet-header
         title="سلامت من"
         subtitle="با یک قدم کوچک، حال بهتر"

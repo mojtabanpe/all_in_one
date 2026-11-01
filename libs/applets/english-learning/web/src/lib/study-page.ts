@@ -123,7 +123,18 @@ const POINTS: Record<Rating, number> = {
       </header>
 
       @if (loading()) {
-        <div aioSkeleton class="h-72 rounded-3xl"></div>
+        <div aioSkeleton class="h-5 w-40 rounded-lg" aria-hidden="true"></div>
+        <div
+          aioSkeleton
+          class="min-h-64 rounded-3xl"
+          aria-label="Loading review"
+          role="status"
+        ></div>
+        <div class="flex justify-center gap-2" aria-hidden="true">
+          <div aioSkeleton class="size-12 rounded-2xl"></div>
+          <div aioSkeleton class="size-12 rounded-2xl"></div>
+        </div>
+        <div aioSkeleton class="h-12 rounded-2xl" aria-hidden="true"></div>
       } @else if (loadError()) {
         <div aioEmpty class="lx-glass rounded-3xl">
           <div aioEmptyHeader>

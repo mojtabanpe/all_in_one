@@ -143,7 +143,17 @@ const emptyDraft = (): Draft => ({
     <header class="flex items-center justify-between gap-3">
       <div>
         <h1 class="text-2xl font-bold">عادت‌ها</h1>
-        <p class="text-muted-foreground text-sm">{{ summary() }}</p>
+        <p class="text-muted-foreground min-h-6 text-sm">
+          @if (initialLoading()) {
+            <span
+              aioSkeleton
+              class="block h-5 w-32 rounded-lg"
+              aria-hidden="true"
+            ></span>
+          } @else {
+            {{ summary() }}
+          }
+        </p>
       </div>
       <button aioBtn (click)="openNew()">
         <aio-icon name="lucidePlus" size="sm" />
@@ -176,7 +186,7 @@ const emptyDraft = (): Draft => ({
       }
     </div>
 
-    @if (res.isLoading() && !res.hasValue()) {
+    @if (initialLoading()) {
       <div aioSkeleton class="h-20 rounded-2xl"></div>
       <div aioSkeleton class="h-20 rounded-2xl"></div>
     } @else {
@@ -531,6 +541,11 @@ export class HabitsPage {
   );
   protected readonly habits = linkedSignal(() =>
     this.res.hasValue() ? this.res.value() : [],
+  );
+  protected readonly initialLoading = computed(
+    () =>
+      (this.res.isLoading() && !this.res.hasValue()) ||
+      (this.sectionsRes.isLoading() && !this.sectionsRes.hasValue()),
   );
   protected readonly sections = computed(() =>
     this.sectionsRes.hasValue() ? this.sectionsRes.value() : [],

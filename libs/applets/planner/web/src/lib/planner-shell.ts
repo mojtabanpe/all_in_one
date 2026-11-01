@@ -28,9 +28,7 @@ import {
     }),
   ],
   template: `
-    <div
-      class="applet-planner mx-auto flex w-full max-w-2xl flex-col gap-5 [&>router-outlet]:hidden"
-    >
+    <div class="applet-planner aio-applet-layout">
       <aio-applet-header
         title="جا برای کارهای مهم."
         subtitle="ذهن خلوت، مسیر روشن"

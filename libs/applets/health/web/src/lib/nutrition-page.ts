@@ -24,6 +24,7 @@ import {
   AioAccordionTrigger,
   AioBadge,
   AioButton,
+  AioSkeleton,
   AioCardDirectives,
   AioConfirm,
   AioDialog,
@@ -57,6 +58,7 @@ import { MealForm } from './meal-form';
     AioAccordionTrigger,
     AioBadge,
     AioButton,
+    AioSkeleton,
     AioCardDirectives,
     AioDialog,
     AioDialogActions,
@@ -84,96 +86,113 @@ import { MealForm } from './meal-form';
       <section aioCard>
         <div aioCardHeader>
           <h2 aioCardTitle>رژیم شما</h2>
-          <p aioCardDescription>{{ modeLabel() }}</p>
+          <p aioCardDescription class="min-h-6">
+            @if (initialLoading()) {
+              <span
+                aioSkeleton
+                class="block h-5 w-36 rounded-lg"
+                aria-hidden="true"
+              ></span>
+            } @else {
+              {{ modeLabel() }}
+            }
+          </p>
         </div>
         <div
           aioCardContent
-          class="flex flex-wrap items-center justify-between gap-3"
+          class="flex min-h-36 flex-wrap items-center justify-between gap-3"
         >
-          <div class="text-sm">
-            @if (diet(); as d) {
-              <span class="font-semibold">{{ d.name }}</span>
-              <span class="text-muted-foreground">
-                ، کربوهیدرات {{ fa(d.carbsPct) }}٪، پروتئین
-                {{ fa(d.proteinPct) }}٪، چربی {{ fa(d.fatPct) }}٪</span
-              >
-            } @else {
-              <span class="text-muted-foreground"
-                >وعده‌ها با الگوی تغذیه متعادل سنجیده می‌شوند.</span
-              >
-            }
-            @if (profile.value()?.calorieTarget; as t) {
-              <div class="text-muted-foreground mt-1">
-                نیاز روزانه: {{ fa(t) }} کالری
-              </div>
-            }
-          </div>
-          <button
-            aioBtn
-            variant="outline"
-            size="sm"
-            (click)="choosing.set(true)"
-          >
-            {{
-              profile.value()?.dietMode === 'NONE'
-                ? 'رژیم خاصی دارید؟'
-                : 'تغییر رژیم'
-            }}
-          </button>
-          @if (hasActiveDiet()) {
+          @if (initialLoading()) {
+            <div
+              class="flex w-full flex-col gap-3"
+              role="status"
+              aria-label="در حال دریافت رژیم"
+            >
+              <div
+                aioSkeleton
+                class="h-5 w-2/3 rounded-lg"
+                aria-hidden="true"
+              ></div>
+              <div
+                aioSkeleton
+                class="h-5 w-full rounded-lg"
+                aria-hidden="true"
+              ></div>
+              <div
+                aioSkeleton
+                class="h-11 w-40 rounded-xl"
+                aria-hidden="true"
+              ></div>
+            </div>
+          } @else {
+            <div class="text-sm">
+              @if (diet(); as d) {
+                <span class="font-semibold">{{ d.name }}</span>
+                <span class="text-muted-foreground">
+                  ، کربوهیدرات {{ fa(d.carbsPct) }}٪، پروتئین
+                  {{ fa(d.proteinPct) }}٪، چربی {{ fa(d.fatPct) }}٪</span
+                >
+              } @else {
+                <span class="text-muted-foreground"
+                  >وعده‌ها با الگوی تغذیه متعادل سنجیده می‌شوند.</span
+                >
+              }
+              @if (profile.value()?.calorieTarget; as t) {
+                <div class="text-muted-foreground mt-1">
+                  نیاز روزانه: {{ fa(t) }} کالری
+                </div>
+              }
+            </div>
             <button
               aioBtn
-              type="button"
-              variant="ghost"
+              variant="outline"
               size="sm"
-              [attr.aria-expanded]="browsingDiets()"
-              aria-controls="diet-suggestions"
-              (click)="browsingDiets.set(!browsingDiets())"
+              (click)="choosing.set(true)"
             >
-              {{ browsingDiets() ? 'بستن پیشنهادها' : 'بررسی رژیم‌های دیگر' }}
+              {{
+                profile.value()?.dietMode === 'NONE'
+                  ? 'رژیم خاصی دارید؟'
+                  : 'تغییر رژیم'
+              }}
             </button>
+            @if (hasActiveDiet()) {
+              <button
+                aioBtn
+                type="button"
+                variant="ghost"
+                size="sm"
+                [attr.aria-expanded]="browsingDiets()"
+                aria-controls="diet-suggestions"
+                (click)="browsingDiets.set(!browsingDiets())"
+              >
+                {{ browsingDiets() ? 'بستن پیشنهادها' : 'بررسی رژیم‌های دیگر' }}
+              </button>
+            }
           }
         </div>
-        @if (diet(); as d) {
-          <div
-            aioCardFooter
-            class="text-muted-foreground flex-col items-start gap-1 text-xs"
-          >
+        <div
+          aioCardFooter
+          class="text-muted-foreground min-h-16 flex-col items-start gap-1 text-xs"
+        >
+          @if (initialLoading()) {
+            <div
+              aioSkeleton
+              class="h-4 w-full rounded-lg"
+              aria-hidden="true"
+            ></div>
+            <div
+              aioSkeleton
+              class="h-4 w-3/4 rounded-lg"
+              aria-hidden="true"
+            ></div>
+          } @else if (diet(); as d) {
             <p>بیشتر: {{ d.encourage.join('، ') }}</p>
             <p>کمتر: {{ d.limit.join('، ') }}</p>
-          </div>
-        }
+          } @else {
+            <p>با انتخاب رژیم، پیشنهادها بر اساس نیازت تنظیم می‌شوند.</p>
+          }
+        </div>
       </section>
-
-      @if (showDietSuggestions()) {
-        <section aioCard id="diet-suggestions">
-          <div aioCardHeader>
-            <h2 aioCardTitle>کدام رژیم به سلیقه شما نزدیک‌تر است؟</h2>
-            <p aioCardDescription>
-              پیشنهادهای اولیه برای مقایسه؛ انتخاب رژیم را خودتان انجام می‌دهید.
-            </p>
-          </div>
-          <div aioCardContent class="flex flex-col gap-3">
-            @for (
-              suggestion of suggestions.value()?.suggestions ?? [];
-              track suggestion.slug
-            ) {
-              <div>
-                <strong>{{ suggestion.name }}</strong>
-                <p class="text-muted-foreground text-sm">
-                  {{ suggestion.reason }}
-                </p>
-              </div>
-            }
-            <button aioBtn variant="outline" (click)="choosing.set(true)">
-              مقایسه و انتخاب رژیم
-            </button>
-            <a aioBtn variant="link" routerLink="../profile"
-              >تنظیم مواد غذایی مستثنا</a
-            >
-          </div>
-        </section>
-      }
 
       <section class="flex flex-col gap-3">
         <div class="flex items-center justify-between">
@@ -183,7 +202,11 @@ import { MealForm } from './meal-form';
             ثبت وعده
           </button>
         </div>
-        @if ((meals.value() ?? []).length === 0) {
+        @if (meals.isLoading() && !meals.hasValue()) {
+          @for (row of [1, 2, 3]; track row) {
+            <div aioSkeleton class="h-24 rounded-2xl" aria-hidden="true"></div>
+          }
+        } @else if ((meals.value() ?? []).length === 0) {
           <div aioEmpty class="glass rounded-3xl">
             <div aioEmptyHeader>
               <div aioEmptyMedia variant="icon">
@@ -250,7 +273,21 @@ import { MealForm } from './meal-form';
             {{ plan.value() ? 'چیدن دوباره' : 'برایم بچین' }}
           </button>
         </div>
-        @if (plan.value(); as p) {
+        @if (plan.isLoading() && !plan.hasValue()) {
+          <div
+            aioSkeleton
+            class="h-5 w-3/4 rounded-lg"
+            aria-hidden="true"
+          ></div>
+          <div
+            aioSkeleton
+            class="h-11 w-full rounded-xl"
+            aria-hidden="true"
+          ></div>
+          @for (row of [1, 2, 3]; track row) {
+            <div aioSkeleton class="h-16 rounded-2xl" aria-hidden="true"></div>
+          }
+        } @else if (plan.value(); as p) {
           <p class="text-muted-foreground text-sm">
             {{ fa(p.days.length) }} روز از {{ faDate(p.startDate) }}، هدف
             {{ fa(p.calorieTarget) }} کالری در روز
@@ -333,6 +370,35 @@ import { MealForm } from './meal-form';
           </p>
         }
       </section>
+      @if (showDietSuggestions()) {
+        <section aioCard id="diet-suggestions">
+          <div aioCardHeader>
+            <h2 aioCardTitle>کدام رژیم به سلیقه شما نزدیک‌تر است؟</h2>
+            <p aioCardDescription>
+              پیشنهادهای اولیه برای مقایسه؛ انتخاب رژیم را خودتان انجام می‌دهید.
+            </p>
+          </div>
+          <div aioCardContent class="flex flex-col gap-3">
+            @for (
+              suggestion of suggestions.value()?.suggestions ?? [];
+              track suggestion.slug
+            ) {
+              <div>
+                <strong>{{ suggestion.name }}</strong>
+                <p class="text-muted-foreground text-sm">
+                  {{ suggestion.reason }}
+                </p>
+              </div>
+            }
+            <button aioBtn variant="outline" (click)="choosing.set(true)">
+              مقایسه و انتخاب رژیم
+            </button>
+            <a aioBtn variant="link" routerLink="../profile"
+              >تنظیم مواد غذایی مستثنا</a
+            >
+          </div>
+        </section>
+      }
     </div>
 
     <aio-dialog [(open)]="shoppingOpen" title="فهرست خرید">
@@ -560,6 +626,11 @@ export class NutritionPage {
     () => `${this.api.base}/profile`,
   );
   protected readonly browsingDiets = signal(false);
+  protected readonly initialLoading = computed(
+    () =>
+      (this.profile.isLoading() && !this.profile.hasValue()) ||
+      (this.diets.isLoading() && !this.diets.hasValue()),
+  );
   protected readonly hasActiveDiet = computed(() => {
     const mode = this.profile.value()?.dietMode;
     return mode !== undefined && mode !== 'NONE';

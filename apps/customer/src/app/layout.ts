@@ -3,6 +3,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
 import {
   NavigationEnd,
+  NavigationStart,
+  NavigationCancel,
+  NavigationError,
+  NavigationSkipped,
   Router,
   RouterLink,
   RouterOutlet,
@@ -11,6 +15,7 @@ import {
   AioAppShell,
   AioButton,
   AioIcon,
+  AioSkeleton,
   type AioNavItem,
   provideIcons,
 } from '@all-in-one/ui';
@@ -36,6 +41,7 @@ import {
     AioAppShell,
     AioButton,
     AioIcon,
+    AioSkeleton,
     Assistant,
     RouterOutlet,
   ],
@@ -97,7 +103,34 @@ import {
           english() ? 'Sign out' : 'خروج'
         }}</span>
       </button>
-      <router-outlet />
+      @if (pendingRoute(); as route) {
+        <div
+          class="aio-route-loading aio-applet-layout"
+          role="status"
+          [attr.aria-label]="
+            route.startsWith('/english') ? 'Loading page' : 'در حال دریافت صفحه'
+          "
+          aria-busy="true"
+        >
+          <div class="aio-route-heading-placeholder" aria-hidden="true">
+            <div aioSkeleton class="h-9 w-3/4 max-w-sm rounded-xl"></div>
+            <div aioSkeleton class="h-5 w-1/2 max-w-xs rounded-lg"></div>
+          </div>
+          <div
+            aioSkeleton
+            class="h-16 w-full rounded-2xl"
+            aria-hidden="true"
+          ></div>
+          <div class="grid gap-5 sm:grid-cols-2" aria-hidden="true">
+            <div aioSkeleton class="h-64 rounded-3xl sm:col-span-2"></div>
+            <div aioSkeleton class="h-32 rounded-2xl"></div>
+            <div aioSkeleton class="h-32 rounded-2xl"></div>
+          </div>
+        </div>
+      }
+      <div class="aio-route-content" [class.hidden]="!!pendingRoute()">
+        <router-outlet />
+      </div>
     </aio-app-shell>
   `,
 })
@@ -105,6 +138,20 @@ export class Layout {
   private readonly auth = inject(AuthStore);
   private readonly router = inject(Router);
   protected readonly pwa = inject(Pwa);
+  protected readonly pendingRoute = toSignal(
+    this.router.events.pipe(
+      filter(
+        (event) =>
+          event instanceof NavigationStart ||
+          event instanceof NavigationEnd ||
+          event instanceof NavigationCancel ||
+          event instanceof NavigationError ||
+          event instanceof NavigationSkipped,
+      ),
+      map((event) => (event instanceof NavigationStart ? event.url : null)),
+    ),
+    { initialValue: null },
+  );
   private readonly url = toSignal(
     this.router.events.pipe(
       filter((e) => e instanceof NavigationEnd),

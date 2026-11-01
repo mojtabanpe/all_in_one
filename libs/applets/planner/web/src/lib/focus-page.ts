@@ -20,6 +20,7 @@ import {
 } from '@all-in-one/applets/planner/contracts';
 import {
   AioButton,
+  AioSkeleton,
   AioConfirm,
   AioDialog,
   AioDialogActions,
@@ -109,6 +110,7 @@ export class FocusTimer {
   selector: 'planner-focus-page',
   imports: [
     AioButton,
+    AioSkeleton,
     AioDialog,
     AioDialogActions,
     AioDialogBody,
@@ -132,8 +134,16 @@ export class FocusTimer {
   template: `
     <header>
       <h1 class="text-2xl font-bold">تمرکز</h1>
-      <p class="text-muted-foreground text-sm">
-        امروز {{ fa(todayMin()) }} دقیقه، این هفته {{ fa(weekMin()) }} دقیقه
+      <p class="text-muted-foreground min-h-6 text-sm">
+        @if (res.isLoading() && !res.hasValue()) {
+          <span
+            aioSkeleton
+            class="block h-5 w-52 rounded-lg"
+            aria-hidden="true"
+          ></span>
+        } @else {
+          امروز {{ fa(todayMin()) }} دقیقه، این هفته {{ fa(weekMin()) }} دقیقه
+        }
       </p>
     </header>
 
@@ -266,6 +276,13 @@ export class FocusTimer {
         ۷ روز گذشته
       </h2>
       <ul class="glass divide-border/60 flex flex-col divide-y rounded-2xl">
+        @if (res.isLoading() && !res.hasValue()) {
+          @for (row of [1, 2, 3]; track row) {
+            <li class="flex min-h-14 items-center px-4 py-2" aria-hidden="true">
+              <span aioSkeleton class="h-6 w-full rounded-lg"></span>
+            </li>
+          }
+        }
         @for (r of records(); track r.id) {
           <li>
             <button
@@ -290,9 +307,11 @@ export class FocusTimer {
             </button>
           </li>
         } @empty {
-          <li class="text-muted-foreground p-4 text-sm">
-            هنوز جلسه تمرکزی ثبت نشده. یک پومودوروی ۲۵ دقیقه‌ای شروع کن!
-          </li>
+          @if (!res.isLoading()) {
+            <li class="text-muted-foreground p-4 text-sm">
+              هنوز جلسه تمرکزی ثبت نشده. یک پومودوروی ۲۵ دقیقه‌ای شروع کن!
+            </li>
+          }
         }
       </ul>
     </section>

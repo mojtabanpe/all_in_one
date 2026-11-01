@@ -8,7 +8,13 @@ import {
   isDevMode,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
+import {
+  PreloadAllModules,
+  provideRouter,
+  withComponentInputBinding,
+  withPreloading,
+  withInMemoryScrolling,
+} from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { authInterceptor } from '@all-in-one/web/shared';
 import { appRoutes } from './app.routes';
@@ -16,7 +22,12 @@ import { appRoutes } from './app.routes';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(appRoutes, withComponentInputBinding()),
+    provideRouter(
+      appRoutes,
+      withComponentInputBinding(),
+      withPreloading(PreloadAllModules),
+      withInMemoryScrolling({ scrollPositionRestoration: 'enabled' }),
+    ),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     // PWA (install on phone, offline shell, updates); production builds only.
     provideServiceWorker('ngsw-worker.js', {

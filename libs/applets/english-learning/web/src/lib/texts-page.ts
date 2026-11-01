@@ -93,8 +93,24 @@ import { EnglishApi } from './english-api';
       </header>
 
       @if (texts.isLoading() && !texts.hasValue()) {
-        <div aioSkeleton class="h-20 rounded-2xl"></div>
-        <div aioSkeleton class="h-20 rounded-2xl"></div>
+        <ul
+          class="lx-glass divide-border/60 flex flex-col divide-y rounded-2xl"
+          aria-busy="true"
+          aria-label="Loading reading texts"
+        >
+          @for (row of [1, 2, 3]; track row) {
+            <li
+              class="flex min-h-20 items-center gap-3 px-4 py-3"
+              aria-hidden="true"
+            >
+              <span class="flex min-w-0 flex-1 flex-col gap-2"
+                ><span aioSkeleton class="h-5 w-3/4 rounded-lg"></span
+                ><span aioSkeleton class="h-5 w-1/2 rounded-lg"></span
+              ></span>
+              <span aioSkeleton class="size-11 shrink-0 rounded-xl"></span>
+            </li>
+          }
+        </ul>
       } @else if (!(texts.value() ?? []).length) {
         <div aioEmpty class="lx-glass rounded-2xl">
           <div aioEmptyHeader>

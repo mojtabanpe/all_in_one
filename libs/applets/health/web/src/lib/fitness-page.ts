@@ -43,6 +43,7 @@ import {
   AioAccordionTrigger,
   AioBadge,
   AioButton,
+  AioSkeleton,
   AioDateInput,
   AioCardDirectives,
   AioConfirm,
@@ -92,6 +93,7 @@ type CategoryFilter = ActivityCategory | 'all';
     AioAccordionTrigger,
     AioBadge,
     AioButton,
+    AioSkeleton,
     AioDateInput,
     AioCardDirectives,
     AioDialog,
@@ -130,11 +132,38 @@ type CategoryFilter = ActivityCategory | 'all';
   ],
   template: `
     <div class="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-2">
-      <section class="health-workout-banner lg:col-span-2">
-        <div class="flex min-w-0 flex-col items-start gap-3">
+      <section class="health-workout-banner min-h-72 lg:col-span-2">
+        <div class="flex min-h-60 min-w-0 flex-1 flex-col items-start gap-3">
           <p class="health-metric-label">با ریتم خودت حرکت کن</p>
-          @if (routines.value()?.[0]; as routine) {
-            <h2 class="text-2xl font-bold">{{ routine.title }}</h2>
+          @if (routines.isLoading() && !routines.hasValue()) {
+            <div
+              class="flex w-full flex-col gap-3"
+              role="status"
+              aria-label="در حال دریافت برنامه تمرین"
+            >
+              <div
+                aioSkeleton
+                class="h-14 w-full max-w-sm rounded-xl"
+                aria-hidden="true"
+              ></div>
+              <div
+                aioSkeleton
+                class="h-10 w-3/4 max-w-xs rounded-lg"
+                aria-hidden="true"
+              ></div>
+              <div
+                aioSkeleton
+                class="h-11 w-44 max-w-full rounded-xl"
+                aria-hidden="true"
+              ></div>
+              <div
+                aioSkeleton
+                class="h-4 w-2/3 rounded-lg"
+                aria-hidden="true"
+              ></div>
+            </div>
+          } @else if (routines.value()?.[0]; as routine) {
+            <h2 class="min-h-14 text-2xl font-bold">{{ routine.title }}</h2>
             <p class="health-metric-label">
               {{ fa(routine.minutes) }} دقیقه،
               {{ fa(routine.days[0]?.exercises?.length ?? 0) }} حرکت در جلسه اول
@@ -150,7 +179,7 @@ type CategoryFilter = ActivityCategory | 'all';
               هر ست را طبق برنامه انجام بده و با «انجام دادم» جلو برو.
             </p>
           } @else {
-            <h2 class="text-2xl font-bold">یک برنامه، مخصوص خودت.</h2>
+            <h2 class="min-h-14 text-2xl font-bold">یک برنامه، مخصوص خودت.</h2>
             <p class="health-metric-label">
               خانه، TRX یا باشگاه؛ متناسب با سطح و زمانی که داری.
             </p>
@@ -163,7 +192,10 @@ type CategoryFilter = ActivityCategory | 'all';
             </button>
           }
         </div>
-        <span class="health-helper-art shrink-0" aria-hidden="true"></span>
+        <span
+          class="health-helper-art hidden shrink-0 sm:block"
+          aria-hidden="true"
+        ></span>
       </section>
       <section aioCard class="lg:col-span-2">
         <div aioCardContent class="health-topline flex-wrap pt-6">
@@ -204,349 +236,362 @@ type CategoryFilter = ActivityCategory | 'all';
         </div>
       </section>
 
-      <section
-        class="flex flex-col gap-3 lg:col-span-2"
-        aria-label="برنامه‌های شخصی"
-      >
-        @if (routines.isLoading()) {
-          <p role="status">در حال دریافت برنامه‌ها…</p>
-        }
-        @if (routines.error()) {
-          <p role="alert">دریافت برنامه‌ها ممکن نشد.</p>
-          <button aioBtn variant="outline" (click)="routines.reload()">
-            تلاش دوباره
-          </button>
-        }
-        @for (routine of routines.value() ?? []; track routine.id) {
-          <section aioCard>
-            <div aioCardHeader>
-              <h3 aioCardTitle>{{ routine.title }}</h3>
-              <p aioCardDescription>
-                {{ fa(routine.weeks) }} هفته، {{ fa(routine.daysPerWeek) }} جلسه
-                در هفته، {{ trainingGoalLabels[routine.goal] }}
-              </p>
-            </div>
-            <div aioCardContent class="flex flex-col gap-3">
-              <h4 class="font-semibold">گرم کردن</h4>
-              @for (line of routine.warmup; track line) {
-                <p class="text-sm">{{ line }}</p>
-              }
-              <div aioAccordion type="single">
-                @for (
-                  session of routine.days;
-                  track $index;
-                  let dayIndex = $index
-                ) {
-                  <div aioAccordionItem>
-                    <aio-accordion-trigger>{{
-                      session.title
-                    }}</aio-accordion-trigger
-                    ><aio-accordion-content>
-                      <div class="flex flex-col gap-3">
-                        @for (item of session.exercises; track $index) {
-                          <div
-                            class="flex flex-wrap items-center justify-between gap-2"
-                          >
-                            <button
-                              aioBtn
-                              variant="link"
-                              (click)="showExercise(item.exerciseSlug)"
-                            >
-                              {{ exerciseName(item.exerciseSlug) }}
-                            </button>
-                            <span class="text-sm"
-                              >{{ fa(item.sets) }} ست،
-                              {{
-                                item.seconds
-                                  ? fa(item.seconds) + ' ثانیه'
-                                  : fa(item.reps) + ' تکرار'
-                              }}، {{ fa(item.restSeconds) }} ثانیه استراحت</span
-                            >
-                          </div>
-                        }
-                        <button
-                          aioBtn
-                          variant="outline"
-                          (click)="startSession(routine, dayIndex)"
-                        >
-                          شروع این جلسه
-                        </button>
-                      </div>
-                    </aio-accordion-content>
-                  </div>
-                }
-              </div>
-              <h4 class="font-semibold">سرد کردن و پیشرفت</h4>
-              @for (line of routine.cooldown; track line) {
-                <p class="text-sm">{{ line }}</p>
-              }
-              @for (line of routine.progression; track line) {
-                <p class="text-muted-foreground text-sm">{{ line }}</p>
-              }
-            </div>
-            <div aioCardFooter class="gap-2">
-              <button aioBtn variant="outline" (click)="editRoutine(routine)">
-                ویرایش حرکات و ست‌ها</button
-              ><button
-                aioBtn
-                variant="ghost"
-                (click)="removeRoutine(routine)"
-                [disabled]="trainingBusy()"
-              >
-                حذف برنامه
-              </button>
-            </div>
-          </section>
-        }
-      </section>
-
-      <section aioCard>
-        <div aioCardHeader>
-          <h2 aioCardTitle>پیشرفت تمرین در ۴ هفته اخیر</h2>
-          <p aioCardDescription>
-            فقط ست‌های واقعاً ثبت‌شده؛ حجم بار، وزن بدن را حساب نمی‌کند.
-          </p>
+      @if (routines.isLoading() && !routines.hasValue()) {
+        <div class="grid gap-5 lg:col-span-2 lg:grid-cols-2" aria-hidden="true">
+          <div aioSkeleton class="h-64 rounded-3xl"></div>
+          <div aioSkeleton class="h-64 rounded-3xl"></div>
         </div>
-        <div aioCardContent class="flex flex-col gap-3">
-          @if (progress.isLoading()) {
-            <p role="status">در حال دریافت…</p>
-          }
-          @if (progress.error()) {
-            <p role="alert">گزارش دریافت نشد.</p>
-            <button aioBtn variant="outline" (click)="progress.reload()">
-              تلاش دوباره
-            </button>
-          }
-          @if (progress.value(); as p) {
-            <p>
-              {{ fa(p.sessions) }} جلسه، {{ fa(p.totalSets) }} ست،
-              {{ fa(p.volumeKg) }} کیلوگرم مجموع وزنه × تکرار
-            </p>
-            <div class="flex flex-wrap gap-2">
-              @for (m of p.muscles; track m.muscle) {
-                <span aioBadge variant="secondary"
-                  >{{ muscleLabels[m.muscle] }}: {{ fa(m.sets) }} ست</span
-                >
-              }
-            </div>
-            @for (entry of p.exercises; track entry.exerciseSlug) {
-              <p class="text-sm">
-                {{ exerciseName(entry.exerciseSlug) }}: {{ fa(entry.sets) }} ست
-                @if (entry.bestWeightKg > 0) {
-                  ، بیشترین وزنه {{ fa(entry.bestWeightKg) }} کیلوگرم
-                }
-              </p>
-            }
-          }
-        </div>
-      </section>
-
-      <section aioCard>
-        <div aioCardHeader>
-          <h2 aioCardTitle>بانک حرکت‌ها</h2>
-          <p aioCardDescription>
-            اجرای مرحله‌به‌مرحله، اشتباهات رایج و حرکت جایگزین؛ ویدئوها به‌مرور
-            اضافه می‌شوند.
-          </p>
-        </div>
-        <div aioCardContent class="flex flex-col gap-3">
-          <div aioField>
-            <label aioFieldLabel for="exercise-search">جست‌وجوی حرکت</label
-            ><input
-              aioInput
-              id="exercise-search"
-              [formField]="exerciseSearchForm.search"
-            />
-          </div>
-          <div aioField>
-            <label aioFieldLabel for="exercise-equipment">تجهیزات</label
-            ><aio-native-select
-              selectId="exercise-equipment"
-              [value]="exerciseSearch().equipment"
-              (valueChange)="setExerciseEquipment($event)"
-              ><option aioNativeSelectOption value="">همه</option>
-              @for (eq of equipment; track eq) {
-                <option aioNativeSelectOption [value]="eq">
-                  {{ equipmentLabels[eq] }}
-                </option>
-              }
-            </aio-native-select>
-          </div>
-          @if (exerciseCatalog.isLoading()) {
-            <p role="status">در حال دریافت حرکت‌ها…</p>
-          }
-          @if (exerciseCatalog.error()) {
-            <p role="alert">بانک حرکت‌ها دریافت نشد.</p>
-            <button aioBtn variant="outline" (click)="exerciseCatalog.reload()">
-              تلاش دوباره
-            </button>
-          }
-          @for (exercise of displayedExercises(); track exercise.slug) {
-            <button
-              aioBtn
-              variant="outline"
-              class="min-h-11 justify-between"
-              (click)="selectedExercise.set(exercise)"
-            >
-              <span>{{ exercise.name }}</span
-              ><span class="text-muted-foreground text-xs"
-                >{{ equipmentLabels[exercise.equipment] }}،
-                {{ muscleLabels[exercise.muscle] }}</span
-              >
-            </button>
-          }
-          @if (displayedExercises().length < filteredExercises().length) {
-            <button
-              aioBtn
-              variant="outline"
-              (click)="exerciseLimit.update(moreExercises)"
-            >
-              نمایش حرکت‌های بیشتر ({{
-                fa(filteredExercises().length - displayedExercises().length)
-              }})
-            </button>
-          }
-          @if (
-            !exerciseCatalog.isLoading() &&
-            !exerciseCatalog.error() &&
-            !filteredExercises().length
-          ) {
-            <p class="text-muted-foreground">حرکتی با این مشخصات موجود نیست.</p>
-          }
-        </div>
-      </section>
-
-      <section class="flex flex-col gap-3">
-        <h2 class="text-lg font-semibold">چه ورزشی کردید؟</h2>
-        <div
-          aioToggleGroup
-          type="single"
-          spacing="2"
-          class="-mx-4 w-auto flex-nowrap overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0"
-          [value]="category()"
-          (valueChange)="setCategory($event)"
+      } @else {
+        <section
+          class="flex flex-col gap-3 lg:col-span-2"
+          aria-label="برنامه‌های شخصی"
         >
-          <button
-            aioToggleGroupItem
-            value="all"
-            class="glass data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-11 rounded-full px-4"
-          >
-            همه
-          </button>
-          @for (c of categories; track c) {
-            <button
-              aioToggleGroupItem
-              [value]="c"
-              class="glass data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-11 rounded-full px-4"
-            >
-              {{ categoryLabels[c] }}
+          @if (routines.error()) {
+            <p role="alert">دریافت برنامه‌ها ممکن نشد.</p>
+            <button aioBtn variant="outline" (click)="routines.reload()">
+              تلاش دوباره
             </button>
           }
-        </div>
-        <div class="grid grid-cols-3 gap-2 sm:grid-cols-5">
-          @for (a of visibleActivities(); track a.slug) {
-            <button
-              aioBtn
-              variant="outline"
-              class="glass h-auto flex-col gap-1.5 rounded-2xl py-3"
-              (click)="openLog(a.slug)"
-            >
-              <aio-icon [name]="a.icon" class="text-primary" />
-              <span class="text-xs">{{ a.name }}</span>
-            </button>
-          }
-        </div>
-      </section>
-
-      <section class="flex flex-col gap-3">
-        <h2 class="text-lg font-semibold">ورزش‌های اخیر</h2>
-        @if ((workouts.value() ?? []).length === 0) {
-          <p class="text-muted-foreground text-sm">
-            در دو هفته اخیر ورزشی ثبت نشده است.
-          </p>
-        } @else {
-          <div aioItemGroup class="flex flex-col gap-2">
-            @for (w of workouts.value() ?? []; track w.id) {
-              <div aioItem variant="outline" class="glass rounded-2xl">
-                <div aioItemContent>
-                  <div aioItemTitle>
-                    {{ w.activityName }}، {{ fa(w.durationMin) }} دقیقه
-                  </div>
-                  <div aioItemDescription class="flex flex-wrap gap-1.5">
-                    <span>{{
-                      faDate(w.date, {
-                        weekday: 'long',
-                        day: 'numeric',
-                        month: 'long',
-                      })
-                    }}</span>
-                    <span aioBadge variant="secondary">{{
-                      intensityLabels[w.intensity]
-                    }}</span>
-                    @if (w.calories) {
-                      <span aioBadge variant="outline"
-                        >{{ fa(w.calories) }} کالری</span
-                      >
-                    }
-                    @if (w.distanceKm) {
-                      <span aioBadge variant="outline"
-                        >{{ fa(w.distanceKm) }} کیلومتر</span
-                      >
-                    }
-                  </div>
-                </div>
-                <div aioItemActions>
-                  <button
-                    aioBtn
-                    variant="ghost"
-                    size="icon"
-                    (click)="removeWorkout(w)"
-                    aria-label="حذف"
-                  >
-                    <aio-icon name="lucideTrash2" size="sm" />
-                  </button>
-                </div>
-              </div>
-            }
-          </div>
-        }
-      </section>
-
-      <section class="flex flex-col gap-4 lg:col-span-2">
-        <div>
-          <h2 class="health-section-heading">تمرین‌های آماده</h2>
-          <p class="health-metric-label mt-1">
-            از یک جلسه ساده شروع کن؛ لازم نیست از روز اول سخت بگیری.
-          </p>
-        </div>
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          @for (program of programs.value() ?? []; track program.slug) {
+          @for (routine of routines.value() ?? []; track routine.id) {
             <section aioCard>
               <div aioCardHeader>
-                <span class="health-icon-disc mb-2 text-[var(--health-blue)]"
-                  ><aio-icon name="lucideDumbbell"
-                /></span>
-                <h3 aioCardTitle class="text-base leading-7">
-                  {{ program.title }}
-                </h3>
+                <h3 aioCardTitle>{{ routine.title }}</h3>
                 <p aioCardDescription>
-                  {{ fa(program.minutes) }} دقیقه،
-                  {{ fa(program.exercises.length) }} حرکت
+                  {{ fa(routine.weeks) }} هفته،
+                  {{ fa(routine.daysPerWeek) }} جلسه در هفته،
+                  {{ trainingGoalLabels[routine.goal] }}
                 </p>
               </div>
-              <div aioCardFooter>
-                <button
+              <div aioCardContent class="flex flex-col gap-3">
+                <h4 class="font-semibold">گرم کردن</h4>
+                @for (line of routine.warmup; track line) {
+                  <p class="text-sm">{{ line }}</p>
+                }
+                <div aioAccordion type="single">
+                  @for (
+                    session of routine.days;
+                    track $index;
+                    let dayIndex = $index
+                  ) {
+                    <div aioAccordionItem>
+                      <aio-accordion-trigger>{{
+                        session.title
+                      }}</aio-accordion-trigger
+                      ><aio-accordion-content>
+                        <div class="flex flex-col gap-3">
+                          @for (item of session.exercises; track $index) {
+                            <div
+                              class="flex flex-wrap items-center justify-between gap-2"
+                            >
+                              <button
+                                aioBtn
+                                variant="link"
+                                (click)="showExercise(item.exerciseSlug)"
+                              >
+                                {{ exerciseName(item.exerciseSlug) }}
+                              </button>
+                              <span class="text-sm"
+                                >{{ fa(item.sets) }} ست،
+                                {{
+                                  item.seconds
+                                    ? fa(item.seconds) + ' ثانیه'
+                                    : fa(item.reps) + ' تکرار'
+                                }}، {{ fa(item.restSeconds) }} ثانیه
+                                استراحت</span
+                              >
+                            </div>
+                          }
+                          <button
+                            aioBtn
+                            variant="outline"
+                            (click)="startSession(routine, dayIndex)"
+                          >
+                            شروع این جلسه
+                          </button>
+                        </div>
+                      </aio-accordion-content>
+                    </div>
+                  }
+                </div>
+                <h4 class="font-semibold">سرد کردن و پیشرفت</h4>
+                @for (line of routine.cooldown; track line) {
+                  <p class="text-sm">{{ line }}</p>
+                }
+                @for (line of routine.progression; track line) {
+                  <p class="text-muted-foreground text-sm">{{ line }}</p>
+                }
+              </div>
+              <div aioCardFooter class="gap-2">
+                <button aioBtn variant="outline" (click)="editRoutine(routine)">
+                  ویرایش حرکات و ست‌ها</button
+                ><button
                   aioBtn
-                  class="health-soft-action w-full"
-                  (click)="selectedProgram.set(program)"
+                  variant="ghost"
+                  (click)="removeRoutine(routine)"
+                  [disabled]="trainingBusy()"
                 >
-                  دیدن برنامه
+                  حذف برنامه
                 </button>
               </div>
             </section>
           }
-        </div>
-      </section>
+        </section>
+
+        <section aioCard>
+          <div aioCardHeader>
+            <h2 aioCardTitle>پیشرفت تمرین در ۴ هفته اخیر</h2>
+            <p aioCardDescription>
+              فقط ست‌های واقعاً ثبت‌شده؛ حجم بار، وزن بدن را حساب نمی‌کند.
+            </p>
+          </div>
+          <div aioCardContent class="flex flex-col gap-3">
+            @if (progress.isLoading()) {
+              <p role="status">در حال دریافت…</p>
+            }
+            @if (progress.error()) {
+              <p role="alert">گزارش دریافت نشد.</p>
+              <button aioBtn variant="outline" (click)="progress.reload()">
+                تلاش دوباره
+              </button>
+            }
+            @if (progress.value(); as p) {
+              <p>
+                {{ fa(p.sessions) }} جلسه، {{ fa(p.totalSets) }} ست،
+                {{ fa(p.volumeKg) }} کیلوگرم مجموع وزنه × تکرار
+              </p>
+              <div class="flex flex-wrap gap-2">
+                @for (m of p.muscles; track m.muscle) {
+                  <span aioBadge variant="secondary"
+                    >{{ muscleLabels[m.muscle] }}: {{ fa(m.sets) }} ست</span
+                  >
+                }
+              </div>
+              @for (entry of p.exercises; track entry.exerciseSlug) {
+                <p class="text-sm">
+                  {{ exerciseName(entry.exerciseSlug) }}:
+                  {{ fa(entry.sets) }} ست
+                  @if (entry.bestWeightKg > 0) {
+                    ، بیشترین وزنه {{ fa(entry.bestWeightKg) }} کیلوگرم
+                  }
+                </p>
+              }
+            }
+          </div>
+        </section>
+
+        <section aioCard>
+          <div aioCardHeader>
+            <h2 aioCardTitle>بانک حرکت‌ها</h2>
+            <p aioCardDescription>
+              اجرای مرحله‌به‌مرحله، اشتباهات رایج و حرکت جایگزین؛ ویدئوها
+              به‌مرور اضافه می‌شوند.
+            </p>
+          </div>
+          <div aioCardContent class="flex flex-col gap-3">
+            <div aioField>
+              <label aioFieldLabel for="exercise-search">جست‌وجوی حرکت</label
+              ><input
+                aioInput
+                id="exercise-search"
+                [formField]="exerciseSearchForm.search"
+              />
+            </div>
+            <div aioField>
+              <label aioFieldLabel for="exercise-equipment">تجهیزات</label
+              ><aio-native-select
+                selectId="exercise-equipment"
+                [value]="exerciseSearch().equipment"
+                (valueChange)="setExerciseEquipment($event)"
+                ><option aioNativeSelectOption value="">همه</option>
+                @for (eq of equipment; track eq) {
+                  <option aioNativeSelectOption [value]="eq">
+                    {{ equipmentLabels[eq] }}
+                  </option>
+                }
+              </aio-native-select>
+            </div>
+            @if (exerciseCatalog.isLoading()) {
+              <p role="status">در حال دریافت حرکت‌ها…</p>
+            }
+            @if (exerciseCatalog.error()) {
+              <p role="alert">بانک حرکت‌ها دریافت نشد.</p>
+              <button
+                aioBtn
+                variant="outline"
+                (click)="exerciseCatalog.reload()"
+              >
+                تلاش دوباره
+              </button>
+            }
+            @for (exercise of displayedExercises(); track exercise.slug) {
+              <button
+                aioBtn
+                variant="outline"
+                class="min-h-11 justify-between"
+                (click)="selectedExercise.set(exercise)"
+              >
+                <span>{{ exercise.name }}</span
+                ><span class="text-muted-foreground text-xs"
+                  >{{ equipmentLabels[exercise.equipment] }}،
+                  {{ muscleLabels[exercise.muscle] }}</span
+                >
+              </button>
+            }
+            @if (displayedExercises().length < filteredExercises().length) {
+              <button
+                aioBtn
+                variant="outline"
+                (click)="exerciseLimit.update(moreExercises)"
+              >
+                نمایش حرکت‌های بیشتر ({{
+                  fa(filteredExercises().length - displayedExercises().length)
+                }})
+              </button>
+            }
+            @if (
+              !exerciseCatalog.isLoading() &&
+              !exerciseCatalog.error() &&
+              !filteredExercises().length
+            ) {
+              <p class="text-muted-foreground">
+                حرکتی با این مشخصات موجود نیست.
+              </p>
+            }
+          </div>
+        </section>
+
+        <section class="flex flex-col gap-3">
+          <h2 class="text-lg font-semibold">چه ورزشی کردید؟</h2>
+          <div
+            aioToggleGroup
+            type="single"
+            spacing="2"
+            class="-mx-4 w-auto flex-nowrap overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0"
+            [value]="category()"
+            (valueChange)="setCategory($event)"
+          >
+            <button
+              aioToggleGroupItem
+              value="all"
+              class="glass data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-11 rounded-full px-4"
+            >
+              همه
+            </button>
+            @for (c of categories; track c) {
+              <button
+                aioToggleGroupItem
+                [value]="c"
+                class="glass data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-11 rounded-full px-4"
+              >
+                {{ categoryLabels[c] }}
+              </button>
+            }
+          </div>
+          <div class="grid grid-cols-3 gap-2 sm:grid-cols-5">
+            @for (a of visibleActivities(); track a.slug) {
+              <button
+                aioBtn
+                variant="outline"
+                class="glass h-auto flex-col gap-1.5 rounded-2xl py-3"
+                (click)="openLog(a.slug)"
+              >
+                <aio-icon [name]="a.icon" class="text-primary" />
+                <span class="text-xs">{{ a.name }}</span>
+              </button>
+            }
+          </div>
+        </section>
+
+        <section class="flex flex-col gap-3">
+          <h2 class="text-lg font-semibold">ورزش‌های اخیر</h2>
+          @if ((workouts.value() ?? []).length === 0) {
+            <p class="text-muted-foreground text-sm">
+              در دو هفته اخیر ورزشی ثبت نشده است.
+            </p>
+          } @else {
+            <div aioItemGroup class="flex flex-col gap-2">
+              @for (w of workouts.value() ?? []; track w.id) {
+                <div aioItem variant="outline" class="glass rounded-2xl">
+                  <div aioItemContent>
+                    <div aioItemTitle>
+                      {{ w.activityName }}، {{ fa(w.durationMin) }} دقیقه
+                    </div>
+                    <div aioItemDescription class="flex flex-wrap gap-1.5">
+                      <span>{{
+                        faDate(w.date, {
+                          weekday: 'long',
+                          day: 'numeric',
+                          month: 'long',
+                        })
+                      }}</span>
+                      <span aioBadge variant="secondary">{{
+                        intensityLabels[w.intensity]
+                      }}</span>
+                      @if (w.calories) {
+                        <span aioBadge variant="outline"
+                          >{{ fa(w.calories) }} کالری</span
+                        >
+                      }
+                      @if (w.distanceKm) {
+                        <span aioBadge variant="outline"
+                          >{{ fa(w.distanceKm) }} کیلومتر</span
+                        >
+                      }
+                    </div>
+                  </div>
+                  <div aioItemActions>
+                    <button
+                      aioBtn
+                      variant="ghost"
+                      size="icon"
+                      (click)="removeWorkout(w)"
+                      aria-label="حذف"
+                    >
+                      <aio-icon name="lucideTrash2" size="sm" />
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </section>
+
+        <section class="flex flex-col gap-4 lg:col-span-2">
+          <div>
+            <h2 class="health-section-heading">تمرین‌های آماده</h2>
+            <p class="health-metric-label mt-1">
+              از یک جلسه ساده شروع کن؛ لازم نیست از روز اول سخت بگیری.
+            </p>
+          </div>
+          <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            @for (program of programs.value() ?? []; track program.slug) {
+              <section aioCard>
+                <div aioCardHeader>
+                  <span class="health-icon-disc mb-2 text-[var(--health-blue)]"
+                    ><aio-icon name="lucideDumbbell"
+                  /></span>
+                  <h3 aioCardTitle class="text-base leading-7">
+                    {{ program.title }}
+                  </h3>
+                  <p aioCardDescription>
+                    {{ fa(program.minutes) }} دقیقه،
+                    {{ fa(program.exercises.length) }} حرکت
+                  </p>
+                </div>
+                <div aioCardFooter>
+                  <button
+                    aioBtn
+                    class="health-soft-action w-full"
+                    (click)="selectedProgram.set(program)"
+                  >
+                    دیدن برنامه
+                  </button>
+                </div>
+              </section>
+            }
+          </div>
+        </section>
+      }
     </div>
 
     <aio-dialog

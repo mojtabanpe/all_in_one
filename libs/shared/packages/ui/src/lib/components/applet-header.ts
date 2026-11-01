@@ -54,6 +54,7 @@ export interface AioAppletTab {
       display: flex;
       flex-direction: column;
       gap: 0.25rem;
+      min-block-size: 7.25rem;
     }
     .applet-title {
       margin: 0;
@@ -63,6 +64,7 @@ export interface AioAppletTab {
       line-height: 1.65;
       letter-spacing: -0.025em;
       overflow-wrap: anywhere;
+      min-block-size: 1lh;
     }
     .applet-subtitle {
       margin: 0;
@@ -105,6 +107,11 @@ export interface AioAppletTab {
     .applet-tabs .applet-tab[aria-current='page'] {
       color: var(--primary-foreground);
       background: var(--primary);
+    }
+    @media (min-width: 390px) {
+      .applet-heading {
+        min-block-size: 5.5rem;
+      }
     }
     @media (min-width: 640px) {
       .applet-tabs .applet-tab {

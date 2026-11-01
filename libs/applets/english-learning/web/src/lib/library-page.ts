@@ -85,125 +85,191 @@ import { EnglishApi } from './english-api';
           Try again
         </button>
       }
-      @if (decks.isLoading() && !decks.hasValue()) {
-        <div aioSkeleton class="h-56 rounded-[28px]"></div>
-      } @else if (myDecks().length) {
-        <section
-          class="lx-glass flex flex-col gap-5 rounded-[28px] p-5 sm:p-7"
-          aria-labelledby="today-title"
-        >
-          <span class="lx-orb bg-violet-400" aria-hidden="true"></span>
-          <span
-            class="lx-orb start-[-60px] end-auto top-auto bottom-[-70px] bg-sky-300"
-            aria-hidden="true"
-          ></span>
-          <div class="flex items-center gap-5 sm:gap-7">
-            <div class="relative size-24 shrink-0 sm:size-32">
-              <svg
-                viewBox="0 0 120 120"
-                class="size-full -rotate-90"
-                aria-hidden="true"
-              >
-                <circle
-                  class="lx-ring-track"
-                  cx="60"
-                  cy="60"
-                  r="52"
-                  fill="none"
-                  stroke-width="10"
-                />
-                <circle
-                  class="lx-ring-value"
-                  cx="60"
-                  cy="60"
-                  r="52"
-                  fill="none"
-                  stroke-width="10"
-                  stroke-linecap="round"
-                  [attr.stroke-dasharray]="ring"
-                  [attr.stroke-dashoffset]="ring * (1 - progress())"
-                />
-              </svg>
-              <span
-                class="absolute inset-0 flex flex-col items-center justify-center"
-              >
-                @if (totalDue()) {
-                  <span
-                    class="text-2xl leading-none font-extrabold sm:text-3xl"
-                    >{{ fa(totalDue()) }}</span
-                  >
-                  <span class="text-muted-foreground mt-1 text-xs">due</span>
-                } @else {
-                  <aio-icon name="lucideCheck" size="lg" class="text-primary" />
-                }
-              </span>
-            </div>
-            <div class="flex min-w-0 flex-col gap-1">
-              <p class="aio-eyebrow">Today’s review</p>
-              <h2 id="today-title" class="text-xl font-bold sm:text-2xl">
-                @if (recommended()) {
-                  {{ fa(totalDue()) }} cards are waiting for you
-                } @else if ((stats.value()?.reviewedToday ?? 0) > 0) {
-                  All done for today!
-                } @else {
-                  No cards due right now
-                }
-              </h2>
-              <p class="text-muted-foreground text-sm leading-7">
-                @if (recommended(); as next) {
-                  Start with “{{ next.name }}”. A few minutes is all it takes.
-                } @else if ((stats.value()?.reviewedToday ?? 0) > 0) {
-                  You reviewed {{ fa(stats.value()!.reviewedToday) }} cards.
-                  Come back tomorrow to keep your streak going.
-                } @else {
-                  Add new cards or come back tomorrow.
-                }
-              </p>
-            </div>
+
+      <section
+        class="lx-glass flex flex-col gap-5 rounded-[28px] p-5 sm:p-7"
+        [attr.aria-busy]="initialLoading()"
+        aria-labelledby="today-title"
+      >
+        <span class="lx-orb bg-violet-400" aria-hidden="true"></span>
+        <span
+          class="lx-orb start-[-60px] end-auto top-auto bottom-[-70px] bg-sky-300"
+          aria-hidden="true"
+        ></span>
+        <div class="flex items-center gap-5 sm:gap-7">
+          <div class="relative size-16 shrink-0 min-[390px]:size-24 sm:size-32">
+            <svg
+              viewBox="0 0 120 120"
+              class="size-full -rotate-90"
+              aria-hidden="true"
+            >
+              <circle
+                class="lx-ring-track"
+                cx="60"
+                cy="60"
+                r="52"
+                fill="none"
+                stroke-width="10"
+              />
+              <circle
+                class="lx-ring-value"
+                cx="60"
+                cy="60"
+                r="52"
+                fill="none"
+                stroke-width="10"
+                stroke-linecap="round"
+                [attr.stroke-dasharray]="ring"
+                [attr.stroke-dashoffset]="ring * (1 - progress())"
+              />
+            </svg>
+            <span
+              class="absolute inset-0 flex flex-col items-center justify-center"
+            >
+              @if (initialLoading()) {
+                <span aioSkeleton class="h-10 w-10 rounded-full"></span>
+              } @else if (totalDue()) {
+                <span
+                  class="text-2xl leading-none font-extrabold sm:text-3xl"
+                  >{{ fa(totalDue()) }}</span
+                >
+                <span class="text-muted-foreground mt-1 text-xs">due</span>
+              } @else {
+                <aio-icon name="lucideCheck" size="lg" class="text-primary" />
+              }
+            </span>
           </div>
-          @if (recommended(); as next) {
-            <a
-              aioBtn
-              size="lg"
-              class="h-13 w-full rounded-2xl text-base"
-              [routerLink]="['deck', next.id, 'study']"
+          <div class="flex min-w-0 flex-1 flex-col gap-1">
+            <p class="aio-eyebrow">Today’s review</p>
+            <h2
+              id="today-title"
+              class="line-clamp-2 min-h-14 text-xl font-bold sm:text-2xl"
             >
-              <aio-icon name="lucidePlay" size="sm" />
-              Start review
-            </a>
-          }
-          <ul class="flex flex-wrap gap-2" aria-label="Statistics">
-            <li
-              class="lx-chip"
-              [class.text-[var(--streak)]]="streak() > 0"
-              [class.text-muted-foreground]="streak() === 0"
+              @if (initialLoading()) {
+                <span aioSkeleton class="block h-6 w-full rounded-lg"></span>
+                <span
+                  aioSkeleton
+                  class="mt-2 block h-6 w-2/3 rounded-lg"
+                ></span>
+              } @else if (recommended()) {
+                {{ fa(totalDue()) }} cards are waiting for you
+              } @else if ((stats.value()?.reviewedToday ?? 0) > 0) {
+                All done for today!
+              } @else {
+                No cards due right now
+              }
+            </h2>
+            <p
+              class="text-muted-foreground line-clamp-3 min-h-21 text-sm leading-7 sm:line-clamp-2 sm:min-h-14"
             >
-              <aio-icon name="lucideFlame" size="sm" />
-              {{ fa(streak()) }} day streak
-            </li>
-            <li class="lx-chip text-[var(--gem)]">
-              <aio-icon name="lucideGem" size="sm" />
-              {{ fa(stats.value()?.mature ?? 0) }} mature
-            </li>
-            <li class="lx-chip text-muted-foreground">
-              <aio-icon name="lucideLayers" size="sm" />
-              {{ fa(totalCards()) }} cards
-            </li>
-          </ul>
-        </section>
-      }
+              @if (initialLoading()) {
+                <span aioSkeleton class="block h-5 w-full rounded-lg"></span>
+                <span
+                  aioSkeleton
+                  class="mt-2 block h-5 w-3/4 rounded-lg"
+                ></span>
+              } @else if (recommended(); as next) {
+                Start with “{{ next.name }}”. A few minutes is all it takes.
+              } @else if ((stats.value()?.reviewedToday ?? 0) > 0) {
+                You reviewed {{ fa(stats.value()!.reviewedToday) }} cards. Come
+                back tomorrow to keep your streak going.
+              } @else {
+                Add new cards or come back tomorrow.
+              }
+            </p>
+          </div>
+        </div>
+        @if (initialLoading()) {
+          <div aioSkeleton class="h-13 w-full rounded-2xl"></div>
+        } @else if (recommended(); as next) {
+          <a
+            aioBtn
+            size="lg"
+            class="h-13 w-full rounded-2xl text-base"
+            [routerLink]="['deck', next.id, 'study']"
+          >
+            <aio-icon name="lucidePlay" size="sm" />
+            Start review
+          </a>
+        } @else {
+          <button
+            aioBtn
+            size="lg"
+            class="h-13 w-full rounded-2xl text-base"
+            (click)="openNew()"
+          >
+            <aio-icon name="lucidePlus" size="sm" /> Add cards
+          </button>
+        }
+        <ul class="flex min-h-9 flex-wrap gap-2" aria-label="Statistics">
+          <li
+            class="lx-chip"
+            [class.text-[var(--streak)]]="streak() > 0"
+            [class.text-muted-foreground]="streak() === 0"
+          >
+            <aio-icon name="lucideFlame" size="sm" />
+            <span class="min-w-[3ch]">
+              @if (initialLoading()) {
+                <span
+                  aioSkeleton
+                  class="block h-4 w-6 rounded-lg"
+                  aria-hidden="true"
+                ></span>
+              } @else {
+                {{ fa(streak()) }}
+              }
+            </span>
+            day streak
+          </li>
+          <li class="lx-chip text-[var(--gem)]">
+            <aio-icon name="lucideGem" size="sm" />
+            <span class="min-w-[3ch]">
+              @if (initialLoading()) {
+                <span
+                  aioSkeleton
+                  class="block h-4 w-6 rounded-lg"
+                  aria-hidden="true"
+                ></span>
+              } @else {
+                {{ fa(stats.value()?.mature ?? 0) }}
+              }
+            </span>
+            mature
+          </li>
+          <li class="lx-chip text-muted-foreground">
+            <aio-icon name="lucideLayers" size="sm" />
+            <span class="min-w-[3ch]">
+              @if (initialLoading()) {
+                <span
+                  aioSkeleton
+                  class="block h-4 w-6 rounded-lg"
+                  aria-hidden="true"
+                ></span>
+              } @else {
+                {{ fa(totalCards()) }}
+              }
+            </span>
+            cards
+          </li>
+        </ul>
+      </section>
 
       <section class="flex flex-col gap-3" aria-labelledby="decks-title">
         <div class="flex items-center justify-between gap-3">
-          <h2 id="decks-title" class="text-lg font-bold">
-            My decks
-            @if (myDecks().length) {
-              <span class="text-muted-foreground text-sm font-normal"
-                >{{ fa(myDecks().length) }} decks,
-                {{ fa(totalCards()) }} cards</span
-              >
-            }
-          </h2>
+          <div class="min-w-0 flex-1">
+            <h2 id="decks-title" class="text-lg font-bold">My decks</h2>
+            <p class="text-muted-foreground min-h-5 truncate text-sm">
+              @if (decks.isLoading() && !decks.hasValue()) {
+                <span
+                  aioSkeleton
+                  class="block h-5 w-32 rounded-lg"
+                  aria-hidden="true"
+                ></span>
+              } @else {
+                {{ fa(myDecks().length) }} decks, {{ fa(totalCards()) }} cards
+              }
+            </p>
+          </div>
           <button aioBtn variant="outline" (click)="openNew()">
             <aio-icon name="lucidePlus" size="sm" />
             New deck
@@ -241,10 +307,22 @@ import { EnglishApi } from './english-api';
         }
 
         <div class="grid gap-3 sm:grid-cols-2 [&>*]:min-w-0">
+          @if (decks.isLoading() && !decks.hasValue()) {
+            @for (item of [1, 2]; track item) {
+              <div
+                class="lx-glass flex min-h-44 flex-col gap-4 rounded-3xl p-5"
+                aria-hidden="true"
+              >
+                <div aioSkeleton class="h-6 w-2/3 rounded-lg"></div>
+                <div aioSkeleton class="h-5 w-full rounded-lg"></div>
+                <div aioSkeleton class="mt-auto h-4 w-1/3 rounded-lg"></div>
+              </div>
+            }
+          }
           @for (deck of filteredDecks(); track deck.id) {
             <a
               [routerLink]="['deck', deck.id]"
-              class="lx-glass lx-glass-hover flex min-w-0 rounded-3xl"
+              class="lx-glass lx-glass-hover flex min-h-44 min-w-0 rounded-3xl"
             >
               <span
                 class="lx-orb"
@@ -299,6 +377,20 @@ import { EnglishApi } from './english-api';
         <ul
           class="lx-glass divide-foreground/8 flex flex-col divide-y rounded-3xl"
         >
+          @if (starters.isLoading() && !starters.hasValue()) {
+            @for (item of [1, 2, 3, 4]; track item) {
+              <li
+                class="flex min-h-20 items-center gap-3 px-4 py-3"
+                aria-hidden="true"
+              >
+                <span aioSkeleton class="size-10 shrink-0 rounded-xl"></span>
+                <span class="flex flex-1 flex-col gap-2"
+                  ><span aioSkeleton class="h-5 w-2/3 rounded-lg"></span
+                  ><span aioSkeleton class="h-4 w-full rounded-lg"></span
+                ></span>
+              </li>
+            }
+          }
           @for (s of starters.value() ?? []; track s.slug) {
             <li class="flex min-h-16 items-center gap-3 px-4 py-3">
               <span
@@ -422,6 +514,12 @@ export class LibraryPage {
   );
   protected readonly starters = httpResource<StarterDeck[]>(
     () => `${this.api.base}/starter-decks`,
+  );
+
+  protected readonly initialLoading = computed(
+    () =>
+      (this.decks.isLoading() && !this.decks.hasValue()) ||
+      (this.stats.isLoading() && !this.stats.hasValue()),
   );
 
   protected readonly colors = DECK_COLORS;

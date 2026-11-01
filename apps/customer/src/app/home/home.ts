@@ -12,6 +12,7 @@ import {
   AioButton,
   AioCardDirectives,
   AioIcon,
+  AioSkeleton,
   provideIcons,
 } from '@all-in-one/ui';
 import {
@@ -31,7 +32,7 @@ import {
 /** Today at a glance, one card per applet. */
 @Component({
   selector: 'customer-home',
-  imports: [AioButton, AioCardDirectives, AioIcon, RouterLink],
+  imports: [AioButton, AioCardDirectives, AioIcon, AioSkeleton, RouterLink],
   providers: [
     provideIcons({
       lucideCalendarCheck,
@@ -84,37 +85,49 @@ import {
             class="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center md:border-b md:border-white/10 md:py-5"
           >
             <span class="aio-hero-stat-label">کارهای باقی‌مانده</span
-            ><strong class="text-3xl tabular-nums">{{
-              tasks.isLoading()
-                ? '…'
-                : tasks.error()
-                  ? '—'
-                  : fa(openTasks().length)
-            }}</strong>
+            ><strong class="min-h-9 min-w-[2ch] text-3xl tabular-nums">
+              @if (tasks.isLoading() && !tasks.hasValue()) {
+                <span
+                  aioSkeleton
+                  class="block h-9 w-14 rounded-lg"
+                  aria-hidden="true"
+                ></span>
+              } @else {
+                {{ tasks.error() ? '—' : fa(openTasks().length) }}
+              }
+            </strong>
           </div>
           <div
             class="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center md:border-b md:border-white/10 md:py-5"
           >
             <span class="aio-hero-stat-label">کارت‌های آماده مرور</span
-            ><strong class="text-3xl tabular-nums">{{
-              english.isLoading()
-                ? '…'
-                : english.error()
-                  ? '—'
-                  : fa(english.value()?.due ?? 0)
-            }}</strong>
+            ><strong class="min-h-9 min-w-[2ch] text-3xl tabular-nums">
+              @if (english.isLoading() && !english.hasValue()) {
+                <span
+                  aioSkeleton
+                  class="block h-9 w-14 rounded-lg"
+                  aria-hidden="true"
+                ></span>
+              } @else {
+                {{ english.error() ? '—' : fa(english.value()?.due ?? 0) }}
+              }
+            </strong>
           </div>
           <div
             class="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center md:py-5"
           >
             <span class="aio-hero-stat-label">دقیقه فعالیت این هفته</span
-            ><strong class="text-3xl tabular-nums">{{
-              week.isLoading()
-                ? '…'
-                : week.error()
-                  ? '—'
-                  : fa(week.value()?.minutes ?? 0)
-            }}</strong>
+            ><strong class="min-h-9 min-w-[2ch] text-3xl tabular-nums">
+              @if (week.isLoading() && !week.hasValue()) {
+                <span
+                  aioSkeleton
+                  class="block h-9 w-14 rounded-lg"
+                  aria-hidden="true"
+                ></span>
+              } @else {
+                {{ week.error() ? '—' : fa(week.value()?.minutes ?? 0) }}
+              }
+            </strong>
           </div>
         </div>
       </section>
@@ -145,8 +158,16 @@ import {
               </div>
               <div class="flex flex-col gap-2">
                 <h3 class="text-base font-bold">{{ card.title }}</h3>
-                <p class="text-muted-foreground text-sm leading-7">
-                  {{ card.value }}
+                <p class="text-muted-foreground min-h-14 text-sm leading-7">
+                  @if (card.loading) {
+                    <span aioSkeleton class="block h-5 w-3/4 rounded-lg"></span>
+                    <span
+                      aioSkeleton
+                      class="mt-2 block h-5 w-1/2 rounded-lg"
+                    ></span>
+                  } @else {
+                    {{ card.value }}
+                  }
                 </p>
               </div>
               <span class="mt-auto text-xs font-semibold text-primary">{{
@@ -171,9 +192,19 @@ import {
         </div>
         <div aioCardContent>
           @if (tasks.isLoading()) {
-            <p role="status" class="text-muted-foreground py-4">
-              در حال دریافت برنامه امروز…
-            </p>
+            <div
+              class="flex flex-col gap-3 py-4"
+              role="status"
+              aria-label="در حال دریافت برنامه امروز"
+            >
+              @for (row of [1, 2, 3, 4]; track row) {
+                <div
+                  aioSkeleton
+                  class="h-12 rounded-xl"
+                  aria-hidden="true"
+                ></div>
+              }
+            </div>
           } @else if (tasks.error()) {
             <div class="flex flex-wrap items-center justify-between gap-3 py-4">
               <p role="alert">برنامه امروز دریافت نشد.</p>
@@ -255,6 +286,7 @@ export class Home {
     return [
       {
         title: 'برنامه‌ریز',
+        loading: this.tasks.isLoading() && !this.tasks.hasValue(),
         action: 'روزت را بچین',
         icon: 'lucideCalendarCheck',
         link: '/planner',
@@ -263,6 +295,7 @@ export class Home {
       },
       {
         title: 'یادگیری زبان',
+        loading: this.english.isLoading() && !this.english.hasValue(),
         action: 'ادامه یادگیری',
         icon: 'lucideLanguages',
         link: '/english',
@@ -271,6 +304,7 @@ export class Home {
       },
       {
         title: 'تغذیه',
+        loading: this.meals.isLoading() && !this.meals.hasValue(),
         action: 'ثبت وعده غذایی',
         icon: 'lucideSalad',
         link: '/health/nutrition',
@@ -280,6 +314,7 @@ export class Home {
       },
       {
         title: 'حرکت و تمرین',
+        loading: this.week.isLoading() && !this.week.hasValue(),
         action: 'برنامه تمرین من',
         icon: 'lucideDumbbell',
         link: '/health/fitness',

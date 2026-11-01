@@ -113,42 +113,65 @@ const MEAL_ICONS: Record<MealType, string> = {
           <div class="health-daily-grid">
             <section aioCard class="health-calorie-panel">
               <div aioCardHeader>
-                <h2 aioCardTitle class="health-metric-label">
+                <h2 aioCardTitle class="health-metric-label min-h-10">
                   {{ left() >= 0 ? 'کالری باقی‌مانده' : 'بیشتر از هدف روزانه' }}
                 </h2>
               </div>
               <div aioCardContent class="flex flex-col gap-4">
-                @if (profile.isLoading() || meals.isLoading()) {
+                @if (
+                  (profile.isLoading() && !profile.hasValue()) ||
+                  (meals.isLoading() && !meals.hasValue())
+                ) {
                   <div
-                    aioSkeleton
-                    class="h-14 w-24 rounded-2xl"
-                    aria-label="در حال دریافت"
-                  ></div>
+                    class="flex min-h-40 flex-col gap-4"
+                    role="status"
+                    aria-label="در حال دریافت هدف روزانه"
+                  >
+                    <div
+                      aioSkeleton
+                      class="h-14 w-24 rounded-2xl"
+                      aria-hidden="true"
+                    ></div>
+                    <div
+                      aioSkeleton
+                      class="h-5 w-3/4 rounded-lg"
+                      aria-hidden="true"
+                    ></div>
+                    <div
+                      aioSkeleton
+                      class="h-2 w-full rounded-full"
+                      aria-hidden="true"
+                    ></div>
+                  </div>
                 } @else if (profile.error() || meals.error()) {
                   <p class="health-number">—</p>
                   <button aioBtn variant="link" (click)="reloadNutrition()">
                     تلاش دوباره
                   </button>
                 } @else if (target(); as t) {
-                  <p class="health-number">{{ fa(Math.abs(left())) }}</p>
-                  <p class="health-metric-label">
-                    از {{ fa(t) }} کالری هدف روزانه
-                  </p>
-                  <div
-                    aioProgress
-                    [value]="Math.min((eaten() * 100) / t, 100)"
-                    aria-label="سهم کالری ثبت‌شده"
-                  >
-                    <div aioProgressIndicator></div>
+                  <div class="flex min-h-40 flex-col gap-4">
+                    <p class="health-number">{{ fa(Math.abs(left())) }}</p>
+                    <p class="health-metric-label">
+                      از {{ fa(t) }} کالری هدف روزانه
+                    </p>
+                    <div
+                      aioProgress
+                      [value]="Math.min((eaten() * 100) / t, 100)"
+                      aria-label="سهم کالری ثبت‌شده"
+                    >
+                      <div aioProgressIndicator></div>
+                    </div>
                   </div>
                 } @else {
-                  <p class="text-lg font-semibold">از خودت بگو</p>
-                  <p class="health-metric-label">
-                    برای محاسبه هدف روزانه، مشخصاتت را کامل کن.
-                  </p>
-                  <a aioBtn class="health-soft-action" routerLink="profile"
-                    >تکمیل مشخصات</a
-                  >
+                  <div class="flex min-h-40 flex-col items-start gap-4">
+                    <p class="text-lg font-semibold">از خودت بگو</p>
+                    <p class="health-metric-label">
+                      برای محاسبه هدف روزانه، مشخصاتت را کامل کن.
+                    </p>
+                    <a aioBtn class="health-soft-action" routerLink="profile"
+                      >تکمیل مشخصات</a
+                    >
+                  </div>
                 }
                 <span class="health-helper-art" aria-hidden="true"></span>
               </div>
@@ -207,7 +230,7 @@ const MEAL_ICONS: Record<MealType, string> = {
               </div>
             }
           </div>
-          <p class="text-muted-foreground px-1 text-xs">
+          <p class="text-muted-foreground min-h-9 px-1 text-xs">
             {{
               macros()
                 ? 'جمع مقادیر وعده‌هایی که اطلاعات تغذیه‌ای دارند؛ تقریبی است.'

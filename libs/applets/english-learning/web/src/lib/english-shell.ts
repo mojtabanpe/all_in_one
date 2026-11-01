@@ -14,9 +14,7 @@ import { lucideBookOpenText, lucideLayers, lucideMic } from '@ng-icons/lucide';
   imports: [AioAppletHeader, RouterOutlet],
   providers: [provideIcons({ lucideBookOpenText, lucideLayers, lucideMic })],
   template: `
-    <div
-      class="applet-english lx-stage mx-auto flex w-full max-w-3xl min-w-0 flex-col gap-6 [&>router-outlet]:hidden"
-    >
+    <div class="applet-english lx-stage aio-applet-layout">
       <aio-applet-header
         title="English, at your own pace."
         subtitle="One step forward, every day"

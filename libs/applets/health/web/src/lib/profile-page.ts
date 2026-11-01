@@ -24,6 +24,7 @@ import {
   AioIcon,
   provideIcons,
   AioButton,
+  AioSkeleton,
   AioCardDirectives,
   AioFieldDirectives,
   AioFieldError,
@@ -52,6 +53,7 @@ import {
     AioDialogBody,
     AioIcon,
     AioButton,
+    AioSkeleton,
     AioCardDirectives,
     AioFieldDirectives,
     AioFieldError,
@@ -76,7 +78,7 @@ import {
   template: `
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-5">
       @if (profile.isLoading()) {
-        <p role="status" class="health-metric-label">در حال دریافت مشخصات…</p>
+        <p role="status" class="sr-only">در حال دریافت مشخصات…</p>
       }
       @if (profile.error()) {
         <p role="alert">مشخصات دریافت نشد.</p>
@@ -117,7 +119,16 @@ import {
                   >{{ row.label }}</span
                 ><span
                   class="health-metric-label max-w-[45%] whitespace-normal text-end"
-                  >{{ row.value }}</span
+                >
+                  @if (profile.isLoading() && !profile.hasValue()) {
+                    <span
+                      aioSkeleton
+                      class="inline-block h-5 w-20 rounded-lg align-middle"
+                      aria-hidden="true"
+                    ></span>
+                  } @else {
+                    {{ row.value }}
+                  }</span
                 ><aio-icon
                   name="lucideChevronLeft"
                   size="sm"

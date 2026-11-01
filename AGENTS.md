@@ -301,3 +301,6 @@ When the owner gives a new instruction, add it to this list in the same change.
 
 
 65. **Bottom-sheet motion (2026-11-02):** Give all shared bottom sheets a consistent smooth open/close animation. Keep closing faster than opening, allow interrupted transitions and swipe dismissal, and respect reduced-motion settings. Implement this in the shared wrapper/theme without changing generated Spartan Helm code.
+
+
+66. **Stable loading layouts (2026-11-02):** Reduce visible layout shifts throughout the app and during main/sub-navigation. Use the shared Spartan skeletons, especially above the fold; reserve the geometry of headings, summaries and cards, avoid showing empty/default states before data resolves, and verify loading-to-content behavior with delayed responses on phones and desktop.

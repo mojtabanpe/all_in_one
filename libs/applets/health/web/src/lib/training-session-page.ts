@@ -24,6 +24,7 @@ import {
   AioAccordionTrigger,
   AioBadge,
   AioButton,
+  AioSkeleton,
   AioCardDirectives,
   AioConfirm,
   AioProgressDirectives,
@@ -42,6 +43,7 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
     AioAccordionTrigger,
     AioBadge,
     AioButton,
+    AioSkeleton,
     AioCardDirectives,
     AioProgressDirectives,
   ],
@@ -54,7 +56,24 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
         {{ routine.value()?.title ?? 'جلسه تمرین' }}
       </h2>
       @if (routine.isLoading()) {
-        <p role="status">در حال دریافت جلسه…</p>
+        <div
+          class="flex flex-col gap-4"
+          role="status"
+          aria-label="در حال دریافت جلسه"
+        >
+          <div
+            aioSkeleton
+            class="h-5 w-1/2 rounded-lg"
+            aria-hidden="true"
+          ></div>
+          <div
+            aioSkeleton
+            class="h-2 w-full rounded-full"
+            aria-hidden="true"
+          ></div>
+          <div aioSkeleton class="h-80 rounded-3xl" aria-hidden="true"></div>
+          <div aioSkeleton class="h-12 rounded-2xl" aria-hidden="true"></div>
+        </div>
       } @else if (routine.error()) {
         <p role="alert">دریافت برنامه ممکن نشد.</p>
         <button aioBtn variant="outline" (click)="routine.reload()">

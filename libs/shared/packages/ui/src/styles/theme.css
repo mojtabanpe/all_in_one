@@ -37,6 +37,39 @@
 @source '../../../../../../apps';
 @source '../../../../../../libs';
 
+/* Keep the application frame in place while routes, fonts and data load. */
+html {
+  scrollbar-gutter: stable;
+}
+.aio-route-content,
+.aio-route-loading {
+  min-block-size: calc(100dvh - 12rem);
+  min-inline-size: 0;
+}
+.aio-applet-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  inline-size: 100%;
+  max-inline-size: 64rem;
+  min-inline-size: 0;
+  margin-inline: auto;
+}
+.aio-applet-layout > router-outlet {
+  display: none;
+}
+.aio-route-heading-placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-block-size: 7.25rem;
+}
+@media (min-width: 390px) {
+  .aio-route-heading-placeholder {
+    min-block-size: 5.5rem;
+  }
+}
+
 /* English immersion uses Latin digit glyphs, including portalled overlays/toasts. */
 html[lang='en'] *,
 [lang='en'] *,
