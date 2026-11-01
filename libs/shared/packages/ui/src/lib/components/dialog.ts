@@ -1,9 +1,12 @@
 import { NgTemplateOutlet } from '@angular/common';
 import {
   Component,
+  afterNextRender,
   computed,
   contentChild,
   Directive,
+  DestroyRef,
+  ElementRef,
   inject,
   Injectable,
   input,
@@ -28,6 +31,29 @@ export class AioDialogActions {
   readonly template = inject(TemplateRef);
 }
 
+/** Establish the off-screen frame before transitioning a newly portalled sheet. */
+@Directive({
+  selector: '[aioBottomSheetMotion]',
+  host: { '[attr.data-motion-ready]': 'ready()' },
+})
+class AioBottomSheetMotion {
+  protected readonly ready = signal(false);
+
+  constructor() {
+    const element = inject(ElementRef<HTMLElement>).nativeElement;
+    const destroy = inject(DestroyRef);
+    let frame: number | undefined;
+    destroy.onDestroy(() => {
+      if (frame !== undefined) cancelAnimationFrame(frame);
+    });
+    afterNextRender(() => {
+      // A layout read establishes the starting transform before the next frame.
+      element.getBoundingClientRect();
+      frame = requestAnimationFrame(() => this.ready.set(true));
+    });
+  }
+}
+
 /**
  * Responsive dialog (directive 7): a spartan dialog on tablets/desktop and a
  * spartan bottom drawer (bottom sheet) on phones. Never a modal on phones.
@@ -41,7 +67,13 @@ export class AioDialogActions {
  */
 @Component({
   selector: 'aio-dialog',
-  imports: [HlmDialogImports, HlmDrawerImports, HlmButton, NgTemplateOutlet],
+  imports: [
+    HlmDialogImports,
+    HlmDrawerImports,
+    HlmButton,
+    NgTemplateOutlet,
+    AioBottomSheetMotion,
+  ],
   template: `
     @if (isMobile()) {
       <hlm-drawer
@@ -51,10 +83,11 @@ export class AioDialogActions {
       >
         <hlm-drawer-content
           *hlmDrawerPortal="let ctx"
+          aioBottomSheetMotion
           [attr.dir]="language() === 'en' ? 'ltr' : 'rtl'"
           [attr.lang]="language()"
           [class]="
-            'mx-auto w-full min-w-0 max-w-full overflow-hidden pb-[calc(1rem+env(safe-area-inset-bottom,0px))] data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-1rem)] ' +
+            'aio-bottom-sheet mx-auto w-full min-w-0 max-w-full overflow-hidden pb-[calc(1rem+env(safe-area-inset-bottom,0px))] data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-1rem)] ' +
             contentClass()
           "
         >
