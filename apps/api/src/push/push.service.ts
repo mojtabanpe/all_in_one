@@ -184,8 +184,11 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
             dir: 'rtl',
             lang: 'fa',
             data: {
+              // Focus at once (navigating first loses the click's focus permission);
+              // the open app routes to `url` itself, a closed one opens at it.
+              url,
               onActionClick: {
-                default: { operation: 'navigateLastFocusedOrOpen', url },
+                default: { operation: 'focusLastFocusedOrOpen', url },
               },
             },
           },
