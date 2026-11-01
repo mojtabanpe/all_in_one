@@ -29,14 +29,15 @@ import {
 import {
   AioBadge,
   AioButton,
-  AioFieldDirectives,
-  AioFieldError,
   AioIcon,
   AioInput,
-  AioSpinner,
   aioToast,
   AioToggleGroupDirectives,
   provideIcons,
+  AioFormField,
+  AioFormErrors,
+  AioAsyncButton,
+  AioNumberField,
 } from '@all-in-one/ui';
 import { apiErrorMessage, faNumber } from '@all-in-one/web/shared';
 import { lucideMinus, lucidePlus, lucideSparkles } from '@ng-icons/lucide';
@@ -48,14 +49,15 @@ import { HealthApi, scoreClass } from './health-api';
   imports: [
     AioBadge,
     AioButton,
-    AioFieldDirectives,
-    AioFieldError,
     AioIcon,
     AioInput,
-    AioSpinner,
     AioToggleGroupDirectives,
     FormField,
     FormRoot,
+    AioFormField,
+    AioFormErrors,
+    AioAsyncButton,
+    AioNumberField,
   ],
   providers: [provideIcons({ lucideMinus, lucidePlus, lucideSparkles })],
   template: `
@@ -79,37 +81,29 @@ import { HealthApi, scoreClass } from './health-api';
           </button>
         }
       </div>
-      <div aioField>
-        <label aioFieldLabel for="meal-desc">چه خوردید؟</label>
+      <aio-form-field label="چه خوردید؟" controlId="meal-desc">
         <input
           aioInput
           id="meal-desc"
           placeholder="مثلاً: قزل‌آلا با سالاد و کمی برنج"
           [formField]="mealForm.description"
         />
-        @for (e of mealForm.description().errors(); track e.kind) {
-          <aio-field-error [validator]="e.kind">{{
-            e.message
-          }}</aio-field-error>
-        }
-      </div>
+        <aio-form-errors [errors]="mealForm.description().errors()" />
+      </aio-form-field>
       <div class="-mt-2 flex flex-col gap-1">
         <button
-          aioBtn
           type="button"
           variant="outline"
           size="sm"
           class="self-start"
           [disabled]="estimating() || model().description.trim().length < 2"
           (click)="estimate()"
-        >
-          @if (estimating()) {
-            <aio-spinner />
-          } @else {
-            <aio-icon name="lucideSparkles" size="xs" />
-          }
-          تخمین کالری و گروه‌ها با هوش مصنوعی
-        </button>
+          aioAsyncButton
+          [busy]="estimating()"
+          label="تخمین کالری و گروه‌ها با هوش مصنوعی"
+          icon="lucideSparkles"
+          iconSize="xs"
+        ></button>
         @if (macros(); as m) {
           <p class="text-muted-foreground text-xs" aria-live="polite">
             پروتئین {{ fa(m.proteinG) }}، کربوهیدرات {{ fa(m.carbsG) }}، چربی
@@ -161,16 +155,12 @@ import { HealthApi, scoreClass } from './health-api';
           </div>
         }
       </fieldset>
-      <div aioField>
-        <label aioFieldLabel for="meal-cal">کالری تقریبی (اختیاری)</label>
-        <input
-          aioInput
-          id="meal-cal"
-          type="number"
-          inputmode="numeric"
-          [formField]="mealForm.calories"
-        />
-      </div>
+      <aio-number-field
+        label="کالری تقریبی (اختیاری)"
+        controlId="meal-cal"
+        [field]="mealForm.calories"
+        inputMode="numeric"
+      />
       <div
         class="glass flex flex-col gap-1.5 rounded-2xl p-3"
         aria-live="polite"

@@ -15,12 +15,13 @@ import {
   AioDialog,
   AioDialogActions,
   AioDialogBody,
-  AioFieldDirectives,
   AioIcon,
   AioInput,
   AioSkeleton,
   aioToast,
   provideIcons,
+  AioFormField,
+  AioSectionHeading,
 } from '@all-in-one/ui';
 import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
 import {
@@ -54,10 +55,11 @@ interface AgendaItem {
     AioDialog,
     AioDialogActions,
     AioDialogBody,
-    AioFieldDirectives,
     AioIcon,
     AioInput,
     AioSkeleton,
+    AioFormField,
+    AioSectionHeading,
   ],
   providers: [
     provideIcons({
@@ -72,11 +74,16 @@ interface AgendaItem {
   ],
   host: { class: 'flex flex-col gap-5' },
   template: `
-    <header class="flex items-center gap-2">
-      <div class="flex-1">
-        <h1 class="text-2xl font-bold">تقویم</h1>
-        <p class="text-muted-foreground text-sm">{{ rangeLabel() }}</p>
-      </div>
+    <header
+      class="flex items-center gap-2"
+      aioSectionHeading
+      title="تقویم"
+      [description]="rangeLabel()"
+      [level]="1"
+      titleClass="text-2xl font-bold"
+      descriptionClass="text-muted-foreground text-sm"
+      textClass="flex-1"
+    >
       <button
         aioBtn
         variant="outline"
@@ -199,8 +206,7 @@ interface AgendaItem {
             class="flex flex-col gap-3"
             (submit)="$event.preventDefault(); add()"
           >
-            <div aioField>
-              <label aioFieldLabel for="cal-name">نام</label>
+            <aio-form-field label="نام" controlId="cal-name">
               <input
                 aioInput
                 id="cal-name"
@@ -208,9 +214,8 @@ interface AgendaItem {
                 [value]="name()"
                 (input)="name.set($any($event.target).value)"
               />
-            </div>
-            <div aioField>
-              <label aioFieldLabel for="cal-url">نشانی iCal</label>
+            </aio-form-field>
+            <aio-form-field label="نشانی iCal" controlId="cal-url">
               <input
                 aioInput
                 id="cal-url"
@@ -220,7 +225,7 @@ interface AgendaItem {
                 [value]="url()"
                 (input)="url.set($any($event.target).value)"
               />
-            </div>
+            </aio-form-field>
           </form>
         </div>
       </ng-template>

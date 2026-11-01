@@ -1,14 +1,17 @@
 import { Component } from '@angular/core';
-import { AioCardDirectives } from '@all-in-one/ui';
+import { AioCardDirectives, AioCardHeading } from '@all-in-one/ui';
 
 @Component({
   selector: 'public-about',
-  imports: [AioCardDirectives],
+  imports: [AioCardDirectives, AioCardHeading],
   template: `
     <section aioCard class="max-w-2xl">
-      <div aioCardHeader>
-        <h1 aioCardTitle class="text-2xl">درباره «Poshtetgarm»</h1>
-      </div>
+      <div
+        aioCardHeading
+        title="درباره «Poshtetgarm»"
+        [level]="1"
+        titleClass="text-2xl"
+      ></div>
       <div aioCardContent class="flex flex-col gap-3 leading-8">
         <p>
           «Poshtetgarm» چند ابزار کوچک و مستقل را کنار هم می‌گذارد تا زندگی

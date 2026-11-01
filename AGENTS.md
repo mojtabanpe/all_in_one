@@ -200,6 +200,8 @@ When the owner gives a new instruction, add it to this list in the same change.
 
 ## Approved custom components
 
+- **Repeated template compositions** (2026-11-02): shared field/error rendering, card and section headings, empty states, async buttons, skeleton lines/rows, metrics, navigation/catalog cards, native select fields, numeric Signal Forms fields and input-group submit actions in `libs/shared/packages/ui`, composed from existing Spartan wrappers under directive 67.
+
 - **AppletHeader** (2026-11-02): shared title, subtitle and route navigation for all three applets, composed from Spartan button wrappers and icons in `libs/shared/packages/ui`.
 
 - **BottomNav** (2026-10-29): floating bottom navigation for phone sizes, in `libs/shared/packages`,
@@ -288,19 +290,16 @@ When the owner gives a new instruction, add it to this list in the same change.
 
 60. **Language shadowing (2026-11-01):** Include shadowing in language practice: sentence-by-sentence listening and repetition alongside the speaker, adjustable playback speed, optional transcript, and local voice recording for self-comparison. Use the user's AI settings and expose exercise generation to the assistant and ChatGPT tools.
 
-
 61. **English immersion (2026-11-01):** The entire English tab, including cards, definitions, examples, navigation, feedback, errors, dialogs and notifications, is English-only and LTR. This overrides Persian/RTL and Persian-digit defaults within English routes. Use English definitions for starter cards and translate legacy Persian content for display without losing original data or review schedules.
 
-
 62. **Shared applet header (2026-11-02):** Use one reusable component in `libs/shared/packages` for the title, subtitle and top route navigation of planner, English and health. Supply text, links and icons through inputs; keep typography, icon placement and spacing consistent, while preserving each applet’s accent and English-only LTR behavior. The owner explicitly approved this composed component.
-
 
 63. **Brand spelling and logo (2026-11-02):** Use exactly `Poshtetgarm` everywhere the app name appears, including headers, PWA/native notifications, email, install metadata and MCP pages. Use the official hand-and-sun logo in both the top header and sidebar. This replaces all earlier Persian brand spellings.
 
 64. **Assistant multiline composer (2026-11-02):** The assistant composer must wrap long text inside its bounds and support multiple lines. Enter inserts a newline; sending uses the explicit send button. Keep the composer and chat messages within the viewport on phones.
 
-
 65. **Bottom-sheet motion (2026-11-02):** Give all shared bottom sheets a consistent smooth open/close animation. Keep closing faster than opening, allow interrupted transitions and swipe dismissal, and respect reduced-motion settings. Implement this in the shared wrapper/theme without changing generated Spartan Helm code.
 
-
 66. **Stable loading layouts (2026-11-02):** Reduce visible layout shifts throughout the app and during main/sub-navigation. Use the shared Spartan skeletons, especially above the fold; reserve the geometry of headings, summaries and cards, avoid showing empty/default states before data resolves, and verify loading-to-content behavior with delayed responses on phones and desktop.
+
+67. **Reusable template compositions (2026-11-02):** Whenever similar template code is used in more than two places across the apps/applets, extract it to a reusable component in `libs/shared/packages` and consume it through inputs (and projection for controls/actions). Apply this to existing templates too, including the home navigation cards. The owner explicitly authorizes shared compositions of existing Spartan wrappers for these repeated patterns; preserve native semantics, forms, RTL/LTR and stable loading geometry.

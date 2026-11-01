@@ -5,6 +5,7 @@ import {
   AioCardDirectives,
   AioIcon,
   provideIcons,
+  AioSectionHeading,
 } from '@all-in-one/ui';
 import {
   lucideCalendarCheck,
@@ -16,7 +17,13 @@ import { APPLETS } from './applets-data';
 
 @Component({
   selector: 'public-home',
-  imports: [AioButton, AioCardDirectives, AioIcon, RouterLink],
+  imports: [
+    AioButton,
+    AioCardDirectives,
+    AioIcon,
+    RouterLink,
+    AioSectionHeading,
+  ],
   providers: [
     provideIcons({ lucideCalendarCheck, lucideHeartPulse, lucideLanguages }),
   ],
@@ -63,10 +70,15 @@ import { APPLETS } from './applets-data';
                 class="flex size-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/5"
                 ><aio-icon [name]="applet.icon" size="sm"
               /></span>
-              <div>
-                <h3 class="font-semibold">{{ applet.title }}</h3>
-                <p class="aio-hero-caption mt-1">{{ applet.summary }}</p>
-              </div>
+              <div
+                aioSectionHeading
+                [title]="applet.title"
+                [description]="applet.summary"
+                [level]="3"
+                titleClass="font-semibold"
+                descriptionClass="aio-hero-caption mt-1"
+                textClass="flex flex-col gap-1"
+              ></div>
             </div>
           }
         </div>
@@ -96,12 +108,15 @@ import { APPLETS } from './applets-data';
       <section
         class="flex flex-wrap items-center justify-between gap-6 border-t border-border py-8"
       >
-        <div>
-          <h2 class="text-xl font-bold">از یک قدم کوچک شروع کن.</h2>
-          <p class="text-muted-foreground mt-2 text-sm">
-            برنامه امروزت را بچین. بقیه‌اش به‌مرور شکل می‌گیرد.
-          </p>
-        </div>
+        <div
+          aioSectionHeading
+          title="از یک قدم کوچک شروع کن."
+          description="برنامه امروزت را بچین. بقیه‌اش به‌مرور شکل می‌گیرد."
+          [level]="2"
+          titleClass="text-xl font-bold"
+          descriptionClass="text-muted-foreground mt-2 text-sm"
+          textClass="flex flex-col gap-1"
+        ></div>
         <a aioBtn size="lg" [href]="customerUrl">شروع کنید</a>
       </section>
     </div>

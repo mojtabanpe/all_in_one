@@ -24,11 +24,12 @@ import {
   AioAccordionTrigger,
   AioBadge,
   AioButton,
-  AioSkeleton,
   AioCardDirectives,
   AioConfirm,
   AioProgressDirectives,
   aioToast,
+  AioCardHeading,
+  AioSkeletonLines,
 } from '@all-in-one/ui';
 import { apiErrorMessage, faNumber } from '@all-in-one/web/shared';
 import { HealthApi } from './health-api';
@@ -43,9 +44,10 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
     AioAccordionTrigger,
     AioBadge,
     AioButton,
-    AioSkeleton,
     AioCardDirectives,
     AioProgressDirectives,
+    AioCardHeading,
+    AioSkeletonLines,
   ],
   template: `
     <div class="mx-auto flex w-full min-w-0 max-w-2xl flex-col gap-4">
@@ -60,20 +62,14 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
           class="flex flex-col gap-4"
           role="status"
           aria-label="در حال دریافت جلسه"
-        >
-          <div
-            aioSkeleton
-            class="h-5 w-1/2 rounded-lg"
-            aria-hidden="true"
-          ></div>
-          <div
-            aioSkeleton
-            class="h-2 w-full rounded-full"
-            aria-hidden="true"
-          ></div>
-          <div aioSkeleton class="h-80 rounded-3xl" aria-hidden="true"></div>
-          <div aioSkeleton class="h-12 rounded-2xl" aria-hidden="true"></div>
-        </div>
+          aioSkeletonLines
+          [lines]="[
+            'h-5 w-1/2 rounded-lg',
+            'h-2 w-full rounded-full',
+            'h-80 rounded-3xl',
+            'h-12 rounded-2xl',
+          ]"
+        ></div>
       } @else if (routine.error()) {
         <p role="alert">دریافت برنامه ممکن نشد.</p>
         <button aioBtn variant="outline" (click)="routine.reload()">
@@ -94,12 +90,12 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
         </div>
         @if (phase() === 'warmup') {
           <section aioCard>
-            <div aioCardHeader>
-              <h3 aioCardTitle>اول گرم کن</h3>
-              <p aioCardDescription>
-                بعد از گرم کردن، ست‌ها را یکی‌یکی طبق برنامه انجام می‌دهیم.
-              </p>
-            </div>
+            <div
+              aioCardHeading
+              title="اول گرم کن"
+              [level]="3"
+              description="بعد از گرم کردن، ست‌ها را یکی‌یکی طبق برنامه انجام می‌دهیم."
+            ></div>
             <div aioCardContent class="flex flex-col gap-3">
               @for (line of routine.value()?.warmup ?? []; track $index) {
                 <p>{{ line }}</p>
@@ -113,13 +109,16 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
           </section>
         } @else if (phase() === 'rest') {
           <section aioCard>
-            <div aioCardHeader>
-              <h3 aioCardTitle>کمی استراحت کن</h3>
-              <p aioCardDescription>
-                ست قبلی انجام شد؛ قبل از ادامه {{ fa(restSeconds()) }} ثانیه
-                استراحت کن.
-              </p>
-            </div>
+            <div
+              aioCardHeading
+              title="کمی استراحت کن"
+              [level]="3"
+              [description]="
+                'ست قبلی انجام شد؛ قبل از ادامه ' +
+                fa(restSeconds()) +
+                ' ثانیه استراحت کن.'
+              "
+            ></div>
             <div aioCardContent>
               <p>
                 بعدی: {{ nextExerciseName() }}، ست
@@ -249,10 +248,12 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
           }
         } @else if (phase() === 'cooldown') {
           <section aioCard>
-            <div aioCardHeader>
-              <h3 aioCardTitle>ست‌ها تمام شد؛ حالا سرد کن</h3>
-              <p aioCardDescription>بعد از سرد کردن، جلسه را ثبت کن.</p>
-            </div>
+            <div
+              aioCardHeading
+              title="ست‌ها تمام شد؛ حالا سرد کن"
+              [level]="3"
+              description="بعد از سرد کردن، جلسه را ثبت کن."
+            ></div>
             <div aioCardContent class="flex flex-col gap-3">
               @for (line of routine.value()?.cooldown ?? []; track $index) {
                 <p>{{ line }}</p>
@@ -274,12 +275,14 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
           </section>
         } @else {
           <section aioCard>
-            <div aioCardHeader>
-              <h3 aioCardTitle>خسته نباشی! جلسه ثبت شد</h3>
-              <p aioCardDescription>
-                {{ fa(completed().length) }} ست را طبق برنامه انجام دادی.
-              </p>
-            </div>
+            <div
+              aioCardHeading
+              title="خسته نباشی! جلسه ثبت شد"
+              [level]="3"
+              [description]="
+                fa(completed().length) + ' ست را طبق برنامه انجام دادی.'
+              "
+            ></div>
             <div aioCardFooter>
               <a aioBtn routerLink="../.." class="min-h-11 w-full"
                 >برگشت به ورزش</a

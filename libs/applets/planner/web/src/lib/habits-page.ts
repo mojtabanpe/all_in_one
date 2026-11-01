@@ -22,7 +22,6 @@ import {
   AioDialogActions,
   AioDialogBody,
   AioEmptyDirectives,
-  AioFieldDirectives,
   AioIcon,
   AioInput,
   AioNativeSelect,
@@ -31,6 +30,8 @@ import {
   aioToast,
   AioToggleGroupDirectives,
   provideIcons,
+  AioFormField,
+  AioSectionHeading,
 } from '@all-in-one/ui';
 import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
 import {
@@ -119,7 +120,6 @@ const emptyDraft = (): Draft => ({
     AioDialogActions,
     AioDialogBody,
     AioEmptyDirectives,
-    AioFieldDirectives,
     AioIcon,
     AioInput,
     AioNativeSelect,
@@ -127,6 +127,8 @@ const emptyDraft = (): Draft => ({
     AioSkeleton,
     AioToggleGroupDirectives,
     ColorPicker,
+    AioFormField,
+    AioSectionHeading,
   ],
   providers: [
     provideIcons({
@@ -140,21 +142,17 @@ const emptyDraft = (): Draft => ({
   ],
   host: { class: 'flex flex-col gap-5' },
   template: `
-    <header class="flex items-center justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold">عادت‌ها</h1>
-        <p class="text-muted-foreground min-h-6 text-sm">
-          @if (initialLoading()) {
-            <span
-              aioSkeleton
-              class="block h-5 w-32 rounded-lg"
-              aria-hidden="true"
-            ></span>
-          } @else {
-            {{ summary() }}
-          }
-        </p>
-      </div>
+    <header
+      class="flex items-center justify-between gap-3"
+      aioSectionHeading
+      title="عادت‌ها"
+      [description]="summary()"
+      [loading]="initialLoading()"
+      [level]="1"
+      titleClass="text-2xl font-bold"
+      descriptionClass="text-muted-foreground min-h-6 text-sm"
+      textClass=""
+    >
       <button aioBtn (click)="openNew()">
         <aio-icon name="lucidePlus" size="sm" />
         عادت تازه
@@ -318,8 +316,7 @@ const emptyDraft = (): Draft => ({
           class="flex flex-col gap-4 pb-2"
           (submit)="$event.preventDefault(); save()"
         >
-          <div aioField>
-            <label aioFieldLabel for="habit-name">نام</label>
+          <aio-form-field label="نام" controlId="habit-name">
             <input
               aioInput
               id="habit-name"
@@ -327,7 +324,7 @@ const emptyDraft = (): Draft => ({
               [value]="d.name"
               (input)="patch({ name: $any($event.target).value })"
             />
-          </div>
+          </aio-form-field>
           <div class="flex flex-col gap-2">
             <span class="text-sm font-medium">نماد</span>
             <div
@@ -359,8 +356,7 @@ const emptyDraft = (): Draft => ({
             (valueChange)="patch({ color: $event })"
           />
           <div class="grid grid-cols-2 gap-3">
-            <div aioField>
-              <label aioFieldLabel for="habit-goal">هدف روزانه</label>
+            <aio-form-field label="هدف روزانه" controlId="habit-goal">
               <input
                 aioInput
                 id="habit-goal"
@@ -371,9 +367,8 @@ const emptyDraft = (): Draft => ({
                 [value]="d.goal"
                 (input)="patch({ goal: +$any($event.target).value || 1 })"
               />
-            </div>
-            <div aioField>
-              <label aioFieldLabel for="habit-unit">واحد</label>
+            </aio-form-field>
+            <aio-form-field label="واحد" controlId="habit-unit">
               <input
                 aioInput
                 id="habit-unit"
@@ -381,7 +376,7 @@ const emptyDraft = (): Draft => ({
                 [value]="d.unit"
                 (input)="patch({ unit: $any($event.target).value })"
               />
-            </div>
+            </aio-form-field>
           </div>
           <div class="flex flex-col gap-2">
             <span class="text-sm font-medium">روزها</span>
@@ -414,10 +409,11 @@ const emptyDraft = (): Draft => ({
               <div
                 class="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-end gap-3"
               >
-                <div aioField class="min-w-0 gap-2">
-                  <label aioFieldLabel [for]="'habit-reminder-' + i"
-                    >ساعت یادآوری {{ fa(i + 1) }}</label
-                  >
+                <aio-form-field
+                  class="min-w-0 gap-2"
+                  [label]="'ساعت یادآوری ' + fa(i + 1)"
+                  [controlId]="'habit-reminder-' + i"
+                >
                   <input
                     aioInput
                     type="time"
@@ -428,7 +424,7 @@ const emptyDraft = (): Draft => ({
                     aria-describedby="habit-reminder-help"
                     (input)="setReminder(i, $any($event.target).value)"
                   />
-                </div>
+                </aio-form-field>
                 <button
                   aioBtn
                   type="button"
@@ -457,8 +453,7 @@ const emptyDraft = (): Draft => ({
               دریافت اعلان را از حساب کاربری، بخش اعلان‌ها فعال کن.
             </p>
           </div>
-          <div aioField>
-            <label aioFieldLabel for="habit-section">بخش</label>
+          <aio-form-field label="بخش" controlId="habit-section">
             <aio-native-select
               selectId="habit-section"
               [value]="d.sectionId"
@@ -481,7 +476,7 @@ const emptyDraft = (): Draft => ({
                 (input)="patch({ newSection: $any($event.target).value })"
               />
             }
-          </div>
+          </aio-form-field>
           @if (d.id) {
             <div class="flex gap-2">
               <button

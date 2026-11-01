@@ -25,14 +25,14 @@ import {
   AioDialog,
   AioDialogActions,
   AioDialogBody,
-  AioFieldDirectives,
   AioIcon,
-  AioNativeSelect,
-  AioNativeSelectDirectives,
   AioTextarea,
   aioToast,
   AioToggleGroupDirectives,
   provideIcons,
+  AioFormField,
+  AioSectionHeading,
+  AioSelectField,
 } from '@all-in-one/ui';
 import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
 import {
@@ -114,12 +114,12 @@ export class FocusTimer {
     AioDialog,
     AioDialogActions,
     AioDialogBody,
-    AioFieldDirectives,
     AioIcon,
-    AioNativeSelect,
-    AioNativeSelectDirectives,
     AioTextarea,
     AioToggleGroupDirectives,
+    AioFormField,
+    AioSectionHeading,
+    AioSelectField,
   ],
   providers: [
     provideIcons({
@@ -132,20 +132,22 @@ export class FocusTimer {
   ],
   host: { class: 'flex flex-col gap-5' },
   template: `
-    <header>
-      <h1 class="text-2xl font-bold">تمرکز</h1>
-      <p class="text-muted-foreground min-h-6 text-sm">
-        @if (res.isLoading() && !res.hasValue()) {
-          <span
-            aioSkeleton
-            class="block h-5 w-52 rounded-lg"
-            aria-hidden="true"
-          ></span>
-        } @else {
-          امروز {{ fa(todayMin()) }} دقیقه، این هفته {{ fa(weekMin()) }} دقیقه
-        }
-      </p>
-    </header>
+    <header
+      aioSectionHeading
+      title="تمرکز"
+      [description]="
+        'امروز ' +
+        fa(todayMin()) +
+        ' دقیقه، این هفته ' +
+        fa(weekMin()) +
+        ' دقیقه'
+      "
+      [loading]="res.isLoading() && !res.hasValue()"
+      [level]="1"
+      titleClass="text-2xl font-bold"
+      descriptionClass="text-muted-foreground min-h-6 text-sm"
+      textClass="flex flex-col gap-1"
+    ></header>
 
     <section class="glass flex flex-col items-center gap-5 rounded-3xl p-5">
       <div
@@ -219,19 +221,17 @@ export class FocusTimer {
         </div>
       }
 
-      <div aioField class="w-full">
-        <label aioFieldLabel for="focus-task">روی چه کاری؟</label>
-        <aio-native-select
-          selectId="focus-task"
-          [value]="timer.taskId()"
-          (valueChange)="timer.taskId.set($event)"
-        >
-          <option aioNativeSelectOption value="">بدون کار مشخص</option>
-          @for (t of tasks(); track t.id) {
-            <option aioNativeSelectOption [value]="t.id">{{ t.title }}</option>
-          }
-        </aio-native-select>
-      </div>
+      <aio-select-field
+        label="روی چه کاری؟"
+        controlId="focus-task"
+        class="w-full"
+        [value]="timer.taskId()"
+        [options]="tasks()"
+        valueKey="id"
+        labelKey="title"
+        emptyLabel="بدون کار مشخص"
+        (valueChange)="timer.taskId.set($event)"
+      />
 
       <div class="flex w-full gap-2">
         @if (timer.running()) {
@@ -332,8 +332,7 @@ export class FocusTimer {
     >
       <ng-template aioDialogBody>
         <div class="flex flex-col gap-4 pb-2">
-          <div aioField>
-            <label aioFieldLabel for="focus-note">یادداشت</label>
+          <aio-form-field label="یادداشت" controlId="focus-note">
             <textarea
               aioTextarea
               id="focus-note"
@@ -341,7 +340,7 @@ export class FocusTimer {
               [value]="note()"
               (input)="note.set($any($event.target).value)"
             ></textarea>
-          </div>
+          </aio-form-field>
           <p class="text-muted-foreground text-xs">
             مدت جلسه بعد از ثبت عوض نمی‌شود.
           </p>

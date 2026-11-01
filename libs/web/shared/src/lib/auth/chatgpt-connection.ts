@@ -9,12 +9,13 @@ import {
   AioButton,
   AioCardDirectives,
   AioConfirm,
-  AioFieldDirectives,
   AioIcon,
   AioInput,
   AioTextarea,
   aioToast,
   provideIcons,
+  AioFormField,
+  AioCardHeading,
 } from '@all-in-one/ui';
 import { lucideCopy, lucideKeyRound, lucideTrash2 } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
@@ -36,21 +37,21 @@ interface KeysResponse {
   imports: [
     AioButton,
     AioCardDirectives,
-    AioFieldDirectives,
     AioIcon,
     AioInput,
     AioTextarea,
+    AioFormField,
+    AioCardHeading,
   ],
   providers: [provideIcons({ lucideCopy, lucideKeyRound, lucideTrash2 })],
   template: `
     <section aioCard>
-      <div aioCardHeader>
-        <h2 aioCardTitle>اتصال به ChatGPT</h2>
-        <p aioCardDescription>
-          از داخل ChatGPT کارت انگلیسی بساز، متن ذخیره کن و کارها، عادت‌ها و
-          تمرکزت را مدیریت کن.
-        </p>
-      </div>
+      <div
+        aioCardHeading
+        title="اتصال به ChatGPT"
+        [level]="2"
+        description="از داخل ChatGPT کارت انگلیسی بساز، متن ذخیره کن و کارها، عادت‌ها و تمرکزت را مدیریت کن."
+      ></div>
       <div aioCardContent class="flex flex-col gap-4">
         <ol class="text-muted-foreground list-decimal space-y-1 ps-5 text-sm">
           <li>
@@ -85,8 +86,12 @@ interface KeysResponse {
         </ol>
 
         <form class="flex gap-2" (submit)="$event.preventDefault(); create()">
-          <div aioField class="flex-1">
-            <label aioFieldLabel for="mcp-name" class="sr-only">نام کلید</label>
+          <aio-form-field
+            class="flex-1"
+            label="نام کلید"
+            controlId="mcp-name"
+            labelClass="sr-only"
+          >
             <input
               aioInput
               id="mcp-name"
@@ -94,7 +99,7 @@ interface KeysResponse {
               [value]="name()"
               (input)="name.set($any($event.target).value)"
             />
-          </div>
+          </aio-form-field>
           <button aioBtn type="submit" [disabled]="busy()">
             <aio-icon name="lucideKeyRound" size="sm" />
             ساخت کلید
@@ -102,10 +107,11 @@ interface KeysResponse {
         </form>
 
         @if (fresh(); as token) {
-          <div aioField class="bg-accent rounded-2xl p-3">
-            <label aioFieldLabel for="mcp-token"
-              >کلید تازه؛ همین حالا کپی کن، دیگر نشان داده نمی‌شود</label
-            >
+          <aio-form-field
+            class="bg-accent rounded-2xl p-3"
+            label="کلید تازه؛ همین حالا کپی کن، دیگر نشان داده نمی‌شود"
+            controlId="mcp-token"
+          >
             <textarea
               aioTextarea
               id="mcp-token"
@@ -124,7 +130,7 @@ interface KeysResponse {
             >
               <aio-icon name="lucideCopy" size="sm" /> کپی کلید
             </button>
-          </div>
+          </aio-form-field>
         }
 
         <ul class="divide-border/60 flex flex-col divide-y">

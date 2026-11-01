@@ -17,15 +17,15 @@ import {
   AioDialogActions,
   AioDialogBody,
   AioEmptyDirectives,
-  AioFieldDirectives,
   AioIcon,
   AioInput,
-  AioNativeSelect,
-  AioNativeSelectDirectives,
   AioSkeleton,
   AioSwitch,
   aioToast,
   provideIcons,
+  AioFormField,
+  AioSectionHeading,
+  AioSelectField,
 } from '@all-in-one/ui';
 import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
 import { lucideHourglass, lucidePlus, lucideRepeat } from '@ng-icons/lucide';
@@ -56,25 +56,28 @@ const emptyDraft = (): Draft => ({
     AioDialogActions,
     AioDialogBody,
     AioEmptyDirectives,
-    AioFieldDirectives,
     AioIcon,
     AioInput,
-    AioNativeSelect,
-    AioNativeSelectDirectives,
     AioSkeleton,
     AioSwitch,
     ColorPicker,
+    AioFormField,
+    AioSectionHeading,
+    AioSelectField,
   ],
   providers: [provideIcons({ lucideHourglass, lucidePlus, lucideRepeat })],
   host: { class: 'flex flex-col gap-5' },
   template: `
-    <header class="flex items-center justify-between gap-3">
-      <div>
-        <h1 class="text-2xl font-bold">روزشمار</h1>
-        <p class="text-muted-foreground text-sm">
-          تولدها، سالگردها و روزهای مهم
-        </p>
-      </div>
+    <header
+      class="flex items-center justify-between gap-3"
+      aioSectionHeading
+      title="روزشمار"
+      description="تولدها، سالگردها و روزهای مهم"
+      [level]="1"
+      titleClass="text-2xl font-bold"
+      descriptionClass="text-muted-foreground text-sm"
+      textClass=""
+    >
       <button aioBtn (click)="open()">
         <aio-icon name="lucidePlus" size="sm" />
         روز تازه
@@ -145,8 +148,7 @@ const emptyDraft = (): Draft => ({
           class="flex flex-col gap-4 pb-2"
           (submit)="$event.preventDefault(); save()"
         >
-          <div aioField>
-            <label aioFieldLabel for="cd-title">عنوان</label>
+          <aio-form-field label="عنوان" controlId="cd-title">
             <input
               aioInput
               id="cd-title"
@@ -154,10 +156,9 @@ const emptyDraft = (): Draft => ({
               [value]="d.title"
               (input)="patch({ title: $any($event.target).value })"
             />
-          </div>
+          </aio-form-field>
           <div class="grid grid-cols-2 gap-3">
-            <div aioField>
-              <label aioFieldLabel for="cd-date">تاریخ</label>
+            <aio-form-field label="تاریخ" controlId="cd-date">
               <aio-date-input
                 contentClass="applet-planner"
                 inputId="cd-date"
@@ -165,21 +166,15 @@ const emptyDraft = (): Draft => ({
                 [value]="d.date"
                 (valueChange)="patch({ date: $event })"
               />
-            </div>
-            <div aioField>
-              <label aioFieldLabel for="cd-kind">نوع</label>
-              <aio-native-select
-                selectId="cd-kind"
-                [value]="d.kind"
-                (valueChange)="setKind($event)"
-              >
-                @for (k of kinds; track k) {
-                  <option aioNativeSelectOption [value]="k">
-                    {{ kindLabels[k] }}
-                  </option>
-                }
-              </aio-native-select>
-            </div>
+            </aio-form-field>
+            <aio-select-field
+              label="نوع"
+              controlId="cd-kind"
+              [value]="d.kind"
+              [options]="kinds"
+              [optionLabels]="kindLabels"
+              (valueChange)="setKind($event)"
+            />
           </div>
           <p class="text-muted-foreground -mt-2 text-xs">
             {{ dateLabel(d.date, true) }}
@@ -196,15 +191,14 @@ const emptyDraft = (): Draft => ({
             [value]="d.color"
             (valueChange)="patch({ color: $event })"
           />
-          <div aioField>
-            <label aioFieldLabel for="cd-note">یادداشت</label>
+          <aio-form-field label="یادداشت" controlId="cd-note">
             <input
               aioInput
               id="cd-note"
               [value]="d.note"
               (input)="patch({ note: $any($event.target).value })"
             />
-          </div>
+          </aio-form-field>
         </form>
       </ng-template>
       <ng-template aioDialogActions>

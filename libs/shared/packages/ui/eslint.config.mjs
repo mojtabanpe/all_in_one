@@ -36,4 +36,16 @@ export default [
     files: ['**/*.ts'],
     rules: { 'no-restricted-imports': 'off' },
   },
+  {
+    // Composed components keep native hosts (buttons, links, headings and dl groups).
+    files: [
+      'src/lib/components/{async-button,card-heading,catalog-card,empty-state,metric,navigation-card,section-heading,skeleton-lines,skeleton-rows}.ts',
+    ],
+    rules: {
+      '@angular-eslint/component-selector': [
+        'error',
+        { type: 'attribute', prefix: 'aio', style: 'camelCase' },
+      ],
+    },
+  },
 ];

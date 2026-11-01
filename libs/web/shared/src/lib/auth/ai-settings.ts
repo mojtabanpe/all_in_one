@@ -15,12 +15,12 @@ import type {
 import {
   AioButton,
   AioCardDirectives,
-  AioFieldDirectives,
   AioIcon,
   AioInput,
-  AioSpinner,
   aioToast,
   provideIcons,
+  AioFormField,
+  AioAsyncButton,
 } from '@all-in-one/ui';
 import {
   lucideCircleCheck,
@@ -74,10 +74,10 @@ const SERVICES: {
   imports: [
     AioButton,
     AioCardDirectives,
-    AioFieldDirectives,
     AioIcon,
     AioInput,
-    AioSpinner,
+    AioFormField,
+    AioAsyncButton,
   ],
   providers: [
     provideIcons({ lucideCircleCheck, lucideCircleDashed, lucidePlugZap }),
@@ -112,10 +112,10 @@ const SERVICES: {
               }}</span>
             </div>
             <p class="text-muted-foreground -mt-2 text-xs">{{ s.hint }}</p>
-            <div aioField>
-              <label aioFieldLabel [for]="'ai-url-' + s.kind"
-                >نشانی (URL)</label
-              >
+            <aio-form-field
+              label="نشانی (URL)"
+              [controlId]="'ai-url-' + s.kind"
+            >
               <input
                 aioInput
                 type="url"
@@ -126,12 +126,12 @@ const SERVICES: {
                 [value]="d.url"
                 (input)="patch(s.kind, { url: $any($event.target).value })"
               />
-            </div>
+            </aio-form-field>
             <div class="grid gap-3" [class.sm:grid-cols-2]="s.kind === 'tts'">
-              <div aioField>
-                <label aioFieldLabel [for]="'ai-model-' + s.kind">
-                  {{ s.kind === 'tts' ? 'صدای اصلی (مدل)' : 'مدل' }}
-                </label>
+              <aio-form-field
+                [label]="s.kind === 'tts' ? 'صدای اصلی (مدل)' : 'مدل'"
+                [controlId]="'ai-model-' + s.kind"
+              >
                 <input
                   aioInput
                   dir="ltr"
@@ -140,12 +140,12 @@ const SERVICES: {
                   [value]="d.model"
                   (input)="patch(s.kind, { model: $any($event.target).value })"
                 />
-              </div>
+              </aio-form-field>
               @if (s.kind === 'tts') {
-                <div aioField>
-                  <label aioFieldLabel for="ai-model2-tts"
-                    >صدای دوم (دیالوگ‌ها)</label
-                  >
+                <aio-form-field
+                  label="صدای دوم (دیالوگ‌ها)"
+                  controlId="ai-model2-tts"
+                >
                   <input
                     aioInput
                     dir="ltr"
@@ -156,11 +156,10 @@ const SERVICES: {
                       patch(s.kind, { model2: $any($event.target).value })
                     "
                   />
-                </div>
+                </aio-form-field>
               }
             </div>
-            <div aioField>
-              <label aioFieldLabel [for]="'ai-key-' + s.kind">کلید API</label>
+            <aio-form-field label="کلید API" [controlId]="'ai-key-' + s.kind">
               <input
                 aioInput
                 type="password"
@@ -175,25 +174,22 @@ const SERVICES: {
                 [value]="d.key"
                 (input)="patch(s.kind, { key: $any($event.target).value })"
               />
-            </div>
+            </aio-form-field>
             <div class="flex flex-wrap gap-2">
               <button aioBtn type="submit" [disabled]="busy() === s.kind">
                 ذخیره
               </button>
               <button
-                aioBtn
                 type="button"
                 variant="outline"
                 [disabled]="!ready || busy() === s.kind"
                 (click)="test(s.kind)"
-              >
-                @if (testing() === s.kind) {
-                  <aio-spinner />
-                } @else {
-                  <aio-icon name="lucidePlugZap" size="sm" />
-                }
-                آزمایش اتصال
-              </button>
+                aioAsyncButton
+                [busy]="testing() === s.kind"
+                label="آزمایش اتصال"
+                icon="lucidePlugZap"
+                iconSize="sm"
+              ></button>
               @if (hasKey(s.kind)) {
                 <button
                   aioBtn

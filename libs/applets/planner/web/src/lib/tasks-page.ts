@@ -31,12 +31,13 @@ import {
   AioDialog,
   AioDialogBody,
   AioDialogActions,
-  AioEmptyDirectives,
   AioIcon,
   AioInputGroupDirectives,
   AioSkeleton,
   aioToast,
   provideIcons,
+  AioEmptyState,
+  AioSkeletonLines,
 } from '@all-in-one/ui';
 import {
   apiErrorMessage,
@@ -97,7 +98,6 @@ const DONE_DAYS = 30;
     AioDialog,
     AioDialogBody,
     AioDialogActions,
-    AioEmptyDirectives,
     AioIcon,
     AioInputGroupDirectives,
     AioSkeleton,
@@ -106,6 +106,8 @@ const DONE_DAYS = 30;
     NgTemplateOutlet,
     TagSettings,
     TaskDetail,
+    AioEmptyState,
+    AioSkeletonLines,
   ],
   providers: [
     provideIcons({
@@ -212,11 +214,11 @@ const DONE_DAYS = 30;
     }
 
     @if (loading()) {
-      <div class="flex flex-col gap-2">
-        <div aioSkeleton class="h-12 rounded-2xl"></div>
-        <div aioSkeleton class="h-12 rounded-2xl"></div>
-        <div aioSkeleton class="h-12 rounded-2xl"></div>
-      </div>
+      <div
+        class="flex flex-col gap-2"
+        aioSkeletonLines
+        [lines]="['h-12 rounded-2xl', 'h-12 rounded-2xl', 'h-12 rounded-2xl']"
+      ></div>
     } @else if (view() === 'trash') {
       @if (trash().length) {
         <ul class="glass divide-border/60 flex flex-col divide-y rounded-2xl">
@@ -346,15 +348,15 @@ const DONE_DAYS = 30;
     }
 
     <ng-template #empty let-title="title" let-text="text">
-      <div aioEmpty class="glass rounded-2xl">
-        <div aioEmptyHeader>
-          <div aioEmptyMedia variant="icon" class="text-primary">
-            <aio-icon name="lucideCircleCheckBig" />
-          </div>
-          <h2 aioEmptyTitle>{{ title }}</h2>
-          <p aioEmptyDescription>{{ text }}</p>
-        </div>
-      </div>
+      <div
+        class="glass rounded-2xl"
+        aioEmptyState
+        [title]="title"
+        [description]="text"
+        [level]="2"
+        icon="lucideCircleCheckBig"
+        iconClass="text-primary"
+      ></div>
     </ng-template>
 
     <ng-template #row let-task>

@@ -16,15 +16,15 @@ import {
 import {
   AioButton,
   AioConfirm,
-  AioFieldDirectives,
   AioIcon,
   AioInput,
   AioInputGroupDirectives,
-  AioNativeSelect,
-  AioNativeSelectDirectives,
   AioSkeleton,
   aioToast,
   provideIcons,
+  AioFormField,
+  AioSelectField,
+  AioInputGroupSubmit,
 } from '@all-in-one/ui';
 import { apiErrorMessage, AuthStore } from '@all-in-one/web/shared';
 import {
@@ -41,14 +41,14 @@ import { PlannerApi } from './planner-api';
   selector: 'planner-list-settings',
   imports: [
     AioButton,
-    AioFieldDirectives,
     AioIcon,
     AioInput,
     AioInputGroupDirectives,
     ColorPicker,
-    AioNativeSelect,
-    AioNativeSelectDirectives,
     AioSkeleton,
+    AioFormField,
+    AioSelectField,
+    AioInputGroupSubmit,
   ],
   providers: [
     provideIcons({ lucidePlus, lucideTrash2, lucideUserPlus, lucideX }),
@@ -58,8 +58,7 @@ import { PlannerApi } from './planner-api';
       @let l = detail.value();
       <div class="flex flex-col gap-5 pb-2">
         @if (l.role === 'OWNER') {
-          <div aioField>
-            <label aioFieldLabel for="list-name">نام</label>
+          <aio-form-field label="نام" controlId="list-name">
             <input
               aioInput
               id="list-name"
@@ -67,27 +66,22 @@ import { PlannerApi } from './planner-api';
               [value]="l.name"
               (change)="rename($any($event.target).value)"
             />
-          </div>
+          </aio-form-field>
           <planner-color-picker
             [value]="color()"
             (valueChange)="setColor($event)"
           />
           @if (!l.isInbox) {
-            <div aioField>
-              <label aioFieldLabel for="list-folder">پوشه</label>
-              <aio-native-select
-                selectId="list-folder"
-                [value]="l.folderId ?? ''"
-                (valueChange)="update({ folderId: $event || null })"
-              >
-                <option aioNativeSelectOption value="">بدون پوشه</option>
-                @for (f of folders(); track f.id) {
-                  <option aioNativeSelectOption [value]="f.id">
-                    {{ f.name }}
-                  </option>
-                }
-              </aio-native-select>
-            </div>
+            <aio-select-field
+              label="پوشه"
+              controlId="list-folder"
+              [value]="l.folderId ?? ''"
+              [options]="folders()"
+              valueKey="id"
+              labelKey="name"
+              emptyLabel="بدون پوشه"
+              (valueChange)="update({ folderId: $event || null })"
+            />
           }
         }
 
@@ -122,16 +116,7 @@ import { PlannerApi } from './planner-api';
               [value]="newSection()"
               (input)="newSection.set($any($event.target).value)"
             />
-            <aio-input-group-addon align="inline-end">
-              <button
-                aioInputGroupButton
-                type="submit"
-                size="icon-sm"
-                aria-label="افزودن بخش"
-              >
-                <aio-icon name="lucidePlus" size="sm" />
-              </button>
-            </aio-input-group-addon>
+            <aio-input-group-submit label="افزودن بخش" icon="lucidePlus" />
           </form>
         </div>
 
@@ -326,19 +311,18 @@ export class ListSettings {
 /** Rename, recolour or delete a tag. */
 @Component({
   selector: 'planner-tag-settings',
-  imports: [AioButton, AioFieldDirectives, AioIcon, AioInput, ColorPicker],
+  imports: [AioButton, AioIcon, AioInput, ColorPicker, AioFormField],
   providers: [provideIcons({ lucideTrash2 })],
   template: `
     <div class="flex flex-col gap-5 pb-2">
-      <div aioField>
-        <label aioFieldLabel for="tag-name">نام</label>
+      <aio-form-field label="نام" controlId="tag-name">
         <input
           aioInput
           id="tag-name"
           [value]="tag().name"
           (change)="rename($any($event.target).value)"
         />
-      </div>
+      </aio-form-field>
       <planner-color-picker
         [value]="color()"
         (valueChange)="setColor($event)"

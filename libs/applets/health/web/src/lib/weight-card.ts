@@ -23,14 +23,15 @@ import {
   AioDialogActions,
   AioDialogBody,
   AioFieldDirectives,
-  AioFieldError,
   AioIcon,
-  AioInput,
   AioProgressDirectives,
   AioSkeleton,
   aioToast,
   AioToggleGroupDirectives,
   provideIcons,
+  AioFormField,
+  AioFormErrors,
+  AioNumberField,
 } from '@all-in-one/ui';
 import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
 import { lucideScale, lucideTrash2 } from '@ng-icons/lucide';
@@ -61,14 +62,15 @@ function addMonths(iso: string, months: number): string {
     AioDialogActions,
     AioDialogBody,
     AioFieldDirectives,
-    AioFieldError,
     AioIcon,
-    AioInput,
     AioProgressDirectives,
     AioSkeleton,
     AioToggleGroupDirectives,
     FormField,
     FormRoot,
+    AioFormField,
+    AioFormErrors,
+    AioNumberField,
   ],
   providers: [provideIcons({ lucideScale, lucideTrash2 })],
   template: `
@@ -187,24 +189,15 @@ function addMonths(iso: string, months: number): string {
           (submit)="$event.preventDefault(); saveWeight()"
         >
           <div class="grid grid-cols-2 gap-3">
-            <div aioField>
-              <label aioFieldLabel for="weigh-kg">وزن (کیلوگرم)</label>
-              <input
-                aioInput
-                id="weigh-kg"
-                type="number"
-                inputmode="decimal"
-                step="0.1"
-                [formField]="weighForm.weightKg"
-              />
-              @for (e of weighForm.weightKg().errors(); track e.kind) {
-                <aio-field-error [validator]="e.kind">{{
-                  e.message
-                }}</aio-field-error>
-              }
-            </div>
-            <div aioField>
-              <label aioFieldLabel for="weigh-date">روز</label>
+            <aio-number-field
+              label="وزن (کیلوگرم)"
+              controlId="weigh-kg"
+              [field]="weighForm.weightKg"
+              inputMode="decimal"
+              step="0.1"
+              [showErrors]="true"
+            />
+            <aio-form-field label="روز" controlId="weigh-date">
               <aio-date-input
                 contentClass="applet-health"
                 inputId="weigh-date"
@@ -212,7 +205,7 @@ function addMonths(iso: string, months: number): string {
                 [formField]="weighForm.date"
               />
               <p aioFieldDescription>{{ dateLabel(weighModel().date) }}</p>
-            </div>
+            </aio-form-field>
           </div>
         </form>
         @if (weight.value()?.entries?.length) {
@@ -274,38 +267,22 @@ function addMonths(iso: string, months: number): string {
           (submit)="$event.preventDefault(); saveGoal()"
         >
           <div class="grid grid-cols-2 gap-3">
-            <div aioField>
-              <label aioFieldLabel for="goal-current">وزن الان (کیلوگرم)</label>
-              <input
-                aioInput
-                id="goal-current"
-                type="number"
-                inputmode="decimal"
-                step="0.1"
-                [formField]="goalForm.currentKg"
-              />
-              @for (e of goalForm.currentKg().errors(); track e.kind) {
-                <aio-field-error [validator]="e.kind">{{
-                  e.message
-                }}</aio-field-error>
-              }
-            </div>
-            <div aioField>
-              <label aioFieldLabel for="goal-target">وزن هدف (کیلوگرم)</label>
-              <input
-                aioInput
-                id="goal-target"
-                type="number"
-                inputmode="decimal"
-                step="0.1"
-                [formField]="goalForm.targetKg"
-              />
-              @for (e of goalForm.targetKg().errors(); track e.kind) {
-                <aio-field-error [validator]="e.kind">{{
-                  e.message
-                }}</aio-field-error>
-              }
-            </div>
+            <aio-number-field
+              label="وزن الان (کیلوگرم)"
+              controlId="goal-current"
+              [field]="goalForm.currentKg"
+              inputMode="decimal"
+              step="0.1"
+              [showErrors]="true"
+            />
+            <aio-number-field
+              label="وزن هدف (کیلوگرم)"
+              controlId="goal-target"
+              [field]="goalForm.targetKg"
+              inputMode="decimal"
+              step="0.1"
+              [showErrors]="true"
+            />
           </div>
           <div aioField>
             <span aioFieldLabel id="goal-months-label">تا کی؟</span>
@@ -347,11 +324,7 @@ function addMonths(iso: string, months: number): string {
                   : 'تاریخ را انتخاب کن'
               }}
             </p>
-            @for (e of goalForm.targetDate().errors(); track e.kind) {
-              <aio-field-error [validator]="e.kind">{{
-                e.message
-              }}</aio-field-error>
-            }
+            <aio-form-errors [errors]="goalForm.targetDate().errors()" />
           </div>
           @if (preview(); as p) {
             <div

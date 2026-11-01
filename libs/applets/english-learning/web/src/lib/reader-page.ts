@@ -19,16 +19,15 @@ import {
   AioDialog,
   AioDialogActions,
   AioDialogBody,
-  AioFieldDirectives,
   AioIcon,
   AioInput,
-  AioNativeSelect,
-  AioNativeSelectOption,
   AioSkeleton,
   AioSpinner,
   AioTextarea,
   aioToast,
   provideIcons,
+  AioFormField,
+  AioSelectField,
 } from '@all-in-one/ui';
 import { englishErrorMessage as apiErrorMessage } from './english-locale';
 import {
@@ -58,15 +57,14 @@ const UNIT_KEY = 'aio.english.reader.unit';
     AioDialog,
     AioDialogActions,
     AioDialogBody,
-    AioFieldDirectives,
     AioIcon,
     AioInput,
-    AioNativeSelect,
-    AioNativeSelectOption,
     AioSkeleton,
     AioSpinner,
     AioTextarea,
     RouterLink,
+    AioFormField,
+    AioSelectField,
   ],
   providers: [
     provideIcons({
@@ -228,8 +226,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
               </button>
             </p>
           }
-          <div aioField>
-            <label aioFieldLabel for="lookup-front">Front</label>
+          <aio-form-field label="Front" controlId="lookup-front">
             <div class="flex gap-2">
               <input
                 aioInput
@@ -255,9 +252,8 @@ const UNIT_KEY = 'aio.english.reader.unit';
                 This word is already in this deck.
               </p>
             }
-          </div>
-          <div aioField>
-            <label aioFieldLabel for="lookup-back">Definition</label>
+          </aio-form-field>
+          <aio-form-field label="Definition" controlId="lookup-back">
             <textarea
               aioTextarea
               id="lookup-back"
@@ -266,9 +262,8 @@ const UNIT_KEY = 'aio.english.reader.unit';
               [value]="back()"
               (input)="back.set($any($event.target).value)"
             ></textarea>
-          </div>
-          <div aioField>
-            <label aioFieldLabel for="lookup-examples">Examples</label>
+          </aio-form-field>
+          <aio-form-field label="Examples" controlId="lookup-examples">
             <textarea
               aioTextarea
               id="lookup-examples"
@@ -278,24 +273,18 @@ const UNIT_KEY = 'aio.english.reader.unit';
               [value]="examples()"
               (input)="examples.set($any($event.target).value)"
             ></textarea>
-          </div>
+          </aio-form-field>
           <div class="grid grid-cols-[1fr_6rem] gap-3">
-            <div aioField>
-              <label aioFieldLabel for="lookup-deck">deck</label>
-              <aio-native-select
-                selectId="lookup-deck"
-                [value]="deckId()"
-                (valueChange)="setDeck($event)"
-              >
-                @for (d of decks(); track d.id) {
-                  <option aioNativeSelectOption [value]="d.id">
-                    {{ d.name }}
-                  </option>
-                }
-              </aio-native-select>
-            </div>
-            <div aioField>
-              <label aioFieldLabel for="lookup-unit">Unit</label>
+            <aio-select-field
+              label="deck"
+              controlId="lookup-deck"
+              [value]="deckId()"
+              [options]="decks()"
+              valueKey="id"
+              labelKey="name"
+              (valueChange)="setDeck($event)"
+            />
+            <aio-form-field label="Unit" controlId="lookup-unit">
               <input
                 aioInput
                 id="lookup-unit"
@@ -304,7 +293,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
                 [value]="unit()"
                 (input)="unit.set($any($event.target).value)"
               />
-            </div>
+            </aio-form-field>
           </div>
           @if (formError()) {
             <p class="text-destructive text-sm" role="alert">

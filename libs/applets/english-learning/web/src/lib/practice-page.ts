@@ -15,8 +15,6 @@ import {
 } from '@all-in-one/applets/english-learning/contracts';
 import {
   AioButton,
-  AioEmptyDirectives,
-  AioFieldDirectives,
   AioIcon,
   AioNativeSelect,
   AioNativeSelectOption,
@@ -25,6 +23,10 @@ import {
   aioToast,
   AioToggleGroupDirectives,
   provideIcons,
+  AioEmptyState,
+  AioSectionHeading,
+  AioAsyncButton,
+  AioSelectField,
 } from '@all-in-one/ui';
 import { englishErrorMessage as apiErrorMessage } from './english-locale';
 import {
@@ -71,8 +73,6 @@ const freshTask = (): TaskState => ({
   selector: 'english-learning-practice',
   imports: [
     AioButton,
-    AioEmptyDirectives,
-    AioFieldDirectives,
     AioIcon,
     AioNativeSelect,
     AioNativeSelectOption,
@@ -80,6 +80,10 @@ const freshTask = (): TaskState => ({
     AioTextarea,
     AioToggleGroupDirectives,
     NgTemplateOutlet,
+    AioEmptyState,
+    AioSectionHeading,
+    AioAsyncButton,
+    AioSelectField,
   ],
   providers: [
     provideIcons({
@@ -100,12 +104,15 @@ const freshTask = (): TaskState => ({
   ],
   template: `
     <div class="flex flex-col gap-6">
-      <header>
-        <h1 class="text-2xl font-bold">Conversation practice</h1>
-        <p class="text-muted-foreground text-sm">
-          Everyday English: write, speak, listen and shadow.
-        </p>
-      </header>
+      <header
+        aioSectionHeading
+        title="Conversation practice"
+        description="Everyday English: write, speak, listen and shadow."
+        [level]="1"
+        titleClass="text-2xl font-bold"
+        descriptionClass="text-muted-foreground text-sm"
+        textClass="flex flex-col gap-1"
+      ></header>
 
       <div
         aioToggleGroup
@@ -129,34 +136,24 @@ const freshTask = (): TaskState => ({
       </div>
 
       <div class="grid grid-cols-2 gap-3">
-        <div aioField>
-          <label aioFieldLabel for="practice-situation">Situation</label>
-          <aio-native-select
-            selectId="practice-situation"
-            [value]="situation()"
-            (valueChange)="situation.set($any($event))"
-          >
-            @for (s of situations; track s.id) {
-              <option aioNativeSelectOption [value]="s.id">
-                {{ s.label }}
-              </option>
-            }
-          </aio-native-select>
-        </div>
-        <div aioField>
-          <label aioFieldLabel for="practice-level">Level</label>
-          <aio-native-select
-            selectId="practice-level"
-            [value]="level()"
-            (valueChange)="level.set($any($event))"
-          >
-            @for (l of levels; track l.id) {
-              <option aioNativeSelectOption [value]="l.id">
-                {{ l.label }}
-              </option>
-            }
-          </aio-native-select>
-        </div>
+        <aio-select-field
+          label="Situation"
+          controlId="practice-situation"
+          [value]="situation()"
+          [options]="situations"
+          valueKey="id"
+          labelKey="label"
+          (valueChange)="situation.set($any($event))"
+        />
+        <aio-select-field
+          label="Level"
+          controlId="practice-level"
+          [value]="level()"
+          [options]="levels"
+          valueKey="id"
+          labelKey="label"
+          (valueChange)="level.set($any($event))"
+        />
       </div>
 
       @if (error()) {
@@ -175,17 +172,15 @@ const freshTask = (): TaskState => ({
             and record yourself to hear the difference.
           </p>
           <button
-            aioBtn
             size="lg"
             [disabled]="busy() || recording() || recordingPending()"
             (click)="newDialogue()"
-          >
-            @if (busy()) {
-              <aio-spinner aria-label="Loading" /> Preparing…
-            } @else {
-              <aio-icon name="lucideHeadphones" /> New exercise
-            }
-          </button>
+            aioAsyncButton
+            [busy]="busy()"
+            label="New exercise"
+            busyLabel="Preparing…"
+            icon="lucideHeadphones"
+          ></button>
           <p class="text-muted-foreground text-sm">
             To generate exercises and audio, configure chat and text-to-speech
             in Account → AI.
@@ -331,18 +326,16 @@ const freshTask = (): TaskState => ({
         }
       } @else if (mode() === 'listening') {
         <button
-          aioBtn
           size="lg"
           class="h-14 rounded-2xl"
           [disabled]="busy()"
           (click)="newDialogue()"
-        >
-          @if (busy()) {
-            <aio-spinner aria-label="Loading" /> Preparing…
-          } @else {
-            <aio-icon name="lucideHeadphones" /> New dialogue
-          }
-        </button>
+          aioAsyncButton
+          [busy]="busy()"
+          label="New dialogue"
+          busyLabel="Preparing…"
+          icon="lucideHeadphones"
+        ></button>
 
         @if (dialogue(); as d) {
           <section
@@ -563,18 +556,15 @@ const freshTask = (): TaskState => ({
               "
             ></textarea>
             <button
-              aioBtn
               class="self-start"
               [disabled]="busy() || !current().answer.trim()"
               (click)="check()"
-            >
-              @if (busy()) {
-                <aio-spinner aria-label="Loading" />
-              } @else {
-                <aio-icon name="lucideCheck" size="sm" />
-              }
-              Check answer
-            </button>
+              aioAsyncButton
+              [busy]="busy()"
+              label="Check answer"
+              icon="lucideCheck"
+              iconSize="sm"
+            ></button>
           </section>
 
           @if (current().feedback; as f) {
@@ -644,21 +634,15 @@ const freshTask = (): TaskState => ({
             />
           }
         } @else if (!busy()) {
-          <div aioEmpty class="lx-glass rounded-2xl">
-            <div aioEmptyHeader>
-              <h2 aioEmptyTitle>
-                {{
-                  mode() === 'speaking'
-                    ? 'Answer aloud'
-                    : 'Write a short answer'
-                }}
-              </h2>
-              <p aioEmptyDescription>
-                Choose a situation and select “New exercise”. Then check your
-                answer.
-              </p>
-            </div>
-          </div>
+          <div
+            class="lx-glass rounded-2xl"
+            aioEmptyState
+            [title]="
+              mode() === 'speaking' ? 'Answer aloud' : 'Write a short answer'
+            "
+            description="Choose a situation and select “New exercise”. Then check your answer."
+            [level]="2"
+          ></div>
         }
       }
     </div>

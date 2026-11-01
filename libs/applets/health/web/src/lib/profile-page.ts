@@ -27,12 +27,13 @@ import {
   AioSkeleton,
   AioCardDirectives,
   AioFieldDirectives,
-  AioFieldError,
   AioInput,
-  AioNativeSelect,
-  AioNativeSelectOption,
   aioToast,
   AioToggleGroupDirectives,
+  AioFormField,
+  AioCardHeading,
+  AioNumberField,
+  AioSelectField,
 } from '@all-in-one/ui';
 import { apiErrorMessage, faNumber } from '@all-in-one/web/shared';
 import { HealthApi } from './health-api';
@@ -56,13 +57,14 @@ import {
     AioSkeleton,
     AioCardDirectives,
     AioFieldDirectives,
-    AioFieldError,
     AioInput,
-    AioNativeSelect,
-    AioNativeSelectOption,
     AioToggleGroupDirectives,
     FormField,
     FormRoot,
+    AioFormField,
+    AioCardHeading,
+    AioNumberField,
+    AioSelectField,
   ],
   providers: [
     provideIcons({
@@ -87,10 +89,12 @@ import {
         </button>
       }
       <section aioCard>
-        <div aioCardHeader>
-          <p aioCardDescription>برنامه، بر اساس خودت</p>
-          <h2 aioCardTitle>هر تغییر کوچک، از همین‌جا.</h2>
-        </div>
+        <div
+          aioCardHeading
+          title="هر تغییر کوچک، از همین‌جا."
+          [level]="2"
+          description="برنامه، بر اساس خودت"
+        ></div>
         <div aioCardContent>
           <p class="health-metric-label">
             مشخصات و هدفت را به‌روز نگه دار تا برآوردهای برنامه به تو نزدیک‌تر
@@ -100,11 +104,12 @@ import {
       </section>
       @for (group of settingGroups(); track group.title) {
         <section aioCard>
-          <div aioCardHeader>
-            <h2 aioCardTitle class="health-section-heading">
-              {{ group.title }}
-            </h2>
-          </div>
+          <div
+            aioCardHeading
+            [title]="group.title"
+            [level]="2"
+            titleClass="health-section-heading"
+          ></div>
           <div aioCardContent>
             @for (row of group.rows; track row.label) {
               <button
@@ -151,8 +156,7 @@ import {
           [formRoot]="profileForm"
           (submit)="$event.preventDefault(); save()"
         >
-          <div aioField>
-            <span aioFieldLabel>جنسیت</span>
+          <aio-form-field label="جنسیت">
             <div
               aioToggleGroup
               type="single"
@@ -177,71 +181,40 @@ import {
                 مرد
               </button>
             </div>
-          </div>
+          </aio-form-field>
           <div class="grid grid-cols-3 gap-3">
-            <div aioField>
-              <label aioFieldLabel for="birthYear">سال تولد (شمسی)</label>
-              <input
-                aioInput
-                id="birthYear"
-                type="number"
-                inputmode="numeric"
-                [formField]="profileForm.birthYear"
-              />
-              @for (e of profileForm.birthYear().errors(); track e.kind) {
-                <aio-field-error [validator]="e.kind">{{
-                  e.message
-                }}</aio-field-error>
-              }
-            </div>
-            <div aioField>
-              <label aioFieldLabel for="height">قد (سانتی‌متر)</label>
-              <input
-                aioInput
-                id="height"
-                type="number"
-                inputmode="numeric"
-                [formField]="profileForm.heightCm"
-              />
-              @for (e of profileForm.heightCm().errors(); track e.kind) {
-                <aio-field-error [validator]="e.kind">{{
-                  e.message
-                }}</aio-field-error>
-              }
-            </div>
-            <div aioField>
-              <label aioFieldLabel for="weight">وزن (کیلوگرم)</label>
-              <input
-                aioInput
-                id="weight"
-                type="number"
-                inputmode="decimal"
-                step="0.1"
-                [formField]="profileForm.weightKg"
-              />
-              @for (e of profileForm.weightKg().errors(); track e.kind) {
-                <aio-field-error [validator]="e.kind">{{
-                  e.message
-                }}</aio-field-error>
-              }
-            </div>
+            <aio-number-field
+              label="سال تولد (شمسی)"
+              controlId="birthYear"
+              [field]="profileForm.birthYear"
+              inputMode="numeric"
+              [showErrors]="true"
+            />
+            <aio-number-field
+              label="قد (سانتی‌متر)"
+              controlId="height"
+              [field]="profileForm.heightCm"
+              inputMode="numeric"
+              [showErrors]="true"
+            />
+            <aio-number-field
+              label="وزن (کیلوگرم)"
+              controlId="weight"
+              [field]="profileForm.weightKg"
+              inputMode="decimal"
+              step="0.1"
+              [showErrors]="true"
+            />
           </div>
-          <div aioField>
-            <label aioFieldLabel for="activity">میزان تحرک</label>
-            <aio-native-select
-              selectId="activity"
-              [value]="model().activityLevel"
-              (valueChange)="set('activityLevel', $event)"
-            >
-              @for (level of activityLevels; track level) {
-                <option aioNativeSelectOption [value]="level">
-                  {{ activityLabels[level] }}
-                </option>
-              }
-            </aio-native-select>
-          </div>
-          <div aioField>
-            <span aioFieldLabel>هدف</span>
+          <aio-select-field
+            label="میزان تحرک"
+            controlId="activity"
+            [value]="model().activityLevel"
+            [options]="activityLevels"
+            [optionLabels]="activityLabels"
+            (valueChange)="set('activityLevel', $event)"
+          />
+          <aio-form-field label="هدف">
             <div
               aioToggleGroup
               type="single"
@@ -260,11 +233,11 @@ import {
                 </button>
               }
             </div>
-          </div>
-          <div aioField>
-            <label aioFieldLabel for="excluded-foods"
-              >مواد غذایی که نمی‌خواهید در برنامه باشند</label
-            >
+          </aio-form-field>
+          <aio-form-field
+            label="مواد غذایی که نمی‌خواهید در برنامه باشند"
+            controlId="excluded-foods"
+          >
             <input
               aioInput
               id="excluded-foods"
@@ -275,7 +248,7 @@ import {
               با ویرگول جدا کنید. این فیلتر نام مواد است؛ ترکیبات جایگزین یا
               آلودگی متقاطع را تشخیص نمی‌دهد.
             </p>
-          </div>
+          </aio-form-field>
           <div class="flex items-center justify-between gap-3">
             @if (profile.value()?.calorieTarget; as target) {
               <p class="text-sm">

@@ -11,10 +11,11 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   AioButton,
   AioCardDirectives,
-  AioFieldDirectives,
-  AioFieldError,
   AioInput,
   aioToast,
+  AioFormField,
+  AioFormErrors,
+  AioCardHeading,
 } from '@all-in-one/ui';
 import { loginSchema } from '@all-in-one/shared/schemas';
 import { apiErrorMessage } from './auth.guards';
@@ -30,28 +31,28 @@ import { AuthStore } from './auth.store';
   imports: [
     AioButton,
     AioCardDirectives,
-    AioFieldDirectives,
-    AioFieldError,
     AioInput,
     FormField,
     FormRoot,
     RouterLink,
+    AioFormField,
+    AioFormErrors,
+    AioCardHeading,
   ],
   template: `
     <div class="mx-auto flex min-h-[70dvh] max-w-sm flex-col justify-center">
       <section aioCard>
-        <div aioCardHeader>
-          <h1 aioCardTitle class="text-xl">
-            {{ mode() === 'login' ? 'ورود به ' + name() : 'ساخت حساب' }}
-          </h1>
-          <p aioCardDescription>
-            {{
-              mode() === 'login'
-                ? 'با ایمیل و رمز عبورتان وارد شوید.'
-                : 'چند ثانیه بیشتر طول نمی‌کشد.'
-            }}
-          </p>
-        </div>
+        <div
+          aioCardHeading
+          [title]="mode() === 'login' ? 'ورود به ' + name() : 'ساخت حساب'"
+          [level]="1"
+          [description]="
+            mode() === 'login'
+              ? 'با ایمیل و رمز عبورتان وارد شوید.'
+              : 'چند ثانیه بیشتر طول نمی‌کشد.'
+          "
+          titleClass="text-xl"
+        ></div>
         <form
           aioCardContent
           class="flex flex-col gap-4"
@@ -59,18 +60,16 @@ import { AuthStore } from './auth.store';
           (submit)="$event.preventDefault(); send()"
         >
           @if (mode() === 'register') {
-            <div aioField>
-              <label aioFieldLabel for="name">نام</label>
+            <aio-form-field label="نام" controlId="name">
               <input
                 aioInput
                 id="name"
                 autocomplete="name"
                 [formField]="authForm.name"
               />
-            </div>
+            </aio-form-field>
           }
-          <div aioField>
-            <label aioFieldLabel for="email">ایمیل</label>
+          <aio-form-field label="ایمیل" controlId="email">
             <input
               aioInput
               id="email"
@@ -79,14 +78,9 @@ import { AuthStore } from './auth.store';
               autocomplete="email"
               [formField]="authForm.email"
             />
-            @for (error of authForm.email().errors(); track error.kind) {
-              <aio-field-error [validator]="error.kind">{{
-                error.message
-              }}</aio-field-error>
-            }
-          </div>
-          <div aioField>
-            <label aioFieldLabel for="password">رمز عبور</label>
+            <aio-form-errors [errors]="authForm.email().errors()" />
+          </aio-form-field>
+          <aio-form-field label="رمز عبور" controlId="password">
             <input
               aioInput
               id="password"
@@ -97,12 +91,8 @@ import { AuthStore } from './auth.store';
               "
               [formField]="authForm.password"
             />
-            @for (error of authForm.password().errors(); track error.kind) {
-              <aio-field-error [validator]="error.kind">{{
-                error.message
-              }}</aio-field-error>
-            }
-          </div>
+            <aio-form-errors [errors]="authForm.password().errors()" />
+          </aio-form-field>
           @if (pendingEmail()) {
             <div
               class="bg-accent text-accent-foreground flex flex-col gap-2 rounded-2xl p-3 text-sm"

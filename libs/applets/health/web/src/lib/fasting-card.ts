@@ -30,6 +30,7 @@ import {
   aioToast,
   AioToggleGroupDirectives,
   provideIcons,
+  AioFormField,
 } from '@all-in-one/ui';
 import { toIsoDate } from '@all-in-one/shared/schemas';
 import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
@@ -61,6 +62,7 @@ const HOUR = 3_600_000;
     AioProgressDirectives,
     AioSkeleton,
     AioToggleGroupDirectives,
+    AioFormField,
   ],
   providers: [provideIcons({ lucideHistory, lucideTimer, lucideTrash2 })],
   template: `
@@ -234,8 +236,7 @@ const HOUR = 3_600_000;
               }}.
             </p>
           </div>
-          <div aioField>
-            <label aioFieldLabel for="fast-start">از کی چیزی نخورده‌ای؟</label>
+          <aio-form-field label="از کی چیزی نخورده‌ای؟" controlId="fast-start">
             <aio-date-input
               contentClass="applet-health"
               inputId="fast-start"
@@ -267,7 +268,7 @@ const HOUR = 3_600_000;
                   'اگر همین الان شروع می‌کنی، دست نزن؛ حداکثر ۷۲ ساعت قبل.'
               }}
             </p>
-          </div>
+          </aio-form-field>
         </form>
       </ng-template>
       <ng-template aioDialogActions>

@@ -19,6 +19,7 @@ import {
   AioInput,
   AioNativeSelect,
   AioNativeSelectDirectives,
+  AioFormField,
 } from '@all-in-one/ui';
 
 type Settings = Pick<
@@ -80,12 +81,16 @@ export function recurrencePreset(rule: string | null | undefined): string {
     AioInput,
     AioNativeSelect,
     AioNativeSelectDirectives,
+    AioFormField,
   ],
   host: { class: 'block min-w-0 w-full' },
   template: `
     <fieldset aioFieldSet class="min-w-0 gap-4 border-t border-border pt-5">
-      <div aioField class="min-w-0 gap-2">
-        <label aioFieldLabel [for]="prefix() + 'preset'">تکرار</label>
+      <aio-form-field
+        class="min-w-0 gap-2"
+        label="تکرار"
+        [controlId]="prefix() + 'preset'"
+      >
         <aio-native-select
           [selectId]="prefix() + 'preset'"
           [value]="preset()"
@@ -101,12 +106,15 @@ export function recurrencePreset(rule: string | null | undefined): string {
           <option aioNativeSelectOption value="YEARLY">هر سال</option>
           <option aioNativeSelectOption value="CUSTOM">دلخواه</option>
         </aio-native-select>
-      </div>
+      </aio-form-field>
       @if (preset() !== 'NONE') {
         @if (preset() === 'CUSTOM') {
           <div class="grid min-w-0 grid-cols-2 gap-3">
-            <div aioField class="min-w-0 gap-2">
-              <label aioFieldLabel [for]="prefix() + 'freq'">واحد تکرار</label>
+            <aio-form-field
+              class="min-w-0 gap-2"
+              label="واحد تکرار"
+              [controlId]="prefix() + 'freq'"
+            >
               <aio-native-select
                 [selectId]="prefix() + 'freq'"
                 [value]="frequency()"
@@ -117,11 +125,12 @@ export function recurrencePreset(rule: string | null | undefined): string {
                 <option aioNativeSelectOption value="MONTHLY">ماه</option>
                 <option aioNativeSelectOption value="YEARLY">سال</option>
               </aio-native-select>
-            </div>
-            <div aioField class="min-w-0 gap-2">
-              <label aioFieldLabel [for]="prefix() + 'interval'"
-                >فاصلهٔ تکرار</label
-              >
+            </aio-form-field>
+            <aio-form-field
+              class="min-w-0 gap-2"
+              label="فاصلهٔ تکرار"
+              [controlId]="prefix() + 'interval'"
+            >
               <input
                 aioInput
                 type="number"
@@ -131,7 +140,7 @@ export function recurrencePreset(rule: string | null | undefined): string {
                 [value]="interval()"
                 (input)="interval.set(+$any($event.target).value); raw.set('')"
               />
-            </div>
+            </aio-form-field>
           </div>
         }
         @if (
@@ -160,8 +169,11 @@ export function recurrencePreset(rule: string | null | undefined): string {
             </div>
           </fieldset>
         }
-        <div aioField class="min-w-0 gap-2">
-          <label aioFieldLabel [for]="prefix() + 'end'">پایان تکرار</label>
+        <aio-form-field
+          class="min-w-0 gap-2"
+          label="پایان تکرار"
+          [controlId]="prefix() + 'end'"
+        >
           <aio-native-select
             [selectId]="prefix() + 'end'"
             [value]="ending()"
@@ -190,7 +202,7 @@ export function recurrencePreset(rule: string | null | undefined): string {
               (input)="count.set(+$any($event.target).value)"
             />
           }
-        </div>
+        </aio-form-field>
       }
       <button
         aioBtn
@@ -206,8 +218,11 @@ export function recurrencePreset(rule: string | null | undefined): string {
       @if (advanced()) {
         <div [id]="prefix() + 'advanced'" class="flex min-w-0 flex-col gap-4">
           @if (preset() !== 'NONE') {
-            <div aioField class="min-w-0 gap-2">
-              <label aioFieldLabel [for]="prefix() + 'from'">مبنای تکرار</label>
+            <aio-form-field
+              class="min-w-0 gap-2"
+              label="مبنای تکرار"
+              [controlId]="prefix() + 'from'"
+            >
               <aio-native-select
                 [selectId]="prefix() + 'from'"
                 [value]="repeatFrom()"
@@ -220,11 +235,12 @@ export function recurrencePreset(rule: string | null | undefined): string {
                   زمان انجام نوبت قبلی
                 </option>
               </aio-native-select>
-            </div>
-            <div aioField class="min-w-0 gap-2">
-              <label aioFieldLabel [for]="prefix() + 'zone'"
-                >منطقهٔ زمانی</label
-              >
+            </aio-form-field>
+            <aio-form-field
+              class="min-w-0 gap-2"
+              label="منطقهٔ زمانی"
+              [controlId]="prefix() + 'zone'"
+            >
               <input
                 aioInput
                 dir="ltr"
@@ -236,12 +252,13 @@ export function recurrencePreset(rule: string | null | undefined): string {
                 زمان شروع بر اساس این منطقه است. نمایش روزانه با تهران هماهنگ
                 می‌شود.
               </p>
-            </div>
+            </aio-form-field>
             @if (preset() === 'CUSTOM') {
-              <div aioField class="min-w-0 gap-2">
-                <label aioFieldLabel [for]="prefix() + 'rule'"
-                  >قانون RRULE (اختیاری)</label
-                >
+              <aio-form-field
+                class="min-w-0 gap-2"
+                label="قانون RRULE (اختیاری)"
+                [controlId]="prefix() + 'rule'"
+              >
                 <input
                   aioInput
                   dir="ltr"
@@ -250,13 +267,14 @@ export function recurrencePreset(rule: string | null | undefined): string {
                   (input)="raw.set($any($event.target).value)"
                   placeholder="RRULE:FREQ=MONTHLY;BYDAY=-1FR"
                 />
-              </div>
+              </aio-form-field>
             }
           }
-          <div aioField class="min-w-0 gap-2">
-            <label aioFieldLabel [for]="prefix() + 'duration'"
-              >مدت کار (دقیقه، اختیاری)</label
-            >
+          <aio-form-field
+            class="min-w-0 gap-2"
+            label="مدت کار (دقیقه، اختیاری)"
+            [controlId]="prefix() + 'duration'"
+          >
             <input
               aioInput
               type="number"
@@ -270,7 +288,7 @@ export function recurrencePreset(rule: string | null | undefined): string {
                 )
               "
             />
-          </div>
+          </aio-form-field>
         </div>
       }
       @if (error()) {

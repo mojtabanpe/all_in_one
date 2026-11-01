@@ -9,11 +9,13 @@ import type {
 import type { PlannerTask } from '@all-in-one/applets/planner/contracts';
 import { toIsoDate } from '@all-in-one/shared/schemas';
 import {
+  AioMetric,
+  AioNavigationCard,
   AioButton,
   AioCardDirectives,
   AioIcon,
-  AioSkeleton,
   provideIcons,
+  AioSkeletonRows,
 } from '@all-in-one/ui';
 import {
   API_BASE_URL,
@@ -32,7 +34,15 @@ import {
 /** Today at a glance, one card per applet. */
 @Component({
   selector: 'customer-home',
-  imports: [AioButton, AioCardDirectives, AioIcon, AioSkeleton, RouterLink],
+  imports: [
+    AioNavigationCard,
+    AioMetric,
+    AioButton,
+    AioCardDirectives,
+    AioIcon,
+    RouterLink,
+    AioSkeletonRows,
+  ],
   providers: [
     provideIcons({
       lucideCalendarCheck,
@@ -83,52 +93,31 @@ import {
         >
           <div
             class="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center md:border-b md:border-white/10 md:py-5"
-          >
-            <span class="aio-hero-stat-label">کارهای باقی‌مانده</span
-            ><strong class="min-h-9 min-w-[2ch] text-3xl tabular-nums">
-              @if (tasks.isLoading() && !tasks.hasValue()) {
-                <span
-                  aioSkeleton
-                  class="block h-9 w-14 rounded-lg"
-                  aria-hidden="true"
-                ></span>
-              } @else {
-                {{ tasks.error() ? '—' : fa(openTasks().length) }}
-              }
-            </strong>
-          </div>
+            aioMetric
+            label="کارهای باقی‌مانده"
+            [value]="tasks.error() ? '—' : fa(openTasks().length)"
+            [loading]="tasks.isLoading() && !tasks.hasValue()"
+            labelClass="aio-hero-stat-label"
+            valueClass="min-h-9 min-w-[2ch] text-3xl tabular-nums"
+          ></div>
           <div
             class="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center md:border-b md:border-white/10 md:py-5"
-          >
-            <span class="aio-hero-stat-label">کارت‌های آماده مرور</span
-            ><strong class="min-h-9 min-w-[2ch] text-3xl tabular-nums">
-              @if (english.isLoading() && !english.hasValue()) {
-                <span
-                  aioSkeleton
-                  class="block h-9 w-14 rounded-lg"
-                  aria-hidden="true"
-                ></span>
-              } @else {
-                {{ english.error() ? '—' : fa(english.value()?.due ?? 0) }}
-              }
-            </strong>
-          </div>
+            aioMetric
+            label="کارت‌های آماده مرور"
+            [value]="english.error() ? '—' : fa(english.value()?.due ?? 0)"
+            [loading]="english.isLoading() && !english.hasValue()"
+            labelClass="aio-hero-stat-label"
+            valueClass="min-h-9 min-w-[2ch] text-3xl tabular-nums"
+          ></div>
           <div
             class="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center md:py-5"
-          >
-            <span class="aio-hero-stat-label">دقیقه فعالیت این هفته</span
-            ><strong class="min-h-9 min-w-[2ch] text-3xl tabular-nums">
-              @if (week.isLoading() && !week.hasValue()) {
-                <span
-                  aioSkeleton
-                  class="block h-9 w-14 rounded-lg"
-                  aria-hidden="true"
-                ></span>
-              } @else {
-                {{ week.error() ? '—' : fa(week.value()?.minutes ?? 0) }}
-              }
-            </strong>
-          </div>
+            aioMetric
+            label="دقیقه فعالیت این هفته"
+            [value]="week.error() ? '—' : fa(week.value()?.minutes ?? 0)"
+            [loading]="week.isLoading() && !week.hasValue()"
+            labelClass="aio-hero-stat-label"
+            valueClass="min-h-9 min-w-[2ch] text-3xl tabular-nums"
+          ></div>
         </div>
       </section>
       <section aria-labelledby="spaces-heading" class="flex flex-col gap-4">
@@ -143,37 +132,15 @@ import {
         <div class="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
           @for (card of cards(); track card.title) {
             <a
+              aioNavigationCard
               [routerLink]="card.link"
-              class="aio-module-card"
               [class]="card.accent"
-            >
-              <div class="flex items-center justify-between">
-                <span class="aio-module-icon"
-                  ><aio-icon [name]="card.icon" /></span
-                ><aio-icon
-                  name="lucideChevronLeft"
-                  size="sm"
-                  class="text-muted-foreground"
-                />
-              </div>
-              <div class="flex flex-col gap-2">
-                <h3 class="text-base font-bold">{{ card.title }}</h3>
-                <p class="text-muted-foreground min-h-14 text-sm leading-7">
-                  @if (card.loading) {
-                    <span aioSkeleton class="block h-5 w-3/4 rounded-lg"></span>
-                    <span
-                      aioSkeleton
-                      class="mt-2 block h-5 w-1/2 rounded-lg"
-                    ></span>
-                  } @else {
-                    {{ card.value }}
-                  }
-                </p>
-              </div>
-              <span class="mt-auto text-xs font-semibold text-primary">{{
-                card.action
-              }}</span>
-            </a>
+              [title]="card.title"
+              [icon]="card.icon"
+              [description]="card.value"
+              [action]="card.action"
+              [loading]="card.loading"
+            ></a>
           }
         </div>
       </section>
@@ -197,13 +164,12 @@ import {
               role="status"
               aria-label="در حال دریافت برنامه امروز"
             >
-              @for (row of [1, 2, 3, 4]; track row) {
-                <div
-                  aioSkeleton
-                  class="h-12 rounded-xl"
-                  aria-hidden="true"
-                ></div>
-              }
+              <div
+                aioSkeletonRows
+                class="contents"
+                [count]="4"
+                itemClass="h-12 rounded-xl"
+              ></div>
             </div>
           } @else if (tasks.error()) {
             <div class="flex flex-wrap items-center justify-between gap-3 py-4">

@@ -16,6 +16,7 @@ import {
 } from '@all-in-one/applets/health/contracts';
 import { addDays, toIsoDate } from '@all-in-one/shared/schemas';
 import {
+  AioMetric,
   AioCardDirectives,
   AioButton,
   AioDialog,
@@ -26,6 +27,7 @@ import {
   AioSkeleton,
   aioToast,
   provideIcons,
+  AioSkeletonLines,
 } from '@all-in-one/ui';
 import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
 import {
@@ -54,6 +56,7 @@ const MEAL_ICONS: Record<MealType, string> = {
 @Component({
   selector: 'health-overview',
   imports: [
+    AioMetric,
     AioCardDirectives,
     AioButton,
     AioDialog,
@@ -66,6 +69,7 @@ const MEAL_ICONS: Record<MealType, string> = {
     MealForm,
     RouterLink,
     WeightCard,
+    AioSkeletonLines,
   ],
   providers: [
     provideIcons({
@@ -126,23 +130,13 @@ const MEAL_ICONS: Record<MealType, string> = {
                     class="flex min-h-40 flex-col gap-4"
                     role="status"
                     aria-label="در حال دریافت هدف روزانه"
-                  >
-                    <div
-                      aioSkeleton
-                      class="h-14 w-24 rounded-2xl"
-                      aria-hidden="true"
-                    ></div>
-                    <div
-                      aioSkeleton
-                      class="h-5 w-3/4 rounded-lg"
-                      aria-hidden="true"
-                    ></div>
-                    <div
-                      aioSkeleton
-                      class="h-2 w-full rounded-full"
-                      aria-hidden="true"
-                    ></div>
-                  </div>
+                    aioSkeletonLines
+                    [lines]="[
+                      'h-14 w-24 rounded-2xl',
+                      'h-5 w-3/4 rounded-lg',
+                      'h-2 w-full rounded-full',
+                    ]"
+                  ></div>
                 } @else if (profile.error() || meals.error()) {
                   <p class="health-number">—</p>
                   <button aioBtn variant="link" (click)="reloadNutrition()">
@@ -326,12 +320,15 @@ const MEAL_ICONS: Record<MealType, string> = {
                     "
                     ><aio-icon [name]="row.icon" size="sm"
                   /></span>
-                  <div class="flex min-w-0 flex-1 flex-col gap-1">
-                    <strong class="text-sm">{{ row.label }}</strong>
-                    <p class="health-metric-label break-words">
-                      {{ meals.isLoading() ? 'در حال دریافت…' : row.summary }}
-                    </p>
-                  </div>
+                  <div
+                    class="flex min-w-0 flex-1 flex-col gap-1"
+                    aioMetric
+                    [label]="meals.isLoading() ? 'در حال دریافت…' : row.summary"
+                    [value]="row.label"
+                    labelClass="health-metric-label break-words"
+                    valueClass="text-sm"
+                    [labelFirst]="false"
+                  ></div>
                   <button
                     aioBtn
                     variant="ghost"
@@ -383,62 +380,68 @@ const MEAL_ICONS: Record<MealType, string> = {
               </p>
             </div>
             <div class="grid grid-cols-3 gap-3 border-y border-border py-5">
-              <div class="health-sheet-stat">
-                <aio-icon
-                  name="lucideApple"
-                  class="text-[var(--health-orange)]"
-                /><strong class="health-small-number">{{
-                  fa(Math.round(meal.recipe.calories * meal.servings))
-                }}</strong
-                ><span class="health-metric-label">کالری</span>
-              </div>
-              <div class="health-sheet-stat">
-                <aio-icon
-                  name="lucideClock"
-                  class="text-[var(--health-green)]"
-                /><strong class="health-small-number">{{
-                  fa(meal.recipe.prepMinutes)
-                }}</strong
-                ><span class="health-metric-label">دقیقه آماده‌سازی</span>
-              </div>
-              <div class="health-sheet-stat">
-                <aio-icon
-                  name="lucideSoup"
-                  class="text-[var(--health-blue)]"
-                /><strong class="health-small-number">{{
-                  fa(meal.recipe.ingredients.length)
-                }}</strong
-                ><span class="health-metric-label">ماده اولیه</span>
-              </div>
+              <div
+                class="health-sheet-stat"
+                aioMetric
+                label="کالری"
+                [value]="fa(Math.round(meal.recipe.calories * meal.servings))"
+                labelClass="health-metric-label"
+                valueClass="health-small-number"
+                [labelFirst]="false"
+                icon="lucideApple"
+                iconClass="text-[var(--health-orange)]"
+              ></div>
+              <div
+                class="health-sheet-stat"
+                aioMetric
+                label="دقیقه آماده‌سازی"
+                [value]="fa(meal.recipe.prepMinutes)"
+                labelClass="health-metric-label"
+                valueClass="health-small-number"
+                [labelFirst]="false"
+                icon="lucideClock"
+                iconClass="text-[var(--health-green)]"
+              ></div>
+              <div
+                class="health-sheet-stat"
+                aioMetric
+                label="ماده اولیه"
+                [value]="fa(meal.recipe.ingredients.length)"
+                labelClass="health-metric-label"
+                valueClass="health-small-number"
+                [labelFirst]="false"
+                icon="lucideSoup"
+                iconClass="text-[var(--health-blue)]"
+              ></div>
             </div>
             <div class="grid grid-cols-3 gap-3 text-center">
-              <div>
-                <p class="health-metric-label">پروتئین</p>
-                <strong
-                  >{{
-                    fa(Math.round(meal.recipe.proteinG * meal.servings))
-                  }}
-                  گرم</strong
-                >
-              </div>
-              <div>
-                <p class="health-metric-label">کربوهیدرات</p>
-                <strong
-                  >{{
-                    fa(Math.round(meal.recipe.carbsG * meal.servings))
-                  }}
-                  گرم</strong
-                >
-              </div>
-              <div>
-                <p class="health-metric-label">چربی</p>
-                <strong
-                  >{{
-                    fa(Math.round(meal.recipe.fatG * meal.servings))
-                  }}
-                  گرم</strong
-                >
-              </div>
+              <div
+                aioMetric
+                label="پروتئین"
+                [value]="
+                  fa(Math.round(meal.recipe.proteinG * meal.servings)) + ' گرم'
+                "
+                labelClass="health-metric-label"
+                valueClass=""
+              ></div>
+              <div
+                aioMetric
+                label="کربوهیدرات"
+                [value]="
+                  fa(Math.round(meal.recipe.carbsG * meal.servings)) + ' گرم'
+                "
+                labelClass="health-metric-label"
+                valueClass=""
+              ></div>
+              <div
+                aioMetric
+                label="چربی"
+                [value]="
+                  fa(Math.round(meal.recipe.fatG * meal.servings)) + ' گرم'
+                "
+                labelClass="health-metric-label"
+                valueClass=""
+              ></div>
             </div>
             <div>
               <h3 class="mb-3 font-semibold">مواد لازم برای هر سهم پایه</h3>

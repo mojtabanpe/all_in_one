@@ -18,6 +18,7 @@ import {
   AioSkeleton,
   type AioNavItem,
   provideIcons,
+  AioSkeletonLines,
 } from '@all-in-one/ui';
 import { Assistant, AuthStore } from '@all-in-one/web/shared';
 import type { AssistantContext } from '@all-in-one/shared/schemas';
@@ -44,6 +45,7 @@ import {
     AioSkeleton,
     Assistant,
     RouterOutlet,
+    AioSkeletonLines,
   ],
   providers: [
     provideIcons({
@@ -112,20 +114,30 @@ import {
           "
           aria-busy="true"
         >
-          <div class="aio-route-heading-placeholder" aria-hidden="true">
-            <div aioSkeleton class="h-9 w-3/4 max-w-sm rounded-xl"></div>
-            <div aioSkeleton class="h-5 w-1/2 max-w-xs rounded-lg"></div>
-          </div>
+          <div
+            class="aio-route-heading-placeholder"
+            aria-hidden="true"
+            aioSkeletonLines
+            [lines]="[
+              'h-9 w-3/4 max-w-sm rounded-xl',
+              'h-5 w-1/2 max-w-xs rounded-lg',
+            ]"
+          ></div>
           <div
             aioSkeleton
             class="h-16 w-full rounded-2xl"
             aria-hidden="true"
           ></div>
-          <div class="grid gap-5 sm:grid-cols-2" aria-hidden="true">
-            <div aioSkeleton class="h-64 rounded-3xl sm:col-span-2"></div>
-            <div aioSkeleton class="h-32 rounded-2xl"></div>
-            <div aioSkeleton class="h-32 rounded-2xl"></div>
-          </div>
+          <div
+            class="grid gap-5 sm:grid-cols-2"
+            aria-hidden="true"
+            aioSkeletonLines
+            [lines]="[
+              'h-64 rounded-3xl sm:col-span-2',
+              'h-32 rounded-2xl',
+              'h-32 rounded-2xl',
+            ]"
+          ></div>
         </div>
       }
       <div class="aio-route-content" [class.hidden]="!!pendingRoute()">

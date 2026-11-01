@@ -14,8 +14,6 @@ import {
   AioDialog,
   AioDialogActions,
   AioDialogBody,
-  AioEmptyDirectives,
-  AioFieldDirectives,
   AioIcon,
   AioInput,
   AioInputGroupDirectives,
@@ -23,6 +21,10 @@ import {
   AioTextarea,
   aioToast,
   provideIcons,
+  AioFormField,
+  AioEmptyState,
+  AioSectionHeading,
+  AioSkeletonLines,
 } from '@all-in-one/ui';
 import {
   englishErrorMessage as apiErrorMessage,
@@ -50,14 +52,16 @@ import { EnglishApi } from './english-api';
     AioDialog,
     AioDialogActions,
     AioDialogBody,
-    AioEmptyDirectives,
-    AioFieldDirectives,
     AioIcon,
     AioInput,
     AioInputGroupDirectives,
     AioSkeleton,
     AioTextarea,
     RouterLink,
+    AioFormField,
+    AioEmptyState,
+    AioSectionHeading,
+    AioSkeletonLines,
   ],
   providers: [
     provideIcons({
@@ -255,21 +259,20 @@ import { EnglishApi } from './english-api';
       </section>
 
       <section class="flex flex-col gap-3" aria-labelledby="decks-title">
-        <div class="flex items-center justify-between gap-3">
-          <div class="min-w-0 flex-1">
-            <h2 id="decks-title" class="text-lg font-bold">My decks</h2>
-            <p class="text-muted-foreground min-h-5 truncate text-sm">
-              @if (decks.isLoading() && !decks.hasValue()) {
-                <span
-                  aioSkeleton
-                  class="block h-5 w-32 rounded-lg"
-                  aria-hidden="true"
-                ></span>
-              } @else {
-                {{ fa(myDecks().length) }} decks, {{ fa(totalCards()) }} cards
-              }
-            </p>
-          </div>
+        <div
+          class="flex items-center justify-between gap-3"
+          aioSectionHeading
+          title="My decks"
+          [description]="
+            fa(myDecks().length) + ' decks, ' + fa(totalCards()) + ' cards'
+          "
+          [loading]="decks.isLoading() && !decks.hasValue()"
+          [level]="2"
+          headingId="decks-title"
+          titleClass="text-lg font-bold"
+          descriptionClass="text-muted-foreground min-h-5 truncate text-sm"
+          textClass="min-w-0 flex-1"
+        >
           <button aioBtn variant="outline" (click)="openNew()">
             <aio-icon name="lucidePlus" size="sm" />
             New deck
@@ -293,17 +296,15 @@ import { EnglishApi } from './english-api';
         }
 
         @if (decks.hasValue() && !myDecks().length) {
-          <div aioEmpty class="lx-glass rounded-3xl">
-            <div aioEmptyHeader>
-              <div aioEmptyMedia variant="icon" class="text-primary">
-                <aio-icon name="lucideBookOpen" />
-              </div>
-              <h3 aioEmptyTitle>Your library is empty</h3>
-              <p aioEmptyDescription>
-                Create a deck or start with a ready-made deck below.
-              </p>
-            </div>
-          </div>
+          <div
+            class="lx-glass rounded-3xl"
+            aioEmptyState
+            title="Your library is empty"
+            description="Create a deck or start with a ready-made deck below."
+            [level]="3"
+            icon="lucideBookOpen"
+            iconClass="text-primary"
+          ></div>
         }
 
         <div class="grid gap-3 sm:grid-cols-2 [&>*]:min-w-0">
@@ -312,11 +313,13 @@ import { EnglishApi } from './english-api';
               <div
                 class="lx-glass flex min-h-44 flex-col gap-4 rounded-3xl p-5"
                 aria-hidden="true"
-              >
-                <div aioSkeleton class="h-6 w-2/3 rounded-lg"></div>
-                <div aioSkeleton class="h-5 w-full rounded-lg"></div>
-                <div aioSkeleton class="mt-auto h-4 w-1/3 rounded-lg"></div>
-              </div>
+                aioSkeletonLines
+                [lines]="[
+                  'h-6 w-2/3 rounded-lg',
+                  'h-5 w-full rounded-lg',
+                  'mt-auto h-4 w-1/3 rounded-lg',
+                ]"
+              ></div>
             }
           }
           @for (deck of filteredDecks(); track deck.id) {
@@ -384,9 +387,10 @@ import { EnglishApi } from './english-api';
                 aria-hidden="true"
               >
                 <span aioSkeleton class="size-10 shrink-0 rounded-xl"></span>
-                <span class="flex flex-1 flex-col gap-2"
-                  ><span aioSkeleton class="h-5 w-2/3 rounded-lg"></span
-                  ><span aioSkeleton class="h-4 w-full rounded-lg"></span
+                <span
+                  class="flex flex-1 flex-col gap-2"
+                  aioSkeletonLines
+                  [lines]="['h-5 w-2/3 rounded-lg', 'h-4 w-full rounded-lg']"
                 ></span>
               </li>
             }
@@ -440,8 +444,7 @@ import { EnglishApi } from './english-api';
           class="flex flex-col gap-4"
           (submit)="$event.preventDefault(); create()"
         >
-          <div aioField>
-            <label aioFieldLabel for="deck-name">Name</label>
+          <aio-form-field label="Name" controlId="deck-name">
             <input
               aioInput
               id="deck-name"
@@ -450,9 +453,8 @@ import { EnglishApi } from './english-api';
               [value]="name()"
               (input)="name.set($any($event.target).value)"
             />
-          </div>
-          <div aioField>
-            <label aioFieldLabel for="deck-desc">Description (optional)</label>
+          </aio-form-field>
+          <aio-form-field label="Description (optional)" controlId="deck-desc">
             <textarea
               aioTextarea
               id="deck-desc"
@@ -460,7 +462,7 @@ import { EnglishApi } from './english-api';
               [value]="description()"
               (input)="description.set($any($event.target).value)"
             ></textarea>
-          </div>
+          </aio-form-field>
           <fieldset class="flex flex-col gap-2">
             <legend class="mb-2 text-sm font-medium">Colour</legend>
             <div class="flex flex-wrap gap-2">

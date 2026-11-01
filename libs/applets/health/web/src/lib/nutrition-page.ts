@@ -30,13 +30,16 @@ import {
   AioDialog,
   AioDialogActions,
   AioDialogBody,
-  AioEmptyDirectives,
   AioIcon,
   AioItemDirectives,
-  AioFieldDirectives,
   AioTextarea,
   aioToast,
   provideIcons,
+  AioFormField,
+  AioEmptyState,
+  AioCardHeading,
+  AioSkeletonLines,
+  AioSkeletonRows,
 } from '@all-in-one/ui';
 import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
 import {
@@ -63,14 +66,17 @@ import { MealForm } from './meal-form';
     AioDialog,
     AioDialogActions,
     AioDialogBody,
-    AioEmptyDirectives,
     AioIcon,
     AioItemDirectives,
-    AioFieldDirectives,
     AioTextarea,
     DietChooser,
     MealForm,
     RouterLink,
+    AioFormField,
+    AioEmptyState,
+    AioCardHeading,
+    AioSkeletonLines,
+    AioSkeletonRows,
   ],
   providers: [
     provideIcons({
@@ -107,23 +113,13 @@ import { MealForm } from './meal-form';
               class="flex w-full flex-col gap-3"
               role="status"
               aria-label="در حال دریافت رژیم"
-            >
-              <div
-                aioSkeleton
-                class="h-5 w-2/3 rounded-lg"
-                aria-hidden="true"
-              ></div>
-              <div
-                aioSkeleton
-                class="h-5 w-full rounded-lg"
-                aria-hidden="true"
-              ></div>
-              <div
-                aioSkeleton
-                class="h-11 w-40 rounded-xl"
-                aria-hidden="true"
-              ></div>
-            </div>
+              aioSkeletonLines
+              [lines]="[
+                'h-5 w-2/3 rounded-lg',
+                'h-5 w-full rounded-lg',
+                'h-11 w-40 rounded-xl',
+              ]"
+            ></div>
           } @else {
             <div class="text-sm">
               @if (diet(); as d) {
@@ -203,21 +199,22 @@ import { MealForm } from './meal-form';
           </button>
         </div>
         @if (meals.isLoading() && !meals.hasValue()) {
-          @for (row of [1, 2, 3]; track row) {
-            <div aioSkeleton class="h-24 rounded-2xl" aria-hidden="true"></div>
-          }
+          <div
+            aioSkeletonRows
+            class="contents"
+            [count]="3"
+            itemClass="h-24 rounded-2xl"
+          ></div>
         } @else if ((meals.value() ?? []).length === 0) {
-          <div aioEmpty class="glass rounded-3xl">
-            <div aioEmptyHeader>
-              <div aioEmptyMedia variant="icon">
-                <aio-icon name="lucideSalad" />
-              </div>
-              <h3 aioEmptyTitle>هنوز وعده‌ای ثبت نشده</h3>
-              <p aioEmptyDescription>
-                هر وعده را ثبت کنید تا بر اساس رژیمتان امتیاز و پیشنهاد بگیرید.
-              </p>
-            </div>
-          </div>
+          <div
+            class="glass rounded-3xl"
+            aioEmptyState
+            title="هنوز وعده‌ای ثبت نشده"
+            description="هر وعده را ثبت کنید تا بر اساس رژیمتان امتیاز و پیشنهاد بگیرید."
+            [level]="3"
+            icon="lucideSalad"
+            iconClass=""
+          ></div>
         } @else {
           <div aioItemGroup class="flex flex-col gap-2">
             @for (m of meals.value() ?? []; track m.id) {
@@ -284,9 +281,12 @@ import { MealForm } from './meal-form';
             class="h-11 w-full rounded-xl"
             aria-hidden="true"
           ></div>
-          @for (row of [1, 2, 3]; track row) {
-            <div aioSkeleton class="h-16 rounded-2xl" aria-hidden="true"></div>
-          }
+          <div
+            aioSkeletonRows
+            class="contents"
+            [count]="3"
+            itemClass="h-16 rounded-2xl"
+          ></div>
         } @else if (plan.value(); as p) {
           <p class="text-muted-foreground text-sm">
             {{ fa(p.days.length) }} روز از {{ faDate(p.startDate) }}، هدف
@@ -372,12 +372,12 @@ import { MealForm } from './meal-form';
       </section>
       @if (showDietSuggestions()) {
         <section aioCard id="diet-suggestions">
-          <div aioCardHeader>
-            <h2 aioCardTitle>کدام رژیم به سلیقه شما نزدیک‌تر است؟</h2>
-            <p aioCardDescription>
-              پیشنهادهای اولیه برای مقایسه؛ انتخاب رژیم را خودتان انجام می‌دهید.
-            </p>
-          </div>
+          <div
+            aioCardHeading
+            title="کدام رژیم به سلیقه شما نزدیک‌تر است؟"
+            [level]="2"
+            description="پیشنهادهای اولیه برای مقایسه؛ انتخاب رژیم را خودتان انجام می‌دهید."
+          ></div>
           <div aioCardContent class="flex flex-col gap-3">
             @for (
               suggestion of suggestions.value()?.suggestions ?? [];
@@ -451,10 +451,11 @@ import { MealForm } from './meal-form';
                 >تنظیم هوش مصنوعی</a
               >
             } @else {
-              <div aioField class="min-w-0 gap-2">
-                <label aioFieldLabel for="swap-preference"
-                  >چه غذایی دوست داری؟ (اختیاری)</label
-                >
+              <aio-form-field
+                class="min-w-0 gap-2"
+                label="چه غذایی دوست داری؟ (اختیاری)"
+                controlId="swap-preference"
+              >
                 <textarea
                   aioTextarea
                   id="swap-preference"
@@ -469,7 +470,7 @@ import { MealForm } from './meal-form';
                     aiMealSuggestions.set([])
                   "
                 ></textarea>
-              </div>
+              </aio-form-field>
               <button
                 aioBtn
                 type="button"

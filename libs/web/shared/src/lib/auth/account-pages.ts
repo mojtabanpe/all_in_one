@@ -9,6 +9,8 @@ import {
   AioSpinner,
   AioSwitch,
   aioToast,
+  AioFormField,
+  AioCardHeading,
 } from '@all-in-one/ui';
 import { apiErrorMessage } from './auth.guards';
 import { AiSettingsCard } from './ai-settings';
@@ -24,19 +26,21 @@ const PAGE =
   imports: [
     AioButton,
     AioCardDirectives,
-    AioFieldDirectives,
     AioInput,
     RouterLink,
+    AioFormField,
+    AioCardHeading,
   ],
   template: `
     <div [class]="page">
       <section aioCard>
-        <div aioCardHeader>
-          <h1 aioCardTitle class="text-xl">بازیابی رمز</h1>
-          <p aioCardDescription>
-            ایمیلت را بنویس تا لینک انتخاب رمز تازه را بفرستیم.
-          </p>
-        </div>
+        <div
+          aioCardHeading
+          title="بازیابی رمز"
+          [level]="1"
+          description="ایمیلت را بنویس تا لینک انتخاب رمز تازه را بفرستیم."
+          titleClass="text-xl"
+        ></div>
         <form
           aioCardContent
           class="flex flex-col gap-4"
@@ -51,8 +55,7 @@ const PAGE =
               اعتبار دارد.
             </p>
           }
-          <div aioField>
-            <label aioFieldLabel for="forgot-email">ایمیل</label>
+          <aio-form-field label="ایمیل" controlId="forgot-email">
             <input
               aioInput
               id="forgot-email"
@@ -62,7 +65,7 @@ const PAGE =
               [value]="email()"
               (input)="email.set($any($event.target).value)"
             />
-          </div>
+          </aio-form-field>
           <button aioBtn type="submit" size="lg" [disabled]="busy()">
             فرستادن لینک
           </button>
@@ -102,17 +105,21 @@ export class ForgotPasswordPage {
   imports: [
     AioButton,
     AioCardDirectives,
-    AioFieldDirectives,
     AioInput,
     RouterLink,
+    AioFormField,
+    AioCardHeading,
   ],
   template: `
     <div [class]="page">
       <section aioCard>
-        <div aioCardHeader>
-          <h1 aioCardTitle class="text-xl">رمز تازه</h1>
-          <p aioCardDescription>رمزی با دست‌کم ۸ نویسه انتخاب کن.</p>
-        </div>
+        <div
+          aioCardHeading
+          title="رمز تازه"
+          [level]="1"
+          description="رمزی با دست‌کم ۸ نویسه انتخاب کن."
+          titleClass="text-xl"
+        ></div>
         <form
           aioCardContent
           class="flex flex-col gap-4"
@@ -123,8 +130,7 @@ export class ForgotPasswordPage {
               این لینک ناقص است. دوباره درخواست بازیابی بده.
             </p>
           }
-          <div aioField>
-            <label aioFieldLabel for="reset-password">رمز تازه</label>
+          <aio-form-field label="رمز تازه" controlId="reset-password">
             <input
               aioInput
               id="reset-password"
@@ -134,9 +140,8 @@ export class ForgotPasswordPage {
               [value]="password()"
               (input)="password.set($any($event.target).value)"
             />
-          </div>
-          <div aioField>
-            <label aioFieldLabel for="reset-repeat">تکرار رمز</label>
+          </aio-form-field>
+          <aio-form-field label="تکرار رمز" controlId="reset-repeat">
             <input
               aioInput
               id="reset-repeat"
@@ -146,7 +151,7 @@ export class ForgotPasswordPage {
               [value]="repeat()"
               (input)="repeat.set($any($event.target).value)"
             />
-          </div>
+          </aio-form-field>
           <button
             aioBtn
             type="submit"
@@ -200,13 +205,22 @@ export class ResetPasswordPage {
 /** Opens from the emailed confirmation link (`?token=`). */
 @Component({
   selector: 'web-verify-email-page',
-  imports: [AioButton, AioCardDirectives, AioSpinner, RouterLink],
+  imports: [
+    AioButton,
+    AioCardDirectives,
+    AioSpinner,
+    RouterLink,
+    AioCardHeading,
+  ],
   template: `
     <div [class]="page">
       <section aioCard>
-        <div aioCardHeader>
-          <h1 aioCardTitle class="text-xl">تأیید ایمیل</h1>
-        </div>
+        <div
+          aioCardHeading
+          title="تأیید ایمیل"
+          [level]="1"
+          titleClass="text-xl"
+        ></div>
         <div aioCardContent class="flex flex-col gap-4" role="status">
           @switch (state()) {
             @case ('working') {
@@ -263,6 +277,8 @@ export class VerifyEmailPage implements OnInit {
     AioInput,
     AiSettingsCard,
     ChatGptConnection,
+    AioFormField,
+    AioCardHeading,
   ],
   template: `
     <div class="mx-auto flex w-full max-w-lg flex-col gap-6">
@@ -273,19 +289,18 @@ export class VerifyEmailPage implements OnInit {
         </p>
       </header>
       <section aioCard>
-        <div aioCardHeader>
-          <h2 aioCardTitle>تغییر رمز</h2>
-          <p aioCardDescription>
-            بعد از تغییر، دستگاه‌های دیگر از حساب خارج می‌شوند.
-          </p>
-        </div>
+        <div
+          aioCardHeading
+          title="تغییر رمز"
+          [level]="2"
+          description="بعد از تغییر، دستگاه‌های دیگر از حساب خارج می‌شوند."
+        ></div>
         <form
           aioCardContent
           class="flex flex-col gap-4"
           (submit)="$event.preventDefault(); change()"
         >
-          <div aioField>
-            <label aioFieldLabel for="current-password">رمز فعلی</label>
+          <aio-form-field label="رمز فعلی" controlId="current-password">
             <input
               aioInput
               id="current-password"
@@ -295,9 +310,8 @@ export class VerifyEmailPage implements OnInit {
               [value]="current()"
               (input)="current.set($any($event.target).value)"
             />
-          </div>
-          <div aioField>
-            <label aioFieldLabel for="new-password">رمز تازه</label>
+          </aio-form-field>
+          <aio-form-field label="رمز تازه" controlId="new-password">
             <input
               aioInput
               id="new-password"
@@ -307,19 +321,19 @@ export class VerifyEmailPage implements OnInit {
               [value]="next()"
               (input)="next.set($any($event.target).value)"
             />
-          </div>
+          </aio-form-field>
           <button aioBtn type="submit" class="self-start" [disabled]="busy()">
             ذخیره رمز تازه
           </button>
         </form>
       </section>
       <section aioCard>
-        <div aioCardHeader>
-          <h2 aioCardTitle>اعلان‌ها</h2>
-          <p aioCardDescription>
-            یادآوری کارهای زمان‌دار، حتی وقتی برنامه باز نیست.
-          </p>
-        </div>
+        <div
+          aioCardHeading
+          title="اعلان‌ها"
+          [level]="2"
+          description="یادآوری کارهای زمان‌دار، حتی وقتی برنامه باز نیست."
+        ></div>
         <div aioCardContent class="flex flex-col gap-3">
           <p class="text-muted-foreground text-sm" role="status">
             {{ push.message() }}
@@ -369,10 +383,10 @@ export class VerifyEmailPage implements OnInit {
                 [disabled]="push.reviewSaving() || !push.reviewLoaded()"
               />
             </div>
-            <div aioField>
-              <label aioFieldLabel for="review-reminder-time"
-                >ساعت یادآوری روزانه</label
-              >
+            <aio-form-field
+              label="ساعت یادآوری روزانه"
+              controlId="review-reminder-time"
+            >
               <input
                 aioInput
                 id="review-reminder-time"
@@ -391,7 +405,7 @@ export class VerifyEmailPage implements OnInit {
                 به وقت تهران؛ برای دریافت یادآوری، اعلان‌های دستگاه را هم فعال
                 کن.
               </p>
-            </div>
+            </aio-form-field>
             <p class="text-muted-foreground text-sm" role="status">
               {{ push.reviewMessage() }}
             </p>

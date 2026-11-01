@@ -14,17 +14,18 @@ import {
   AioDialog,
   AioDialogActions,
   AioDialogBody,
-  AioEmptyDirectives,
-  AioFieldDirectives,
   AioIcon,
   AioInput,
-  AioNativeSelect,
-  AioNativeSelectOption,
   AioSkeleton,
-  AioSpinner,
   AioTextarea,
   aioToast,
   provideIcons,
+  AioFormField,
+  AioEmptyState,
+  AioSectionHeading,
+  AioSkeletonLines,
+  AioAsyncButton,
+  AioSelectField,
 } from '@all-in-one/ui';
 import {
   englishErrorMessage as apiErrorMessage,
@@ -49,16 +50,17 @@ import { EnglishApi } from './english-api';
     AioDialog,
     AioDialogActions,
     AioDialogBody,
-    AioEmptyDirectives,
-    AioFieldDirectives,
     AioIcon,
     AioInput,
-    AioNativeSelect,
-    AioNativeSelectOption,
     AioSkeleton,
-    AioSpinner,
     AioTextarea,
     RouterLink,
+    AioFormField,
+    AioEmptyState,
+    AioSectionHeading,
+    AioSkeletonLines,
+    AioAsyncButton,
+    AioSelectField,
   ],
   providers: [
     provideIcons({
@@ -79,13 +81,16 @@ import { EnglishApi } from './english-api';
           Try again
         </button>
       }
-      <header class="flex items-center justify-between gap-3">
-        <div>
-          <h1 class="text-2xl font-bold">Reading</h1>
-          <p class="text-muted-foreground text-sm">
-            Read, listen and turn new words into flashcards.
-          </p>
-        </div>
+      <header
+        class="flex items-center justify-between gap-3"
+        aioSectionHeading
+        title="Reading"
+        description="Read, listen and turn new words into flashcards."
+        [level]="1"
+        titleClass="text-2xl font-bold"
+        descriptionClass="text-muted-foreground text-sm"
+        textClass=""
+      >
         <button aioBtn (click)="openNew()">
           <aio-icon name="lucidePlus" size="sm" />
           New text
@@ -103,28 +108,26 @@ import { EnglishApi } from './english-api';
               class="flex min-h-20 items-center gap-3 px-4 py-3"
               aria-hidden="true"
             >
-              <span class="flex min-w-0 flex-1 flex-col gap-2"
-                ><span aioSkeleton class="h-5 w-3/4 rounded-lg"></span
-                ><span aioSkeleton class="h-5 w-1/2 rounded-lg"></span
+              <span
+                class="flex min-w-0 flex-1 flex-col gap-2"
+                aioSkeletonLines
+                [lines]="['h-5 w-3/4 rounded-lg', 'h-5 w-1/2 rounded-lg']"
               ></span>
               <span aioSkeleton class="size-11 shrink-0 rounded-xl"></span>
             </li>
           }
         </ul>
       } @else if (!(texts.value() ?? []).length) {
-        <div aioEmpty class="lx-glass rounded-2xl">
-          <div aioEmptyHeader>
-            <div aioEmptyMedia variant="icon" class="text-primary">
-              <aio-icon name="lucideFileText" />
-            </div>
-            <h2 aioEmptyTitle>No reading texts yet</h2>
-            <p aioEmptyDescription>
-              Paste an English text or let AI write about a topic you choose.
-            </p>
-          </div>
-          <div aioEmptyContent>
-            <button aioBtn (click)="openNew()">Add your first text</button>
-          </div>
+        <div
+          class="lx-glass rounded-2xl"
+          aioEmptyState
+          title="No reading texts yet"
+          description="Paste an English text or let AI write about a topic you choose."
+          [level]="2"
+          icon="lucideFileText"
+          iconClass="text-primary"
+        >
+          <button aioBtn (click)="openNew()">Add your first text</button>
         </div>
       } @else {
         <ul
@@ -196,50 +199,37 @@ import { EnglishApi } from './english-api';
         >
           <div class="lx-glass flex flex-col gap-3 rounded-2xl p-3">
             <div class="grid grid-cols-2 gap-3">
-              <div aioField>
-                <label aioFieldLabel for="text-topic">Topic</label>
-                <aio-native-select
-                  selectId="text-topic"
-                  [value]="topic()"
-                  (valueChange)="topic.set($any($event))"
-                >
-                  @for (t of topics; track t.id) {
-                    <option aioNativeSelectOption [value]="t.id">
-                      {{ t.label }}
-                    </option>
-                  }
-                </aio-native-select>
-              </div>
-              <div aioField>
-                <label aioFieldLabel for="text-level">Level</label>
-                <aio-native-select
-                  selectId="text-level"
-                  [value]="level()"
-                  (valueChange)="level.set($any($event))"
-                >
-                  @for (l of levels; track l.id) {
-                    <option aioNativeSelectOption [value]="l.id">
-                      {{ l.label }}
-                    </option>
-                  }
-                </aio-native-select>
-              </div>
+              <aio-select-field
+                label="Topic"
+                controlId="text-topic"
+                [value]="topic()"
+                [options]="topics"
+                valueKey="id"
+                labelKey="label"
+                (valueChange)="topic.set($any($event))"
+              />
+              <aio-select-field
+                label="Level"
+                controlId="text-level"
+                [value]="level()"
+                [options]="levels"
+                valueKey="id"
+                labelKey="label"
+                (valueChange)="level.set($any($event))"
+              />
             </div>
             <button
-              aioBtn
               type="button"
               variant="outline"
               [disabled]="generating()"
               (click)="generate()"
-            >
-              @if (generating()) {
-                <aio-spinner aria-label="Loading" />
-                Writing (about a minute)…
-              } @else {
-                <aio-icon name="lucideSparkles" size="sm" />
-                Generate with AI
-              }
-            </button>
+              aioAsyncButton
+              [busy]="generating()"
+              label="Generate with AI"
+              busyLabel="Writing (about a minute)…"
+              icon="lucideSparkles"
+              iconSize="sm"
+            ></button>
             @if (feedbackFrom()) {
               <p class="text-muted-foreground text-xs">
                 Based on your feedback on “<span dir="ltr">{{
@@ -249,8 +239,7 @@ import { EnglishApi } from './english-api';
               </p>
             }
           </div>
-          <div aioField>
-            <label aioFieldLabel for="text-title">Title</label>
+          <aio-form-field label="Title" controlId="text-title">
             <input
               aioInput
               id="text-title"
@@ -259,9 +248,8 @@ import { EnglishApi } from './english-api';
               [value]="title()"
               (input)="title.set($any($event.target).value)"
             />
-          </div>
-          <div aioField>
-            <label aioFieldLabel for="text-body">Text</label>
+          </aio-form-field>
+          <aio-form-field label="Text" controlId="text-body">
             <textarea
               aioTextarea
               id="text-body"
@@ -274,7 +262,7 @@ import { EnglishApi } from './english-api';
                 body.set($any($event.target).value); aiWritten.set(false)
               "
             ></textarea>
-          </div>
+          </aio-form-field>
           @if (formError()) {
             <p class="text-destructive text-sm" role="alert">
               {{ formError() }}

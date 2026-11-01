@@ -4,7 +4,6 @@ import {
   AioButton,
   AioCardDirectives,
   AioCheckbox,
-  AioFieldDirectives,
   AioIcon,
   AioInput,
   AioInputGroupDirectives,
@@ -13,6 +12,9 @@ import {
   AioProgressDirectives,
   AioSwitch,
   provideIcons,
+  AioFormField,
+  AioCardHeading,
+  AioSectionHeading,
 } from '@all-in-one/ui';
 import { lucidePlus, lucideSearch } from '@ng-icons/lucide';
 
@@ -34,7 +36,6 @@ interface Swatch {
     AioButton,
     AioCardDirectives,
     AioCheckbox,
-    AioFieldDirectives,
     AioIcon,
     AioInput,
     AioInputGroupDirectives,
@@ -42,17 +43,23 @@ interface Swatch {
     AioNativeSelectOption,
     AioProgressDirectives,
     AioSwitch,
+    AioFormField,
+    AioCardHeading,
+    AioSectionHeading,
   ],
   providers: [provideIcons({ lucidePlus, lucideSearch })],
   template: `
     <div class="flex flex-col gap-8">
-      <header class="flex flex-col gap-1">
-        <h1 class="text-2xl font-bold">سیستم طراحی</h1>
-        <p class="text-muted-foreground text-sm">
-          بر پایه Skeuo Next: شیشه چینی سرد، دکمه‌های گرافیتی براق، تأکید
-          آبی‌فیروزه‌ای.
-        </p>
-      </header>
+      <header
+        class="flex flex-col gap-1"
+        aioSectionHeading
+        title="سیستم طراحی"
+        description="بر پایه Skeuo Next: شیشه چینی سرد، دکمه‌های گرافیتی براق، تأکید آبی‌فیروزه‌ای."
+        [level]="1"
+        titleClass="text-2xl font-bold"
+        descriptionClass="text-muted-foreground text-sm"
+        textClass="flex flex-col gap-1"
+      ></header>
 
       @for (group of palette; track group.title) {
         <section class="flex flex-col gap-3" [attr.aria-label]="group.title">
@@ -129,12 +136,10 @@ interface Swatch {
       <section class="flex flex-col gap-3" aria-label="فرم‌ها">
         <h2 class="text-lg font-bold">فرم‌ها</h2>
         <div class="glass grid gap-5 rounded-xl p-5 sm:grid-cols-2">
-          <div aioField>
-            <label aioFieldLabel for="ds-name">نام</label>
+          <aio-form-field label="نام" controlId="ds-name">
             <input aioInput id="ds-name" placeholder="مثلاً: رضا" />
-          </div>
-          <div aioField>
-            <label aioFieldLabel for="ds-search">جست‌وجو</label>
+          </aio-form-field>
+          <aio-form-field label="جست‌وجو" controlId="ds-search">
             <div aioInputGroup>
               <aio-input-group-addon>
                 <aio-icon name="lucideSearch" size="sm" />
@@ -145,14 +150,13 @@ interface Swatch {
                 placeholder="واژه یا کار"
               />
             </div>
-          </div>
-          <div aioField>
-            <label aioFieldLabel for="ds-select">انتخاب</label>
+          </aio-form-field>
+          <aio-form-field label="انتخاب" controlId="ds-select">
             <aio-native-select selectId="ds-select" value="b">
               <option aioNativeSelectOption value="a">گزینه یک</option>
               <option aioNativeSelectOption value="b">گزینه دو</option>
             </aio-native-select>
-          </div>
+          </aio-form-field>
           <div class="flex flex-col justify-end gap-4">
             <div class="flex items-center gap-3 text-sm">
               <aio-checkbox inputId="ds-remind" [(checked)]="checked" />
@@ -170,10 +174,12 @@ interface Swatch {
         <h2 class="text-lg font-bold">سطح‌ها و وضعیت‌ها</h2>
         <div class="grid gap-4 sm:grid-cols-2">
           <section aioCard>
-            <div aioCardHeader>
-              <h3 aioCardTitle>کارت</h3>
-              <p aioCardDescription>شیشه چینی با سایه نرم و لبه روشن.</p>
-            </div>
+            <div
+              aioCardHeading
+              title="کارت"
+              [level]="3"
+              description="شیشه چینی با سایه نرم و لبه روشن."
+            ></div>
             <div aioCardContent class="flex flex-col gap-3">
               <div aioProgress [value]="64" aria-label="نمونه پیشرفت">
                 <div aioProgressIndicator></div>

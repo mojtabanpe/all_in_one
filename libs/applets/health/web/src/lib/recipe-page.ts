@@ -5,6 +5,7 @@ import {
   MEAL_TYPE_LABELS,
 } from '@all-in-one/applets/health/contracts';
 import {
+  AioMetric,
   AioBadge,
   AioButton,
   AioCardDirectives,
@@ -19,7 +20,14 @@ import { HealthApi } from './health-api';
 
 @Component({
   selector: 'health-recipe-page',
-  imports: [AioBadge, AioButton, AioCardDirectives, AioIcon, AioSkeleton],
+  imports: [
+    AioMetric,
+    AioBadge,
+    AioButton,
+    AioCardDirectives,
+    AioIcon,
+    AioSkeleton,
+  ],
   providers: [provideIcons({ lucideArrowRight, lucideChefHat, lucideClock })],
   template: `
     <div class="mx-auto flex max-w-2xl flex-col gap-4">
@@ -56,22 +64,42 @@ import { HealthApi } from './health-api';
           </div>
           <div aioCardContent class="flex flex-col gap-4">
             <dl class="grid grid-cols-4 gap-2 text-center">
-              <div class="glass rounded-2xl p-2">
-                <dt class="text-muted-foreground text-xs">کالری</dt>
-                <dd class="font-bold">{{ fa(r.calories) }}</dd>
-              </div>
-              <div class="glass rounded-2xl p-2">
-                <dt class="text-muted-foreground text-xs">پروتئین</dt>
-                <dd class="font-bold">{{ fa(r.proteinG) }}g</dd>
-              </div>
-              <div class="glass rounded-2xl p-2">
-                <dt class="text-muted-foreground text-xs">کربوهیدرات</dt>
-                <dd class="font-bold">{{ fa(r.carbsG) }}g</dd>
-              </div>
-              <div class="glass rounded-2xl p-2">
-                <dt class="text-muted-foreground text-xs">چربی</dt>
-                <dd class="font-bold">{{ fa(r.fatG) }}g</dd>
-              </div>
+              <div
+                class="glass rounded-2xl p-2"
+                aioMetric
+                label="کالری"
+                [value]="fa(r.calories)"
+                labelClass="text-muted-foreground text-xs"
+                valueClass="font-bold"
+                [definition]="true"
+              ></div>
+              <div
+                class="glass rounded-2xl p-2"
+                aioMetric
+                label="پروتئین"
+                [value]="fa(r.proteinG) + 'g'"
+                labelClass="text-muted-foreground text-xs"
+                valueClass="font-bold"
+                [definition]="true"
+              ></div>
+              <div
+                class="glass rounded-2xl p-2"
+                aioMetric
+                label="کربوهیدرات"
+                [value]="fa(r.carbsG) + 'g'"
+                labelClass="text-muted-foreground text-xs"
+                valueClass="font-bold"
+                [definition]="true"
+              ></div>
+              <div
+                class="glass rounded-2xl p-2"
+                aioMetric
+                label="چربی"
+                [value]="fa(r.fatG) + 'g'"
+                labelClass="text-muted-foreground text-xs"
+                valueClass="font-bold"
+                [definition]="true"
+              ></div>
             </dl>
             <section>
               <h3 class="mb-2 font-semibold">مواد لازم</h3>

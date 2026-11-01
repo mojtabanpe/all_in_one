@@ -75,4 +75,14 @@ export default [
     // Override or add rules here
     rules: {},
   },
+  {
+    files: ['**/*.html'],
+    rules: {
+      // These native-host components render their required label/title inputs.
+      '@angular-eslint/template/elements-content': [
+        'error',
+        { allowList: ['aioAsyncButton', 'aioNavigationCard'] },
+      ],
+    },
+  },
 ];

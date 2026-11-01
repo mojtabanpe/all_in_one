@@ -16,12 +16,11 @@ import {
 } from '@all-in-one/applets/health/contracts';
 import {
   AioButton,
-  AioFieldDirectives,
-  AioNativeSelect,
-  AioNativeSelectOption,
   AioTextarea,
   aioToast,
   AioToggleGroupDirectives,
+  AioFormField,
+  AioSelectField,
 } from '@all-in-one/ui';
 import { apiErrorMessage } from '@all-in-one/web/shared';
 import { HealthApi } from './health-api';
@@ -34,16 +33,14 @@ import { HealthApi } from './health-api';
   selector: 'health-diet-chooser',
   imports: [
     AioButton,
-    AioFieldDirectives,
-    AioNativeSelect,
-    AioNativeSelectOption,
     AioTextarea,
     AioToggleGroupDirectives,
+    AioFormField,
+    AioSelectField,
   ],
   template: `
     <div class="flex flex-col gap-4">
-      <div aioField>
-        <span aioFieldLabel>رژیم غذایی خاصی دارید؟</span>
+      <aio-form-field label="رژیم غذایی خاصی دارید؟">
         <div
           aioToggleGroup
           type="single"
@@ -64,11 +61,10 @@ import { HealthApi } from './health-api';
             </button>
           }
         </div>
-      </div>
+      </aio-form-field>
 
       @if (mode() === 'OWN') {
-        <div aioField>
-          <label aioFieldLabel for="own-diet">رژیمتان را توضیح دهید</label>
+        <aio-form-field label="رژیمتان را توضیح دهید" controlId="own-diet">
           <textarea
             aioTextarea
             id="own-diet"
@@ -77,32 +73,26 @@ import { HealthApi } from './health-api';
             [value]="notes()"
             (input)="notes.set($any($event.target).value)"
           ></textarea>
-        </div>
-        <div aioField>
-          <label aioFieldLabel for="own-closest"
-            >نزدیک‌ترین رژیم برای سنجش وعده‌ها</label
-          >
-          <aio-native-select
-            selectId="own-closest"
-            [value]="dietSlug()"
-            (valueChange)="dietSlug.set($event)"
-          >
-            @for (d of diets(); track d.slug) {
-              <option aioNativeSelectOption [value]="d.slug">
-                {{ d.name }}
-              </option>
-            }
-          </aio-native-select>
-        </div>
+        </aio-form-field>
+        <aio-select-field
+          label="نزدیک‌ترین رژیم برای سنجش وعده‌ها"
+          controlId="own-closest"
+          [value]="dietSlug()"
+          [options]="diets()"
+          valueKey="slug"
+          labelKey="name"
+          (valueChange)="dietSlug.set($event)"
+        />
       }
 
       @if (mode() === 'APP_DIET' || mode() === 'APP_PLAN') {
-        <div aioField>
-          <span aioFieldLabel>{{
+        <aio-form-field
+          [label]="
             mode() === 'APP_PLAN'
               ? 'برنامه بر اساس کدام رژیم چیده شود؟'
               : 'کدام رژیم؟'
-          }}</span>
+          "
+        >
           <div
             aioToggleGroup
             type="single"
@@ -126,7 +116,7 @@ import { HealthApi } from './health-api';
               </button>
             }
           </div>
-        </div>
+        </aio-form-field>
       }
 
       <button aioBtn [disabled]="saving() || !valid()" (click)="save()">

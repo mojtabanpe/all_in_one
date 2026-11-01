@@ -30,12 +30,15 @@ import {
   AioInputGroupDirectives,
   AioNativeSelect,
   AioNativeSelectDirectives,
-  AioSpinner,
   AioSwitch,
   AioTextarea,
   aioToast,
   AioToggleGroupDirectives,
   provideIcons,
+  AioFormField,
+  AioAsyncButton,
+  AioSelectField,
+  AioInputGroupSubmit,
 } from '@all-in-one/ui';
 import { apiErrorMessage, faDate } from '@all-in-one/web/shared';
 import {
@@ -76,10 +79,13 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
     AioInputGroupDirectives,
     AioNativeSelect,
     AioNativeSelectDirectives,
-    AioSpinner,
     AioSwitch,
     AioTextarea,
     AioToggleGroupDirectives,
+    AioFormField,
+    AioAsyncButton,
+    AioSelectField,
+    AioInputGroupSubmit,
   ],
   providers: [
     provideIcons({
@@ -100,8 +106,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
     <div
       class="flex min-w-0 flex-col gap-5 pb-2 [overflow-wrap:anywhere] [&_[data-slot=field]]:min-w-0 [&_[data-slot=field]]:gap-2"
     >
-      <div aioField>
-        <label aioFieldLabel for="task-title">عنوان</label>
+      <aio-form-field label="عنوان" controlId="task-title">
         <input
           aioInput
           id="task-title"
@@ -109,10 +114,9 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
           [value]="t.title"
           (change)="saveTitle($any($event.target).value)"
         />
-      </div>
+      </aio-form-field>
 
-      <div aioField>
-        <label aioFieldLabel for="task-content">توضیح</label>
+      <aio-form-field label="توضیح" controlId="task-content">
         <textarea
           aioTextarea
           id="task-content"
@@ -123,7 +127,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
           [value]="t.content"
           (change)="save({ content: $any($event.target).value })"
         ></textarea>
-      </div>
+      </aio-form-field>
 
       <fieldset aioFieldSet class="min-w-0 gap-3 border-t border-border pt-5">
         <legend aioFieldLegend class="text-sm">زمان‌بندی</legend>
@@ -143,8 +147,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
           }
         </div>
         <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
-          <div aioField>
-            <label aioFieldLabel for="task-date">تاریخ</label>
+          <aio-form-field label="تاریخ" controlId="task-date">
             <aio-date-input
               contentClass="applet-planner"
               class="min-w-0 max-w-full"
@@ -153,9 +156,8 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
               [value]="t.date ?? ''"
               (valueChange)="save({ date: $event || null })"
             />
-          </div>
-          <div aioField>
-            <label aioFieldLabel for="task-time">ساعت</label>
+          </aio-form-field>
+          <aio-form-field label="ساعت" controlId="task-time">
             <input
               aioInput
               class="w-full min-w-0 max-w-full appearance-none"
@@ -168,15 +170,14 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
               [value]="t.time ?? ''"
               (change)="save({ time: $any($event.target).value || null })"
             />
-          </div>
+          </aio-form-field>
         </div>
         @if (t.date) {
           <p class="text-muted-foreground text-xs">{{ dateLabel(t.date) }}</p>
         }
       </fieldset>
 
-      <div aioField>
-        <label aioFieldLabel for="task-reminder">یادآوری</label>
+      <aio-form-field label="یادآوری" controlId="task-reminder">
         <aio-native-select
           selectId="task-reminder"
           [disabled]="!t.date || !t.time"
@@ -198,11 +199,10 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
         <p class="text-muted-foreground text-xs">
           تاریخ و ساعت را تعیین کن و اعلان‌ها را در حساب کاربری فعال کن.
         </p>
-      </div>
+      </aio-form-field>
 
       @if (t.repeatRule || t.seriesId || t.isSeries) {
-        <div aioField>
-          <label aioFieldLabel for="task-edit-scope">این تغییر برای</label>
+        <aio-form-field label="این تغییر برای" controlId="task-edit-scope">
           <aio-native-select
             selectId="task-edit-scope"
             [value]="editScope()"
@@ -218,7 +218,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
               کل سری (تاریخچه حفظ می‌شود)
             </option>
           </aio-native-select>
-        </div>
+        </aio-form-field>
       }
       <planner-recurrence-editor
         [value]="recurrenceValue()"
@@ -245,50 +245,40 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
       </div>
 
       <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
-        <div aioField>
-          <label aioFieldLabel for="task-list">فهرست</label>
-          <aio-native-select
-            selectId="task-list"
-            [value]="t.listId"
-            (valueChange)="save({ listId: $event })"
-          >
-            @for (l of lists(); track l.id) {
-              <option aioNativeSelectOption [value]="l.id">{{ l.name }}</option>
-            }
-          </aio-native-select>
-        </div>
-        <div aioField>
-          <label aioFieldLabel for="task-section">بخش</label>
-          <aio-native-select
-            selectId="task-section"
-            [disabled]="!sections().length"
-            [value]="t.sectionId ?? ''"
-            (valueChange)="save({ sectionId: $event || null })"
-          >
-            <option aioNativeSelectOption value="">بدون بخش</option>
-            @for (s of sections(); track s.id) {
-              <option aioNativeSelectOption [value]="s.id">{{ s.name }}</option>
-            }
-          </aio-native-select>
-        </div>
+        <aio-select-field
+          label="فهرست"
+          controlId="task-list"
+          [value]="t.listId"
+          [options]="lists()"
+          valueKey="id"
+          labelKey="name"
+          (valueChange)="save({ listId: $event })"
+        />
+        <aio-select-field
+          label="بخش"
+          controlId="task-section"
+          [value]="t.sectionId ?? ''"
+          [disabled]="!sections().length"
+          [options]="sections()"
+          valueKey="id"
+          labelKey="name"
+          emptyLabel="بدون بخش"
+          (valueChange)="save({ sectionId: $event || null })"
+        />
       </div>
 
       @if (members().length > 1) {
-        <div aioField>
-          <label aioFieldLabel for="task-assignee">مسئول</label>
-          <aio-native-select
-            selectId="task-assignee"
-            [value]="t.assigneeId ?? ''"
-            (valueChange)="save({ assigneeId: $event || null })"
-          >
-            <option aioNativeSelectOption value="">بدون مسئول</option>
-            @for (m of members(); track m.userId) {
-              <option aioNativeSelectOption [value]="m.userId">
-                {{ m.name || m.email }}
-              </option>
-            }
-          </aio-native-select>
-        </div>
+        <aio-select-field
+          label="مسئول"
+          controlId="task-assignee"
+          [value]="t.assigneeId ?? ''"
+          [options]="members()"
+          valueKey="userId"
+          labelKey="name"
+          fallbackLabelKey="email"
+          emptyLabel="بدون مسئول"
+          (valueChange)="save({ assigneeId: $event || null })"
+        />
       }
 
       <div class="flex flex-col gap-2">
@@ -373,33 +363,21 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
             [value]="newItem()"
             (input)="newItem.set($any($event.target).value)"
           />
-          <aio-input-group-addon align="inline-end">
-            <button
-              aioInputGroupButton
-              type="submit"
-              size="icon-sm"
-              aria-label="افزودن زیرکار"
-            >
-              <aio-icon name="lucidePlus" size="sm" />
-            </button>
-          </aio-input-group-addon>
+          <aio-input-group-submit label="افزودن زیرکار" icon="lucidePlus" />
         </form>
         <button
-          aioBtn
           type="button"
           variant="ghost"
           size="sm"
           class="self-start"
           [disabled]="splitting()"
           (click)="split()"
-        >
-          @if (splitting()) {
-            <aio-spinner />
-          } @else {
-            <aio-icon name="lucideSparkles" size="xs" />
-          }
-          شکستن به زیرکار با هوش مصنوعی
-        </button>
+          aioAsyncButton
+          [busy]="splitting()"
+          label="شکستن به زیرکار با هوش مصنوعی"
+          icon="lucideSparkles"
+          iconSize="xs"
+        ></button>
       </div>
 
       <div class="flex min-h-11 items-center justify-between gap-3 text-sm">
@@ -450,16 +428,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
             [value]="newComment()"
             (input)="newComment.set($any($event.target).value)"
           />
-          <aio-input-group-addon align="inline-end">
-            <button
-              aioInputGroupButton
-              type="submit"
-              size="icon-sm"
-              aria-label="فرستادن"
-            >
-              <aio-icon name="lucideSend" size="sm" />
-            </button>
-          </aio-input-group-addon>
+          <aio-input-group-submit label="فرستادن" icon="lucideSend" />
         </form>
       </div>
 

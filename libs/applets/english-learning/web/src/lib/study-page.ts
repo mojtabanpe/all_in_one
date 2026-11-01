@@ -18,12 +18,14 @@ import {
 import {
   AioButton,
   AioConfirm,
-  AioEmptyDirectives,
   AioIcon,
   AioProgressDirectives,
   AioSkeleton,
   aioToast,
   provideIcons,
+  AioEmptyState,
+  AioSectionHeading,
+  AioSkeletonLines,
 } from '@all-in-one/ui';
 import {
   englishErrorMessage as apiErrorMessage,
@@ -75,11 +77,13 @@ const POINTS: Record<Rating, number> = {
   selector: 'english-learning-study',
   imports: [
     AioButton,
-    AioEmptyDirectives,
     AioIcon,
     AioProgressDirectives,
     AioSkeleton,
     RouterLink,
+    AioEmptyState,
+    AioSectionHeading,
+    AioSkeletonLines,
   ],
   providers: [
     provideIcons({
@@ -130,20 +134,22 @@ const POINTS: Record<Rating, number> = {
           aria-label="Loading review"
           role="status"
         ></div>
-        <div class="flex justify-center gap-2" aria-hidden="true">
-          <div aioSkeleton class="size-12 rounded-2xl"></div>
-          <div aioSkeleton class="size-12 rounded-2xl"></div>
-        </div>
+        <div
+          class="flex justify-center gap-2"
+          aria-hidden="true"
+          aioSkeletonLines
+          [lines]="['size-12 rounded-2xl', 'size-12 rounded-2xl']"
+        ></div>
         <div aioSkeleton class="h-12 rounded-2xl" aria-hidden="true"></div>
       } @else if (loadError()) {
-        <div aioEmpty class="lx-glass rounded-3xl">
-          <div aioEmptyHeader>
-            <h1 aioEmptyTitle>Unable to load review</h1>
-            <p aioEmptyDescription>{{ loadError() }}</p>
-          </div>
-          <div aioEmptyContent>
-            <button aioBtn (click)="load()">Again</button>
-          </div>
+        <div
+          class="lx-glass rounded-3xl"
+          aioEmptyState
+          title="Unable to load review"
+          [description]="loadError()"
+          [level]="1"
+        >
+          <button aioBtn (click)="load()">Again</button>
         </div>
       } @else if (current(); as card) {
         <h1 class="text-muted-foreground text-sm font-bold">
@@ -265,15 +271,16 @@ const POINTS: Record<Rating, number> = {
           >
             <aio-icon name="lucidePartyPopper" size="xl" />
           </div>
-          <div class="flex flex-col gap-2">
-            <h1 class="text-primary text-3xl font-bold">
-              Well done! You did it
-            </h1>
-            <p class="text-muted-foreground">
-              You finished reviewing this deck. Come back tomorrow to keep your
-              streak going.
-            </p>
-          </div>
+          <div
+            class="flex flex-col gap-2"
+            aioSectionHeading
+            title="Well done! You did it"
+            description="You finished reviewing this deck. Come back tomorrow to keep your streak going."
+            [level]="1"
+            titleClass="text-primary text-3xl font-bold"
+            descriptionClass="text-muted-foreground"
+            textClass="flex flex-col gap-1"
+          ></div>
           <div class="grid w-full grid-cols-3 gap-3">
             @for (tile of summary(); track tile.label) {
               <div
@@ -303,17 +310,16 @@ const POINTS: Record<Rating, number> = {
           >
         </section>
       } @else {
-        <div aioEmpty class="lx-glass rounded-3xl">
-          <div aioEmptyHeader>
-            <div aioEmptyMedia variant="icon" class="text-primary">
-              <aio-icon name="lucideBookOpen" />
-            </div>
-            <h1 aioEmptyTitle>No cards due right now</h1>
-            <p aioEmptyDescription>Add new cards or come back later.</p>
-          </div>
-          <div aioEmptyContent>
-            <a aioBtn routerLink="..">Back to deck</a>
-          </div>
+        <div
+          class="lx-glass rounded-3xl"
+          aioEmptyState
+          title="No cards due right now"
+          description="Add new cards or come back later."
+          [level]="1"
+          icon="lucideBookOpen"
+          iconClass="text-primary"
+        >
+          <a aioBtn routerLink="..">Back to deck</a>
         </div>
       }
     </div>

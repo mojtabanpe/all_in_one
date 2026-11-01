@@ -16,7 +16,6 @@ import {
   AioDialog,
   AioDialogActions,
   AioDialogBody,
-  AioEmptyDirectives,
   AioFieldDirectives,
   AioIcon,
   AioInput,
@@ -24,10 +23,13 @@ import {
   AioNativeSelect,
   AioNativeSelectOption,
   AioSkeleton,
-  AioSpinner,
   AioTextarea,
   aioToast,
   provideIcons,
+  AioFormField,
+  AioEmptyState,
+  AioSectionHeading,
+  AioAsyncButton,
 } from '@all-in-one/ui';
 import {
   englishErrorMessage as apiErrorMessage,
@@ -62,7 +64,6 @@ const UNIT = /^(?:u\d+)?$/i;
     AioDialog,
     AioDialogActions,
     AioDialogBody,
-    AioEmptyDirectives,
     AioFieldDirectives,
     AioIcon,
     AioInput,
@@ -70,9 +71,12 @@ const UNIT = /^(?:u\d+)?$/i;
     AioNativeSelect,
     AioNativeSelectOption,
     AioSkeleton,
-    AioSpinner,
     AioTextarea,
     RouterLink,
+    AioFormField,
+    AioEmptyState,
+    AioSectionHeading,
+    AioAsyncButton,
   ],
   providers: [
     provideIcons({
@@ -163,8 +167,7 @@ const UNIT = /^(?:u\d+)?$/i;
             class="flex flex-col gap-3"
             (submit)="$event.preventDefault(); addCard()"
           >
-            <div aioField>
-              <label aioFieldLabel for="card-front">Word or phrase</label>
+            <aio-form-field label="Word or phrase" controlId="card-front">
               <input
                 aioInput
                 id="card-front"
@@ -176,27 +179,24 @@ const UNIT = /^(?:u\d+)?$/i;
                 (input)="front.set($any($event.target).value)"
                 (blur)="autoFill()"
               />
-            </div>
+            </aio-form-field>
             <div aioField>
               <div class="flex items-center justify-between">
                 <label aioFieldLabel for="card-back"
                   >Meaning or definition</label
                 >
                 <button
-                  aioBtn
                   type="button"
                   variant="ghost"
                   size="sm"
                   [disabled]="generating()"
                   (click)="fillWithAi()"
-                >
-                  @if (generating()) {
-                    <aio-spinner aria-label="Loading" />
-                  } @else {
-                    <aio-icon name="lucideSparkles" size="sm" />
-                  }
-                  Fill with AI
-                </button>
+                  aioAsyncButton
+                  [busy]="generating()"
+                  label="Fill with AI"
+                  icon="lucideSparkles"
+                  iconSize="sm"
+                ></button>
               </div>
               <textarea
                 aioTextarea
@@ -208,8 +208,7 @@ const UNIT = /^(?:u\d+)?$/i;
               ></textarea>
             </div>
             <div class="grid grid-cols-[6rem_1fr] gap-3">
-              <div aioField>
-                <label aioFieldLabel for="card-unit">Unit</label>
+              <aio-form-field label="Unit" controlId="card-unit">
                 <input
                   aioInput
                   id="card-unit"
@@ -218,11 +217,11 @@ const UNIT = /^(?:u\d+)?$/i;
                   [value]="unit()"
                   (input)="unit.set($any($event.target).value)"
                 />
-              </div>
-              <div aioField>
-                <label aioFieldLabel for="card-examples"
-                  >Examples (optional)</label
-                >
+              </aio-form-field>
+              <aio-form-field
+                label="Examples (optional)"
+                controlId="card-examples"
+              >
                 <textarea
                   aioTextarea
                   id="card-examples"
@@ -233,7 +232,7 @@ const UNIT = /^(?:u\d+)?$/i;
                   [value]="examples()"
                   (input)="examples.set($any($event.target).value)"
                 ></textarea>
-              </div>
+              </aio-form-field>
             </div>
             @if (composerError()) {
               <p class="text-destructive text-sm" role="alert">
@@ -285,20 +284,17 @@ const UNIT = /^(?:u\d+)?$/i;
           </div>
 
           @if (!activeCards().length) {
-            <div aioEmpty class="lx-glass rounded-2xl">
-              <div aioEmptyHeader>
-                <h3 aioEmptyTitle>
-                  {{ cards().length ? 'No cards found' : 'No cards yet' }}
-                </h3>
-                <p aioEmptyDescription>
-                  {{
-                    cards().length
-                      ? 'Try another search.'
-                      : 'Add your first card above.'
-                  }}
-                </p>
-              </div>
-            </div>
+            <div
+              class="lx-glass rounded-2xl"
+              aioEmptyState
+              [title]="cards().length ? 'No cards found' : 'No cards yet'"
+              [description]="
+                cards().length
+                  ? 'Try another search.'
+                  : 'Add your first card above.'
+              "
+              [level]="3"
+            ></div>
           } @else {
             <ul
               class="lx-glass divide-border/60 flex flex-col divide-y rounded-2xl"
@@ -360,13 +356,16 @@ const UNIT = /^(?:u\d+)?$/i;
 
         @if (suspendedCards().length) {
           <section class="flex flex-col gap-3" aria-labelledby="paused-title">
-            <div>
-              <h2 id="paused-title" class="text-lg font-bold">Paused cards</h2>
-              <p class="text-muted-foreground text-sm">
-                Cards you repeatedly forgot are paused from review (the Leitner
-                method).
-              </p>
-            </div>
+            <div
+              aioSectionHeading
+              title="Paused cards"
+              description="Cards you repeatedly forgot are paused from review (the Leitner method)."
+              [level]="2"
+              headingId="paused-title"
+              titleClass="text-lg font-bold"
+              descriptionClass="text-muted-foreground text-sm"
+              textClass="flex flex-col gap-1"
+            ></div>
             <ul
               class="lx-glass divide-border/60 flex flex-col divide-y rounded-2xl"
             >
@@ -497,8 +496,7 @@ const UNIT = /^(?:u\d+)?$/i;
           class="flex flex-col gap-3"
           (submit)="$event.preventDefault(); saveCard()"
         >
-          <div aioField>
-            <label aioFieldLabel for="edit-front">Front</label>
+          <aio-form-field label="Front" controlId="edit-front">
             <input
               aioInput
               id="edit-front"
@@ -507,9 +505,8 @@ const UNIT = /^(?:u\d+)?$/i;
               [value]="editFront()"
               (input)="editFront.set($any($event.target).value)"
             />
-          </div>
-          <div aioField>
-            <label aioFieldLabel for="edit-back">Back</label>
+          </aio-form-field>
+          <aio-form-field label="Back" controlId="edit-back">
             <textarea
               aioTextarea
               id="edit-back"
@@ -518,9 +515,8 @@ const UNIT = /^(?:u\d+)?$/i;
               [value]="editBack()"
               (input)="editBack.set($any($event.target).value)"
             ></textarea>
-          </div>
-          <div aioField>
-            <label aioFieldLabel for="edit-unit">Unit</label>
+          </aio-form-field>
+          <aio-form-field label="Unit" controlId="edit-unit">
             <input
               aioInput
               id="edit-unit"
@@ -529,9 +525,8 @@ const UNIT = /^(?:u\d+)?$/i;
               [value]="editUnit()"
               (input)="editUnit.set($any($event.target).value)"
             />
-          </div>
-          <div aioField>
-            <label aioFieldLabel for="edit-examples">Examples</label>
+          </aio-form-field>
+          <aio-form-field label="Examples" controlId="edit-examples">
             <textarea
               aioTextarea
               id="edit-examples"
@@ -541,7 +536,7 @@ const UNIT = /^(?:u\d+)?$/i;
               [value]="editExamples()"
               (input)="editExamples.set($any($event.target).value)"
             ></textarea>
-          </div>
+          </aio-form-field>
           @if (editError()) {
             <p class="text-destructive text-sm" role="alert">
               {{ editError() }}
@@ -576,17 +571,15 @@ const UNIT = /^(?:u\d+)?$/i;
           class="flex flex-col gap-4"
           (submit)="$event.preventDefault(); saveDeck()"
         >
-          <div aioField>
-            <label aioFieldLabel for="deck-edit-name">Name</label>
+          <aio-form-field label="Name" controlId="deck-edit-name">
             <input
               aioInput
               id="deck-edit-name"
               [value]="dName()"
               (input)="dName.set($any($event.target).value)"
             />
-          </div>
-          <div aioField>
-            <label aioFieldLabel for="deck-edit-desc">Description</label>
+          </aio-form-field>
+          <aio-form-field label="Description" controlId="deck-edit-desc">
             <textarea
               aioTextarea
               id="deck-edit-desc"
@@ -594,7 +587,7 @@ const UNIT = /^(?:u\d+)?$/i;
               [value]="dDesc()"
               (input)="dDesc.set($any($event.target).value)"
             ></textarea>
-          </div>
+          </aio-form-field>
           <fieldset>
             <legend class="mb-2 text-sm font-medium">Colour</legend>
             <div class="flex flex-wrap gap-2">

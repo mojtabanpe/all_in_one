@@ -1,5 +1,5 @@
 import { httpResource } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import type { StarterDeck } from '@all-in-one/applets/english-learning/contracts';
 import {
   type Diet,
@@ -7,97 +7,25 @@ import {
   type Recipe,
   type WorkoutProgram,
 } from '@all-in-one/applets/health/contracts';
-import { AioBadge, AioCardDirectives, AioItemDirectives } from '@all-in-one/ui';
+import { AioCatalogCard, type AioCatalogItem } from '@all-in-one/ui';
 import { API_BASE_URL, faNumber } from '@all-in-one/web/shared';
 
 /** Read-only view of the applet catalogs seeded in the database. */
 @Component({
   selector: 'admin-content',
-  imports: [AioBadge, AioCardDirectives, AioItemDirectives],
+  imports: [AioCatalogCard],
   template: `
     <div class="flex flex-col gap-4">
       <h1 class="text-2xl font-bold">محتوای اپلت‌ها</h1>
       <div class="grid gap-3 md:grid-cols-2">
-        <section aioCard>
-          <div aioCardHeader>
-            <h2 aioCardTitle>دسته‌های آماده انگلیسی</h2>
-            <p aioCardDescription>
-              {{ fa((decks.value() ?? []).length) }} دسته
-            </p>
-          </div>
-          <div aioCardContent aioItemGroup class="flex flex-col gap-1">
-            @for (d of decks.value() ?? []; track d.slug) {
-              <div aioItem size="sm">
-                <div aioItemContent>
-                  <div aioItemTitle>{{ d.title }}</div>
-                </div>
-                <div aioItemActions>
-                  <span aioBadge variant="outline" dir="ltr"
-                    >{{ d.level }}، {{ fa(d.cardCount) }}</span
-                  >
-                </div>
-              </div>
-            }
-          </div>
-        </section>
-        <section aioCard>
-          <div aioCardHeader>
-            <h2 aioCardTitle>رژیم‌ها</h2>
-            <p aioCardDescription>
-              {{ fa((diets.value() ?? []).length) }} رژیم
-            </p>
-          </div>
-          <div aioCardContent aioItemGroup class="flex flex-col gap-1">
-            @for (d of diets.value() ?? []; track d.slug) {
-              <div aioItem size="sm">
-                <div aioItemContent>
-                  <div aioItemTitle>{{ d.name }}</div>
-                  <div aioItemDescription>{{ d.summary }}</div>
-                </div>
-              </div>
-            }
-          </div>
-        </section>
-        <section aioCard>
-          <div aioCardHeader>
-            <h2 aioCardTitle>دستور پخت‌ها</h2>
-            <p aioCardDescription>
-              {{ fa((recipes.value() ?? []).length) }} دستور
-            </p>
-          </div>
-          <div aioCardContent aioItemGroup class="flex flex-col gap-1">
-            @for (r of recipes.value() ?? []; track r.slug) {
-              <div aioItem size="sm">
-                <div aioItemContent>
-                  <div aioItemTitle>{{ r.title }}</div>
-                </div>
-                <div aioItemActions>
-                  <span aioBadge variant="secondary"
-                    >{{ mealTypeLabels[r.mealType] }}،
-                    {{ fa(r.calories) }}</span
-                  >
-                </div>
-              </div>
-            }
-          </div>
-        </section>
-        <section aioCard>
-          <div aioCardHeader>
-            <h2 aioCardTitle>برنامه‌های تمرینی</h2>
-            <p aioCardDescription>
-              {{ fa((programs.value() ?? []).length) }} برنامه
-            </p>
-          </div>
-          <div aioCardContent aioItemGroup class="flex flex-col gap-1">
-            @for (p of programs.value() ?? []; track p.slug) {
-              <div aioItem size="sm">
-                <div aioItemContent>
-                  <div aioItemTitle>{{ p.title }}</div>
-                </div>
-              </div>
-            }
-          </div>
-        </section>
+        @for (catalog of catalogs(); track catalog.title) {
+          <section
+            aioCatalogCard
+            [title]="catalog.title"
+            [description]="catalog.description"
+            [items]="catalog.items"
+          ></section>
+        }
       </div>
     </div>
   `,
@@ -116,6 +44,45 @@ export class Content {
   protected readonly programs = httpResource<WorkoutProgram[]>(
     () => `${this.api}/health/programs`,
   );
-  protected readonly mealTypeLabels = MEAL_TYPE_LABELS;
-  protected readonly fa = (n: number) => faNumber(n);
+  protected readonly catalogs = computed<
+    readonly { title: string; description: string; items: AioCatalogItem[] }[]
+  >(() => [
+    {
+      title: 'دسته‌های آماده انگلیسی',
+      description: `${faNumber((this.decks.value() ?? []).length)} دسته`,
+      items: (this.decks.value() ?? []).map((d) => ({
+        id: d.slug,
+        title: d.title,
+        badge: `${d.level}، ${faNumber(d.cardCount)}`,
+        badgeDirection: 'ltr',
+      })),
+    },
+    {
+      title: 'رژیم‌ها',
+      description: `${faNumber((this.diets.value() ?? []).length)} رژیم`,
+      items: (this.diets.value() ?? []).map((d) => ({
+        id: d.slug,
+        title: d.name,
+        description: d.summary,
+      })),
+    },
+    {
+      title: 'دستور پخت‌ها',
+      description: `${faNumber((this.recipes.value() ?? []).length)} دستور`,
+      items: (this.recipes.value() ?? []).map((r) => ({
+        id: r.slug,
+        title: r.title,
+        badge: `${MEAL_TYPE_LABELS[r.mealType]}، ${faNumber(r.calories)}`,
+        badgeVariant: 'secondary',
+      })),
+    },
+    {
+      title: 'برنامه‌های تمرینی',
+      description: `${faNumber((this.programs.value() ?? []).length)} برنامه`,
+      items: (this.programs.value() ?? []).map((p) => ({
+        id: p.slug,
+        title: p.title,
+      })),
+    },
+  ]);
 }

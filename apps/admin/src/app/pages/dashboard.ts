@@ -1,12 +1,16 @@
 import { httpResource } from '@angular/common/http';
 import { Component, computed, inject } from '@angular/core';
 import type { AdminStats } from '@all-in-one/shared/schemas';
-import { AioCardDirectives, AioSkeleton } from '@all-in-one/ui';
+import {
+  AioCardDirectives,
+  AioCardHeading,
+  AioSkeletonRows,
+} from '@all-in-one/ui';
 import { API_BASE_URL, ApiStatus, faNumber } from '@all-in-one/web/shared';
 
 @Component({
   selector: 'admin-dashboard',
-  imports: [AioCardDirectives, AioSkeleton, ApiStatus],
+  imports: [AioCardDirectives, ApiStatus, AioCardHeading, AioSkeletonRows],
   template: `
     <div class="flex flex-col gap-4">
       <h1 class="text-2xl font-bold">داشبورد</h1>
@@ -14,18 +18,24 @@ import { API_BASE_URL, ApiStatus, faNumber } from '@all-in-one/web/shared';
         <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
           @for (tile of tiles(); track tile.label) {
             <section aioCard size="sm">
-              <div aioCardHeader>
-                <p aioCardDescription>{{ tile.label }}</p>
-                <h2 aioCardTitle class="text-2xl">{{ fa(tile.value) }}</h2>
-              </div>
+              <div
+                aioCardHeading
+                [title]="fa(tile.value)"
+                [level]="2"
+                [description]="tile.label"
+                titleClass="text-2xl"
+              ></div>
             </section>
           }
         </div>
       } @else {
         <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
-          @for (i of [1, 2, 3, 4]; track i) {
-            <div aioSkeleton class="h-24 rounded-3xl"></div>
-          }
+          <div
+            aioSkeletonRows
+            class="contents"
+            [count]="4"
+            itemClass="h-24 rounded-3xl"
+          ></div>
         </div>
       }
       <web-api-status />

@@ -43,25 +43,27 @@ import {
   AioAccordionTrigger,
   AioBadge,
   AioButton,
-  AioSkeleton,
   AioDateInput,
   AioCardDirectives,
   AioConfirm,
   AioDialog,
   AioDialogActions,
   AioDialogBody,
-  AioFieldDirectives,
-  AioFieldError,
   AioIcon,
   AioInput,
   AioItemDirectives,
   AioNativeSelect,
   AioNativeSelectOption,
-  AioProgressDirectives,
   AioTextarea,
   aioToast,
   AioToggleGroupDirectives,
   provideIcons,
+  AioFormField,
+  AioCardHeading,
+  AioSectionHeading,
+  AioSkeletonLines,
+  AioSelectField,
+  AioNumberField,
 } from '@all-in-one/ui';
 import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
 import {
@@ -93,24 +95,26 @@ type CategoryFilter = ActivityCategory | 'all';
     AioAccordionTrigger,
     AioBadge,
     AioButton,
-    AioSkeleton,
     AioDateInput,
     AioCardDirectives,
     AioDialog,
     AioDialogActions,
     AioDialogBody,
-    AioFieldDirectives,
-    AioFieldError,
     AioIcon,
     AioInput,
     AioItemDirectives,
     AioNativeSelect,
     AioNativeSelectOption,
-    AioProgressDirectives,
     AioTextarea,
     AioToggleGroupDirectives,
     FormField,
     FormRoot,
+    AioFormField,
+    AioCardHeading,
+    AioSectionHeading,
+    AioSkeletonLines,
+    AioSelectField,
+    AioNumberField,
   ],
   providers: [
     provideIcons({
@@ -140,28 +144,14 @@ type CategoryFilter = ActivityCategory | 'all';
               class="flex w-full flex-col gap-3"
               role="status"
               aria-label="در حال دریافت برنامه تمرین"
-            >
-              <div
-                aioSkeleton
-                class="h-14 w-full max-w-sm rounded-xl"
-                aria-hidden="true"
-              ></div>
-              <div
-                aioSkeleton
-                class="h-10 w-3/4 max-w-xs rounded-lg"
-                aria-hidden="true"
-              ></div>
-              <div
-                aioSkeleton
-                class="h-11 w-44 max-w-full rounded-xl"
-                aria-hidden="true"
-              ></div>
-              <div
-                aioSkeleton
-                class="h-4 w-2/3 rounded-lg"
-                aria-hidden="true"
-              ></div>
-            </div>
+              aioSkeletonLines
+              [lines]="[
+                'h-14 w-full max-w-sm rounded-xl',
+                'h-10 w-3/4 max-w-xs rounded-lg',
+                'h-11 w-44 max-w-full rounded-xl',
+                'h-4 w-2/3 rounded-lg',
+              ]"
+            ></div>
           } @else if (routines.value()?.[0]; as routine) {
             <h2 class="min-h-14 text-2xl font-bold">{{ routine.title }}</h2>
             <p class="health-metric-label">
@@ -237,10 +227,12 @@ type CategoryFilter = ActivityCategory | 'all';
       </section>
 
       @if (routines.isLoading() && !routines.hasValue()) {
-        <div class="grid gap-5 lg:col-span-2 lg:grid-cols-2" aria-hidden="true">
-          <div aioSkeleton class="h-64 rounded-3xl"></div>
-          <div aioSkeleton class="h-64 rounded-3xl"></div>
-        </div>
+        <div
+          class="grid gap-5 lg:col-span-2 lg:grid-cols-2"
+          aria-hidden="true"
+          aioSkeletonLines
+          [lines]="['h-64 rounded-3xl', 'h-64 rounded-3xl']"
+        ></div>
       } @else {
         <section
           class="flex flex-col gap-3 lg:col-span-2"
@@ -254,14 +246,18 @@ type CategoryFilter = ActivityCategory | 'all';
           }
           @for (routine of routines.value() ?? []; track routine.id) {
             <section aioCard>
-              <div aioCardHeader>
-                <h3 aioCardTitle>{{ routine.title }}</h3>
-                <p aioCardDescription>
-                  {{ fa(routine.weeks) }} هفته،
-                  {{ fa(routine.daysPerWeek) }} جلسه در هفته،
-                  {{ trainingGoalLabels[routine.goal] }}
-                </p>
-              </div>
+              <div
+                aioCardHeading
+                [title]="routine.title"
+                [level]="3"
+                [description]="
+                  fa(routine.weeks) +
+                  ' هفته، ' +
+                  fa(routine.daysPerWeek) +
+                  ' جلسه در هفته، ' +
+                  trainingGoalLabels[routine.goal]
+                "
+              ></div>
               <div aioCardContent class="flex flex-col gap-3">
                 <h4 class="font-semibold">گرم کردن</h4>
                 @for (line of routine.warmup; track line) {
@@ -338,12 +334,12 @@ type CategoryFilter = ActivityCategory | 'all';
         </section>
 
         <section aioCard>
-          <div aioCardHeader>
-            <h2 aioCardTitle>پیشرفت تمرین در ۴ هفته اخیر</h2>
-            <p aioCardDescription>
-              فقط ست‌های واقعاً ثبت‌شده؛ حجم بار، وزن بدن را حساب نمی‌کند.
-            </p>
-          </div>
+          <div
+            aioCardHeading
+            title="پیشرفت تمرین در ۴ هفته اخیر"
+            [level]="2"
+            description="فقط ست‌های واقعاً ثبت‌شده؛ حجم بار، وزن بدن را حساب نمی‌کند."
+          ></div>
           <div aioCardContent class="flex flex-col gap-3">
             @if (progress.isLoading()) {
               <p role="status">در حال دریافت…</p>
@@ -380,36 +376,29 @@ type CategoryFilter = ActivityCategory | 'all';
         </section>
 
         <section aioCard>
-          <div aioCardHeader>
-            <h2 aioCardTitle>بانک حرکت‌ها</h2>
-            <p aioCardDescription>
-              اجرای مرحله‌به‌مرحله، اشتباهات رایج و حرکت جایگزین؛ ویدئوها
-              به‌مرور اضافه می‌شوند.
-            </p>
-          </div>
+          <div
+            aioCardHeading
+            title="بانک حرکت‌ها"
+            [level]="2"
+            description="اجرای مرحله‌به‌مرحله، اشتباهات رایج و حرکت جایگزین؛ ویدئوها به‌مرور اضافه می‌شوند."
+          ></div>
           <div aioCardContent class="flex flex-col gap-3">
-            <div aioField>
-              <label aioFieldLabel for="exercise-search">جست‌وجوی حرکت</label
-              ><input
+            <aio-form-field label="جست‌وجوی حرکت" controlId="exercise-search">
+              <input
                 aioInput
                 id="exercise-search"
                 [formField]="exerciseSearchForm.search"
               />
-            </div>
-            <div aioField>
-              <label aioFieldLabel for="exercise-equipment">تجهیزات</label
-              ><aio-native-select
-                selectId="exercise-equipment"
-                [value]="exerciseSearch().equipment"
-                (valueChange)="setExerciseEquipment($event)"
-                ><option aioNativeSelectOption value="">همه</option>
-                @for (eq of equipment; track eq) {
-                  <option aioNativeSelectOption [value]="eq">
-                    {{ equipmentLabels[eq] }}
-                  </option>
-                }
-              </aio-native-select>
-            </div>
+            </aio-form-field>
+            <aio-select-field
+              label="تجهیزات"
+              controlId="exercise-equipment"
+              [value]="exerciseSearch().equipment"
+              [options]="equipment"
+              [optionLabels]="equipmentLabels"
+              emptyLabel="همه"
+              (valueChange)="setExerciseEquipment($event)"
+            />
             @if (exerciseCatalog.isLoading()) {
               <p role="status">در حال دریافت حرکت‌ها…</p>
             }
@@ -557,12 +546,15 @@ type CategoryFilter = ActivityCategory | 'all';
         </section>
 
         <section class="flex flex-col gap-4 lg:col-span-2">
-          <div>
-            <h2 class="health-section-heading">تمرین‌های آماده</h2>
-            <p class="health-metric-label mt-1">
-              از یک جلسه ساده شروع کن؛ لازم نیست از روز اول سخت بگیری.
-            </p>
-          </div>
+          <div
+            aioSectionHeading
+            title="تمرین‌های آماده"
+            description="از یک جلسه ساده شروع کن؛ لازم نیست از روز اول سخت بگیری."
+            [level]="2"
+            titleClass="health-section-heading"
+            descriptionClass="health-metric-label mt-1"
+            textClass="flex flex-col gap-1"
+          ></div>
           <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             @for (program of programs.value() ?? []; track program.slug) {
               <section aioCard>
@@ -610,12 +602,15 @@ type CategoryFilter = ActivityCategory | 'all';
                   <span class="health-icon-disc text-[var(--health-purple)]">{{
                     fa($index + 1)
                   }}</span>
-                  <div>
-                    <h3 class="font-semibold">{{ exercise.name }}</h3>
-                    <p class="health-metric-label">
-                      {{ exerciseDetail(exercise) }}
-                    </p>
-                  </div>
+                  <div
+                    aioSectionHeading
+                    [title]="exercise.name"
+                    [description]="exerciseDetail(exercise)"
+                    [level]="3"
+                    titleClass="font-semibold"
+                    descriptionClass="health-metric-label"
+                    textClass="flex flex-col gap-1"
+                  ></div>
                 </li>
               }
             </ol>
@@ -648,46 +643,32 @@ type CategoryFilter = ActivityCategory | 'all';
           [formRoot]="routineForm"
           (submit)="$event.preventDefault(); generateRoutine()"
         >
-          <div aioField>
-            <label aioFieldLabel for="routine-title">نام برنامه</label
-            ><input
+          <aio-form-field label="نام برنامه" controlId="routine-title">
+            <input
               aioInput
               id="routine-title"
               [formField]="routineForm.title"
             />
-          </div>
+          </aio-form-field>
           <div class="grid gap-3 sm:grid-cols-2">
-            <div aioField>
-              <label aioFieldLabel for="routine-goal">هدف تمرین</label
-              ><aio-native-select
-                selectId="routine-goal"
-                [value]="routineModel().goal"
-                (valueChange)="setRoutineGoal($event)"
-              >
-                @for (goal of trainingGoals; track goal) {
-                  <option aioNativeSelectOption [value]="goal">
-                    {{ trainingGoalLabels[goal] }}
-                  </option>
-                }
-              </aio-native-select>
-            </div>
-            <div aioField>
-              <label aioFieldLabel for="routine-level">سطح</label
-              ><aio-native-select
-                selectId="routine-level"
-                [value]="routineModel().level"
-                (valueChange)="setRoutineLevel($event)"
-              >
-                @for (level of trainingLevels; track level) {
-                  <option aioNativeSelectOption [value]="level">
-                    {{ levelLabels[level] }}
-                  </option>
-                }
-              </aio-native-select>
-            </div>
+            <aio-select-field
+              label="هدف تمرین"
+              controlId="routine-goal"
+              [value]="routineModel().goal"
+              [options]="trainingGoals"
+              [optionLabels]="trainingGoalLabels"
+              (valueChange)="setRoutineGoal($event)"
+            />
+            <aio-select-field
+              label="سطح"
+              controlId="routine-level"
+              [value]="routineModel().level"
+              [options]="trainingLevels"
+              [optionLabels]="levelLabels"
+              (valueChange)="setRoutineLevel($event)"
+            />
           </div>
-          <div aioField>
-            <span aioFieldLabel>تجهیزات در دسترس</span>
+          <aio-form-field label="تجهیزات در دسترس">
             <div
               aioToggleGroup
               type="multiple"
@@ -707,35 +688,23 @@ type CategoryFilter = ActivityCategory | 'all';
                 </button>
               }
             </div>
-          </div>
+          </aio-form-field>
           <div class="grid grid-cols-3 gap-3">
-            <div aioField>
-              <label aioFieldLabel for="routine-days">جلسه در هفته</label
-              ><input
-                aioInput
-                id="routine-days"
-                type="number"
-                [formField]="routineForm.daysPerWeek"
-              />
-            </div>
-            <div aioField>
-              <label aioFieldLabel for="routine-weeks">تعداد هفته</label
-              ><input
-                aioInput
-                id="routine-weeks"
-                type="number"
-                [formField]="routineForm.weeks"
-              />
-            </div>
-            <div aioField>
-              <label aioFieldLabel for="routine-minutes">دقیقه هر جلسه</label
-              ><input
-                aioInput
-                id="routine-minutes"
-                type="number"
-                [formField]="routineForm.minutes"
-              />
-            </div>
+            <aio-number-field
+              label="جلسه در هفته"
+              controlId="routine-days"
+              [field]="routineForm.daysPerWeek"
+            />
+            <aio-number-field
+              label="تعداد هفته"
+              controlId="routine-weeks"
+              [field]="routineForm.weeks"
+            />
+            <aio-number-field
+              label="دقیقه هر جلسه"
+              controlId="routine-minutes"
+              [field]="routineForm.minutes"
+            />
           </div>
           @if (trainingError()) {
             <p role="alert" class="text-destructive text-sm">
@@ -854,22 +823,22 @@ type CategoryFilter = ActivityCategory | 'all';
           (submit)="$event.preventDefault(); saveRoutine()"
           class="flex flex-col gap-4"
         >
-          <div aioField>
-            <label aioFieldLabel for="edit-routine-title">نام برنامه</label
-            ><input
+          <aio-form-field label="نام برنامه" controlId="edit-routine-title">
+            <input
               aioInput
               id="edit-routine-title"
               [formField]="editorForm.title"
             />
-          </div>
+          </aio-form-field>
           @for (day of editorModel().days; track $index; let di = $index) {
             <h3 class="font-semibold">{{ day.title }}</h3>
             @for (item of day.exercises; track $index; let ei = $index) {
               <div class="flex flex-col gap-2">
-                <div aioField>
-                  <label aioFieldLabel [for]="'edit-ex-' + di + '-' + ei"
-                    >حرکت</label
-                  ><aio-native-select
+                <aio-form-field
+                  label="حرکت"
+                  [controlId]="'edit-ex-' + di + '-' + ei"
+                >
+                  <aio-native-select
                     [selectId]="'edit-ex-' + di + '-' + ei"
                     [value]="item.exerciseSlug"
                     (valueChange)="changeRoutineExercise(di, ei, $event)"
@@ -880,50 +849,28 @@ type CategoryFilter = ActivityCategory | 'all';
                       </option>
                     }
                   </aio-native-select>
-                </div>
+                </aio-form-field>
                 <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  <div aioField>
-                    <label aioFieldLabel [for]="'edit-sets-' + di + '-' + ei"
-                      >ست</label
-                    ><input
-                      aioInput
-                      [id]="'edit-sets-' + di + '-' + ei"
-                      type="number"
-                      [formField]="editorForm.days[di].exercises[ei].sets"
-                    />
-                  </div>
-                  <div aioField>
-                    <label aioFieldLabel [for]="'edit-reps-' + di + '-' + ei"
-                      >تکرار</label
-                    ><input
-                      aioInput
-                      [id]="'edit-reps-' + di + '-' + ei"
-                      type="number"
-                      [formField]="editorForm.days[di].exercises[ei].reps"
-                    />
-                  </div>
-                  <div aioField>
-                    <label aioFieldLabel [for]="'edit-time-' + di + '-' + ei"
-                      >ثانیه</label
-                    ><input
-                      aioInput
-                      [id]="'edit-time-' + di + '-' + ei"
-                      type="number"
-                      [formField]="editorForm.days[di].exercises[ei].seconds"
-                    />
-                  </div>
-                  <div aioField>
-                    <label aioFieldLabel [for]="'edit-rest-' + di + '-' + ei"
-                      >استراحت</label
-                    ><input
-                      aioInput
-                      [id]="'edit-rest-' + di + '-' + ei"
-                      type="number"
-                      [formField]="
-                        editorForm.days[di].exercises[ei].restSeconds
-                      "
-                    />
-                  </div>
+                  <aio-number-field
+                    label="ست"
+                    [controlId]="'edit-sets-' + di + '-' + ei"
+                    [field]="editorForm.days[di].exercises[ei].sets"
+                  />
+                  <aio-number-field
+                    label="تکرار"
+                    [controlId]="'edit-reps-' + di + '-' + ei"
+                    [field]="editorForm.days[di].exercises[ei].reps"
+                  />
+                  <aio-number-field
+                    label="ثانیه"
+                    [controlId]="'edit-time-' + di + '-' + ei"
+                    [field]="editorForm.days[di].exercises[ei].seconds"
+                  />
+                  <aio-number-field
+                    label="استراحت"
+                    [controlId]="'edit-rest-' + di + '-' + ei"
+                    [field]="editorForm.days[di].exercises[ei].restSeconds"
+                  />
                 </div>
               </div>
             }
@@ -959,47 +906,32 @@ type CategoryFilter = ActivityCategory | 'all';
           [formRoot]="logForm"
           (submit)="$event.preventDefault(); save()"
         >
-          <div aioField>
-            <label aioFieldLabel for="w-activity">نوع ورزش</label>
-            <aio-native-select
-              selectId="w-activity"
-              [value]="model().activitySlug"
-              (valueChange)="patch({ activitySlug: $event })"
-            >
-              @for (a of activities.value() ?? []; track a.slug) {
-                <option aioNativeSelectOption [value]="a.slug">
-                  {{ a.name }}
-                </option>
-              }
-            </aio-native-select>
-          </div>
+          <aio-select-field
+            label="نوع ورزش"
+            controlId="w-activity"
+            [value]="model().activitySlug"
+            [options]="activities.value() ?? []"
+            valueKey="slug"
+            labelKey="name"
+            (valueChange)="patch({ activitySlug: $event })"
+          />
           <div class="grid grid-cols-2 gap-3">
-            <div aioField>
-              <label aioFieldLabel for="w-date">تاریخ</label>
+            <aio-form-field label="تاریخ" controlId="w-date">
               <aio-date-input
                 contentClass="applet-health"
                 inputId="w-date"
                 [formField]="logForm.date"
               />
-            </div>
-            <div aioField>
-              <label aioFieldLabel for="w-min">مدت (دقیقه)</label>
-              <input
-                aioInput
-                id="w-min"
-                type="number"
-                inputmode="numeric"
-                [formField]="logForm.durationMin"
-              />
-              @for (e of logForm.durationMin().errors(); track e.kind) {
-                <aio-field-error [validator]="e.kind">{{
-                  e.message
-                }}</aio-field-error>
-              }
-            </div>
+            </aio-form-field>
+            <aio-number-field
+              label="مدت (دقیقه)"
+              controlId="w-min"
+              [field]="logForm.durationMin"
+              inputMode="numeric"
+              [showErrors]="true"
+            />
           </div>
-          <div aioField>
-            <span aioFieldLabel>شدت</span>
+          <aio-form-field label="شدت">
             <div
               aioToggleGroup
               type="single"
@@ -1018,41 +950,32 @@ type CategoryFilter = ActivityCategory | 'all';
                 </button>
               }
             </div>
-          </div>
+          </aio-form-field>
           @if (isCardio()) {
             <div class="grid grid-cols-2 gap-3">
-              <div aioField>
-                <label aioFieldLabel for="w-km">مسافت (کیلومتر)</label>
-                <input
-                  aioInput
-                  id="w-km"
-                  type="number"
-                  inputmode="decimal"
-                  step="0.1"
-                  [formField]="logForm.distanceKm"
-                />
-              </div>
-              <div aioField>
-                <label aioFieldLabel for="w-steps">تعداد قدم</label>
-                <input
-                  aioInput
-                  id="w-steps"
-                  type="number"
-                  inputmode="numeric"
-                  [formField]="logForm.steps"
-                />
-              </div>
+              <aio-number-field
+                label="مسافت (کیلومتر)"
+                controlId="w-km"
+                [field]="logForm.distanceKm"
+                inputMode="decimal"
+                step="0.1"
+              />
+              <aio-number-field
+                label="تعداد قدم"
+                controlId="w-steps"
+                [field]="logForm.steps"
+                inputMode="numeric"
+              />
             </div>
           }
-          <div aioField>
-            <label aioFieldLabel for="w-notes">یادداشت (اختیاری)</label>
+          <aio-form-field label="یادداشت (اختیاری)" controlId="w-notes">
             <textarea
               aioTextarea
               id="w-notes"
               rows="2"
               [formField]="logForm.notes"
             ></textarea>
-          </div>
+          </aio-form-field>
         </form>
       </ng-template>
       <ng-template aioDialogActions>
