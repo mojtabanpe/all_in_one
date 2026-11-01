@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AioButton, AioIcon, provideIcons } from '@all-in-one/ui';
+import { ReminderSheet } from './reminder-sheet';
 import {
   lucideCalendarDays,
   lucideHourglass,
@@ -12,7 +13,14 @@ import {
 /** Planner frame: TickTick's tabs for tasks, calendar, habits, focus and countdowns. */
 @Component({
   selector: 'planner-shell',
-  imports: [AioButton, AioIcon, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [
+    AioButton,
+    AioIcon,
+    ReminderSheet,
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet,
+  ],
   providers: [
     provideIcons({
       lucideCalendarDays,
@@ -52,6 +60,7 @@ import {
         }
       </nav>
       <router-outlet />
+      <planner-reminder-sheet />
     </div>
   `,
 })

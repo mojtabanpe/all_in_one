@@ -296,7 +296,7 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
               const sent = await this.send(
                 sub,
                 task.title,
-                `/app/planner?task=${encodeURIComponent(task.id)}`,
+                `/app/planner?remind=${encodeURIComponent(`task:${task.id}`)}`,
                 key,
               );
               if (!sent)
@@ -360,7 +360,7 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
               const sent = await this.send(
                 sub,
                 `وقت ${habit.name} است`,
-                '/app/planner/habits',
+                `/app/planner/habits?remind=${encodeURIComponent(`habit:${habit.id}:${date}`)}`,
                 key,
               );
               if (!sent)

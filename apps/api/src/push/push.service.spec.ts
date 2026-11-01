@@ -211,7 +211,7 @@ describe('Web Push reminders', () => {
     await service.tick(now);
     await service.tick(now);
     expect(send).toHaveBeenCalledTimes(1);
-    expect(send.mock.calls[0][2]).toBe('/app/planner?task=t1');
+    expect(send.mock.calls[0][2]).toBe('/app/planner?remind=task%3At1');
     tasks.filter.mockResolvedValue([]); // Completed/deleted tasks are absent on the next scan.
     await service.tick(new Date('2026-10-31T09:01:00Z'));
     expect(send).toHaveBeenCalledTimes(1);
@@ -314,7 +314,9 @@ describe('habit reminders', () => {
     expect(send).toHaveBeenCalledTimes(1);
     await service.tick(new Date('2026-10-31T14:30:05Z'));
     expect(send).toHaveBeenCalledTimes(2);
-    expect(send.mock.calls[1][2]).toBe('/app/planner/habits');
+    expect(send.mock.calls[1][2]).toMatch(
+      /^\/app\/planner\/habits\?remind=habit%3A.+%3A2026-10-31$/,
+    );
   });
   it('skips unscheduled days and completed daily goals', async () => {
     const { service, send, habit } = fixture();
