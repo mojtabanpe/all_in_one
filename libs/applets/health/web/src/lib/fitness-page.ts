@@ -18,7 +18,6 @@ import {
   TRAINING_LEVELS,
   generateRoutineSchema,
   saveRoutineSchema,
-  logSessionSchema,
   type GenerateRoutineInput,
   type SaveRoutineInput,
   type Equipment,
@@ -26,7 +25,6 @@ import {
   type Exercise,
   type WorkoutRoutine,
   type TrainingProgress,
-  type CompletedSet,
   ACTIVITY_CATEGORIES,
   ACTIVITY_CATEGORY_LABELS,
   type ActivityCategory,
@@ -82,6 +80,7 @@ import {
   lucideZap,
 } from '@ng-icons/lucide';
 import { HealthApi } from './health-api';
+import { ActivatedRoute, Router } from '@angular/router';
 
 type CategoryFilter = ActivityCategory | 'all';
 
@@ -148,7 +147,7 @@ type CategoryFilter = ActivityCategory | 'all';
               باز کردن جلسه اول
             </button>
             <p class="text-muted-foreground text-xs">
-              پس از انجام تمرین، تعداد و وزنه واقعی ست‌ها را ثبت کن.
+              هر ست را طبق برنامه انجام بده و با «انجام دادم» جلو برو.
             </p>
           } @else {
             <h2 class="text-2xl font-bold">یک برنامه، مخصوص خودت.</h2>
@@ -270,7 +269,7 @@ type CategoryFilter = ActivityCategory | 'all';
                           variant="outline"
                           (click)="startSession(routine, dayIndex)"
                         >
-                          ثبت ست‌های انجام‌شده این جلسه
+                          شروع این جلسه
                         </button>
                       </div>
                     </aio-accordion-content>
@@ -332,8 +331,10 @@ type CategoryFilter = ActivityCategory | 'all';
             </div>
             @for (entry of p.exercises; track entry.exerciseSlug) {
               <p class="text-sm">
-                {{ exerciseName(entry.exerciseSlug) }}: {{ fa(entry.sets) }} ست،
-                بیشترین وزنه {{ fa(entry.bestWeightKg) }} کیلوگرم
+                {{ exerciseName(entry.exerciseSlug) }}: {{ fa(entry.sets) }} ست
+                @if (entry.bestWeightKg > 0) {
+                  ، بیشترین وزنه {{ fa(entry.bestWeightKg) }} کیلوگرم
+                }
               </p>
             }
           }
@@ -798,111 +799,6 @@ type CategoryFilter = ActivityCategory | 'all';
     </aio-dialog>
     <aio-dialog
       contentClass="applet-health health-calm"
-      [(open)]="sessionOpen"
-      title="جلسه تمرین شما"
-      description="فقط ست‌هایی را نگه دارید که انجام داده‌اید؛ تکرار، زمان و وزنه واقعی را وارد کنید."
-    >
-      <ng-template aioDialogBody>
-        <form
-          id="training-session-form"
-          [formRoot]="sessionForm"
-          (submit)="$event.preventDefault(); saveSession()"
-          class="flex flex-col gap-4"
-        >
-          <div class="grid grid-cols-2 gap-3">
-            <div aioField>
-              <label aioFieldLabel for="session-date">تاریخ</label
-              ><aio-date-input
-                contentClass="applet-health"
-                inputId="session-date"
-                [formField]="sessionForm.date"
-              />
-            </div>
-            <div aioField>
-              <label aioFieldLabel for="session-duration">مدت (دقیقه)</label
-              ><input
-                aioInput
-                id="session-duration"
-                type="number"
-                [formField]="sessionForm.durationMin"
-              />
-            </div>
-          </div>
-          @for (set of sessionModel().sets; track $index; let i = $index) {
-            <div class="flex flex-col gap-2">
-              <h3 class="font-semibold">
-                {{ exerciseName(set.exerciseSlug) }}، ست {{ fa(i + 1) }}
-              </h3>
-              <div class="grid grid-cols-3 gap-2">
-                <div aioField>
-                  <label aioFieldLabel [for]="'set-reps-' + i">تکرار</label
-                  ><input
-                    aioInput
-                    [id]="'set-reps-' + i"
-                    type="number"
-                    [formField]="sessionForm.sets[i].reps"
-                  />
-                </div>
-                <div aioField>
-                  <label aioFieldLabel [for]="'set-weight-' + i"
-                    >وزنه (کیلو)</label
-                  ><input
-                    aioInput
-                    [id]="'set-weight-' + i"
-                    type="number"
-                    step="0.5"
-                    [formField]="sessionForm.sets[i].weightKg"
-                  />
-                </div>
-                <div aioField>
-                  <label aioFieldLabel [for]="'set-time-' + i"
-                    >زمان (ثانیه)</label
-                  ><input
-                    aioInput
-                    [id]="'set-time-' + i"
-                    type="number"
-                    [formField]="sessionForm.sets[i].seconds"
-                  />
-                </div>
-              </div>
-              <button
-                aioBtn
-                variant="ghost"
-                type="button"
-                (click)="removeSet(i)"
-              >
-                این ست انجام نشد؛ حذف
-              </button>
-            </div>
-          }
-          <div aioField>
-            <label aioFieldLabel for="session-notes">یادداشت</label
-            ><textarea
-              aioTextarea
-              id="session-notes"
-              [formField]="sessionForm.notes"
-            ></textarea>
-          </div>
-          @if (trainingError()) {
-            <p role="alert" class="text-destructive">{{ trainingError() }}</p>
-          }
-        </form>
-      </ng-template>
-      <ng-template aioDialogActions
-        ><button aioBtn variant="outline" (click)="sessionOpen.set(false)">
-          انصراف</button
-        ><button
-          aioBtn
-          type="submit"
-          form="training-session-form"
-          [disabled]="trainingBusy()"
-        >
-          ثبت ست‌های واقعی
-        </button></ng-template
-      >
-    </aio-dialog>
-    <aio-dialog
-      contentClass="applet-health health-calm"
       [(open)]="editorOpen"
       title="ویرایش برنامه"
     >
@@ -1127,6 +1023,8 @@ type CategoryFilter = ActivityCategory | 'all';
 })
 export class FitnessPage {
   private readonly api = inject(HealthApi);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly confirm = inject(AioConfirm);
   private readonly today = toIsoDate(new Date());
   protected readonly Math = Math;
@@ -1222,16 +1120,6 @@ export class FitnessPage {
     min(path.weeks, 1);
     min(path.minutes, 1);
   });
-  protected readonly sessionOpen = signal(false);
-  protected readonly sessionModel = signal({
-    routineId: '',
-    dayIndex: 0,
-    date: this.today,
-    durationMin: 30,
-    notes: '',
-    sets: [] as CompletedSet[],
-  });
-  protected readonly sessionForm = form(this.sessionModel);
   protected readonly editorOpen = signal(false);
   private editingRoutineId = '';
   protected readonly editorModel = signal<SaveRoutineInput>({
@@ -1305,53 +1193,9 @@ export class FitnessPage {
     }
   }
   protected startSession(routine: WorkoutRoutine, dayIndex: number) {
-    this.trainingError.set('');
-    this.sessionModel.set({
-      routineId: routine.id,
-      dayIndex,
-      date: this.today,
-      durationMin: routine.minutes,
-      notes: '',
-      sets: routine.days[dayIndex].exercises.flatMap((e) =>
-        Array.from({ length: e.sets }, () => ({
-          exerciseSlug: e.exerciseSlug,
-          reps: 0,
-          weightKg: 0,
-          seconds: 0,
-        })),
-      ),
+    void this.router.navigate([routine.id, dayIndex], {
+      relativeTo: this.route,
     });
-    this.sessionOpen.set(true);
-  }
-  protected removeSet(index: number) {
-    this.sessionModel.update((m) => ({
-      ...m,
-      sets: m.sets.filter((_, i) => i !== index),
-    }));
-  }
-  protected async saveSession() {
-    if (this.trainingBusy()) return;
-    const parsed = logSessionSchema.safeParse(this.sessionModel());
-    if (!parsed.success) {
-      this.trainingError.set(
-        'برای هر ست تکرار یا زمان واقعی را وارد کنید؛ ست‌های انجام‌نشده را حذف کنید. تاریخ، مدت و وزنه هم باید معتبر باشند.',
-      );
-      return;
-    }
-    this.trainingBusy.set(true);
-    this.trainingError.set('');
-    try {
-      await this.api.logSession(parsed.data);
-      this.sessionOpen.set(false);
-      this.progress.reload();
-      this.workouts.reload();
-      this.week.reload();
-      aioToast.success('ست‌های تمرین ثبت شد');
-    } catch (error) {
-      this.trainingError.set(apiErrorMessage(error));
-    } finally {
-      this.trainingBusy.set(false);
-    }
   }
   protected editRoutine(routine: WorkoutRoutine) {
     this.editingRoutineId = routine.id;

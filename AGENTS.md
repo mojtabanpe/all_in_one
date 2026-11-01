@@ -279,3 +279,5 @@ When the owner gives a new instruction, add it to this list in the same change.
 56. Display large dashboard and health statistics with compact proportional Persian digits, avoiding the wide spacing of tabular numerals while retaining Vazirmatn and Persian digit shaping.
 
 57. Build and distribute separate Android APKs for ARM64, ARM32 and x86_64 to reduce download size, and push pending changes to master before starting this build.
+
+58. **Guided workout sessions (2026-11-01):** Open training sessions as independent pages, never bottom sheets. Show the fixed prescribed set one step at a time, with only its relevant repetition/time/load information and available exercise illustrations, videos and Persian instructions. Advance after the user confirms completion; do not ask them to edit prescribed values during the session.

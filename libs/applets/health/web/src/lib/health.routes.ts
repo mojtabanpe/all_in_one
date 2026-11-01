@@ -23,6 +23,16 @@ export const healthRoutes: Routes = [
           import('./fitness-page').then((m) => m.FitnessPage),
       },
       {
+        path: 'fitness/:routineId/:dayIndex',
+        title: 'جلسه تمرین',
+        loadComponent: () =>
+          import('./training-session-page').then((m) => m.TrainingSessionPage),
+        canDeactivate: [
+          (component: import('./training-session-page').TrainingSessionPage) =>
+            component.canLeave(),
+        ],
+      },
+      {
         path: 'nutrition',
         title: 'تغذیه',
         loadComponent: () =>

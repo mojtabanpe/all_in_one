@@ -2,6 +2,7 @@ import {
   buildRoutine,
   generateRoutineSchema,
   logSessionSchema,
+  routineExerciseSchema,
   trainingProgress,
   type Exercise,
   type GenerateRoutineInput,
@@ -102,6 +103,35 @@ describe('independent training coach', () => {
         sets: [{ ...session.sets[0], seconds: 30 }],
       }).success,
     ).toBe(true);
+  });
+  it('accepts the seventh planned session and optional prescribed load', () => {
+    const movement = {
+      exerciseSlug: 'barbell-squat',
+      sets: 3,
+      reps: 10,
+      seconds: 0,
+      restSeconds: 60,
+    };
+    expect(routineExerciseSchema.safeParse(movement).success).toBe(true);
+    expect(
+      routineExerciseSchema.safeParse({ ...movement, weightKg: 20 }).success,
+    ).toBe(true);
+    expect(
+      routineExerciseSchema.safeParse({ ...movement, weightKg: -5 }).success,
+    ).toBe(false);
+    const session = {
+      routineId: '00000000-0000-4000-8000-000000000001',
+      dayIndex: 6,
+      date: '2026-11-01',
+      durationMin: 30,
+      sets: [
+        { exerciseSlug: 'barbell-squat', reps: 10, seconds: 0, weightKg: 20 },
+      ],
+    };
+    expect(logSessionSchema.safeParse(session).success).toBe(true);
+    expect(
+      logSessionSchema.safeParse({ ...session, dayIndex: 7 }).success,
+    ).toBe(false);
   });
   it('sums actual sets, weight volume and muscle coverage without counting planned work', () => {
     const logs = [

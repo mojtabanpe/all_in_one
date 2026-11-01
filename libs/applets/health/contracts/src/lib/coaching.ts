@@ -120,6 +120,7 @@ export const routineExerciseSchema = z.object({
   reps: z.int().check(z.gte(1), z.lte(50)),
   seconds: z.int().check(z.gte(0), z.lte(300)),
   restSeconds: z.int().check(z.gte(15), z.lte(300)),
+  weightKg: z.optional(z.number().check(z.gt(0), z.lte(500))),
 });
 export type RoutineExercise = z.infer<typeof routineExerciseSchema>;
 export const routineDaySchema = z.object({
@@ -160,7 +161,7 @@ export const completedSetSchema = z
 export type CompletedSet = z.infer<typeof completedSetSchema>;
 export const logSessionSchema = z.object({
   routineId: z.uuid(),
-  dayIndex: z.int().check(z.gte(0), z.lte(5)),
+  dayIndex: z.int().check(z.gte(0), z.lte(6)),
   date: z.iso.date(),
   durationMin: z.int().check(z.gte(1), z.lte(600)),
   sets: z.array(completedSetSchema).check(z.minLength(1), z.maxLength(96)),
