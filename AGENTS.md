@@ -200,6 +200,8 @@ When the owner gives a new instruction, add it to this list in the same change.
 
 ## Approved custom components
 
+- **AppletHeader** (2026-11-02): shared title, subtitle and route navigation for all three applets, composed from Spartan button wrappers and icons in `libs/shared/packages/ui`.
+
 - **BottomNav** (2026-10-29): floating bottom navigation for phone sizes, in `libs/shared/packages`,
   assembled from spartan pieces (`hlmBtn`, ng-icons) inside a glass container.
 
@@ -288,3 +290,6 @@ When the owner gives a new instruction, add it to this list in the same change.
 
 
 61. **English immersion (2026-11-01):** The entire English tab, including cards, definitions, examples, navigation, feedback, errors, dialogs and notifications, is English-only and LTR. This overrides Persian/RTL and Persian-digit defaults within English routes. Use English definitions for starter cards and translate legacy Persian content for display without losing original data or review schedules.
+
+
+62. **Shared applet header (2026-11-02):** Use one reusable component in `libs/shared/packages` for the title, subtitle and top route navigation of planner, English and health. Supply text, links and icons through inputs; keep typography, icon placement and spacing consistent, while preserving each applet’s accent and English-only LTR behavior. The owner explicitly approved this composed component.

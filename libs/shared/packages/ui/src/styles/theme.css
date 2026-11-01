@@ -355,15 +355,6 @@ html[lang='en'] *,
   .aio-bottom-navigation {
     box-shadow: 0 8px 36px rgb(18 48 44 / 0.12);
   }
-  .aio-applet-tabs {
-    border: 1px solid var(--border);
-    background: rgb(255 255 255 / 0.7);
-    box-shadow: none;
-    border-radius: 16px;
-  }
-  .aio-applet-tabs [aria-current='page'] {
-    box-shadow: 0 1px 4px rgb(18 48 44 / 0.08);
-  }
   .aio-eyebrow {
     font-size: 12px;
     font-weight: 600;
@@ -582,20 +573,6 @@ textarea {
 }
 .health-calm [data-slot='button'][data-variant='default'] {
   box-shadow: none;
-}
-.health-calm .health-tabs {
-  padding: 5px;
-  background: #ececf0;
-  border-radius: 999px;
-}
-.health-calm .health-tabs a {
-  color: #72727a;
-  border-radius: 999px;
-}
-.health-calm .health-tabs a[aria-current='page'] {
-  color: #232326;
-  background: white;
-  box-shadow: 0 2px 8px rgb(30 30 40 / 0.05);
 }
 .health-topline {
   display: flex;
@@ -1021,15 +998,6 @@ textarea {
     opacity: 0.4;
   }
   /* Segmented glass tabs; the active tab is a solid accent pill. */
-  .lx-tabs {
-    border-radius: 20px;
-    padding: 5px;
-  }
-  .lx-tabs [aria-current='page'] {
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.25),
-      0 6px 16px -6px color-mix(in oklch, var(--primary) 70%, transparent);
-  }
   .lx-chip {
     display: inline-flex;
     align-items: center;
@@ -1110,20 +1078,6 @@ textarea {
     0 1px 2px rgb(18 48 44 / 0.06),
     0 18px 44px -22px rgb(18 48 44 / 0.22);
 }
-.health-calm .health-tabs {
-  border: 1px solid rgb(255 255 255 / 0.75);
-  background: rgb(255 255 255 / 0.55);
-  -webkit-backdrop-filter: blur(22px) saturate(170%);
-  backdrop-filter: blur(22px) saturate(170%);
-  box-shadow: 0 10px 30px -20px rgb(18 48 44 / 0.25);
-}
-.health-calm .health-tabs a[aria-current='page'] {
-  color: var(--primary-foreground);
-  background: var(--primary);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.25),
-    0 6px 16px -6px color-mix(in oklch, var(--primary) 70%, transparent);
-}
 .health-calm .health-day-strip [aria-pressed='true'] {
   background: rgb(255 255 255 / 0.8);
   color: var(--accent-foreground);
@@ -1150,8 +1104,7 @@ textarea {
   .health-calm .glass,
   .health-calm .health-metric,
   .health-calm .health-macro,
-  .health-calm .health-meal-list,
-  .health-calm .health-tabs {
+  .health-calm .health-meal-list {
     background: oklch(0.995 0.003 240);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;

@@ -1,5 +1,6 @@
 export * from './accordion';
 export * from './app-shell';
+export * from './applet-header';
 export * from './bottom-nav';
 export * from './controls';
 export * from './dialog';
