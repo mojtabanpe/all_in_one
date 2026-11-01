@@ -19,7 +19,7 @@ import {
   AioDialogBody,
   aioToast,
 } from '@all-in-one/ui';
-import { apiErrorMessage, faDate } from '@all-in-one/web/shared';
+import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
 import { PlannerApi } from './planner-api';
 
 /** `?remind=task:<id>` or `?remind=habit:<id>:<YYYY-MM-DD>` (set by push notifications). */
@@ -53,8 +53,19 @@ export function parseRemind(
           <p class="text-muted-foreground text-sm">در حال دریافت…</p>
         } @else if (missing()) {
           <p class="text-muted-foreground text-sm">
-            این یادآوری دیگر پیدا نشد.
+            {{
+              finished()
+                ? 'این مورد قبلاً کامل شده.'
+                : 'این یادآوری دیگر پیدا نشد.'
+            }}
           </p>
+        } @else if (habit(); as h) {
+          @if (h.goal > 1) {
+            <p class="text-sm">
+              {{ faNumber(count()) }} از {{ faNumber(h.goal) }}
+              {{ h.unit || 'بار' }} انجام شده
+            </p>
+          }
         }
       </ng-template>
       <ng-template aioDialogActions>
@@ -68,9 +79,34 @@ export function parseRemind(
           >
             {{ target()?.kind === 'task' ? 'انجامش نمی‌دم' : 'امروز نه' }}
           </button>
-          <button aioBtn class="min-h-11" [disabled]="busy()" (click)="done()">
-            انجام شد
-          </button>
+          @if ((habit()?.goal ?? 1) > 1) {
+            <button
+              aioBtn
+              variant="outline"
+              class="min-h-11"
+              [disabled]="busy()"
+              (click)="done(true)"
+            >
+              همه انجام شد
+            </button>
+            <button
+              aioBtn
+              class="min-h-11"
+              [disabled]="busy()"
+              (click)="done()"
+            >
+              یک {{ habit()?.unit || 'بار' }} دیگر (+۱)
+            </button>
+          } @else {
+            <button
+              aioBtn
+              class="min-h-11"
+              [disabled]="busy()"
+              (click)="done()"
+            >
+              انجام شد
+            </button>
+          }
         } @else {
           <button aioBtn variant="outline" (click)="close()">بستن</button>
         }
@@ -97,7 +133,8 @@ export class ReminderSheet {
   private readonly habitsRes = httpResource<PlannerHabit[]>(() =>
     this.target()?.kind === 'habit' ? `${this.api.base}/habits` : undefined,
   );
-  private readonly habit = computed(() => {
+  protected readonly faNumber = faNumber;
+  protected readonly habit = computed(() => {
     const t = this.target();
     return t?.kind === 'habit' && this.habitsRes.hasValue()
       ? this.habitsRes.value().find((h) => h.id === t.id)
@@ -112,10 +149,22 @@ export class ReminderSheet {
       ? !this.taskRes.isLoading()
       : !this.habitsRes.isLoading(),
   );
-  protected readonly missing = computed(() =>
+  /** The reminder day's check-in count for the habit. */
+  protected readonly count = computed(() => {
+    const t = this.target();
+    const habit = this.habit();
+    if (t?.kind !== 'habit' || !habit) return 0;
+    return habit.checkins.find((c) => c.date === t.date)?.value ?? 0;
+  });
+  protected readonly finished = computed(() =>
     this.target()?.kind === 'task'
-      ? !this.task() || this.task()!.done
-      : !this.habit(),
+      ? !!this.task()?.done
+      : !!this.habit() && this.count() >= this.habit()!.goal,
+  );
+  protected readonly missing = computed(
+    () =>
+      this.finished() ||
+      (this.target()?.kind === 'task' ? !this.task() : !this.habit()),
   );
   protected readonly title = computed(
     () => this.task()?.title ?? this.habit()?.name ?? 'یادآوری',
@@ -150,7 +199,7 @@ export class ReminderSheet {
     }
   }
 
-  protected done() {
+  protected done(all = false) {
     const t = this.target();
     if (t?.kind === 'task')
       void this.run(
@@ -158,10 +207,13 @@ export class ReminderSheet {
         'کار انجام شد',
       );
     else if (t?.kind === 'habit') {
-      const habit = this.habit()!;
+      const goal = this.habit()!.goal;
+      const value = all ? goal : Math.min(goal, this.count() + 1);
       void this.run(
-        () => this.api.checkin(t.id, { date: t.date, value: habit.goal }),
-        'ثبت شد',
+        () => this.api.checkin(t.id, { date: t.date, value }),
+        value >= goal
+          ? 'امروز کامل شد'
+          : `${faNumber(value)} از ${faNumber(goal)} ثبت شد`,
       );
     }
   }
