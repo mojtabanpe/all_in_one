@@ -209,25 +209,40 @@ const emptyDraft = (): Draft => ({
                 class="flex min-w-0 flex-1 flex-col items-start text-start"
                 (click)="openEdit(h)"
               >
-                <span class="line-clamp-2 w-full font-semibold wrap-anywhere">{{
-                  h.name
-                }}</span>
-                <span class="text-muted-foreground w-full text-xs">
-                  @if (!due) {
-                    امروز لازم نیست
-                  } @else if (h.goal > 1) {
-                    {{ fa(v) }} از {{ fa(h.goal) }} {{ h.unit }}
-                  } @else {
-                    {{ v >= 1 ? 'انجام شد' : 'هنوز نه' }}
-                  }
+                <span class="line-clamp-2 w-full font-semibold wrap-anywhere">
+                  <bdi dir="auto">{{ h.name }}</bdi>
+                </span>
+                <span
+                  dir="rtl"
+                  class="text-muted-foreground flex w-full flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-relaxed"
+                >
+                  <span
+                    class="inline-flex min-w-0 flex-wrap items-baseline gap-x-1"
+                  >
+                    @if (!due) {
+                      امروز لازم نیست
+                    } @else if (h.goal > 1) {
+                      <span class="whitespace-nowrap"
+                        >{{ fa(v) }} از {{ fa(h.goal) }}</span
+                      >
+                      @if (h.unit) {
+                        <bdi dir="auto" class="wrap-anywhere">{{ h.unit }}</bdi>
+                      }
+                    } @else {
+                      {{ v >= 1 ? 'انجام شد' : 'هنوز نه' }}
+                    }
+                  </span>
                   @if (h.streak) {
-                    ،
-                    <aio-icon
-                      name="lucideFlame"
-                      size="xs"
-                      class="text-[var(--streak)]"
-                    />
-                    {{ fa(h.streak) }} روز پیاپی
+                    <span
+                      class="inline-flex items-center gap-1 whitespace-nowrap"
+                    >
+                      <aio-icon
+                        name="lucideFlame"
+                        size="xs"
+                        class="text-[var(--streak)]"
+                      />
+                      <span>{{ fa(h.streak) }} روز پیاپی</span>
+                    </span>
                   }
                 </span>
               </button>

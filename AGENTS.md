@@ -282,4 +282,6 @@ When the owner gives a new instruction, add it to this list in the same change.
 
 58. **Guided workout sessions (2026-11-01):** Open training sessions as independent pages, never bottom sheets. Show the fixed prescribed set one step at a time, with only its relevant repetition/time/load information and available exercise illustrations, videos and Persian instructions. Advance after the user confirms completion; do not ask them to edit prescribed values during the session.
 
+59. **Habit text direction (2026-11-01):** Keep habit progress, user-entered units and streak text readable in Persian RTL, including English names/units. Isolate mixed-direction values and keep progress and streak in separate groups that wrap cleanly on phones.
+
 60. **Language shadowing (2026-11-01):** Include shadowing in language practice: sentence-by-sentence listening and repetition alongside the speaker, adjustable playback speed, optional transcript, and local voice recording for self-comparison. Use the user's AI settings and expose exercise generation to the assistant and ChatGPT tools.
