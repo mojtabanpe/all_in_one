@@ -217,6 +217,14 @@ When the owner gives a new instruction, add it to this list in the same change.
     porcelain hand, orange sun (`#e88329`) on the deep-teal primary (`#18514b`). Source:
     `design-system/all-in-one/logo/poshtetgarm-1024.png`; the PWA icons and favicons are generated from it.
 
+## Glass language and closable sidebar (2026-11-01)
+
+37. **The language applet is glass and matches the rest of the app** (owner: "very different from the rest; make it
+    glass, and very cool"). No Duolingo chunky `btn-3d` / `border-b-4` there any more: English pages sit on the
+    `lx-stage` ambient light with `lx-glass` panels (`theme.css`), keeping the green accent.
+38. **The desktop/tablet sidebar can be closed completely** (`collapsible="offcanvas"`, header button or Ctrl/⌘+B,
+    remembered in a cookie). The shell's `main` is `min-w-0` so wide content never slides under the sidebar.
+
 ## Approved custom components
 
 - **BottomNav** (2026-10-29): floating bottom navigation for phone sizes, in `libs/shared/packages`,

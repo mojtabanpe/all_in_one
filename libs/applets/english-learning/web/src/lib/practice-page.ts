@@ -110,7 +110,7 @@ const freshTask = (): TaskState => ({
         aioToggleGroup
         type="single"
         spacing="1"
-        class="glass grid w-full grid-cols-3 rounded-2xl p-1"
+        class="lx-glass grid w-full grid-cols-3 rounded-2xl p-1"
         aria-label="نوع تمرین"
         [value]="mode()"
         (valueChange)="setMode($event)"
@@ -162,7 +162,7 @@ const freshTask = (): TaskState => ({
         <button
           aioBtn
           size="lg"
-          class="btn-3d h-14 rounded-2xl"
+          class="h-14 rounded-2xl"
           [disabled]="busy()"
           (click)="newDialogue()"
         >
@@ -175,7 +175,7 @@ const freshTask = (): TaskState => ({
 
         @if (dialogue(); as d) {
           <section
-            class="glass flex flex-col gap-4 rounded-2xl p-4"
+            class="lx-glass flex flex-col gap-4 rounded-2xl p-4"
             aria-labelledby="dialogue-title"
           >
             <h2
@@ -247,7 +247,7 @@ const freshTask = (): TaskState => ({
               <h2 id="questions-title" class="text-lg font-bold">سؤال‌ها</h2>
               @for (q of d.questions; track $index; let qi = $index) {
                 <div
-                  class="glass flex flex-col gap-2 rounded-2xl p-4"
+                  class="lx-glass flex flex-col gap-2 rounded-2xl p-4"
                   role="group"
                   [attr.aria-labelledby]="'q-' + qi"
                 >
@@ -297,7 +297,7 @@ const freshTask = (): TaskState => ({
         <button
           aioBtn
           size="lg"
-          class="btn-3d h-14 rounded-2xl"
+          class="h-14 rounded-2xl"
           [disabled]="busy()"
           (click)="newTask()"
         >
@@ -313,7 +313,7 @@ const freshTask = (): TaskState => ({
 
         @if (current().task; as task) {
           <section
-            class="glass flex flex-col gap-3 rounded-2xl p-4"
+            class="lx-glass flex flex-col gap-3 rounded-2xl p-4"
             aria-labelledby="task-title"
           >
             <h2 id="task-title" class="sr-only">تمرین</h2>
@@ -408,7 +408,7 @@ const freshTask = (): TaskState => ({
 
           @if (current().feedback; as f) {
             <section
-              class="glass flex flex-col gap-4 rounded-2xl p-4"
+              class="lx-glass flex flex-col gap-4 rounded-2xl p-4"
               aria-labelledby="feedback-title"
             >
               <h2 id="feedback-title" class="text-lg font-bold">بازخورد</h2>
@@ -473,7 +473,7 @@ const freshTask = (): TaskState => ({
             />
           }
         } @else if (!busy()) {
-          <div aioEmpty class="glass rounded-2xl">
+          <div aioEmpty class="lx-glass rounded-2xl">
             <div aioEmptyHeader>
               <h2 aioEmptyTitle>
                 {{ mode() === 'speaking' ? 'بلند جواب بده' : 'کوتاه بنویس' }}
@@ -510,7 +510,9 @@ const freshTask = (): TaskState => ({
               </aio-native-select>
             }
           </div>
-          <ul class="glass divide-border/60 flex flex-col divide-y rounded-2xl">
+          <ul
+            class="lx-glass divide-border/60 flex flex-col divide-y rounded-2xl"
+          >
             @for (p of phrases; track p.phrase) {
               <li class="flex min-h-14 items-center gap-2 px-3 py-2">
                 <span

@@ -1,12 +1,13 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { HlmSidebarImports } from '@spartan-ng/helm/sidebar';
+import { HlmSidebarImports, HlmSidebarService } from '@spartan-ng/helm/sidebar';
 import { AioBottomNav, type AioNavItem } from './bottom-nav';
 import { AioConfirmHost } from './dialog';
 import { AioIcon } from './icon';
 
 /**
- * App layout: spartan sidebar (start side, floating, collapsible to icons) on
+ * App layout: spartan sidebar (start side, floating, fully closable: the header
+ * button or Ctrl/⌘+B; the choice is kept in a cookie) on
  * tablets/desktop, floating bottom nav on phones, plus the confirmation host.
  * Put `<aio-toaster />` once in the app root (toasts also show outside the shell). Project page content; project header actions with
  * `aioShellActions`.
@@ -23,23 +24,23 @@ import { AioIcon } from './icon';
   ],
   template: `
     <div hlmSidebarWrapper>
-      <hlm-sidebar side="right" variant="floating" collapsible="icon">
-        <div hlmSidebarHeader class="px-4 py-7">
-          <a routerLink="/" class="flex items-center gap-2 font-bold">
+      <hlm-sidebar side="right" variant="floating" collapsible="offcanvas">
+        <div hlmSidebarHeader class="flex-row items-center px-4 py-7">
+          <a routerLink="/" class="flex flex-1 items-center gap-2 font-bold">
             <span class="aio-brand-mark"
               ><aio-icon [name]="brandIcon()" size="sm"
             /></span>
-            <span class="group-data-[collapsible=icon]:hidden">{{
-              appName()
-            }}</span>
+            <span>{{ appName() }}</span>
           </a>
+          <!-- eslint-disable-next-line @angular-eslint/template/elements-content -->
+          <button
+            hlmSidebarTrigger
+            srOnlyText="بستن منو"
+            class="text-muted-foreground size-11"
+          ></button>
         </div>
         <div hlmSidebarContent class="aio-workspace-nav px-2">
-          <p
-            class="aio-sidebar-caption px-4 pb-3 group-data-[collapsible=icon]:hidden"
-          >
-            فضای شخصی شما
-          </p>
+          <p class="aio-sidebar-caption px-4 pb-3">فضای شخصی شما</p>
           <div hlmSidebarGroup>
             <ul hlmSidebarMenu class="gap-2">
               @for (item of navItems(); track item.link) {
@@ -63,16 +64,20 @@ import { AioIcon } from './icon';
         </div>
       </hlm-sidebar>
 
-      <main hlmSidebarInset class="bg-transparent">
+      <main hlmSidebarInset class="min-w-0 bg-transparent">
         <header class="aio-app-header flex items-center gap-2 px-5 md:px-8">
           <!-- spartan's trigger component renders its own icon and sr-only label -->
-          <!-- eslint-disable-next-line @angular-eslint/template/elements-content -->
-          <button
-            hlmSidebarTrigger
-            srOnlyText="باز و بسته کردن منو"
-            class="hidden md:inline-flex"
-          ></button>
-          <span class="text-base font-bold md:hidden">{{ appName() }}</span>
+          @if (collapsed()) {
+            <!-- eslint-disable-next-line @angular-eslint/template/elements-content -->
+            <button
+              hlmSidebarTrigger
+              srOnlyText="باز کردن منو"
+              class="hidden size-11 md:inline-flex"
+            ></button>
+          }
+          <span class="text-base font-bold" [class.md:hidden]="!collapsed()">{{
+            appName()
+          }}</span>
           <div class="ms-auto flex items-center gap-2">
             <ng-content select="[aioShellActions]" />
           </div>
@@ -90,6 +95,11 @@ import { AioIcon } from './icon';
   `,
 })
 export class AioAppShell {
+  private readonly sidebar = inject(HlmSidebarService);
+  /** Desktop sidebar closed: the header shows the name and the open button. */
+  protected readonly collapsed = computed(
+    () => this.sidebar.state() === 'collapsed',
+  );
   readonly appName = input.required<string>();
   readonly brandIcon = input('lucideSparkles');
   readonly navItems = input.required<readonly AioNavItem[]>();

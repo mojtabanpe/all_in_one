@@ -86,7 +86,9 @@ const UNIT = /^(?:u\d+)?$/i;
     }),
   ],
   template: `
-    <div class="applet-english mx-auto flex w-full max-w-3xl flex-col gap-6">
+    <div
+      class="applet-english lx-stage mx-auto min-w-0 flex w-full max-w-3xl flex-col gap-6"
+    >
       @if (loading()) {
         <div aioSkeleton class="h-28 rounded-3xl"></div>
         <div aioSkeleton class="h-64 rounded-3xl"></div>
@@ -133,7 +135,7 @@ const UNIT = /^(?:u\d+)?$/i;
         <a
           aioBtn
           size="lg"
-          class="btn-3d h-14 w-full rounded-2xl"
+          class="h-14 w-full rounded-2xl"
           [class.pointer-events-none]="!dueCount()"
           [attr.aria-disabled]="!dueCount()"
           [class.opacity-50]="!dueCount()"
@@ -148,7 +150,7 @@ const UNIT = /^(?:u\d+)?$/i;
         </a>
 
         <section
-          class="glass flex flex-col gap-4 rounded-2xl p-4"
+          class="lx-glass flex flex-col gap-4 rounded-2xl p-4"
           aria-labelledby="add-title"
         >
           <h2 id="add-title" class="font-bold">کارت جدید</h2>
@@ -276,7 +278,7 @@ const UNIT = /^(?:u\d+)?$/i;
           </div>
 
           @if (!activeCards().length) {
-            <div aioEmpty class="glass rounded-2xl">
+            <div aioEmpty class="lx-glass rounded-2xl">
               <div aioEmptyHeader>
                 <h3 aioEmptyTitle>
                   {{ cards().length ? 'کارتی پیدا نشد' : 'هنوز کارتی نداری' }}
@@ -292,7 +294,7 @@ const UNIT = /^(?:u\d+)?$/i;
             </div>
           } @else {
             <ul
-              class="glass divide-border/60 flex flex-col divide-y rounded-2xl"
+              class="lx-glass divide-border/60 flex flex-col divide-y rounded-2xl"
             >
               @for (card of visibleCards(); track card.id) {
                 <li class="flex min-h-14 items-center gap-2 px-3">
@@ -361,7 +363,7 @@ const UNIT = /^(?:u\d+)?$/i;
               </p>
             </div>
             <ul
-              class="glass divide-border/60 flex flex-col divide-y rounded-2xl"
+              class="lx-glass divide-border/60 flex flex-col divide-y rounded-2xl"
             >
               @for (card of suspendedCards(); track card.id) {
                 <li class="flex min-h-14 items-center gap-2 px-3 py-2">
@@ -417,7 +419,7 @@ const UNIT = /^(?:u\d+)?$/i;
           <div class="flex flex-col gap-4">
             <button
               type="button"
-              class="glass flex min-h-40 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-b-4 p-6 text-center"
+              class="lx-glass flex min-h-40 flex-col items-center justify-center gap-2 rounded-2xl p-6 text-center"
               (click)="previewFlipped.update((f) => !f)"
               [attr.aria-label]="previewFlipped() ? 'نمایش رو' : 'نمایش پشت'"
             >

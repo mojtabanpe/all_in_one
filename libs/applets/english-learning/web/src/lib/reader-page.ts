@@ -78,7 +78,9 @@ const UNIT_KEY = 'aio.english.reader.unit';
     }),
   ],
   template: `
-    <div class="applet-english mx-auto flex w-full max-w-2xl flex-col gap-6">
+    <div
+      class="applet-english lx-stage mx-auto min-w-0 flex w-full max-w-2xl flex-col gap-6"
+    >
       @if (loading()) {
         <div aioSkeleton class="h-12 rounded-2xl"></div>
         <div aioSkeleton class="h-96 rounded-3xl"></div>
@@ -103,9 +105,9 @@ const UNIT_KEY = 'aio.english.reader.unit';
         </header>
 
         <div
-          class="glass sticky top-2 z-10 flex items-center gap-3 rounded-2xl p-2"
+          class="lx-glass sticky top-2 z-10 flex items-center gap-3 rounded-2xl p-2"
         >
-          <button aioBtn class="btn-3d rounded-xl" (click)="toggleReading()">
+          <button aioBtn class="rounded-xl" (click)="toggleReading()">
             <aio-icon
               [name]="reading() ? 'lucidePause' : 'lucidePlay'"
               size="sm"
@@ -120,7 +122,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
         <article
           dir="ltr"
           lang="en"
-          class="glass flex flex-col gap-4 rounded-3xl p-5 text-lg leading-loose select-text"
+          class="lx-glass flex flex-col gap-4 rounded-3xl p-5 text-lg leading-loose select-text"
           (dblclick)="onDoubleClick($event)"
           (pointerup)="onPointerUp($event)"
         >
@@ -144,7 +146,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
 
         @if (t.ai) {
           <section
-            class="glass flex flex-col gap-3 rounded-2xl p-4"
+            class="lx-glass flex flex-col gap-3 rounded-2xl p-4"
             aria-labelledby="rate-title"
           >
             <h2 id="rate-title" class="font-bold">این متن چطور بود؟</h2>

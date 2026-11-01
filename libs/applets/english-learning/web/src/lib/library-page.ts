@@ -30,6 +30,8 @@ import {
   lucideCheck,
   lucideFlame,
   lucideGem,
+  lucideLayers,
+  lucidePlay,
   lucidePlus,
   lucideSearch,
 } from '@ng-icons/lucide';
@@ -59,81 +61,119 @@ import { EnglishApi } from './english-api';
       lucideCheck,
       lucideFlame,
       lucideGem,
+      lucideLayers,
+      lucidePlay,
       lucidePlus,
       lucideSearch,
     }),
   ],
   template: `
     <div class="flex flex-col gap-6">
-      <header class="flex items-center justify-between gap-3">
-        <h1 class="text-2xl font-bold">انگلیسی</h1>
-        <div class="flex items-center gap-4 text-base font-bold">
-          <span
-            class="flex items-center gap-1"
-            [class.text-[var(--streak)]]="streak() > 0"
-            [class.text-muted-foreground]="streak() === 0"
-            [attr.aria-label]="fa(streak()) + ' روز پیاپی'"
-          >
-            <aio-icon name="lucideFlame" />{{ fa(streak()) }}
-          </span>
-          <span
-            class="flex items-center gap-1 text-[var(--gem)]"
-            [attr.aria-label]="
-              fa(stats.value()?.mature ?? 0) + ' کارت جاافتاده'
-            "
-          >
-            <aio-icon name="lucideGem" />{{ fa(stats.value()?.mature ?? 0) }}
-          </span>
-        </div>
-      </header>
-
       @if (decks.isLoading() && !decks.hasValue()) {
-        <div aioSkeleton class="h-40 rounded-3xl"></div>
-      } @else if (recommended(); as next) {
-        <section
-          class="glass flex flex-col items-center gap-4 rounded-3xl border-2 border-b-4 p-6 text-center"
-        >
-          <div
-            class="bg-primary text-primary-foreground flex size-16 items-center justify-center rounded-full shadow-[0_0.25rem_0_var(--primary-edge)]"
-          >
-            <aio-icon name="lucideBookOpen" size="lg" />
-          </div>
-          <div class="flex flex-col gap-1">
-            <h2 class="text-xl font-bold">مرور امروز</h2>
-            <p class="text-muted-foreground">
-              {{ fa(totalDue()) }} کارت آماده مرور است. از «{{ next.name }}»
-              شروع کن.
-            </p>
-          </div>
-          <a
-            aioBtn
-            size="lg"
-            class="btn-3d h-14 w-full rounded-2xl"
-            [routerLink]="['deck', next.id, 'study']"
-            >شروع مرور</a
-          >
-        </section>
+        <div aioSkeleton class="h-56 rounded-[28px]"></div>
       } @else if (myDecks().length) {
         <section
-          class="glass flex items-center gap-4 rounded-3xl border-2 border-b-4 p-5"
+          class="lx-glass flex flex-col gap-5 rounded-[28px] p-5 sm:p-7"
+          aria-labelledby="today-title"
         >
-          <div
-            class="flex size-12 shrink-0 items-center justify-center rounded-full bg-[var(--streak)]/15 text-[var(--streak)]"
-          >
-            <aio-icon name="lucideFlame" />
+          <span class="lx-orb bg-emerald-400" aria-hidden="true"></span>
+          <span
+            class="lx-orb start-[-60px] end-auto top-auto bottom-[-70px] bg-sky-300"
+            aria-hidden="true"
+          ></span>
+          <div class="flex items-center gap-5 sm:gap-7">
+            <div class="relative size-24 shrink-0 sm:size-32">
+              <svg
+                viewBox="0 0 120 120"
+                class="size-full -rotate-90"
+                aria-hidden="true"
+              >
+                <circle
+                  class="lx-ring-track"
+                  cx="60"
+                  cy="60"
+                  r="52"
+                  fill="none"
+                  stroke-width="10"
+                />
+                <circle
+                  class="lx-ring-value"
+                  cx="60"
+                  cy="60"
+                  r="52"
+                  fill="none"
+                  stroke-width="10"
+                  stroke-linecap="round"
+                  [attr.stroke-dasharray]="ring"
+                  [attr.stroke-dashoffset]="ring * (1 - progress())"
+                />
+              </svg>
+              <span
+                class="absolute inset-0 flex flex-col items-center justify-center"
+              >
+                @if (totalDue()) {
+                  <span
+                    class="text-2xl leading-none font-extrabold sm:text-3xl"
+                    >{{ fa(totalDue()) }}</span
+                  >
+                  <span class="text-muted-foreground mt-1 text-xs">آماده</span>
+                } @else {
+                  <aio-icon name="lucideCheck" size="lg" class="text-primary" />
+                }
+              </span>
+            </div>
+            <div class="flex min-w-0 flex-col gap-1">
+              <p class="aio-eyebrow">مرور امروز</p>
+              <h2 id="today-title" class="text-xl font-bold sm:text-2xl">
+                @if (recommended()) {
+                  {{ fa(totalDue()) }} کارت منتظر توست
+                } @else if ((stats.value()?.reviewedToday ?? 0) > 0) {
+                  امروز کامل شد!
+                } @else {
+                  فعلاً کارتی برای مرور نیست
+                }
+              </h2>
+              <p class="text-muted-foreground text-sm leading-7">
+                @if (recommended(); as next) {
+                  از «{{ next.name }}» شروع کن؛ چند دقیقه کافی است.
+                } @else if ((stats.value()?.reviewedToday ?? 0) > 0) {
+                  {{ fa(stats.value()!.reviewedToday) }} کارت مرور کردی. فردا
+                  برگرد تا شعله روشن بماند.
+                } @else {
+                  کارت تازه اضافه کن یا فردا برگرد.
+                }
+              </p>
+            </div>
           </div>
-          <div class="flex flex-col">
-            <h2 class="font-bold">
-              {{
-                (stats.value()?.reviewedToday ?? 0) > 0
-                  ? 'امروز کامل شد!'
-                  : 'فعلاً کارتی برای مرور نیست'
-              }}
-            </h2>
-            <p class="text-muted-foreground text-sm">
-              کارت تازه اضافه کن یا فردا برگرد تا شعله روشن بماند.
-            </p>
-          </div>
+          @if (recommended(); as next) {
+            <a
+              aioBtn
+              size="lg"
+              class="h-13 w-full rounded-2xl text-base"
+              [routerLink]="['deck', next.id, 'study']"
+            >
+              <aio-icon name="lucidePlay" size="sm" />
+              شروع مرور
+            </a>
+          }
+          <ul class="flex flex-wrap gap-2" aria-label="آمار">
+            <li
+              class="lx-chip"
+              [class.text-[var(--streak)]]="streak() > 0"
+              [class.text-muted-foreground]="streak() === 0"
+            >
+              <aio-icon name="lucideFlame" size="sm" />
+              {{ fa(streak()) }} روز پیاپی
+            </li>
+            <li class="lx-chip text-[var(--gem)]">
+              <aio-icon name="lucideGem" size="sm" />
+              {{ fa(stats.value()?.mature ?? 0) }} جاافتاده
+            </li>
+            <li class="lx-chip text-muted-foreground">
+              <aio-icon name="lucideLayers" size="sm" />
+              {{ fa(totalCards()) }} کارت
+            </li>
+          </ul>
         </section>
       }
 
@@ -171,7 +211,7 @@ import { EnglishApi } from './english-api';
         }
 
         @if (decks.hasValue() && !myDecks().length) {
-          <div aioEmpty class="glass rounded-2xl">
+          <div aioEmpty class="lx-glass rounded-3xl">
             <div aioEmptyHeader>
               <div aioEmptyMedia variant="icon" class="text-primary">
                 <aio-icon name="lucideBookOpen" />
@@ -184,14 +224,18 @@ import { EnglishApi } from './english-api';
           </div>
         }
 
-        <div class="grid gap-3 sm:grid-cols-2">
+        <div class="grid gap-3 sm:grid-cols-2 [&>*]:min-w-0">
           @for (deck of filteredDecks(); track deck.id) {
             <a
               [routerLink]="['deck', deck.id]"
-              class="glass flex overflow-hidden rounded-2xl transition-transform active:scale-[0.98]"
+              class="lx-glass lx-glass-hover flex min-w-0 rounded-3xl"
             >
-              <span class="w-2 shrink-0" [class]="tone(deck.color).bar"></span>
-              <span class="flex min-w-0 flex-1 flex-col gap-2 p-4">
+              <span
+                class="lx-orb"
+                [class]="tone(deck.color).bar"
+                aria-hidden="true"
+              ></span>
+              <span class="flex min-w-0 flex-1 flex-col gap-2 p-5">
                 <span class="flex items-start justify-between gap-2">
                   <span class="truncate text-lg font-bold">{{
                     deck.name
@@ -208,6 +252,20 @@ import { EnglishApi } from './english-api';
                     deck.description
                   }}</span>
                 }
+                <span
+                  class="bg-foreground/8 mt-1 h-1.5 overflow-hidden rounded-full"
+                  aria-hidden="true"
+                >
+                  <span
+                    class="block h-full rounded-full"
+                    [class]="tone(deck.color).bar"
+                    [style.width.%]="
+                      deck.total
+                        ? (100 * (deck.total - deck.due)) / deck.total
+                        : 0
+                    "
+                  ></span>
+                </span>
                 <span class="text-muted-foreground text-xs">
                   {{ fa(deck.total) }} کارت
                   @if (deck.suspended) {
@@ -222,7 +280,9 @@ import { EnglishApi } from './english-api';
 
       <section class="flex flex-col gap-3" aria-labelledby="starter-title">
         <h2 id="starter-title" class="text-lg font-bold">دسته‌های آماده</h2>
-        <ul class="glass divide-border/60 flex flex-col divide-y rounded-2xl">
+        <ul
+          class="lx-glass divide-foreground/8 flex flex-col divide-y rounded-3xl"
+        >
           @for (s of starters.value() ?? []; track s.slug) {
             <li class="flex min-h-16 items-center gap-3 px-4 py-3">
               <span
@@ -362,6 +422,14 @@ export class LibraryPage {
   /** Copied in this visit, or a deck with the same name is already in the library. */
   protected readonly inLibrary = (s: StarterDeck) =>
     this.copied().has(s.slug) || this.myDecks().some((d) => d.name === s.title);
+  /** Circumference of the progress ring (r = 52). */
+  protected readonly ring = 2 * Math.PI * 52;
+  /** Today's share of the review queue already done. */
+  protected readonly progress = computed(() => {
+    const done = this.stats.value()?.reviewedToday ?? 0;
+    const left = this.totalDue();
+    return done + left ? done / (done + left) : 0;
+  });
   protected readonly streak = computed(
     () => this.stats.value()?.streakDays ?? 0,
   );

@@ -83,7 +83,7 @@ import { EnglishApi } from './english-api';
         <div aioSkeleton class="h-20 rounded-2xl"></div>
         <div aioSkeleton class="h-20 rounded-2xl"></div>
       } @else if (!(texts.value() ?? []).length) {
-        <div aioEmpty class="glass rounded-2xl">
+        <div aioEmpty class="lx-glass rounded-2xl">
           <div aioEmptyHeader>
             <div aioEmptyMedia variant="icon" class="text-primary">
               <aio-icon name="lucideFileText" />
@@ -95,11 +95,13 @@ import { EnglishApi } from './english-api';
             </p>
           </div>
           <div aioEmptyContent>
-            <button aioBtn class="btn-3d" (click)="openNew()">اولین متن</button>
+            <button aioBtn (click)="openNew()">اولین متن</button>
           </div>
         </div>
       } @else {
-        <ul class="glass divide-border/60 flex flex-col divide-y rounded-2xl">
+        <ul
+          class="lx-glass divide-border/60 flex flex-col divide-y rounded-2xl"
+        >
           @for (text of texts.value() ?? []; track text.id) {
             <li class="flex min-h-16 items-center gap-3 px-4">
               <a
@@ -163,7 +165,7 @@ import { EnglishApi } from './english-api';
           class="flex flex-col gap-4"
           (submit)="$event.preventDefault(); save()"
         >
-          <div class="glass flex flex-col gap-3 rounded-2xl p-3">
+          <div class="lx-glass flex flex-col gap-3 rounded-2xl p-3">
             <div class="grid grid-cols-2 gap-3">
               <div aioField>
                 <label aioFieldLabel for="text-topic">موضوع</label>

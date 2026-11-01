@@ -50,7 +50,7 @@ const RATING_STYLE: Record<
     class:
       '[--primary:var(--destructive)] [--primary-edge:color-mix(in_oklch,var(--destructive)_72%,black)]',
   },
-  hard: { variant: 'outline', key: '2', class: 'btn-3d-quiet border-2' },
+  hard: { variant: 'outline', key: '2', class: '' },
   good: { variant: 'default', key: '3', class: '' },
   easy: {
     variant: 'default',
@@ -91,7 +91,7 @@ const POINTS: Record<Rating, number> = {
   ],
   template: `
     <div
-      class="applet-english mx-auto flex min-h-[calc(100dvh-var(--bottom-nav-space)-6rem)] w-full max-w-lg flex-col gap-6"
+      class="applet-english lx-stage mx-auto flex min-w-0 min-h-[calc(100dvh-var(--bottom-nav-space)-6rem)] w-full max-w-lg flex-col gap-6"
     >
       <header class="flex items-center gap-3">
         <a
@@ -121,7 +121,7 @@ const POINTS: Record<Rating, number> = {
       @if (loading()) {
         <div aioSkeleton class="h-72 rounded-3xl"></div>
       } @else if (loadError()) {
-        <div aioEmpty class="glass rounded-3xl">
+        <div aioEmpty class="lx-glass rounded-3xl">
           <div aioEmptyHeader>
             <h1 aioEmptyTitle>مرور باز نشد</h1>
             <p aioEmptyDescription>{{ loadError() }}</p>
@@ -136,7 +136,7 @@ const POINTS: Record<Rating, number> = {
         </h1>
         <button
           type="button"
-          class="glass flex min-h-64 flex-col items-center justify-center gap-4 rounded-3xl border-2 border-b-4 p-6 text-center"
+          class="lx-glass flex min-h-64 flex-col items-center justify-center gap-4 rounded-3xl p-6 text-center"
           (click)="toggle()"
           [attr.aria-label]="flipped() ? 'نمایش رو' : 'نمایش جواب'"
           aria-live="polite"
@@ -163,7 +163,7 @@ const POINTS: Record<Rating, number> = {
           <button
             aioBtn
             size="icon-lg"
-            class="btn-3d size-12 rounded-2xl [--primary-edge:color-mix(in_oklch,var(--gem)_72%,black)] [--primary:var(--gem)]"
+            class="size-12 rounded-2xl [--primary:var(--gem)]"
             (click)="speak()"
             aria-label="تلفظ"
           >
@@ -195,7 +195,7 @@ const POINTS: Record<Rating, number> = {
           <ul
             dir="ltr"
             lang="en"
-            class="glass text-muted-foreground flex list-disc flex-col gap-1 rounded-2xl py-3 ps-8 pe-4 text-sm"
+            class="lx-glass text-muted-foreground flex list-disc flex-col gap-1 rounded-2xl py-3 ps-8 pe-4 text-sm"
           >
             @for (line of examples(); track $index) {
               <li>{{ line }}</li>
@@ -215,7 +215,7 @@ const POINTS: Record<Rating, number> = {
                 <button
                   aioBtn
                   size="lg"
-                  class="btn-3d h-auto min-h-14 flex-col gap-0 rounded-2xl py-2"
+                  class="h-auto min-h-14 flex-col gap-0 rounded-2xl py-2"
                   [variant]="style[r].variant"
                   [class]="style[r].class"
                   [disabled]="busy()"
@@ -233,7 +233,7 @@ const POINTS: Record<Rating, number> = {
             <button
               aioBtn
               size="lg"
-              class="btn-3d h-14 w-full rounded-2xl"
+              class="h-14 w-full rounded-2xl"
               (click)="toggle()"
             >
               نمایش جواب
@@ -279,13 +279,13 @@ const POINTS: Record<Rating, number> = {
           <a
             aioBtn
             size="lg"
-            class="btn-3d mt-auto h-14 w-full rounded-2xl"
+            class="mt-auto h-14 w-full rounded-2xl"
             routerLink=".."
             >ادامه</a
           >
         </section>
       } @else {
-        <div aioEmpty class="glass rounded-3xl">
+        <div aioEmpty class="lx-glass rounded-3xl">
           <div aioEmptyHeader>
             <div aioEmptyMedia variant="icon" class="text-primary">
               <aio-icon name="lucideBookOpen" />
@@ -294,7 +294,7 @@ const POINTS: Record<Rating, number> = {
             <p aioEmptyDescription>کارت تازه اضافه کن یا بعداً برگرد.</p>
           </div>
           <div aioEmptyContent>
-            <a aioBtn class="btn-3d" routerLink="..">بازگشت به دسته</a>
+            <a aioBtn routerLink="..">بازگشت به دسته</a>
           </div>
         </div>
       }
