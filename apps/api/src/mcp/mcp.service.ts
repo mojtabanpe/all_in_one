@@ -22,7 +22,7 @@ import { ToolsService } from '../tools/tools.service';
 import { ToolKit } from './mcp-tool-kit';
 
 const INSTRUCTIONS = [
-  "Manage the connected user's «پشتت گرم» data: English flashcards and reading passages (Recall), the planner (TickTick-style tasks, lists, habits, focus, calendars, countdowns) and health (meals with calories and macros, workouts, profile, meal plans).",
+  "Manage the connected user's «Poshtetgarm» data: English flashcards and reading passages (Recall), the planner (TickTick-style tasks, lists, habits, focus, calendars, countdowns) and health (meals with calories and macros, workouts, profile, meal plans).",
   'English: list decks before choosing a deck ID; generate content in the conversation, then save it with the creation tools; edit cards with update_card to keep their review history; only record review_card ratings the user gave.',
   'Planner: dates are calendar days in Tehran time (YYYY-MM-DD). Use list_lists to find list IDs (tasks without list_id go to the Inbox) and get_list for members before assigning. Trashed tasks can be restored; delete_list is permanent.',
   'Health: to change a meal, read the day with get_nutrition_day, then update_meal with the new description and your calorie/macro estimate.',
@@ -49,7 +49,7 @@ export class McpService {
         issuerUrl: new URL(this.auth.origin),
         resourceServerUrl: this.auth.resource,
         scopesSupported: [...MCP_SCOPES],
-        resourceName: 'پشتت گرم: انگلیسی و برنامه‌ریز',
+        resourceName: 'Poshtetgarm: انگلیسی و برنامه‌ریز',
       }),
     );
 

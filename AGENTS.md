@@ -293,3 +293,8 @@ When the owner gives a new instruction, add it to this list in the same change.
 
 
 62. **Shared applet header (2026-11-02):** Use one reusable component in `libs/shared/packages` for the title, subtitle and top route navigation of planner, English and health. Supply text, links and icons through inputs; keep typography, icon placement and spacing consistent, while preserving each applet’s accent and English-only LTR behavior. The owner explicitly approved this composed component.
+
+
+63. **Brand spelling and logo (2026-11-02):** Use exactly `Poshtetgarm` everywhere the app name appears, including headers, PWA/native notifications, email, install metadata and MCP pages. Use the official hand-and-sun logo in both the top header and sidebar. This replaces all earlier Persian brand spellings.
+
+64. **Assistant multiline composer (2026-11-02):** The assistant composer must wrap long text inside its bounds and support multiple lines. Enter inserts a newline; sending uses the explicit send button. Keep the composer and chat messages within the viewport on phones.

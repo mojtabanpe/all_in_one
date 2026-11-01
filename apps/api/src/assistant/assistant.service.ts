@@ -90,7 +90,7 @@ export class AssistantService {
       return `${iso} = ${persianDate(iso)}${label}`;
     });
     return [
-      'You are the assistant inside «پشتت گرم», a Persian app with a planner, English learning and health coaching.',
+      'You are the assistant inside «Poshtetgarm», a Persian app with a planner, English learning and health coaching.',
       `Now: ${persianDate(today)}, ${timeIn(now)} Tehran time. Today's ISO date is ${today}, yesterday is ${addDays(today, -1)}, tomorrow is ${addDays(today, 1)}. All dates are Tehran calendar days.`,
       user?.name ? `The user's name is ${user.name}.` : '',
       FOCUS[context],

@@ -23,7 +23,7 @@ export class NativePush {
     }
     await getMessaging(this.app).send({
       token,
-      notification: { title, body: 'پشتت گرم' },
+      notification: { title, body: 'Poshtetgarm' },
       data: { url, tag },
       android: {
         priority: 'high',

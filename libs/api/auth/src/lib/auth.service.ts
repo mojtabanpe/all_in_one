@@ -144,7 +144,7 @@ export class AuthService {
     });
     await this.mail.send({
       to: user.email,
-      subject: 'ایمیلت را در «پشتت گرم» تأیید کن',
+      subject: 'ایمیلت را در «Poshtetgarm» تأیید کن',
       text: [
         'خوش آمدی! برای تمام کردن ساخت حساب، ایمیلت را تأیید کن',
         '(لینک یک بار و تا ۲۴ ساعت کار می‌کند):',
@@ -199,7 +199,7 @@ export class AuthService {
         },
       });
     });
-    this.notify(updated.email, 'رمز حسابت در «پشتت گرم» عوض شد');
+    this.notify(updated.email, 'رمز حسابت در «Poshtetgarm» عوض شد');
     return updated;
   }
 
@@ -235,9 +235,9 @@ export class AuthService {
     });
     await this.mail.send({
       to: user.email,
-      subject: 'بازیابی رمز «پشتت گرم»',
+      subject: 'بازیابی رمز «Poshtetgarm»',
       text: [
-        'کسی خواسته رمز حسابت در «پشتت گرم» را عوض کند.',
+        'کسی خواسته رمز حسابت در «Poshtetgarm» را عوض کند.',
         '',
         'رمز تازه را اینجا انتخاب کن (لینک یک بار و تا یک ساعت کار می‌کند):',
         this.mail.link('reset-password', token),
@@ -276,7 +276,7 @@ export class AuthService {
       throw new BadRequestException(
         'این لینک بازیابی نامعتبر است یا منقضی شده.',
       );
-    this.notify(user.email, 'رمز حسابت در «پشتت گرم» بازنشانی شد');
+    this.notify(user.email, 'رمز حسابت در «Poshtetgarm» بازنشانی شد');
   }
 
   /** Security notice; a mail failure must not undo the password change. */

@@ -163,7 +163,7 @@ export class Pwa {
             <aio-icon name="lucideDownload" size="sm" />
             <h2 aioAlertTitle>
               {{
-                copy('پشتت گرم روی دستگاه شما', 'Poshtetgarm on your device')
+                copy('Poshtetgarm روی دستگاه شما', 'Poshtetgarm on your device')
               }}
             </h2>
             <div aioAlertDescription>
@@ -253,7 +253,7 @@ export class Pwa {
     }
     <aio-dialog
       [(open)]="pwa.installGuideOpen"
-      [title]="copy('نصب پشتت گرم', 'Install Poshtetgarm')"
+      [title]="copy('نصب Poshtetgarm', 'Install Poshtetgarm')"
       [language]="language()"
     >
       <ng-template aioDialogBody>

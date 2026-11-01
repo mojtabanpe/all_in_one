@@ -51,10 +51,13 @@ export class MailService {
 
   async send(mail: Mail): Promise<void> {
     if (this.transport) {
+      const sender =
+        this.config.get<string>('MAIL_FROM') || 'no-reply@localhost';
+      const address = sender.match(/<([^<>]+)>\s*$/)?.[1] ?? sender;
       await this.transport.sendMail({
-        from:
-          this.config.get<string>('MAIL_FROM') ||
-          'پشتت گرم <no-reply@localhost>',
+        // Keep the configured mailbox while enforcing the current display name,
+        // including servers whose MAIL_FROM still contains older branding.
+        from: { name: 'Poshtetgarm', address: address.trim() },
         ...mail,
       });
     } else if (this.env === 'test') {

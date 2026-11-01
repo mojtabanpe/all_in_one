@@ -7,12 +7,12 @@ import { AioCardDirectives } from '@all-in-one/ui';
   template: `
     <section aioCard class="max-w-2xl">
       <div aioCardHeader>
-        <h1 aioCardTitle class="text-2xl">درباره «پشتت گرم»</h1>
+        <h1 aioCardTitle class="text-2xl">درباره «Poshtetgarm»</h1>
       </div>
       <div aioCardContent class="flex flex-col gap-3 leading-8">
         <p>
-          «پشتت گرم» چند ابزار کوچک و مستقل را کنار هم می‌گذارد تا زندگی روزمره
-          ساده‌تر شود: برنامه‌ریز، یادگیری انگلیسی و سلامت.
+          «Poshtetgarm» چند ابزار کوچک و مستقل را کنار هم می‌گذارد تا زندگی
+          روزمره ساده‌تر شود: برنامه‌ریز، یادگیری انگلیسی و سلامت.
         </p>
         <p>
           پیشنهادهای تغذیه و ورزش عمومی هستند و جای نظر پزشک یا متخصص تغذیه را

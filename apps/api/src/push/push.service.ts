@@ -178,7 +178,7 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
         JSON.stringify({
           notification: {
             title,
-            body: 'پشتت گرم',
+            body: 'Poshtetgarm',
             icon: '/app/icons/icon-192.png',
             tag,
             dir: 'rtl',
@@ -230,7 +230,7 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
       throw new ConflictException('اعلان‌های این دستگاه را دوباره فعال کن.');
     const sent = await this.send(
       sub,
-      'اعلان آزمایشی پشتت گرم',
+      'اعلان آزمایشی Poshtetgarm',
       '/app/account',
       'test',
     );

@@ -1,4 +1,4 @@
-# استقرار «پشتت گرم» روی poshtetgarm.ir
+# استقرار «Poshtetgarm» روی poshtetgarm.ir
 
 این اپ جای Recall را روی `poshtetgarm.ir` می‌گیرد. حساب‌های انتخاب‌شده Recall با دسته‌ها، کارت‌ها و متن‌هایشان با `deploy/import-recall.sh <email>...` منتقل می‌شوند (رمزها همان می‌مانند).
 

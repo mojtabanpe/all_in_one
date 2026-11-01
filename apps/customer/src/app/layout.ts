@@ -53,7 +53,7 @@ import {
   ],
   template: `
     <aio-app-shell
-      [appName]="english() ? 'Poshtetgarm' : 'پشتت گرم'"
+      appName="Poshtetgarm"
       [navItems]="navigation()"
       [language]="english() ? 'en' : 'fa'"
     >
@@ -64,10 +64,11 @@ import {
           aioBtn
           variant="ghost"
           class="h-11"
+          [attr.aria-label]="english() ? 'Install' : 'نصب'"
           (click)="pwa.install()"
         >
           <aio-icon name="lucideDownload" size="sm" />
-          <span [class.hidden]="english()" [class.sm:inline]="english()">{{
+          <span class="hidden sm:inline">{{
             english() ? 'Install' : 'نصب'
           }}</span>
         </button>

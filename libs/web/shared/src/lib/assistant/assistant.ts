@@ -110,9 +110,7 @@ export class AssistantStore {
       (click)="open.set(true)"
     >
       <aio-icon name="lucideSparkles" size="sm" />
-      <span [class.hidden]="english()" [class.sm:inline]="english()">{{
-        copy('دستیار', 'Assistant')
-      }}</span>
+      <span class="hidden sm:inline">{{ copy('دستیار', 'Assistant') }}</span>
     </button>
 
     <aio-dialog
@@ -160,7 +158,7 @@ export class AssistantStore {
         >
           @for (m of conversation(); track $index) {
             <div
-              class="max-w-[85%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-line"
+              class="min-w-0 max-w-[85%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap wrap-anywhere"
               [class]="
                 m.role === 'user'
                   ? 'bg-primary text-primary-foreground self-start'
@@ -204,14 +202,18 @@ export class AssistantStore {
 
         <form
           aioInputGroup
-          class="mt-2"
+          class="mt-2 h-auto! min-w-0 flex-col items-stretch"
           (submit)="$event.preventDefault(); send(draft())"
         >
-          <input
-            aioInputGroupInput
+          <textarea
+            aioInputGroupTextarea
+            id="assistant-message"
             name="assistant-message"
+            class="min-h-24 max-h-48 w-full min-w-0 resize-none overflow-x-hidden overflow-y-auto whitespace-pre-wrap wrap-anywhere [field-sizing:content]"
+            rows="3"
+            wrap="soft"
             autocomplete="off"
-            enterkeyhint="send"
+            enterkeyhint="enter"
             [placeholder]="
               copy('بنویس یا با میکروفون بگو…', 'Type or use the microphone…')
             "
@@ -219,8 +221,8 @@ export class AssistantStore {
             [disabled]="busy()"
             [value]="draft()"
             (input)="draft.set($any($event.target).value)"
-          />
-          <aio-input-group-addon align="inline-end">
+          ></textarea>
+          <aio-input-group-addon align="block-end" class="justify-end">
             @if (status.hasValue() && status.value().stt) {
               <button
                 aioInputGroupButton
@@ -261,7 +263,7 @@ export class AssistantStore {
             variant="ghost"
             size="sm"
             class="text-muted-foreground mt-2"
-            (click)="store.messages.set([])"
+            (click)="conversation.set([])"
           >
             <aio-icon name="lucideTrash2" size="xs" />
             {{ copy('گفتگوی تازه', 'New conversation') }}

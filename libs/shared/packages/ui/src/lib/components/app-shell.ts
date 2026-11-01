@@ -35,10 +35,14 @@ import { AioIcon } from './icon';
       >
         <div hlmSidebarHeader class="flex-row items-center px-4 py-7">
           <a routerLink="/" class="flex flex-1 items-center gap-2 font-bold">
-            <span class="aio-brand-mark"
-              ><aio-icon [name]="brandIcon()" size="sm"
-            /></span>
-            <span>{{ appName() }}</span>
+            <img
+              [src]="logoSrc()"
+              width="36"
+              height="36"
+              alt=""
+              class="size-9 shrink-0 rounded-xl"
+            />
+            <bdi dir="ltr">{{ appName() }}</bdi>
           </a>
           <!-- eslint-disable-next-line @angular-eslint/template/elements-content -->
           <button
@@ -85,10 +89,23 @@ import { AioIcon } from './icon';
               class="hidden size-11 md:inline-flex"
             ></button>
           }
-          <span class="text-base font-bold" [class.md:hidden]="!collapsed()">{{
-            appName()
-          }}</span>
-          <div class="ms-auto flex items-center gap-2">
+          <a
+            routerLink="/"
+            class="flex min-h-11 min-w-0 shrink-0 items-center gap-2 text-base font-bold"
+            [attr.aria-label]="appName()"
+          >
+            <img
+              [src]="logoSrc()"
+              width="32"
+              height="32"
+              alt=""
+              class="size-8 shrink-0 rounded-lg"
+            />
+            <bdi dir="ltr" class="hidden min-[390px]:inline">{{
+              appName()
+            }}</bdi>
+          </a>
+          <div class="ms-auto flex min-w-0 items-center gap-1 sm:gap-2">
             <ng-content select="[aioShellActions]" />
           </div>
         </header>
@@ -115,6 +132,6 @@ export class AioAppShell {
   );
   readonly appName = input.required<string>();
   readonly language = input<'fa' | 'en'>('fa');
-  readonly brandIcon = input('lucideSparkles');
+  readonly logoSrc = input('brand-logo.png');
   readonly navItems = input.required<readonly AioNavItem[]>();
 }

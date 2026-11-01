@@ -53,7 +53,7 @@ import { APPLETS } from './applets-data';
           </p>
         </div>
         <div class="aio-hero flex flex-col gap-6">
-          <span class="aio-hero-caption">همه در یک، در یک نگاه</span>
+          <span class="aio-hero-caption">Poshtetgarm، در یک نگاه</span>
           <h2 class="text-2xl leading-relaxed font-bold">
             برای هر بخش از روزت،<br />یک جای درست.
           </h2>

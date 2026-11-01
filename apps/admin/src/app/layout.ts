@@ -33,11 +33,7 @@ import {
     }),
   ],
   template: `
-    <aio-app-shell
-      appName="پنل مدیریت"
-      brandIcon="lucideShieldCheck"
-      [navItems]="nav"
-    >
+    <aio-app-shell appName="Poshtetgarm" [navItems]="nav">
       <a
         aioShellActions
         aioBtn

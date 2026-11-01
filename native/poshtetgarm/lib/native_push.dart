@@ -110,7 +110,7 @@ class NativePush {
                 (message.data['tag'] ?? message.messageId ?? 'reminder')
                     .hashCode &
                 0x7fffffff,
-            title: message.notification?.title ?? 'پشتت گرم',
+            title: message.notification?.title ?? 'Poshtetgarm',
             body: message.notification?.body,
             notificationDetails: const NotificationDetails(
               android: AndroidNotificationDetails(
