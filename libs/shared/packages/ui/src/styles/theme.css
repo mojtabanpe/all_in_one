@@ -422,12 +422,7 @@ html[lang='en'] *,
     z-index: 39;
     height: calc(var(--bottom-nav-space) + 1.75rem);
     pointer-events: none;
-    background: linear-gradient(
-      to top,
-      var(--background) 0%,
-      var(--background) 55%,
-      color-mix(in oklch, var(--background) 0%, transparent) 100%
-    );
+    background: linear-gradient(transparent, var(--background) 45%);
   }
   .aio-eyebrow {
     font-size: 12px;
