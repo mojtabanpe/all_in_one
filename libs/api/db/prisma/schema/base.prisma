@@ -61,6 +61,7 @@ model User {
   mealLogs        MealLog[]
   mealPlans       MealPlan[]
   aiSettings      UserAiSettings?
+  aiPresets UserAiPreset[]
 
   @@map("users")
 }

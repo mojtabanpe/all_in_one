@@ -6,7 +6,14 @@ import type {
   AiStatus,
   UpdateAiSettingsInput,
 } from '@all-in-one/shared/schemas';
-import { SAVED_MODELS_LIMIT } from '@all-in-one/shared/schemas';
+import {
+  AI_PRESETS_LIMIT,
+  type AiKind,
+  type AiPresetView,
+  SAVED_MODELS_LIMIT,
+  type SaveAiPresetInput,
+} from '@all-in-one/shared/schemas';
+import { NotFoundException } from '@nestjs/common';
 import { SecretBox } from './secret-box';
 
 /** One service's resolved config for a request (key decrypted, server side only). */
@@ -79,12 +86,110 @@ export class AiSettingsService {
         hasKey: !!r?.sttKey,
       },
       ready: status(r),
+      presets: await this.presets(userId),
       savedModels: {
         chat: remember(r?.chatModels ?? [], [r?.chatModel]),
         tts: remember(r?.ttsModels ?? [], [r?.ttsModel, r?.ttsModel2]),
         stt: remember(r?.sttModels ?? [], [r?.sttModel]),
       },
     };
+  }
+
+  private async presets(userId: string): Promise<AiPresetView[]> {
+    const rows = await this.prisma.userAiPreset.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map((p) => {
+      const key = this.box.open(p.key);
+      return {
+        id: p.id,
+        kind: p.kind as AiKind,
+        url: p.url,
+        model: p.model,
+        model2: p.model2 ?? '',
+        keyHint: key ? `…${key.slice(-4)}` : '',
+        createdAt: p.createdAt.toISOString(),
+      };
+    });
+  }
+
+  /** Store a section's setup as a new row (an identical one is just moved to the top). */
+  async savePreset(
+    userId: string,
+    input: SaveAiPresetInput,
+  ): Promise<AiSettings> {
+    const current = await this.row(userId);
+    const key = input.key
+      ? input.key
+      : this.box.open(current?.[`${input.kind}Key`]);
+    const model2 = input.kind === 'tts' ? input.model2 || null : null;
+    const same = (
+      await this.prisma.userAiPreset.findMany({
+        where: {
+          userId,
+          kind: input.kind,
+          url: input.url,
+          model: input.model,
+          model2,
+        },
+      })
+    ).find((p) => (this.box.open(p.key) ?? null) === (key ?? null));
+    if (same)
+      await this.prisma.userAiPreset.update({
+        where: { id: same.id },
+        data: { createdAt: new Date() },
+      });
+    else
+      await this.prisma.userAiPreset.create({
+        data: {
+          userId,
+          kind: input.kind,
+          url: input.url,
+          model: input.model,
+          model2,
+          key: key ? this.box.seal(key) : null,
+        },
+      });
+    // Keep the newest AI_PRESETS_LIMIT per service.
+    const old = await this.prisma.userAiPreset.findMany({
+      where: { userId, kind: input.kind },
+      orderBy: { createdAt: 'desc' },
+      skip: AI_PRESETS_LIMIT,
+      select: { id: true },
+    });
+    if (old.length)
+      await this.prisma.userAiPreset.deleteMany({
+        where: { id: { in: old.map((o) => o.id) } },
+      });
+    return this.view(userId);
+  }
+
+  /** Make a saved setup the current one for its service, key included. */
+  async applyPreset(userId: string, id: string): Promise<AiSettings> {
+    const p = await this.prisma.userAiPreset.findFirst({
+      where: { id, userId },
+    });
+    if (!p) throw new NotFoundException();
+    const kind = p.kind as AiKind;
+    await this.update(userId, {
+      [kind]: {
+        url: p.url,
+        model: p.model,
+        ...(kind === 'tts' ? { model2: p.model2 ?? '' } : {}),
+      },
+    });
+    // The key is copied sealed, without passing through plain text.
+    await this.prisma.userAiSettings.update({
+      where: { userId },
+      data: { [`${kind}Key`]: p.key },
+    });
+    return this.view(userId);
+  }
+
+  async removePreset(userId: string, id: string): Promise<AiSettings> {
+    await this.prisma.userAiPreset.deleteMany({ where: { id, userId } });
+    return this.view(userId);
   }
 
   async status(userId: string): Promise<AiStatus> {

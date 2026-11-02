@@ -266,6 +266,11 @@ When the owner gives a new instruction, add it to this list in the same change.
     (`chatModels`/`ttsModels`/`sttModels`, most recent first, at most 15) and shown as chips under the field: tap to
     use it again, × to forget it (`forgetModel`). Technical fields (urls, model names, keys) carry `lang="en"` so they
     show Latin digits.
+    **Saved setups** (owner, same day: "a save button per section, url and API key saved too"): «ذخیره در فهرست» stores
+    the section's url, model(s) and key as a row of `user_ai_presets` (key sealed like the settings; an empty key
+    field = the stored key; identical rows are not duplicated; 30 per service). Each section lists its rows in a
+    spartan table (model / url, key as `…last4`, «استفاده», delete); «استفاده» makes the row current, key included,
+    copied sealed. The key itself never reaches the browser.
 
 ## Approved custom components
 

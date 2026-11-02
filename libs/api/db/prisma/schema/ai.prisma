@@ -24,3 +24,21 @@ model UserAiSettings {
 
   @@map("user_ai_settings")
 }
+
+/// Saved AI service setups the user can switch back to (owner, 2026-11-02): one row per
+/// "save" of a section. Keys are sealed like UserAiSettings and never sent to the browser.
+model UserAiPreset {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// chat | tts | stt
+  kind      String   @db.VarChar(10)
+  url       String   @db.VarChar(500)
+  model     String   @db.VarChar(100)
+  model2    String?  @db.VarChar(100)
+  key       String?  @db.VarChar(1000)
+  createdAt DateTime @default(now())
+
+  @@index([userId, kind, createdAt])
+  @@map("user_ai_presets")
+}

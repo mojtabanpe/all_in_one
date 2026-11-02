@@ -1,7 +1,19 @@
-import { Body, Controller, Get, HttpCode, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { type AuthUser, CurrentUser } from '@all-in-one/api/auth';
 import {
   type AiKind,
+  type SaveAiPresetInput,
+  saveAiPresetSchema,
   testAiSchema,
   type UpdateAiSettingsInput,
   updateAiSettingsSchema,
@@ -28,6 +40,33 @@ export class AiController {
     @Body({ schema: updateAiSettingsSchema }) input: UpdateAiSettingsInput,
   ) {
     return this.settings.update(user.id, input);
+  }
+
+  /** Save a section's setup (url, model, key) to its list. */
+  @Post('settings/presets')
+  @HttpCode(200)
+  savePreset(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: saveAiPresetSchema }) input: SaveAiPresetInput,
+  ) {
+    return this.settings.savePreset(user.id, input);
+  }
+
+  @Post('settings/presets/:id/apply')
+  @HttpCode(200)
+  applyPreset(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.settings.applyPreset(user.id, id);
+  }
+
+  @Delete('settings/presets/:id')
+  removePreset(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.settings.removePreset(user.id, id);
   }
 
   @Get('status')

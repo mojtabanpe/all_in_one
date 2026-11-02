@@ -11,6 +11,7 @@ import type {
   AiSettings,
   AiTestResult,
   UpdateAiSettingsInput,
+  AiPresetView,
 } from '@all-in-one/shared/schemas';
 import {
   AioTranslate,
@@ -22,12 +23,15 @@ import {
   AioFormField,
   AioAsyncButton,
   AioNotifications,
+  AioTableDirectives,
   verbatim,
 } from '@all-in-one/ui';
 import {
   lucideCircleCheck,
   lucideCircleDashed,
+  lucideBookmarkPlus,
   lucidePlugZap,
+  lucideTrash2,
   lucideX,
 } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
@@ -75,6 +79,7 @@ const SERVICES: {
 @Component({
   selector: 'web-ai-settings',
   imports: [
+    AioTableDirectives,
     AioButton,
     AioCardDirectives,
     AioIcon,
@@ -87,7 +92,9 @@ const SERVICES: {
     provideIcons({
       lucideCircleCheck,
       lucideCircleDashed,
+      lucideBookmarkPlus,
       lucidePlugZap,
+      lucideTrash2,
       lucideX,
     }),
   ],
@@ -303,7 +310,79 @@ const SERVICES: {
                   {{ 'پاک کردن کلید' | aioTranslate }}
                 </button>
               }
+              <button
+                aioBtn
+                type="button"
+                variant="outline"
+                [disabled]="busy() === s.kind || !d.url.trim()"
+                (click)="savePreset(s.kind)"
+              >
+                <aio-icon name="lucideBookmarkPlus" size="sm" />
+                {{ 'ذخیره در فهرست' | aioTranslate }}
+              </button>
             </div>
+            @if (presetsOf(s.kind).length) {
+              <div aioTableContainer class="rounded-xl border">
+                <table aioTable lang="en" dir="ltr" class="text-xs">
+                  <thead aioTHead>
+                    <tr aioTr>
+                      <th aioTh>Model / URL</th>
+                      <th aioTh>Key</th>
+                      <th aioTh><span class="sr-only">Actions</span></th>
+                    </tr>
+                  </thead>
+                  <tbody aioTBody>
+                    @for (p of presetsOf(s.kind); track p.id) {
+                      <tr aioTr [class.bg-accent]="isCurrent(p)">
+                        <td aioTd class="w-full max-w-0">
+                          <div class="truncate font-medium">
+                            {{ p.model || '—' }}
+                            @if (p.model2) {
+                              <span class="text-muted-foreground">
+                                / {{ p.model2 }}</span
+                              >
+                            }
+                          </div>
+                          <div
+                            class="text-muted-foreground truncate"
+                            [title]="p.url"
+                          >
+                            {{ p.url }}
+                          </div>
+                        </td>
+                        <td aioTd class="font-mono">{{ p.keyHint || '—' }}</td>
+                        <td aioTd class="whitespace-nowrap">
+                          <button
+                            aioBtn
+                            type="button"
+                            size="sm"
+                            [variant]="isCurrent(p) ? 'ghost' : 'default'"
+                            [disabled]="busy() === s.kind || isCurrent(p)"
+                            (click)="applyPreset(p)"
+                          >
+                            {{
+                              (isCurrent(p) ? 'فعال' : 'استفاده') | aioTranslate
+                            }}
+                          </button>
+                          <button
+                            aioBtn
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            class="text-destructive"
+                            [attr.aria-label]="'حذف از فهرست' | aioTranslate"
+                            [disabled]="busy() === s.kind"
+                            (click)="removePreset(p)"
+                          >
+                            <aio-icon name="lucideTrash2" size="xs" />
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
           </form>
         }
         <p class="text-muted-foreground text-xs">
@@ -398,6 +477,79 @@ export class AiSettingsCard {
     return this.settings.hasValue()
       ? (this.settings.value().savedModels?.[kind] ?? [])
       : [];
+  }
+
+  protected presetsOf(kind: AiKind): AiPresetView[] {
+    return this.settings.hasValue()
+      ? (this.settings.value().presets ?? []).filter((p) => p.kind === kind)
+      : [];
+  }
+
+  /** The row matching the service's current url and model(s). */
+  protected isCurrent(p: AiPresetView): boolean {
+    if (!this.settings.hasValue()) return false;
+    const v = this.settings.value();
+    const cur = v[p.kind];
+    return (
+      cur.url === p.url &&
+      cur.model === p.model &&
+      (p.kind !== 'tts' || v.tts.model2 === p.model2)
+    );
+  }
+
+  /** Save the section as typed (an empty key field = the stored key) as a new row. */
+  protected async savePreset(kind: AiKind) {
+    const d = this.drafts()[kind];
+    this.busy.set(kind);
+    try {
+      this.settings.set(
+        await firstValueFrom(
+          this.http.post<AiSettings>(`${this.base}/presets`, {
+            kind,
+            url: d.url.trim(),
+            model: d.model.trim(),
+            ...(kind === 'tts' ? { model2: d.model2.trim() } : {}),
+            ...(d.key.trim() ? { key: d.key.trim() } : {}),
+          }),
+        ),
+      );
+      this.notifications.success('در فهرست ذخیره شد');
+    } catch (error) {
+      this.notifications.error(apiErrorMessage(error));
+    } finally {
+      this.busy.set(null);
+    }
+  }
+
+  protected async applyPreset(p: AiPresetView) {
+    this.busy.set(p.kind);
+    try {
+      this.settings.set(
+        await firstValueFrom(
+          this.http.post<AiSettings>(`${this.base}/presets/${p.id}/apply`, {}),
+        ),
+      );
+      this.notifications.success('این تنظیم فعال شد');
+    } catch (error) {
+      this.notifications.error(apiErrorMessage(error));
+    } finally {
+      this.busy.set(null);
+    }
+  }
+
+  protected async removePreset(p: AiPresetView) {
+    this.busy.set(p.kind);
+    try {
+      this.settings.set(
+        await firstValueFrom(
+          this.http.delete<AiSettings>(`${this.base}/presets/${p.id}`),
+        ),
+      );
+    } catch (error) {
+      this.notifications.error(apiErrorMessage(error));
+    } finally {
+      this.busy.set(null);
+    }
   }
 
   protected forget(kind: AiKind, model: string) {

@@ -17,6 +17,20 @@ export interface AiSettings {
   ready: AiStatus;
   /** Model names used before, per service, most recent first (current one included). */
   savedModels: Record<AiKind, string[]>;
+  /** Saved setups (url, model, key) per service, newest first. */
+  presets: AiPresetView[];
+}
+
+/** A saved setup; the key itself never leaves the server, only its last 4 characters. */
+export interface AiPresetView {
+  id: string;
+  kind: AiKind;
+  url: string;
+  model: string;
+  model2: string;
+  /** e.g. '…a1b2', or '' when the setup has no key. */
+  keyHint: string;
+  createdAt: string;
 }
 
 export interface AiStatus {
@@ -61,6 +75,19 @@ export const updateAiSettingsSchema = z.partial(
 /** How many model names each service remembers. */
 export const SAVED_MODELS_LIMIT = 15;
 export type UpdateAiSettingsInput = z.infer<typeof updateAiSettingsSchema>;
+
+/** Save a section's setup: what is typed, or the stored value where the field is left empty (key). */
+export const saveAiPresetSchema = z.object({
+  kind: z.enum(['chat', 'tts', 'stt']),
+  url: z.string().check(z.trim(), z.maxLength(500)),
+  model: z.string().check(z.trim(), z.maxLength(100)),
+  model2: z.optional(z.string().check(z.trim(), z.maxLength(100))),
+  /** Omitted or '' = use the key stored for this service now. */
+  key: z.optional(z.string().check(z.trim(), z.maxLength(500))),
+});
+export type SaveAiPresetInput = z.infer<typeof saveAiPresetSchema>;
+/** How many saved setups each service keeps. */
+export const AI_PRESETS_LIMIT = 30;
 
 export const testAiSchema = z.object({ kind: z.enum(AI_KINDS) });
 export interface AiTestResult {
