@@ -3982,7 +3982,7 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['دقیقه، این هفته', 'Minutes, this week'],
   ['این مورد قبلاً کامل شده.', 'This item has already been completed.'],
   ['این یادآوری دیگر پیدا نشد.', 'This reminder was no longer found.'],
-  ['بار', 'load'],
+  ['بار', 'times'],
   ['انجامش نمی‌دم', 'I will not do it'],
   ['امروز نه', 'not today'],
   ['هنوز عادتی نساخته‌ای', "You haven't made a habit yet"],
