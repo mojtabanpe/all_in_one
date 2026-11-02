@@ -27,6 +27,8 @@ describe('application language', () => {
       directions.push(direction),
     );
     locale.setLanguage('en');
+    // The message table is a lazy chunk; the app waits for it before English renders.
+    await locale.ready;
     await fixture.whenStable();
     expect(document.documentElement.dir).toBe('ltr');
     expect(document.documentElement.lang).toBe('en');
