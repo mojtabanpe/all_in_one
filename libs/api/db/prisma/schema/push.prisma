@@ -8,6 +8,7 @@ model PushSubscription {
   /// WEB uses VAPID keys; ANDROID/MACOS use an FCM registration token.
   platform String @default("WEB") @db.VarChar(10)
   fcmToken String?
+  language String @default("fa") @db.VarChar(2)
   sessionVersion Int
   createdAt DateTime @default(now())
   deliveries PushDelivery[]

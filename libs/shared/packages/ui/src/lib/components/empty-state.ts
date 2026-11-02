@@ -1,3 +1,4 @@
+import { AioTranslate } from '../locale';
 import { Component, input } from '@angular/core';
 import {
   AioEmpty,
@@ -19,6 +20,7 @@ import { AioIcon } from './icon';
     AioEmptyDescription,
     AioEmptyContent,
     AioIcon,
+    AioTranslate,
   ],
   template: `
     <div aioEmptyHeader>
@@ -38,7 +40,7 @@ import { AioIcon } from './icon';
           <h2 aioEmptyTitle>{{ title() }}</h2>
         }
       }
-      <p aioEmptyDescription>{{ description() }}</p>
+      <p aioEmptyDescription>{{ description() | aioTranslate }}</p>
     </div>
     <div aioEmptyContent class="empty:hidden"><ng-content /></div>
   `,

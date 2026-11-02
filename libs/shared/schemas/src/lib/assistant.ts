@@ -9,6 +9,7 @@ export const ASSISTANT_CONTEXTS = [
 export type AssistantContext = (typeof ASSISTANT_CONTEXTS)[number];
 
 export const assistantRequestSchema = z.object({
+  language: z.optional(z.enum(['fa', 'en'])),
   /** The conversation so far, oldest first; the last one is the user's new message. */
   messages: z
     .array(

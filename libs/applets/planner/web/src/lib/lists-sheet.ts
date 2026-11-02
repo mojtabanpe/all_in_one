@@ -14,12 +14,14 @@ import {
   type PlannerTag,
 } from '@all-in-one/applets/planner/contracts';
 import {
+  AioTranslate,
   AioButton,
   AioConfirm,
   AioIcon,
   AioInputGroupDirectives,
-  aioToast,
   provideIcons,
+  AioNotifications,
+  AioLocale,
 } from '@all-in-one/ui';
 import { apiErrorMessage } from '@all-in-one/web/shared';
 import {
@@ -69,6 +71,7 @@ type Adding = 'list' | 'folder' | 'tag' | null;
     AioInputGroupDirectives,
     ColorPicker,
     NgTemplateOutlet,
+    AioTranslate,
   ],
   providers: [
     provideIcons({
@@ -88,7 +91,10 @@ type Adding = 'list' | 'folder' | 'tag' | null;
     }),
   ],
   template: `
-    <nav class="flex flex-col gap-4 pb-2" aria-label="فهرست‌ها">
+    <nav
+      class="flex flex-col gap-4 pb-2"
+      [attr.aria-label]="'فهرست‌ها' | aioTranslate"
+    >
       <ul class="flex flex-col">
         @for (v of smart; track v.key) {
           <ng-container
@@ -122,7 +128,7 @@ type Adding = 'list' | 'folder' | 'tag' | null;
         <h3
           class="text-muted-foreground flex items-center justify-between px-2 text-xs font-semibold"
         >
-          فهرست‌ها
+          {{ 'فهرست‌ها' | aioTranslate }}
           <span class="flex gap-1">
             <button
               aioBtn
@@ -131,7 +137,8 @@ type Adding = 'list' | 'folder' | 'tag' | null;
               type="button"
               (click)="adding.set('folder')"
             >
-              <aio-icon name="lucideFolder" size="xs" /> پوشه
+              <aio-icon name="lucideFolder" size="xs" />
+              {{ 'پوشه' | aioTranslate }}
             </button>
             <button
               aioBtn
@@ -140,7 +147,8 @@ type Adding = 'list' | 'folder' | 'tag' | null;
               type="button"
               (click)="adding.set('list')"
             >
-              <aio-icon name="lucidePlus" size="xs" /> فهرست
+              <aio-icon name="lucidePlus" size="xs" />
+              {{ 'فهرست' | aioTranslate }}
             </button>
           </span>
         </h3>
@@ -153,17 +161,21 @@ type Adding = 'list' | 'folder' | 'tag' | null;
             <input
               aioInputGroupInput
               [placeholder]="
-                adding() === 'list' ? 'نام فهرست تازه' : 'نام پوشه تازه'
+                (adding() === 'list' ? 'نام فهرست تازه' : 'نام پوشه تازه')
+                  | aioTranslate
               "
               [attr.aria-label]="
-                adding() === 'list' ? 'نام فهرست تازه' : 'نام پوشه تازه'
+                (adding() === 'list' ? 'نام فهرست تازه' : 'نام پوشه تازه')
+                  | aioTranslate
               "
               enterkeyhint="done"
               [value]="name()"
               (input)="name.set($any($event.target).value)"
             />
             <aio-input-group-addon align="inline-end">
-              <button aioInputGroupButton type="submit" size="sm">ساختن</button>
+              <button aioInputGroupButton type="submit" size="sm">
+                {{ 'ساختن' | aioTranslate }}
+              </button>
             </aio-input-group-addon>
           </form>
           @if (adding() === 'list') {
@@ -183,13 +195,13 @@ type Adding = 'list' | 'folder' | 'tag' | null;
               class="text-muted-foreground flex min-h-11 cursor-pointer items-center gap-2 px-2 text-sm font-semibold"
             >
               <aio-icon name="lucideFolder" size="sm" />
-              <span class="flex-1">{{ f.folder.name }}</span>
+              <span class="flex-1">{{ f.folder.name | aioTranslate }}</span>
               <button
                 aioBtn
                 variant="ghost"
                 size="icon-sm"
                 type="button"
-                [attr.aria-label]="'حذف پوشه ' + f.folder.name"
+                [attr.aria-label]="'حذف پوشه ' + f.folder.name | aioTranslate"
                 (click)="$event.preventDefault(); removeFolder(f.folder)"
               >
                 <aio-icon name="lucideTrash2" size="xs" />
@@ -210,7 +222,7 @@ type Adding = 'list' | 'folder' | 'tag' | null;
         <h3
           class="text-muted-foreground flex items-center justify-between px-2 text-xs font-semibold"
         >
-          برچسب‌ها
+          {{ 'برچسب‌ها' | aioTranslate }}
           <button
             aioBtn
             variant="ghost"
@@ -218,7 +230,8 @@ type Adding = 'list' | 'folder' | 'tag' | null;
             type="button"
             (click)="adding.set('tag')"
           >
-            <aio-icon name="lucidePlus" size="xs" /> برچسب
+            <aio-icon name="lucidePlus" size="xs" />
+            {{ 'برچسب' | aioTranslate }}
           </button>
         </h3>
         @if (adding() === 'tag') {
@@ -229,14 +242,16 @@ type Adding = 'list' | 'folder' | 'tag' | null;
           >
             <input
               aioInputGroupInput
-              placeholder="نام برچسب، بدون فاصله"
-              aria-label="نام برچسب تازه"
+              [placeholder]="'نام برچسب، بدون فاصله' | aioTranslate"
+              [attr.aria-label]="'نام برچسب تازه' | aioTranslate"
               enterkeyhint="done"
               [value]="name()"
               (input)="name.set($any($event.target).value)"
             />
             <aio-input-group-addon align="inline-end">
-              <button aioInputGroupButton type="submit" size="sm">ساختن</button>
+              <button aioInputGroupButton type="submit" size="sm">
+                {{ 'ساختن' | aioTranslate }}
+              </button>
             </aio-input-group-addon>
           </form>
         }
@@ -254,9 +269,9 @@ type Adding = 'list' | 'folder' | 'tag' | null;
                   size="sm"
                   [class]="tone[t.color].text"
                 />
-                <span class="flex-1">{{ t.name }}</span>
+                <span class="flex-1">{{ t.name | aioTranslate }}</span>
                 <span class="text-muted-foreground text-xs">{{
-                  fa(t.openCount)
+                  fa(t.openCount) | aioTranslate
                 }}</span>
               </button>
               <button
@@ -264,7 +279,7 @@ type Adding = 'list' | 'folder' | 'tag' | null;
                 variant="ghost"
                 size="icon"
                 type="button"
-                [attr.aria-label]="'تنظیم برچسب ' + t.name"
+                [attr.aria-label]="'تنظیم برچسب ' + t.name | aioTranslate"
                 (click)="editTag.emit(t)"
               >
                 <aio-icon name="lucideEllipsis" size="sm" />
@@ -272,7 +287,10 @@ type Adding = 'list' | 'folder' | 'tag' | null;
             </li>
           } @empty {
             <li class="text-muted-foreground px-2 text-sm">
-              با نوشتن #برچسب در کادر افزودن هم برچسب ساخته می‌شود.
+              {{
+                'با نوشتن #برچسب در کادر افزودن هم برچسب ساخته می‌شود.'
+                  | aioTranslate
+              }}
             </li>
           }
         </ul>
@@ -314,9 +332,11 @@ type Adding = 'list' | 'folder' | 'tag' | null;
           (click)="picked.emit(key)"
         >
           <aio-icon [name]="icon" size="sm" class="text-primary" />
-          <span class="flex-1">{{ label }}</span>
+          <span class="flex-1">{{ label | aioTranslate }}</span>
           @if (count) {
-            <span class="text-muted-foreground text-xs">{{ fa(count) }}</span>
+            <span class="text-muted-foreground text-xs">{{
+              fa(count) | aioTranslate
+            }}</span>
           }
         </button>
       </li>
@@ -344,7 +364,7 @@ type Adding = 'list' | 'folder' | 'tag' | null;
           }
           @if (l.openCount) {
             <span class="text-muted-foreground text-xs">{{
-              fa(l.openCount)
+              fa(l.openCount) | aioTranslate
             }}</span>
           }
         </button>
@@ -363,6 +383,10 @@ type Adding = 'list' | 'folder' | 'tag' | null;
   `,
 })
 export class ListsSheet {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   private readonly api = inject(PlannerApi);
   private readonly confirm = inject(AioConfirm);
 
@@ -400,7 +424,7 @@ export class ListsSheet {
     })),
   );
 
-  protected readonly fa = (n: number) => n.toLocaleString('fa-IR');
+  protected readonly fa = (n: number) => this.locale.number(n);
   protected readonly asColor = (c: string) => c as PlannerColor;
 
   protected async create() {
@@ -420,7 +444,7 @@ export class ListsSheet {
       this.adding.set(null);
       this.changed.emit();
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
@@ -436,7 +460,7 @@ export class ListsSheet {
       await this.api.removeFolder(folder.id);
       this.changed.emit();
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 }

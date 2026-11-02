@@ -1,7 +1,9 @@
+import { AioLocale, AioTranslate } from '../locale';
 import {
   booleanAttribute,
   Component,
   computed,
+  inject,
   input,
   model,
   signal,
@@ -13,7 +15,10 @@ import {
   PersianDate,
   provideDateAdapter,
 } from '@spartan-ng/brain/date-time';
-import { provideBrnCalendarI18n } from '@spartan-ng/brain/calendar';
+import {
+  BrnCalendarI18nService,
+  BrnCalendarI18nToken,
+} from '@spartan-ng/brain/calendar';
 import { HlmCalendar } from '@spartan-ng/helm/calendar';
 import { lucideCalendarDays } from '@ng-icons/lucide';
 import { AioIcon, provideIcons } from './icon';
@@ -87,25 +92,63 @@ export function jalaliToIso(value: JalaliDate): string {
     AioDialogBody,
     AioDialogActions,
     HlmCalendar,
+    AioTranslate,
   ],
   providers: [
     provideIcons({ lucideCalendarDays }),
     provideDateAdapter(BrnJalaliDateAdapter),
-    provideBrnCalendarI18n({
-      firstDayOfWeek: () => 6,
-      months: () => MONTHS,
-      formatMonth: (month) => MONTHS[month],
-      formatYear: (year) =>
-        year.toLocaleString('fa-IR', { useGrouping: false }),
-      formatHeader: (month, year) =>
-        `${MONTHS[month]} ${year.toLocaleString('fa-IR', { useGrouping: false })}`,
-      formatWeekdayName: (day) => WEEKDAYS[day].slice(0, 1),
-      labelWeekday: (day) => WEEKDAYS[day],
-      labelPrevious: () => 'ماه قبل',
-      labelNext: () => 'ماه بعد',
-      years: (start = 1300, end = 1500) =>
-        Array.from({ length: end - start + 1 }, (_, i) => start + i),
-    }),
+    {
+      provide: BrnCalendarI18nToken,
+      useFactory: () => {
+        const locale = inject(AioLocale);
+        const service = new BrnCalendarI18nService();
+        const englishMonths = [
+          'Farvardin',
+          'Ordibehesht',
+          'Khordad',
+          'Tir',
+          'Mordad',
+          'Shahrivar',
+          'Mehr',
+          'Aban',
+          'Azar',
+          'Dey',
+          'Bahman',
+          'Esfand',
+        ] as typeof MONTHS;
+        const weekdays = [
+          'Sunday',
+          'Monday',
+          'Tuesday',
+          'Wednesday',
+          'Thursday',
+          'Friday',
+          'Saturday',
+        ];
+        const monthName = (month: number) =>
+          locale.english() ? englishMonths[month] : MONTHS[month];
+        service.use({
+          firstDayOfWeek: () => 6,
+          months: () => (locale.english() ? englishMonths : MONTHS),
+          formatMonth: monthName,
+          formatYear: (year) => locale.number(year, { useGrouping: false }),
+          formatHeader: (month, year) =>
+            `${monthName(month)} ${locale.number(year, { useGrouping: false })}`,
+          formatWeekdayName: (day) =>
+            locale.english()
+              ? weekdays[day].slice(0, 3)
+              : WEEKDAYS[day].slice(0, 1),
+          labelWeekday: (day) =>
+            locale.english() ? weekdays[day] : WEEKDAYS[day],
+          labelPrevious: () =>
+            locale.english() ? 'Previous month' : 'ماه قبل',
+          labelNext: () => (locale.english() ? 'Next month' : 'ماه بعد'),
+          years: (start = 1300, end = 1500) =>
+            Array.from({ length: end - start + 1 }, (_, i) => start + i),
+        });
+        return service;
+      },
+    },
   ],
   host: { class: 'block min-w-0 w-full' },
   styles: `
@@ -121,7 +164,7 @@ export function jalaliToIso(value: JalaliDate): string {
       class="min-h-11 w-full min-w-0 justify-between gap-2 rounded-[12px] font-normal motion-safe:active:scale-[0.96]"
       [id]="inputId()"
       [disabled]="disabled() || readonly()"
-      [attr.aria-label]="ariaLabel() || null"
+      [attr.aria-label]="ariaLabel() || null | aioTranslate"
       [attr.aria-invalid]="invalid()"
       [attr.aria-required]="required()"
       aria-haspopup="dialog"
@@ -129,7 +172,7 @@ export function jalaliToIso(value: JalaliDate): string {
       (click)="open.set(true); touched.set(true)"
     >
       <span class="min-w-0 truncate" [class.text-muted-foreground]="!value()">{{
-        label()
+        label() | aioTranslate
       }}</span>
       <aio-icon
         name="lucideCalendarDays"
@@ -139,13 +182,13 @@ export function jalaliToIso(value: JalaliDate): string {
     </button>
     <aio-dialog
       [(open)]="open"
-      title="انتخاب تاریخ شمسی"
+      [title]="'انتخاب تاریخ شمسی' | aioTranslate"
       [contentClass]="
         'sm:max-w-sm [&_[data-slot=dialog-body]]:px-1 ' + contentClass()
       "
     >
       <ng-template aioDialogBody>
-        <div class="flex justify-center" dir="rtl">
+        <div class="flex justify-center" [attr.dir]="locale.direction()">
           <hlm-calendar
             class="jalali-calendar p-0 [&_button]:min-h-11 [&_button]:min-w-11"
             [date]="date()"
@@ -166,7 +209,7 @@ export function jalaliToIso(value: JalaliDate): string {
             variant="ghost"
             (click)="value.set(''); open.set(false); touched.set(true)"
           >
-            پاک‌کردن تاریخ
+            {{ 'پاک‌کردن تاریخ' | aioTranslate }}
           </button>
         }
         <button
@@ -175,13 +218,14 @@ export function jalaliToIso(value: JalaliDate): string {
           variant="outline"
           (click)="open.set(false)"
         >
-          بستن
+          {{ 'بستن' | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>
   `,
 })
 export class AioDateInput implements FormValueControl<string> {
+  protected readonly locale = inject(AioLocale);
   readonly value = model('');
   readonly touched = model(false);
   readonly disabled = input(false, { transform: booleanAttribute });
@@ -207,12 +251,17 @@ export class AioDateInput implements FormValueControl<string> {
   );
   protected readonly label = computed(() =>
     this.date()
-      ? new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-arabext', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          timeZone: 'UTC',
-        }).format(new Date(`${this.value()}T12:00:00Z`))
+      ? new Intl.DateTimeFormat(
+          this.locale.english()
+            ? 'en-US-u-ca-persian'
+            : 'fa-IR-u-ca-persian-nu-arabext',
+          {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            timeZone: 'UTC',
+          },
+        ).format(new Date(`${this.value()}T12:00:00Z`))
       : 'انتخاب تاریخ',
   );
   protected select(date: JalaliDate | null | undefined) {

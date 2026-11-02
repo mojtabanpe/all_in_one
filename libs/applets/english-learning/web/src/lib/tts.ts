@@ -1,14 +1,18 @@
 import { inject, Injectable } from '@angular/core';
 import type { SpeechVoice } from '@all-in-one/applets/english-learning/contracts';
-import { aioToast } from '@all-in-one/ui';
+import { AioNotifications } from '@all-in-one/ui';
 import { EnglishApi } from './english-api';
 
 /**
  * Plays server-side speech (Recall's TtsService): one clip at a time, or a list
  * of chunks read aloud in order while the next chunk is fetched.
  */
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root',
+})
 export class Tts {
+  private readonly notifications = inject(AioNotifications);
+
   private readonly api = inject(EnglishApi);
   private audio: HTMLAudioElement | null = null;
   private url: string | null = null;
@@ -29,7 +33,7 @@ export class Tts {
     } catch {
       if (generation === this.generation) {
         this.cancel();
-        aioToast.error('Unable to play pronunciation.');
+        this.notifications.error('Unable to play pronunciation.');
       }
     }
   }
@@ -62,7 +66,7 @@ export class Tts {
       }
     } catch {
       if (generation === this.generation)
-        aioToast.error('Unable to read the text aloud.');
+        this.notifications.error('Unable to read the text aloud.');
     } finally {
       if (generation === this.generation) this.cancel();
     }

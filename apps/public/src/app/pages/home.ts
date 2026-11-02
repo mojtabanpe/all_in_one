@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
+  AioTranslate,
   AioButton,
   AioCardDirectives,
   AioIcon,
@@ -23,6 +24,7 @@ import { APPLETS } from './applets-data';
     AioIcon,
     RouterLink,
     AioSectionHeading,
+    AioTranslate,
   ],
   providers: [
     provideIcons({ lucideCalendarCheck, lucideHeartPulse, lucideLanguages }),
@@ -35,34 +37,45 @@ import { APPLETS } from './applets-data';
         <div class="flex flex-col items-start gap-6">
           <span
             class="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-xs font-medium"
-            ><span class="size-1.5 rounded-full bg-primary"></span>یک فضای شخصی،
-            برای زندگی روزمره</span
+            ><span class="size-1.5 rounded-full bg-primary"></span
+            >{{ 'یک فضای شخصی، برای زندگی روزمره' | aioTranslate }}</span
           >
           <h1
             class="text-4xl leading-[1.55] font-bold tracking-tight md:text-5xl"
           >
-            روزهای شلوغ.<br /><span class="text-primary">یک جای خلوت.</span>
+            {{ 'روزهای شلوغ.' | aioTranslate }}<br /><span
+              class="text-primary"
+              >{{ 'یک جای خلوت.' | aioTranslate }}</span
+            >
           </h1>
           <p
             class="text-muted-foreground max-w-lg text-base leading-8 md:text-lg"
           >
-            برنامه روزت، واژه‌ای که یاد می‌گیری و وقتی که برای خودت می‌گذاری.
-            همه کنار هم، با ریتم خودت.
+            {{
+              'برنامه روزت، واژه‌ای که یاد می‌گیری و وقتی که برای خودت می‌گذاری. همه کنار هم، با ریتم خودت.'
+                | aioTranslate
+            }}
           </p>
           <div class="flex flex-wrap gap-3">
-            <a aioBtn size="lg" [href]="customerUrl">فضای خودت را بساز</a
-            ><a aioBtn size="lg" variant="outline" routerLink="/applets"
-              >کشف امکانات</a
-            >
+            <a aioBtn size="lg" [href]="customerUrl">{{
+              'فضای خودت را بساز' | aioTranslate
+            }}</a
+            ><a aioBtn size="lg" variant="outline" routerLink="/applets">{{
+              'کشف امکانات' | aioTranslate
+            }}</a>
           </div>
           <p class="text-muted-foreground text-xs">
-            فارسی و راست‌به‌چپ، روی موبایل و کامپیوتر
+            {{ 'فارسی و راست‌به‌چپ، روی موبایل و کامپیوتر' | aioTranslate }}
           </p>
         </div>
         <div class="aio-hero flex flex-col gap-6">
-          <span class="aio-hero-caption">Poshtetgarm، در یک نگاه</span>
+          <span class="aio-hero-caption">{{
+            'Poshtetgarm، در یک نگاه' | aioTranslate
+          }}</span>
           <h2 class="text-2xl leading-relaxed font-bold">
-            برای هر بخش از روزت،<br />یک جای درست.
+            {{ 'برای هر بخش از روزت،' | aioTranslate }}<br />{{
+              'یک جای درست.' | aioTranslate
+            }}
           </h2>
           @for (applet of applets; track applet.title) {
             <div class="flex items-start gap-4 border-t border-white/15 pt-5">
@@ -72,8 +85,8 @@ import { APPLETS } from './applets-data';
               /></span>
               <div
                 aioSectionHeading
-                [title]="applet.title"
-                [description]="applet.summary"
+                [title]="applet.title | aioTranslate"
+                [description]="applet.summary | aioTranslate"
                 [level]="3"
                 titleClass="font-semibold"
                 descriptionClass="aio-hero-caption mt-1"
@@ -85,8 +98,12 @@ import { APPLETS } from './applets-data';
       </section>
       <section class="flex flex-col gap-5">
         <div>
-          <p class="aio-eyebrow">کمتر پراکنده، بیشتر متمرکز</p>
-          <h2 class="aio-page-title">سه مسیر، یک همراه.</h2>
+          <p class="aio-eyebrow">
+            {{ 'کمتر پراکنده، بیشتر متمرکز' | aioTranslate }}
+          </p>
+          <h2 class="aio-page-title">
+            {{ 'سه مسیر، یک همراه.' | aioTranslate }}
+          </h2>
         </div>
         <div class="grid gap-4 md:grid-cols-3">
           @for (applet of applets; track applet.title) {
@@ -95,11 +112,15 @@ import { APPLETS } from './applets-data';
                 <span class="aio-module-icon mb-4"
                   ><aio-icon [name]="applet.icon"
                 /></span>
-                <h3 aioCardTitle>{{ applet.title }}</h3>
-                <p aioCardDescription class="leading-7">{{ applet.summary }}</p>
+                <h3 aioCardTitle>{{ applet.title | aioTranslate }}</h3>
+                <p aioCardDescription class="leading-7">
+                  {{ applet.summary | aioTranslate }}
+                </p>
               </div>
               <div aioCardFooter>
-                <a aioBtn variant="link" routerLink="/applets">بیشتر بدانید</a>
+                <a aioBtn variant="link" routerLink="/applets">{{
+                  'بیشتر بدانید' | aioTranslate
+                }}</a>
               </div>
             </article>
           }
@@ -110,14 +131,18 @@ import { APPLETS } from './applets-data';
       >
         <div
           aioSectionHeading
-          title="از یک قدم کوچک شروع کن."
-          description="برنامه امروزت را بچین. بقیه‌اش به‌مرور شکل می‌گیرد."
+          [title]="'از یک قدم کوچک شروع کن.' | aioTranslate"
+          [description]="
+            'برنامه امروزت را بچین. بقیه‌اش به‌مرور شکل می‌گیرد.' | aioTranslate
+          "
           [level]="2"
           titleClass="text-xl font-bold"
           descriptionClass="text-muted-foreground mt-2 text-sm"
           textClass="flex flex-col gap-1"
         ></div>
-        <a aioBtn size="lg" [href]="customerUrl">شروع کنید</a>
+        <a aioBtn size="lg" [href]="customerUrl">{{
+          'شروع کنید' | aioTranslate
+        }}</a>
       </section>
     </div>
   `,

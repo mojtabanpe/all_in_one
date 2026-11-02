@@ -1,3 +1,4 @@
+import { AioTranslate } from '../locale';
 import { Component, input, output } from '@angular/core';
 import { AioNativeSelect } from './controls';
 import { AioNativeSelectOption } from '../spartan';
@@ -7,9 +8,9 @@ import { AioFormField } from './form-field';
 @Component({
   selector: 'aio-select-field',
   host: { class: 'block min-w-0' },
-  imports: [AioFormField, AioNativeSelect, AioNativeSelectOption],
+  imports: [AioFormField, AioNativeSelect, AioNativeSelectOption, AioTranslate],
   template: `
-    <aio-form-field [label]="label()" [controlId]="controlId()">
+    <aio-form-field [label]="label() | aioTranslate" [controlId]="controlId()">
       <aio-native-select
         [selectId]="controlId()"
         [value]="value()"
@@ -17,11 +18,13 @@ import { AioFormField } from './form-field';
         (valueChange)="valueChange.emit($event)"
       >
         @if (emptyLabel() !== undefined) {
-          <option aioNativeSelectOption value="">{{ emptyLabel() }}</option>
+          <option aioNativeSelectOption value="">
+            {{ emptyLabel() | aioTranslate }}
+          </option>
         }
         @for (option of options(); track optionValue(option)) {
           <option aioNativeSelectOption [value]="optionValue(option)">
-            {{ optionLabel(option) }}
+            {{ optionLabel(option) | aioTranslate }}
           </option>
         }
       </aio-native-select>

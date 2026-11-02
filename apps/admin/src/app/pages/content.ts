@@ -7,22 +7,27 @@ import {
   type Recipe,
   type WorkoutProgram,
 } from '@all-in-one/applets/health/contracts';
-import { AioCatalogCard, type AioCatalogItem } from '@all-in-one/ui';
-import { API_BASE_URL, faNumber } from '@all-in-one/web/shared';
+import {
+  AioTranslate,
+  AioCatalogCard,
+  type AioCatalogItem,
+  AioLocale,
+} from '@all-in-one/ui';
+import { API_BASE_URL } from '@all-in-one/web/shared';
 
 /** Read-only view of the applet catalogs seeded in the database. */
 @Component({
   selector: 'admin-content',
-  imports: [AioCatalogCard],
+  imports: [AioCatalogCard, AioTranslate],
   template: `
     <div class="flex flex-col gap-4">
-      <h1 class="text-2xl font-bold">محتوای اپلت‌ها</h1>
+      <h1 class="text-2xl font-bold">{{ 'محتوای اپلت‌ها' | aioTranslate }}</h1>
       <div class="grid gap-3 md:grid-cols-2">
         @for (catalog of catalogs(); track catalog.title) {
           <section
             aioCatalogCard
-            [title]="catalog.title"
-            [description]="catalog.description"
+            [title]="catalog.title | aioTranslate"
+            [description]="catalog.description | aioTranslate"
             [items]="catalog.items"
           ></section>
         }
@@ -31,6 +36,8 @@ import { API_BASE_URL, faNumber } from '@all-in-one/web/shared';
   `,
 })
 export class Content {
+  protected readonly locale = inject(AioLocale);
+
   private readonly api = inject(API_BASE_URL);
   protected readonly decks = httpResource<StarterDeck[]>(
     () => `${this.api}/english/starter-decks`,
@@ -49,17 +56,17 @@ export class Content {
   >(() => [
     {
       title: 'دسته‌های آماده انگلیسی',
-      description: `${faNumber((this.decks.value() ?? []).length)} دسته`,
+      description: `${this.locale.number((this.decks.value() ?? []).length)} دسته`,
       items: (this.decks.value() ?? []).map((d) => ({
         id: d.slug,
         title: d.title,
-        badge: `${d.level}، ${faNumber(d.cardCount)}`,
+        badge: `${d.level}، ${this.locale.number(d.cardCount)}`,
         badgeDirection: 'ltr',
       })),
     },
     {
       title: 'رژیم‌ها',
-      description: `${faNumber((this.diets.value() ?? []).length)} رژیم`,
+      description: `${this.locale.number((this.diets.value() ?? []).length)} رژیم`,
       items: (this.diets.value() ?? []).map((d) => ({
         id: d.slug,
         title: d.name,
@@ -68,17 +75,17 @@ export class Content {
     },
     {
       title: 'دستور پخت‌ها',
-      description: `${faNumber((this.recipes.value() ?? []).length)} دستور`,
+      description: `${this.locale.number((this.recipes.value() ?? []).length)} دستور`,
       items: (this.recipes.value() ?? []).map((r) => ({
         id: r.slug,
         title: r.title,
-        badge: `${MEAL_TYPE_LABELS[r.mealType]}، ${faNumber(r.calories)}`,
+        badge: `${MEAL_TYPE_LABELS[r.mealType]}، ${this.locale.number(r.calories)}`,
         badgeVariant: 'secondary',
       })),
     },
     {
       title: 'برنامه‌های تمرینی',
-      description: `${faNumber((this.programs.value() ?? []).length)} برنامه`,
+      description: `${this.locale.number((this.programs.value() ?? []).length)} برنامه`,
       items: (this.programs.value() ?? []).map((p) => ({
         id: p.slug,
         title: p.title,

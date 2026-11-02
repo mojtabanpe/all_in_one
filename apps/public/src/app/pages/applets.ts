@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import {
+  AioTranslate,
   AioButton,
   AioCardDirectives,
   AioIcon,
@@ -16,7 +17,7 @@ import { APPLETS } from './applets-data';
 
 @Component({
   selector: 'public-applets',
-  imports: [AioButton, AioCardDirectives, AioIcon],
+  imports: [AioButton, AioCardDirectives, AioIcon, AioTranslate],
   providers: [
     provideIcons({
       lucideCalendarCheck,
@@ -27,15 +28,15 @@ import { APPLETS } from './applets-data';
   ],
   template: `
     <div class="flex flex-col gap-4">
-      <h1 class="text-2xl font-bold">اپلت‌ها</h1>
+      <h1 class="text-2xl font-bold">{{ 'اپلت‌ها' | aioTranslate }}</h1>
       @for (applet of applets; track applet.title) {
         <article aioCard>
           <div aioCardHeader>
             <h2 aioCardTitle class="flex items-center gap-2 text-lg">
               <aio-icon [name]="applet.icon" class="text-primary" />
-              {{ applet.title }}
+              {{ applet.title | aioTranslate }}
             </h2>
-            <p aioCardDescription>{{ applet.summary }}</p>
+            <p aioCardDescription>{{ applet.summary | aioTranslate }}</p>
           </div>
           <ul aioCardContent class="flex flex-col gap-2 text-sm">
             @for (f of applet.features; track f) {
@@ -44,13 +45,15 @@ import { APPLETS } from './applets-data';
                   name="lucideCircleCheck"
                   size="sm"
                   class="text-success"
-                />{{ f }}
+                />{{ f | aioTranslate }}
               </li>
             }
           </ul>
         </article>
       }
-      <a aioBtn size="lg" class="self-start" [href]="customerUrl">شروع کنید</a>
+      <a aioBtn size="lg" class="self-start" [href]="customerUrl">{{
+        'شروع کنید' | aioTranslate
+      }}</a>
     </div>
   `,
 })

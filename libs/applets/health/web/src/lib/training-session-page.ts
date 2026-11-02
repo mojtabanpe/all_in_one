@@ -19,6 +19,7 @@ import {
 } from '@all-in-one/applets/health/contracts';
 import { toIsoDate } from '@all-in-one/shared/schemas';
 import {
+  AioTranslate,
   AioAccordionContent,
   AioAccordionDirectives,
   AioAccordionTrigger,
@@ -27,11 +28,12 @@ import {
   AioCardDirectives,
   AioConfirm,
   AioProgressDirectives,
-  aioToast,
   AioCardHeading,
   AioSkeletonLines,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
-import { apiErrorMessage, faNumber } from '@all-in-one/web/shared';
+import { apiErrorMessage } from '@all-in-one/web/shared';
 import { HealthApi } from './health-api';
 import { prescribedSet, trainingSessionSteps } from './training-session-steps';
 
@@ -48,20 +50,21 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
     AioProgressDirectives,
     AioCardHeading,
     AioSkeletonLines,
+    AioTranslate,
   ],
   template: `
     <div class="mx-auto flex w-full min-w-0 max-w-2xl flex-col gap-4">
-      <a aioBtn variant="ghost" routerLink="../.." class="self-start"
-        >بازگشت به ورزش</a
-      >
+      <a aioBtn variant="ghost" routerLink="../.." class="self-start">{{
+        'بازگشت به ورزش' | aioTranslate
+      }}</a>
       <h2 #heading tabindex="-1" class="text-xl font-bold outline-none">
-        {{ routine.value()?.title ?? 'جلسه تمرین' }}
+        {{ routine.value()?.title ?? 'جلسه تمرین' | aioTranslate }}
       </h2>
       @if (routine.isLoading()) {
         <div
           class="flex flex-col gap-4"
           role="status"
-          aria-label="در حال دریافت جلسه"
+          [attr.aria-label]="'در حال دریافت جلسه' | aioTranslate"
           aioSkeletonLines
           [lines]="[
             'h-5 w-1/2 rounded-lg',
@@ -71,20 +74,28 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
           ]"
         ></div>
       } @else if (routine.error()) {
-        <p role="alert">دریافت برنامه ممکن نشد.</p>
+        <p role="alert">{{ 'دریافت برنامه ممکن نشد.' | aioTranslate }}</p>
         <button aioBtn variant="outline" (click)="routine.reload()">
-          تلاش دوباره
+          {{ 'تلاش دوباره' | aioTranslate }}
         </button>
       } @else if (!day()) {
-        <p role="alert">این جلسه در برنامه وجود ندارد.</p>
+        <p role="alert">
+          {{ 'این جلسه در برنامه وجود ندارد.' | aioTranslate }}
+        </p>
       } @else {
-        <p class="text-muted-foreground">{{ day()?.title }}</p>
+        <p class="text-muted-foreground">{{ day()?.title | aioTranslate }}</p>
         <div class="flex flex-col gap-2">
           <p class="text-sm" role="status">
-            {{ fa(completed().length) }} از {{ fa(steps().length) }} ست انجام
-            شده
+            {{
+              '{0} از {1} ست انجام شده'
+                | aioTranslate: [fa(completed().length), fa(steps().length)]
+            }}
           </p>
-          <div aioProgress [value]="progress()" aria-label="پیشرفت جلسه">
+          <div
+            aioProgress
+            [value]="progress()"
+            [attr.aria-label]="'پیشرفت جلسه' | aioTranslate"
+          >
             <div aioProgressIndicator></div>
           </div>
         </div>
@@ -92,18 +103,21 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
           <section aioCard>
             <div
               aioCardHeading
-              title="اول گرم کن"
+              [title]="'اول گرم کن' | aioTranslate"
               [level]="3"
-              description="بعد از گرم کردن، ست‌ها را یکی‌یکی طبق برنامه انجام می‌دهیم."
+              [description]="
+                'بعد از گرم کردن، ست‌ها را یکی‌یکی طبق برنامه انجام می‌دهیم.'
+                  | aioTranslate
+              "
             ></div>
             <div aioCardContent class="flex flex-col gap-3">
               @for (line of routine.value()?.warmup ?? []; track $index) {
-                <p>{{ line }}</p>
+                <p>{{ line | aioTranslate }}</p>
               }
             </div>
             <div aioCardFooter>
               <button aioBtn class="min-h-11 w-full" (click)="start()">
-                گرم کردم؛ شروع تمرین
+                {{ 'گرم کردم؛ شروع تمرین' | aioTranslate }}
               </button>
             </div>
           </section>
@@ -111,18 +125,21 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
           <section aioCard>
             <div
               aioCardHeading
-              title="کمی استراحت کن"
+              [title]="'کمی استراحت کن' | aioTranslate"
               [level]="3"
               [description]="
                 'ست قبلی انجام شد؛ قبل از ادامه ' +
-                fa(restSeconds()) +
-                ' ثانیه استراحت کن.'
+                  fa(restSeconds()) +
+                  ' ثانیه استراحت کن.' | aioTranslate
               "
             ></div>
             <div aioCardContent>
               <p>
-                بعدی: {{ nextExerciseName() }}، ست
-                {{ fa(current()?.setNumber ?? 1) }}
+                {{
+                  'بعدی: {0}، ست {1}'
+                    | aioTranslate
+                      : [nextExerciseName(), fa(current()?.setNumber ?? 1)]
+                }}
               </p>
             </div>
             <div aioCardFooter>
@@ -131,7 +148,7 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
                 class="min-h-11 w-full"
                 (click)="continueExercise()"
               >
-                استراحت کردم؛ مرحله بعد
+                {{ 'استراحت کردم؛ مرحله بعد' | aioTranslate }}
               </button>
             </div>
           </section>
@@ -140,48 +157,64 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
             <section aioCard>
               <div aioCardHeader class="gap-3">
                 <div class="flex flex-wrap gap-2">
-                  <span aioBadge variant="secondary"
-                    >حرکت {{ fa(step.exerciseIndex + 1) }} از
-                    {{ fa(day()?.exercises?.length ?? 0) }}</span
-                  >
-                  <span aioBadge variant="outline"
-                    >ست {{ fa(step.setNumber) }} از {{ fa(step.sets) }}</span
-                  >
+                  <span aioBadge variant="secondary">{{
+                    'حرکت {0} از {1}'
+                      | aioTranslate
+                        : [
+                            fa(step.exerciseIndex + 1),
+                            fa(day()?.exercises?.length ?? 0),
+                          ]
+                  }}</span>
+                  <span aioBadge variant="outline">{{
+                    'ست {0} از {1}'
+                      | aioTranslate: [fa(step.setNumber), fa(step.sets)]
+                  }}</span>
                 </div>
                 <h3 aioCardTitle class="text-xl">
-                  {{ exercise.value()?.name ?? 'در حال دریافت حرکت…' }}
+                  {{
+                    exercise.value()?.name ?? 'در حال دریافت حرکت…'
+                      | aioTranslate
+                  }}
                 </h3>
                 <p class="text-2xl font-bold">
                   @if (step.seconds > 0) {
-                    {{ fa(step.seconds) }} ثانیه
+                    {{ '{0} ثانیه' | aioTranslate: [fa(step.seconds)] }}
                   } @else {
-                    {{ fa(step.reps) }} تکرار
+                    {{ '{0} تکرار' | aioTranslate: [fa(step.reps)] }}
                   }
                 </p>
                 @if (exercise.value(); as movement) {
                   <p aioCardDescription>
-                    {{ equipmentLabels[movement.equipment] }}
+                    {{ equipmentLabels[movement.equipment] | aioTranslate }}
                   </p>
                   @if (recordedSet()?.weightKg; as weight) {
-                    <p>وزنهٔ این ست: {{ fa(weight) }} کیلوگرم</p>
+                    <p>
+                      {{
+                        'وزنهٔ این ست: {0} کیلوگرم' | aioTranslate: [fa(weight)]
+                      }}
+                    </p>
                   }
                   @if (movement.guide?.eachSide) {
-                    <p class="text-sm">برای هر سمت انجام بده.</p>
+                    <p class="text-sm">
+                      {{ 'برای هر سمت انجام بده.' | aioTranslate }}
+                    </p>
                   }
                 }
               </div>
               <div aioCardContent class="flex flex-col gap-4">
                 @if (exercise.error()) {
-                  <p role="alert">راهنمای حرکت دریافت نشد.</p>
+                  <p role="alert">
+                    {{ 'راهنمای حرکت دریافت نشد.' | aioTranslate }}
+                  </p>
                   <button aioBtn variant="outline" (click)="exercise.reload()">
-                    تلاش دوباره
+                    {{ 'تلاش دوباره' | aioTranslate }}
                   </button>
                 }
                 @if (exercise.value(); as movement) {
                   @if (movement.guide; as guide) {
                     <img
                       [src]="guide.imageUrl"
-                      [alt]="'روش اجرای ' + movement.name"
+                      [alt]="'روش اجرای ' + movement.name | aioTranslate"
                       width="1400"
                       height="700"
                       class="h-auto max-h-72 w-full rounded-lg bg-white object-contain"
@@ -189,9 +222,9 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
                   }
                   <div aioAccordion type="single">
                     <div aioAccordionItem>
-                      <aio-accordion-trigger
-                        >راهنمای اجرای حرکت</aio-accordion-trigger
-                      >
+                      <aio-accordion-trigger>{{
+                        'راهنمای اجرای حرکت' | aioTranslate
+                      }}</aio-accordion-trigger>
                       <aio-accordion-content>
                         <div class="flex flex-col gap-4">
                           <ol
@@ -201,11 +234,13 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
                               instruction of movement.instructions;
                               track $index
                             ) {
-                              <li>{{ instruction }}</li>
+                              <li>{{ instruction | aioTranslate }}</li>
                             }
                           </ol>
                           @if (movement.mistakes.length) {
-                            <h4 class="font-semibold">اشتباهات رایج</h4>
+                            <h4 class="font-semibold">
+                              {{ 'اشتباهات رایج' | aioTranslate }}
+                            </h4>
                             <ul
                               class="flex list-inside list-disc flex-col gap-2"
                             >
@@ -213,7 +248,7 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
                                 mistake of movement.mistakes;
                                 track $index
                               ) {
-                                <li>{{ mistake }}</li>
+                                <li>{{ mistake | aioTranslate }}</li>
                               }
                             </ul>
                           }
@@ -229,7 +264,7 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
                       [href]="movement.videoUrl"
                       target="_blank"
                       rel="noopener noreferrer"
-                      >دیدن ویدئوی آموزش (پنجره جدید)</a
+                      >{{ 'دیدن ویدئوی آموزش (پنجره جدید)' | aioTranslate }}</a
                     >
                   }
                 }
@@ -241,7 +276,7 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
                   [disabled]="!recordedSet()"
                   (click)="completeSet()"
                 >
-                  این ست را انجام دادم
+                  {{ 'این ست را انجام دادم' | aioTranslate }}
                 </button>
               </div>
             </section>
@@ -250,16 +285,18 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
           <section aioCard>
             <div
               aioCardHeading
-              title="ست‌ها تمام شد؛ حالا سرد کن"
+              [title]="'ست‌ها تمام شد؛ حالا سرد کن' | aioTranslate"
               [level]="3"
-              description="بعد از سرد کردن، جلسه را ثبت کن."
+              [description]="'بعد از سرد کردن، جلسه را ثبت کن.' | aioTranslate"
             ></div>
             <div aioCardContent class="flex flex-col gap-3">
               @for (line of routine.value()?.cooldown ?? []; track $index) {
-                <p>{{ line }}</p>
+                <p>{{ line | aioTranslate }}</p>
               }
               @if (saveError()) {
-                <p role="alert" class="text-destructive">{{ saveError() }}</p>
+                <p role="alert" class="text-destructive">
+                  {{ saveError() | aioTranslate }}
+                </p>
               }
             </div>
             <div aioCardFooter>
@@ -269,7 +306,10 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
                 [disabled]="saving()"
                 (click)="finish()"
               >
-                {{ saving() ? 'در حال ثبت…' : 'سرد کردم؛ ثبت جلسه' }}
+                {{
+                  (saving() ? 'در حال ثبت…' : 'سرد کردم؛ ثبت جلسه')
+                    | aioTranslate
+                }}
               </button>
             </div>
           </section>
@@ -277,16 +317,17 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
           <section aioCard>
             <div
               aioCardHeading
-              title="خسته نباشی! جلسه ثبت شد"
+              [title]="'خسته نباشی! جلسه ثبت شد' | aioTranslate"
               [level]="3"
               [description]="
                 fa(completed().length) + ' ست را طبق برنامه انجام دادی.'
+                  | aioTranslate
               "
             ></div>
             <div aioCardFooter>
-              <a aioBtn routerLink="../.." class="min-h-11 w-full"
-                >برگشت به ورزش</a
-              >
+              <a aioBtn routerLink="../.." class="min-h-11 w-full">{{
+                'برگشت به ورزش' | aioTranslate
+              }}</a>
             </div>
           </section>
         }
@@ -295,6 +336,10 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
   `,
 })
 export class TrainingSessionPage {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   readonly routineId = input.required<string>();
   readonly dayIndex = input.required<string>();
   private readonly api = inject(HealthApi);
@@ -304,7 +349,8 @@ export class TrainingSessionPage {
     viewChild<ElementRef<HTMLHeadingElement>>('heading');
   private startedAt = 0;
   private sessionDate = '';
-  protected readonly fa = faNumber;
+  protected readonly fa = (value: number, options?: Intl.NumberFormatOptions) =>
+    this.locale.number(value, options);
   protected readonly equipmentLabels = EQUIPMENT_LABELS;
   protected readonly phase = signal<
     'warmup' | 'exercise' | 'rest' | 'cooldown' | 'done'
@@ -404,7 +450,7 @@ export class TrainingSessionPage {
         sets: this.completed(),
       });
       this.phase.set('done');
-      aioToast.success('جلسه تمرین ثبت شد');
+      this.notifications.success('جلسه تمرین ثبت شد');
       this.focusStart();
     } catch (error) {
       this.saveError.set(apiErrorMessage(error));

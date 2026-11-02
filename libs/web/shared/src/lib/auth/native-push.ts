@@ -1,3 +1,4 @@
+import { AioLocale } from '@all-in-one/ui';
 import { HttpClient } from '@angular/common/http';
 import { effect, inject, Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
@@ -17,6 +18,7 @@ declare global {
 /** The shell only provides OS permission/token; all API calls use our session cookie. */
 @Injectable({ providedIn: 'root' })
 export class NativePush {
+  private readonly locale = inject(AioLocale);
   private readonly http = inject(HttpClient);
   private readonly api = inject(API_BASE_URL);
   private readonly userId = signal<string | null>(null);
@@ -37,6 +39,7 @@ export class NativePush {
       window.addEventListener('poshtetgarm-push-token', () => void this.sync());
     }
     effect(() => {
+      this.locale.language();
       if (this.userId() && this.available()) void this.sync();
     });
   }
@@ -55,7 +58,11 @@ export class NativePush {
     const result = await firstValueFrom(
       this.http.put<{ endpoint: string }>(
         `${this.api}/push/native/subscription`,
-        { platform: state.platform, token: state.token },
+        {
+          platform: state.platform,
+          token: state.token,
+          language: this.locale.language(),
+        },
       ),
     );
     const previous = this.endpoint;

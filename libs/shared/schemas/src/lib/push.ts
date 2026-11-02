@@ -22,6 +22,7 @@ export const pushEndpointSchema = z.string().check(
   }, 'نشانی سرویس اعلان معتبر نیست.'),
 );
 export const pushSubscriptionSchema = z.object({
+  language: z.optional(z.enum(['fa', 'en'])),
   endpoint: pushEndpointSchema,
   keys: z.object({
     p256dh: z.string().check(z.regex(/^[A-Za-z0-9_-]{87}=?$/)),
@@ -29,6 +30,7 @@ export const pushSubscriptionSchema = z.object({
   }),
 });
 export const nativePushSchema = z.object({
+  language: z.optional(z.enum(['fa', 'en'])),
   platform: z.enum(['ANDROID', 'MACOS']),
   token: z
     .string()

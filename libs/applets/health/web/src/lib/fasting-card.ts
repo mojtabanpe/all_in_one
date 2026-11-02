@@ -16,6 +16,7 @@ import {
   MAX_FAST_HOURS,
 } from '@all-in-one/applets/health/contracts';
 import {
+  AioTranslate,
   AioButton,
   AioDateInput,
   AioConfirm,
@@ -27,13 +28,14 @@ import {
   AioInput,
   AioProgressDirectives,
   AioSkeleton,
-  aioToast,
   AioToggleGroupDirectives,
   provideIcons,
   AioFormField,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
 import { toIsoDate } from '@all-in-one/shared/schemas';
-import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
+import { apiErrorMessage } from '@all-in-one/web/shared';
 import { lucideHistory, lucideTimer, lucideTrash2 } from '@ng-icons/lucide';
 import { HealthApi } from './health-api';
 import {
@@ -63,6 +65,7 @@ const HOUR = 3_600_000;
     AioSkeleton,
     AioToggleGroupDirectives,
     AioFormField,
+    AioTranslate,
   ],
   providers: [provideIcons({ lucideHistory, lucideTimer, lucideTrash2 })],
   template: `
@@ -73,9 +76,10 @@ const HOUR = 3_600_000;
       <div class="flex items-center justify-between gap-2">
         <h2 id="fast-title" class="health-metric-label">
           {{
-            active()
+            (active()
               ? 'در فستینگ، ' + protocolLabel(active()!.targetHours)
               : 'فستینگ'
+            ) | aioTranslate
           }}
         </h2>
         <span class="health-icon-disc text-[var(--health-orange)]"
@@ -86,38 +90,49 @@ const HOUR = 3_600_000;
         <div
           aioSkeleton
           class="h-24 rounded-2xl"
-          aria-label="در حال دریافت"
+          [attr.aria-label]="'در حال دریافت' | aioTranslate"
         ></div>
       } @else if (state.error()) {
-        <p class="health-metric-label">فستینگ دریافت نشد.</p>
+        <p class="health-metric-label">
+          {{ 'فستینگ دریافت نشد.' | aioTranslate }}
+        </p>
         <button aioBtn variant="link" (click)="state.reload()">
-          تلاش دوباره
+          {{ 'تلاش دوباره' | aioTranslate }}
         </button>
       } @else if (active(); as fast) {
         <div class="flex flex-col gap-1">
           <p class="health-number" aria-live="off">
-            {{ timerLabel() }}
+            {{ timerLabel() | aioTranslate }}
           </p>
           <p class="health-metric-label">
-            {{ duration(elapsed()) }} از شروع، ساعت
-            {{ clock(fast.startedAt) }}
+            {{
+              '{0} از شروع، ساعت {1}'
+                | aioTranslate: [duration(elapsed()), clock(fast.startedAt)]
+            }}
           </p>
         </div>
         <div
           aioProgress
           class="health-fast-progress"
           [value]="Math.min((elapsed() * 100) / fast.targetHours, 100)"
-          [attr.aria-label]="'پیشرفت تا ' + fa(fast.targetHours) + ' ساعت'"
+          [attr.aria-label]="
+            'پیشرفت تا ' + fa(fast.targetHours) + ' ساعت' | aioTranslate
+          "
         >
           <div aioProgressIndicator></div>
         </div>
         <p class="text-sm">
           @if (elapsed() >= fast.targetHours) {
-            <strong>به هدف {{ fa(fast.targetHours) }} ساعته رسیدی.</strong>
-            هر وقت آماده بودی، فستینگ را تمام کن.
+            <strong>{{
+              'به هدف {0} ساعته رسیدی.' | aioTranslate: [fa(fast.targetHours)]
+            }}</strong>
+            {{ 'هر وقت آماده بودی، فستینگ را تمام کن.' | aioTranslate }}
           } @else {
-            {{ duration(fast.targetHours - elapsed()) }} مانده؛ پایان ساعت
-            {{ endClock() }}
+            {{
+              '{0} مانده؛ پایان ساعت {1}'
+                | aioTranslate
+                  : [duration(fast.targetHours - elapsed()), endClock()]
+            }}
           }
         </p>
         <div class="flex flex-wrap gap-2">
@@ -127,7 +142,7 @@ const HOUR = 3_600_000;
             [disabled]="busy()"
             (click)="endNow()"
           >
-            پایان فستینگ
+            {{ 'پایان فستینگ' | aioTranslate }}
           </button>
           <button
             aioBtn
@@ -135,23 +150,34 @@ const HOUR = 3_600_000;
             class="health-soft-action"
             (click)="openEdit(fast)"
           >
-            ویرایش
+            {{ 'ویرایش' | aioTranslate }}
           </button>
         </div>
       } @else {
         <div class="flex flex-col gap-1">
           @if (last(); as fast) {
             <p class="health-small-number">
-              {{ duration(hours(fast)) }}
+              {{ duration(hours(fast)) | aioTranslate }}
             </p>
             <p class="health-metric-label">
-              آخرین فستینگ، {{ dayLabel(fast.endedAt!) }}
-              {{ hours(fast) >= fast.targetHours ? '، کامل' : '' }}
+              {{
+                'آخرین فستینگ، {0} {1}'
+                  | aioTranslate
+                    : [
+                        dayLabel(fast.endedAt!),
+                        hours(fast) >= fast.targetHours ? '، کامل' : '',
+                      ]
+              }}
             </p>
           } @else {
-            <p class="text-lg font-semibold">آماده‌ی یک فستینگ؟</p>
+            <p class="text-lg font-semibold">
+              {{ 'آماده‌ی یک فستینگ؟' | aioTranslate }}
+            </p>
             <p class="health-metric-label">
-              شروعش را ثبت کن تا ببینی چند ساعت است که چیزی نخورده‌ای.
+              {{
+                'شروعش را ثبت کن تا ببینی چند ساعت است که چیزی نخورده‌ای.'
+                  | aioTranslate
+              }}
             </p>
           }
         </div>
@@ -161,7 +187,7 @@ const HOUR = 3_600_000;
             class="health-primary-action flex-1"
             (click)="openStart()"
           >
-            شروع فستینگ
+            {{ 'شروع فستینگ' | aioTranslate }}
           </button>
           @if (state.value()?.recent?.length) {
             <button
@@ -169,7 +195,7 @@ const HOUR = 3_600_000;
               variant="ghost"
               size="icon"
               class="health-soft-action size-11"
-              aria-label="سابقه فستینگ"
+              [attr.aria-label]="'سابقه فستینگ' | aioTranslate"
               (click)="historyOpen.set(true)"
             >
               <aio-icon name="lucideHistory" size="sm" />
@@ -182,8 +208,12 @@ const HOUR = 3_600_000;
     <aio-dialog
       [open]="sheet() !== null"
       (openChange)="$event || sheet.set(null)"
-      [title]="sheet() === 'edit' ? 'ویرایش فستینگ' : 'شروع فستینگ'"
-      description="ساعت‌ها بدون غذا؛ آب، چای و قهوه‌ی بدون شکر مجاز است."
+      [title]="
+        (sheet() === 'edit' ? 'ویرایش فستینگ' : 'شروع فستینگ') | aioTranslate
+      "
+      [description]="
+        'ساعت‌ها بدون غذا؛ آب، چای و قهوه‌ی بدون شکر مجاز است.' | aioTranslate
+      "
       contentClass="applet-health health-calm"
     >
       <ng-template aioDialogBody>
@@ -193,7 +223,9 @@ const HOUR = 3_600_000;
           (submit)="$event.preventDefault(); save()"
         >
           <div aioField>
-            <span aioFieldLabel id="fast-hours-label">مدت فستینگ</span>
+            <span aioFieldLabel id="fast-hours-label">{{
+              'مدت فستینگ' | aioTranslate
+            }}</span>
             <div
               aioToggleGroup
               type="single"
@@ -210,13 +242,13 @@ const HOUR = 3_600_000;
                   [value]="'' + h"
                   class="min-w-[4.5rem] flex-1 tabular-nums"
                 >
-                  {{ protocolLabel(h) }}
+                  {{ protocolLabel(h) | aioTranslate }}
                 </button>
               }
             </div>
-            <label aioFieldLabel for="fast-hours" class="mt-2"
-              >یا تعداد ساعت دلخواه</label
-            >
+            <label aioFieldLabel for="fast-hours" class="mt-2">{{
+              'یا تعداد ساعت دلخواه' | aioTranslate
+            }}</label>
             <input
               aioInput
               id="fast-hours"
@@ -228,15 +260,23 @@ const HOUR = 3_600_000;
               (input)="typeHours($any($event.target).value)"
             />
             <p aioFieldDescription>
-              {{ protocolLabel(targetHours()) }}: {{ fa(targetHours()) }} ساعت
-              فستینگ{{
-                targetHours() < 24
-                  ? '، ' + fa(24 - targetHours()) + ' ساعت پنجره‌ی غذا'
-                  : ''
-              }}.
+              {{
+                '{0}: {1} ساعت فستینگ{2}.'
+                  | aioTranslate
+                    : [
+                        protocolLabel(targetHours()),
+                        fa(targetHours()),
+                        targetHours() < 24
+                          ? '، ' + fa(24 - targetHours()) + ' ساعت پنجره‌ی غذا'
+                          : '',
+                      ]
+              }}
             </p>
           </div>
-          <aio-form-field label="از کی چیزی نخورده‌ای؟" controlId="fast-start">
+          <aio-form-field
+            [label]="'از کی چیزی نخورده‌ای؟' | aioTranslate"
+            controlId="fast-start"
+          >
             <aio-date-input
               contentClass="applet-health"
               inputId="fast-start"
@@ -248,7 +288,7 @@ const HOUR = 3_600_000;
             <input
               aioInput
               type="time"
-              aria-label="ساعت شروع فستینگ"
+              [attr.aria-label]="'ساعت شروع فستینگ' | aioTranslate"
               [value]="startInput().slice(11, 16)"
               (change)="
                 startInput.set(
@@ -266,6 +306,7 @@ const HOUR = 3_600_000;
               {{
                 startError() ??
                   'اگر همین الان شروع می‌کنی، دست نزن؛ حداکثر ۷۲ ساعت قبل.'
+                  | aioTranslate
               }}
             </p>
           </aio-form-field>
@@ -280,11 +321,11 @@ const HOUR = 3_600_000;
             [disabled]="busy()"
             (click)="removeActive()"
           >
-            حذف
+            {{ 'حذف' | aioTranslate }}
           </button>
         }
         <button aioBtn variant="outline" (click)="sheet.set(null)">
-          انصراف
+          {{ 'انصراف' | aioTranslate }}
         </button>
         <button
           aioBtn
@@ -293,14 +334,14 @@ const HOUR = 3_600_000;
           class="health-primary-action"
           [disabled]="busy()"
         >
-          {{ sheet() === 'edit' ? 'ذخیره' : 'شروع' }}
+          {{ (sheet() === 'edit' ? 'ذخیره' : 'شروع') | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>
 
     <aio-dialog
       [(open)]="historyOpen"
-      title="سابقه فستینگ"
+      [title]="'سابقه فستینگ' | aioTranslate"
       contentClass="applet-health health-calm"
     >
       <ng-template aioDialogBody>
@@ -311,23 +352,29 @@ const HOUR = 3_600_000;
             >
               <div class="flex min-w-0 flex-1 flex-col">
                 <strong class="text-sm tabular-nums"
-                  >{{ duration(hours(fast)) }}
-                  <span class="font-normal text-muted-foreground"
-                    >از {{ fa(fast.targetHours) }} ساعت</span
-                  ></strong
+                  >{{ duration(hours(fast)) | aioTranslate
+                  }}<span class="font-normal text-muted-foreground">{{
+                    'از {0} ساعت' | aioTranslate: [fa(fast.targetHours)]
+                  }}</span></strong
                 >
-                <span class="health-metric-label"
-                  >{{ dayLabel(fast.startedAt) }}، ساعت
-                  {{ clock(fast.startedAt) }} تا
-                  {{ clock(fast.endedAt!) }}</span
-                >
+                <span class="health-metric-label">{{
+                  '{0}، ساعت {1} تا {2}'
+                    | aioTranslate
+                      : [
+                          dayLabel(fast.startedAt),
+                          clock(fast.startedAt),
+                          clock(fast.endedAt!),
+                        ]
+                }}</span>
               </div>
               <button
                 aioBtn
                 variant="ghost"
                 size="icon"
                 class="size-11 shrink-0"
-                [attr.aria-label]="'حذف فستینگ ' + dayLabel(fast.startedAt)"
+                [attr.aria-label]="
+                  'حذف فستینگ ' + dayLabel(fast.startedAt) | aioTranslate
+                "
                 (click)="remove(fast)"
               >
                 <aio-icon name="lucideTrash2" size="sm" />
@@ -340,6 +387,10 @@ const HOUR = 3_600_000;
   `,
 })
 export class FastingCard {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   private readonly api = inject(HealthApi);
   private readonly confirm = inject(AioConfirm);
   private readonly destroyRef = inject(DestroyRef);
@@ -349,9 +400,12 @@ export class FastingCard {
   protected readonly protocolLabel = fastingProtocolLabel;
   protected readonly duration = duration;
   protected readonly clock = clockTime;
-  protected readonly fa = (n: number) => faNumber(n);
+  protected readonly fa = (n: number) => this.locale.number(n);
   protected readonly dayLabel = (iso: string) =>
-    faDate(toIsoDate(new Date(iso)), { day: 'numeric', month: 'long' });
+    this.locale.date(toIsoDate(new Date(iso)), {
+      day: 'numeric',
+      month: 'long',
+    });
 
   protected readonly state = httpResource<FastingState>(
     () => `${this.api.base}/fasting`,
@@ -465,7 +519,7 @@ export class FastingCard {
       this.state.set(state);
       this.sheet.set(null);
       if (!this.editingId)
-        aioToast.success(
+        this.notifications.success(
           'فستینگ شروع شد',
           `${fastingProtocolLabel(this.targetHours())}؛ موفق باشی!`,
         );
@@ -480,7 +534,7 @@ export class FastingCard {
       this.state.set(state);
       const done = state.recent.find((f) => f.id === fast.id);
       const lasted = done ? duration(this.hours(done)) : '';
-      aioToast.action(`فستینگ تمام شد: ${lasted}`, 'برگرداندن', () =>
+      this.notifications.action(`فستینگ تمام شد: ${lasted}`, 'برگرداندن', () =>
         this.reopen(fast.id),
       );
     });
@@ -527,7 +581,7 @@ export class FastingCard {
     try {
       await work();
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.busy.set(false);
     }

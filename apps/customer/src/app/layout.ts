@@ -12,6 +12,8 @@ import {
   RouterOutlet,
 } from '@angular/router';
 import {
+  AioTranslate,
+  AioLocale,
   AioAppShell,
   AioButton,
   AioIcon,
@@ -46,6 +48,7 @@ import {
     Assistant,
     RouterOutlet,
     AioSkeletonLines,
+    AioTranslate,
   ],
   providers: [
     provideIcons({
@@ -71,13 +74,13 @@ import {
           aioShellActions
           aioBtn
           variant="ghost"
-          class="h-11"
-          [attr.aria-label]="english() ? 'Install' : 'نصب'"
+          class="hidden h-11 sm:inline-flex"
+          [attr.aria-label]="(english() ? 'Install' : 'نصب') | aioTranslate"
           (click)="pwa.install()"
         >
           <aio-icon name="lucideDownload" size="sm" />
           <span class="hidden sm:inline">{{
-            english() ? 'Install' : 'نصب'
+            (english() ? 'Install' : 'نصب') | aioTranslate
           }}</span>
         </button>
       }
@@ -88,7 +91,9 @@ import {
         size="icon"
         class="size-11"
         routerLink="/account"
-        [attr.aria-label]="english() ? 'Account' : 'حساب کاربری'"
+        [attr.aria-label]="
+          (english() ? 'Account' : 'حساب کاربری') | aioTranslate
+        "
       >
         <aio-icon name="lucideUserRound" size="sm" />
       </a>
@@ -97,12 +102,14 @@ import {
         aioBtn
         variant="ghost"
         class="size-11 md:w-auto"
-        [attr.aria-label]="english() ? 'Sign out' : 'خروج از حساب'"
+        [attr.aria-label]="
+          (english() ? 'Sign out' : 'خروج از حساب') | aioTranslate
+        "
         (click)="logout()"
       >
         <aio-icon name="lucideLogOut" size="sm" />
         <span class="hidden md:inline">{{
-          english() ? 'Sign out' : 'خروج'
+          (english() ? 'Sign out' : 'خروج') | aioTranslate
         }}</span>
       </button>
       @if (pendingRoute(); as route) {
@@ -110,7 +117,7 @@ import {
           class="aio-route-loading aio-applet-layout"
           role="status"
           [attr.aria-label]="
-            route.startsWith('/english') ? 'Loading page' : 'در حال دریافت صفحه'
+            (english() ? 'Loading page' : 'در حال دریافت صفحه') | aioTranslate
           "
           aria-busy="true"
         >
@@ -147,6 +154,8 @@ import {
   `,
 })
 export class Layout {
+  protected readonly locale = inject(AioLocale);
+
   private readonly auth = inject(AuthStore);
   private readonly router = inject(Router);
   protected readonly pwa = inject(Pwa);
@@ -185,9 +194,8 @@ export class Layout {
     { label: 'انگلیسی', icon: 'lucideLanguages', link: '/english' },
     { label: 'سلامت', icon: 'lucideHeartPulse', link: '/health' },
   ];
-  protected readonly english = computed(
-    () => this.assistantContext() === 'english',
-  );
+
+  protected readonly english = this.locale.english;
   protected readonly navigation = computed(() =>
     this.english()
       ? this.nav.map((item, i) => ({

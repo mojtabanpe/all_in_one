@@ -10,6 +10,7 @@ import {
   type StarterDeck,
 } from '@all-in-one/applets/english-learning/contracts';
 import {
+  AioTranslate,
   AioButton,
   AioDialog,
   AioDialogActions,
@@ -19,17 +20,15 @@ import {
   AioInputGroupDirectives,
   AioSkeleton,
   AioTextarea,
-  aioToast,
   provideIcons,
   AioFormField,
   AioEmptyState,
   AioSectionHeading,
   AioSkeletonLines,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
-import {
-  englishErrorMessage as apiErrorMessage,
-  englishNumber as faNumber,
-} from './english-locale';
+import { englishErrorMessage as apiErrorMessage } from './english-locale';
 import {
   lucideBookOpen,
   lucideCheck,
@@ -45,7 +44,6 @@ import { EnglishApi } from './english-api';
 
 /** Recall's library: streak, today's review, the user's decks and starter decks. */
 @Component({
-  host: { dir: 'ltr', lang: 'en' },
   selector: 'english-learning-library',
   imports: [
     AioButton,
@@ -62,6 +60,7 @@ import { EnglishApi } from './english-api';
     AioEmptyState,
     AioSectionHeading,
     AioSkeletonLines,
+    AioTranslate,
   ],
   providers: [
     provideIcons({
@@ -79,14 +78,14 @@ import { EnglishApi } from './english-api';
     <div class="flex flex-col gap-6">
       @if (decks.error() || starters.error()) {
         <p role="alert" class="text-destructive text-sm">
-          {{ errorMessage(decks.error() ?? starters.error()) }}
+          {{ errorMessage(decks.error() ?? starters.error()) | aioTranslate }}
         </p>
         <button
           aioBtn
           variant="outline"
           (click)="decks.reload(); starters.reload()"
         >
-          Try again
+          {{ 'Try again' | aioTranslate }}
         </button>
       }
 
@@ -135,16 +134,18 @@ import { EnglishApi } from './english-api';
               } @else if (totalDue()) {
                 <span
                   class="text-2xl leading-none font-extrabold sm:text-3xl"
-                  >{{ fa(totalDue()) }}</span
+                  >{{ fa(totalDue()) | aioTranslate }}</span
                 >
-                <span class="text-muted-foreground mt-1 text-xs">due</span>
+                <span class="text-muted-foreground mt-1 text-xs">{{
+                  'due' | aioTranslate
+                }}</span>
               } @else {
                 <aio-icon name="lucideCheck" size="lg" class="text-primary" />
               }
             </span>
           </div>
           <div class="flex min-w-0 flex-1 flex-col gap-1">
-            <p class="aio-eyebrow">Today’s review</p>
+            <p class="aio-eyebrow">{{ 'Today’s review' | aioTranslate }}</p>
             <h2
               id="today-title"
               class="line-clamp-2 min-h-14 text-xl font-bold sm:text-2xl"
@@ -156,11 +157,14 @@ import { EnglishApi } from './english-api';
                   class="mt-2 block h-6 w-2/3 rounded-lg"
                 ></span>
               } @else if (recommended()) {
-                {{ fa(totalDue()) }} cards are waiting for you
+                {{
+                  '{0} cards are waiting for you'
+                    | aioTranslate: [fa(totalDue())]
+                }}
               } @else if ((stats.value()?.reviewedToday ?? 0) > 0) {
-                All done for today!
+                {{ 'All done for today!' | aioTranslate }}
               } @else {
-                No cards due right now
+                {{ 'No cards due right now' | aioTranslate }}
               }
             </h2>
             <p
@@ -173,12 +177,17 @@ import { EnglishApi } from './english-api';
                   class="mt-2 block h-5 w-3/4 rounded-lg"
                 ></span>
               } @else if (recommended(); as next) {
-                Start with “{{ next.name }}”. A few minutes is all it takes.
+                {{
+                  'Start with “{0}”. A few minutes is all it takes.'
+                    | aioTranslate: [next.name]
+                }}
               } @else if ((stats.value()?.reviewedToday ?? 0) > 0) {
-                You reviewed {{ fa(stats.value()!.reviewedToday) }} cards. Come
-                back tomorrow to keep your streak going.
+                {{
+                  'You reviewed {0} cards. Come back tomorrow to keep your streak going.'
+                    | aioTranslate: [fa(stats.value()!.reviewedToday)]
+                }}
               } @else {
-                Add new cards or come back tomorrow.
+                {{ 'Add new cards or come back tomorrow.' | aioTranslate }}
               }
             </p>
           </div>
@@ -193,7 +202,7 @@ import { EnglishApi } from './english-api';
             [routerLink]="['deck', next.id, 'study']"
           >
             <aio-icon name="lucidePlay" size="sm" />
-            Start review
+            {{ 'Start review' | aioTranslate }}
           </a>
         } @else {
           <button
@@ -202,10 +211,14 @@ import { EnglishApi } from './english-api';
             class="h-13 w-full rounded-2xl text-base"
             (click)="openNew()"
           >
-            <aio-icon name="lucidePlus" size="sm" /> Add cards
+            <aio-icon name="lucidePlus" size="sm" />
+            {{ 'Add cards' | aioTranslate }}
           </button>
         }
-        <ul class="flex min-h-9 flex-wrap gap-2" aria-label="Statistics">
+        <ul
+          class="flex min-h-9 flex-wrap gap-2"
+          [attr.aria-label]="'Statistics' | aioTranslate"
+        >
           <li
             class="lx-chip"
             [class.text-[var(--streak)]]="streak() > 0"
@@ -220,10 +233,10 @@ import { EnglishApi } from './english-api';
                   aria-hidden="true"
                 ></span>
               } @else {
-                {{ fa(streak()) }}
+                {{ fa(streak()) | aioTranslate }}
               }
             </span>
-            day streak
+            {{ 'day streak' | aioTranslate }}
           </li>
           <li class="lx-chip text-[var(--gem)]">
             <aio-icon name="lucideGem" size="sm" />
@@ -235,10 +248,10 @@ import { EnglishApi } from './english-api';
                   aria-hidden="true"
                 ></span>
               } @else {
-                {{ fa(stats.value()?.mature ?? 0) }}
+                {{ fa(stats.value()?.mature ?? 0) | aioTranslate }}
               }
             </span>
-            mature
+            {{ 'mature' | aioTranslate }}
           </li>
           <li class="lx-chip text-muted-foreground">
             <aio-icon name="lucideLayers" size="sm" />
@@ -250,10 +263,10 @@ import { EnglishApi } from './english-api';
                   aria-hidden="true"
                 ></span>
               } @else {
-                {{ fa(totalCards()) }}
+                {{ fa(totalCards()) | aioTranslate }}
               }
             </span>
-            cards
+            {{ 'cards' | aioTranslate }}
           </li>
         </ul>
       </section>
@@ -262,9 +275,10 @@ import { EnglishApi } from './english-api';
         <div
           class="flex items-center justify-between gap-3"
           aioSectionHeading
-          title="My decks"
+          [title]="'My decks' | aioTranslate"
           [description]="
             fa(myDecks().length) + ' decks, ' + fa(totalCards()) + ' cards'
+              | aioTranslate
           "
           [loading]="decks.isLoading() && !decks.hasValue()"
           [level]="2"
@@ -275,7 +289,7 @@ import { EnglishApi } from './english-api';
         >
           <button aioBtn variant="outline" (click)="openNew()">
             <aio-icon name="lucidePlus" size="sm" />
-            New deck
+            {{ 'New deck' | aioTranslate }}
           </button>
         </div>
 
@@ -287,8 +301,8 @@ import { EnglishApi } from './english-api';
             <input
               aioInputGroupInput
               type="search"
-              placeholder="Search decks"
-              aria-label="Search decks"
+              [placeholder]="'Search decks' | aioTranslate"
+              [attr.aria-label]="'Search decks' | aioTranslate"
               [value]="search()"
               (input)="search.set($any($event.target).value)"
             />
@@ -299,8 +313,11 @@ import { EnglishApi } from './english-api';
           <div
             class="lx-glass rounded-3xl"
             aioEmptyState
-            title="Your library is empty"
-            description="Create a deck or start with a ready-made deck below."
+            [title]="'Your library is empty' | aioTranslate"
+            [description]="
+              'Create a deck or start with a ready-made deck below.'
+                | aioTranslate
+            "
             [level]="3"
             icon="lucideBookOpen"
             iconClass="text-primary"
@@ -340,7 +357,7 @@ import { EnglishApi } from './english-api';
                   @if (deck.due > 0) {
                     <span
                       class="bg-primary text-primary-foreground shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold"
-                      >{{ fa(deck.due) }} due</span
+                      >{{ '{0} due' | aioTranslate: [fa(deck.due)] }}</span
                     >
                   }
                 </span>
@@ -364,9 +381,9 @@ import { EnglishApi } from './english-api';
                   ></span>
                 </span>
                 <span class="text-muted-foreground text-xs">
-                  {{ fa(deck.total) }} cards
+                  {{ '{0} cards' | aioTranslate: [fa(deck.total)] }}
                   @if (deck.suspended) {
-                    , {{ fa(deck.suspended) }} paused
+                    {{ ', {0} paused' | aioTranslate: [fa(deck.suspended)] }}
                   }
                 </span>
               </span>
@@ -376,7 +393,9 @@ import { EnglishApi } from './english-api';
       </section>
 
       <section class="flex flex-col gap-3" aria-labelledby="starter-title">
-        <h2 id="starter-title" class="text-lg font-bold">Starter decks</h2>
+        <h2 id="starter-title" class="text-lg font-bold">
+          {{ 'Starter decks' | aioTranslate }}
+        </h2>
         <ul
           class="lx-glass divide-foreground/8 flex flex-col divide-y rounded-3xl"
         >
@@ -401,13 +420,14 @@ import { EnglishApi } from './english-api';
                 class="flex size-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold"
                 [class]="tone(s.color).soft + ' ' + tone(s.color).text"
                 dir="ltr"
-                >{{ s.level }}</span
+                >{{ s.level | aioTranslate }}</span
               >
               <span class="flex min-w-0 flex-1 flex-col">
-                <span class="font-semibold">{{ s.title }}</span>
-                <span class="text-muted-foreground truncate text-sm"
-                  >{{ fa(s.cardCount) }} cards, {{ s.description }}</span
-                >
+                <span class="font-semibold">{{ s.title | aioTranslate }}</span>
+                <span class="text-muted-foreground truncate text-sm">{{
+                  '{0} cards, {1}'
+                    | aioTranslate: [fa(s.cardCount), s.description]
+                }}</span>
               </span>
               <button
                 aioBtn
@@ -415,14 +435,14 @@ import { EnglishApi } from './english-api';
                 size="sm"
                 [disabled]="copying() === s.slug || inLibrary(s)"
                 (click)="copy(s)"
-                [attr.aria-label]="'Add ' + s.title"
+                [attr.aria-label]="'Add ' + s.title | aioTranslate"
               >
                 @if (inLibrary(s)) {
                   <aio-icon name="lucideCheck" size="sm" />
-                  Added
+                  {{ 'Added' | aioTranslate }}
                 } @else {
                   <aio-icon name="lucidePlus" size="sm" />
-                  Add
+                  {{ 'Add' | aioTranslate }}
                 }
               </button>
             </li>
@@ -433,10 +453,9 @@ import { EnglishApi } from './english-api';
 
     <aio-dialog
       [(open)]="creating"
-      title="New deck"
-      description="Cards you review together."
+      [title]="'New deck' | aioTranslate"
+      [description]="'Cards you review together.' | aioTranslate"
       contentClass="applet-english"
-      language="en"
     >
       <ng-template aioDialogBody>
         <form
@@ -444,17 +463,20 @@ import { EnglishApi } from './english-api';
           class="flex flex-col gap-4"
           (submit)="$event.preventDefault(); create()"
         >
-          <aio-form-field label="Name" controlId="deck-name">
+          <aio-form-field [label]="'Name' | aioTranslate" controlId="deck-name">
             <input
               aioInput
               id="deck-name"
               autocomplete="off"
-              placeholder="For example: Tactics vocabulary"
+              [placeholder]="'For example: Tactics vocabulary' | aioTranslate"
               [value]="name()"
               (input)="name.set($any($event.target).value)"
             />
           </aio-form-field>
-          <aio-form-field label="Description (optional)" controlId="deck-desc">
+          <aio-form-field
+            [label]="'Description (optional)' | aioTranslate"
+            controlId="deck-desc"
+          >
             <textarea
               aioTextarea
               id="deck-desc"
@@ -464,7 +486,9 @@ import { EnglishApi } from './english-api';
             ></textarea>
           </aio-form-field>
           <fieldset class="flex flex-col gap-2">
-            <legend class="mb-2 text-sm font-medium">Colour</legend>
+            <legend class="mb-2 text-sm font-medium">
+              {{ 'Colour' | aioTranslate }}
+            </legend>
             <div class="flex flex-wrap gap-2">
               @for (c of colors; track c) {
                 <button
@@ -474,7 +498,7 @@ import { EnglishApi } from './english-api';
                   [class.ring-2]="color() === c"
                   [class.ring-foreground]="color() === c"
                   [attr.aria-pressed]="color() === c"
-                  [attr.aria-label]="colorLabels[c]"
+                  [attr.aria-label]="colorLabels[c] | aioTranslate"
                   (click)="color.set(c)"
                 >
                   @if (color() === c) {
@@ -488,7 +512,7 @@ import { EnglishApi } from './english-api';
       </ng-template>
       <ng-template aioDialogActions>
         <button aioBtn variant="outline" (click)="creating.set(false)">
-          Cancel
+          {{ 'Cancel' | aioTranslate }}
         </button>
         <button
           aioBtn
@@ -496,13 +520,17 @@ import { EnglishApi } from './english-api';
           form="english-deck-form"
           [disabled]="saving()"
         >
-          Create deck
+          {{ 'Create deck' | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>
   `,
 })
 export class LibraryPage {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   protected readonly errorMessage = apiErrorMessage;
   private readonly api = inject(EnglishApi);
   private readonly router = inject(Router);
@@ -535,7 +563,7 @@ export class LibraryPage {
   protected readonly copying = signal<string | null>(null);
   protected readonly copied = signal<ReadonlySet<string>>(new Set());
 
-  protected readonly fa = (n: number) => faNumber(n);
+  protected readonly fa = (n: number) => this.locale.number(n);
   protected readonly tone = (c: DeckColor) => DECK_TONE[c];
   /** Copied in this visit, or a deck with the same name is already in the library. */
   protected readonly inLibrary = (s: StarterDeck) =>
@@ -586,7 +614,7 @@ export class LibraryPage {
   protected async create() {
     const name = this.name().trim();
     if (!name) {
-      aioToast.error('Enter a name for the deck.');
+      this.notifications.error('Enter a name for the deck.');
       return;
     }
     this.saving.set(true);
@@ -599,7 +627,7 @@ export class LibraryPage {
       this.creating.set(false);
       await this.router.navigate(['deck', deck.id], { relativeTo: this.route });
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.saving.set(false);
     }
@@ -610,13 +638,13 @@ export class LibraryPage {
     try {
       await this.api.copyStarter(starter.slug);
       this.copied.update((set) => new Set(set).add(starter.slug));
-      aioToast.success(
-        `“${starter.title}” added with ${faNumber(starter.cardCount)} cards`,
+      this.notifications.success(
+        `“${starter.title}” added with ${this.locale.number(starter.cardCount)} cards`,
       );
       this.decks.reload();
       this.stats.reload();
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.copying.set(null);
     }

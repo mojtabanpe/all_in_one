@@ -1,3 +1,5 @@
+import { AioTranslate } from '../locale';
+import { AioLocale } from '../locale';
 import { NgTemplateOutlet } from '@angular/common';
 import {
   Component,
@@ -73,6 +75,7 @@ class AioBottomSheetMotion {
     HlmButton,
     NgTemplateOutlet,
     AioBottomSheetMotion,
+    AioTranslate,
   ],
   template: `
     @if (isMobile()) {
@@ -84,18 +87,20 @@ class AioBottomSheetMotion {
         <hlm-drawer-content
           *hlmDrawerPortal="let ctx"
           aioBottomSheetMotion
-          [attr.dir]="language() === 'en' ? 'ltr' : 'rtl'"
-          [attr.lang]="language()"
+          [attr.dir]="activeLanguage() === 'en' ? 'ltr' : 'rtl'"
+          [attr.lang]="activeLanguage()"
           [class]="
             'aio-bottom-sheet mx-auto w-full min-w-0 max-w-full overflow-hidden pb-[calc(1rem+env(safe-area-inset-bottom,0px))] data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-1rem)] ' +
             contentClass()
           "
         >
           <hlm-drawer-header class="relative min-w-0 shrink-0 pe-24 text-start">
-            <h2 hlmDrawerTitle class="min-w-0 break-words">{{ title() }}</h2>
+            <h2 hlmDrawerTitle class="min-w-0 break-words">
+              {{ title() | aioTranslate }}
+            </h2>
             @if (description()) {
               <p hlmDrawerDescription class="min-w-0 break-words">
-                {{ description() }}
+                {{ description() | aioTranslate }}
               </p>
             }
             <button
@@ -103,9 +108,9 @@ class AioBottomSheetMotion {
               hlmDrawerClose
               variant="ghost"
               class="absolute end-4 top-2 min-h-11 min-w-11"
-              [attr.aria-label]="closeText()"
+              [attr.aria-label]="closeText() | aioTranslate"
             >
-              {{ closeText() }}
+              {{ closeText() | aioTranslate }}
             </button>
           </hlm-drawer-header>
           @if (body(); as b) {
@@ -114,7 +119,7 @@ class AioBottomSheetMotion {
               data-slot="dialog-body"
               tabindex="0"
               role="region"
-              [attr.aria-label]="title()"
+              [attr.aria-label]="title() | aioTranslate"
             >
               <ng-container [ngTemplateOutlet]="b.template" />
             </div>
@@ -131,17 +136,17 @@ class AioBottomSheetMotion {
         <hlm-dialog-content
           *hlmDialogPortal="let ctx"
           [closeLabel]="closeText()"
-          [attr.dir]="language() === 'en' ? 'ltr' : 'rtl'"
-          [attr.lang]="language()"
+          [attr.dir]="activeLanguage() === 'en' ? 'ltr' : 'rtl'"
+          [attr.lang]="activeLanguage()"
           [class]="
             'flex min-w-0 max-h-[calc(100dvh-2rem)] flex-col overflow-hidden ' +
             contentClass()
           "
         >
           <hlm-dialog-header class="shrink-0">
-            <h2 hlmDialogTitle>{{ title() }}</h2>
+            <h2 hlmDialogTitle>{{ title() | aioTranslate }}</h2>
             @if (description()) {
-              <p hlmDialogDescription>{{ description() }}</p>
+              <p hlmDialogDescription>{{ description() | aioTranslate }}</p>
             }
           </hlm-dialog-header>
           @if (body(); as b) {
@@ -150,7 +155,7 @@ class AioBottomSheetMotion {
               data-slot="dialog-body"
               tabindex="0"
               role="region"
-              [attr.aria-label]="title()"
+              [attr.aria-label]="title() | aioTranslate"
             >
               <ng-container [ngTemplateOutlet]="b.template" />
             </div>
@@ -174,9 +179,13 @@ export class AioDialog {
    * pass the applet accent here (`contentClass="applet-planner"`) to keep its colours.
    */
   readonly contentClass = input('');
-  readonly language = input<'fa' | 'en'>('fa');
+  private readonly locale = inject(AioLocale);
+  readonly language = input<'fa' | 'en'>();
+  readonly activeLanguage = computed(
+    () => this.language() ?? this.locale.language(),
+  );
   protected readonly closeText = computed(() =>
-    this.language() === 'en' ? 'Close' : 'بستن',
+    this.activeLanguage() === 'en' ? 'Close' : 'بستن',
   );
 
   protected readonly isMobile = injectIsMobile();
@@ -222,21 +231,21 @@ export class AioConfirm {
 
 @Component({
   selector: 'aio-confirm-host',
-  imports: [AioDialog, AioDialogActions, HlmButton],
+  imports: [AioDialog, AioDialogActions, HlmButton, AioTranslate],
   template: `
     @let request = confirm.pending();
     <aio-dialog
       [open]="!!request"
       (openChange)="!$event && confirm.settle(false)"
-      [title]="request?.title ?? ''"
-      [description]="request?.description"
-      [language]="request?.language ?? 'fa'"
+      [title]="request?.title ?? '' | aioTranslate"
+      [description]="request?.description | aioTranslate"
+      [language]="locale.language()"
     >
       <ng-template aioDialogActions>
         <button hlmBtn variant="outline" (click)="confirm.settle(false)">
           {{
-            request?.cancelText ??
-              (request?.language === 'en' ? 'Cancel' : 'انصراف')
+            request?.cancelText ?? (locale.english() ? 'Cancel' : 'انصراف')
+              | aioTranslate
           }}
         </button>
         <button
@@ -246,7 +255,7 @@ export class AioConfirm {
         >
           {{
             request?.confirmText ??
-              (request?.language === 'en' ? 'Confirm' : 'تأیید')
+              (request?.language === 'en' ? 'Confirm' : 'تأیید') | aioTranslate
           }}
         </button>
       </ng-template>
@@ -254,5 +263,6 @@ export class AioConfirm {
   `,
 })
 export class AioConfirmHost {
+  protected readonly locale = inject(AioLocale);
   protected readonly confirm = inject(AioConfirm);
 }

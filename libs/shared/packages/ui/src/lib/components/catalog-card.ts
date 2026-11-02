@@ -1,3 +1,4 @@
+import { AioTranslate } from '../locale';
 import { Component, input } from '@angular/core';
 import {
   AioCard,
@@ -18,16 +19,28 @@ export interface AioCatalogItem {
 @Component({
   selector: '[aioCatalogCard]',
   hostDirectives: [AioCard],
-  imports: [AioCardHeading, AioCardContent, AioItemDirectives, AioBadge],
+  imports: [
+    AioCardHeading,
+    AioCardContent,
+    AioItemDirectives,
+    AioBadge,
+    AioTranslate,
+  ],
   template: `
-    <div aioCardHeading [title]="title()" [description]="description()"></div>
+    <div
+      aioCardHeading
+      [title]="title() | aioTranslate"
+      [description]="description() | aioTranslate"
+    ></div>
     <div aioCardContent aioItemGroup class="flex flex-col gap-1">
       @for (item of items(); track item.id) {
         <div aioItem size="sm">
           <div aioItemContent>
-            <div aioItemTitle>{{ item.title }}</div>
+            <div aioItemTitle>{{ item.title | aioTranslate }}</div>
             @if (item.description) {
-              <div aioItemDescription>{{ item.description }}</div>
+              <div aioItemDescription>
+                {{ item.description | aioTranslate }}
+              </div>
             }
           </div>
           @if (item.badge) {
@@ -36,7 +49,7 @@ export interface AioCatalogItem {
                 aioBadge
                 [variant]="item.badgeVariant ?? 'outline'"
                 [attr.dir]="item.badgeDirection"
-                >{{ item.badge }}</span
+                >{{ item.badge | aioTranslate }}</span
               >
             </div>
           }

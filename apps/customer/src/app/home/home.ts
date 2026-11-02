@@ -9,6 +9,7 @@ import type {
 import type { PlannerTask } from '@all-in-one/applets/planner/contracts';
 import { toIsoDate } from '@all-in-one/shared/schemas';
 import {
+  AioTranslate,
   AioMetric,
   AioNavigationCard,
   AioButton,
@@ -16,13 +17,9 @@ import {
   AioIcon,
   provideIcons,
   AioSkeletonRows,
+  AioLocale,
 } from '@all-in-one/ui';
-import {
-  API_BASE_URL,
-  AuthStore,
-  faDate,
-  faNumber,
-} from '@all-in-one/web/shared';
+import { API_BASE_URL, AuthStore } from '@all-in-one/web/shared';
 import {
   lucideCalendarCheck,
   lucideChevronLeft,
@@ -42,6 +39,7 @@ import {
     AioIcon,
     RouterLink,
     AioSkeletonRows,
+    AioTranslate,
   ],
   providers: [
     provideIcons({
@@ -56,36 +54,46 @@ import {
     <div class="flex flex-col gap-8 md:gap-10">
       <header class="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p class="aio-eyebrow">{{ todayLabel }}</p>
+          <p class="aio-eyebrow">{{ todayLabel() | aioTranslate }}</p>
           <h1 class="aio-page-title">
-            سلام{{ name() ? '، ' + name() : '' }}. امروز از کجا شروع کنیم؟
+            {{
+              'سلام{0}. امروز از کجا شروع کنیم؟'
+                | aioTranslate: [name() ? '، ' + name() : '']
+            }}
           </h1>
         </div>
-        <span class="text-muted-foreground text-sm"
-          >فضای کوچکِ پیشرفت‌های بزرگ</span
-        >
+        <span class="text-muted-foreground text-sm">{{
+          'فضای کوچکِ پیشرفت‌های بزرگ' | aioTranslate
+        }}</span>
       </header>
       <section
         class="aio-hero grid items-center gap-8 md:grid-cols-[1.4fr_1fr]"
         aria-labelledby="today-heading"
       >
         <div class="flex flex-col items-start gap-4">
-          <span class="aio-hero-caption">یک روز تازه، یک فرصت تازه</span>
+          <span class="aio-hero-caption">{{
+            'یک روز تازه، یک فرصت تازه' | aioTranslate
+          }}</span>
           <h2
             id="today-heading"
             class="text-3xl leading-[1.6] font-bold md:text-4xl"
           >
-            کمی تمرکز.<br />کمی یادگیری.<br /><span class="text-[#d9f0c7]"
-              >کمی بیشتر برای خودت.</span
-            >
+            {{ 'کمی تمرکز.' | aioTranslate }}<br />{{
+              'کمی یادگیری.' | aioTranslate
+            }}<br /><span class="text-[#d9f0c7]">{{
+              'کمی بیشتر برای خودت.' | aioTranslate
+            }}</span>
           </h2>
           <p class="aio-hero-caption hidden max-w-md sm:block">
-            لازم نیست همه‌چیز را یک‌باره انجام بدهی. قدم بعدی‌ات را انتخاب کن؛
-            بقیه‌اش همین‌جاست.
+            {{
+              'لازم نیست همه‌چیز را یک‌باره انجام بدهی. قدم بعدی‌ات را انتخاب کن؛ بقیه‌اش همین‌جاست.'
+                | aioTranslate
+            }}
           </p>
           <a aioBtn class="aio-hero-action mt-2" routerLink="/planner"
-            ><aio-icon name="lucideCalendarCheck" size="sm" />برو به برنامه
-            امروز<aio-icon name="lucideChevronLeft" size="sm"
+            ><aio-icon name="lucideCalendarCheck" size="sm" />{{
+              'برو به برنامه امروز' | aioTranslate
+            }}<aio-icon name="lucideChevronLeft" size="sm"
           /></a>
         </div>
         <div
@@ -94,7 +102,7 @@ import {
           <div
             class="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center md:border-b md:border-white/10 md:py-5"
             aioMetric
-            label="کارهای باقی‌مانده"
+            [label]="'کارهای باقی‌مانده' | aioTranslate"
             [value]="tasks.error() ? '—' : fa(openTasks().length)"
             [loading]="tasks.isLoading() && !tasks.hasValue()"
             labelClass="aio-hero-stat-label"
@@ -103,7 +111,7 @@ import {
           <div
             class="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center md:border-b md:border-white/10 md:py-5"
             aioMetric
-            label="کارت‌های آماده مرور"
+            [label]="'کارت‌های آماده مرور' | aioTranslate"
             [value]="english.error() ? '—' : fa(english.value()?.due ?? 0)"
             [loading]="english.isLoading() && !english.hasValue()"
             labelClass="aio-hero-stat-label"
@@ -112,7 +120,7 @@ import {
           <div
             class="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center md:py-5"
             aioMetric
-            label="دقیقه فعالیت این هفته"
+            [label]="'دقیقه فعالیت این هفته' | aioTranslate"
             [value]="week.error() ? '—' : fa(week.value()?.minutes ?? 0)"
             [loading]="week.isLoading() && !week.hasValue()"
             labelClass="aio-hero-stat-label"
@@ -123,11 +131,11 @@ import {
       <section aria-labelledby="spaces-heading" class="flex flex-col gap-4">
         <div class="flex items-end justify-between gap-3">
           <h2 id="spaces-heading" class="text-lg font-bold">
-            هر بخش از روزت، سر جای خودش.
+            {{ 'هر بخش از روزت، سر جای خودش.' | aioTranslate }}
           </h2>
-          <span class="text-muted-foreground hidden text-xs sm:block"
-            >انتخاب کن و ادامه بده</span
-          >
+          <span class="text-muted-foreground hidden text-xs sm:block">{{
+            'انتخاب کن و ادامه بده' | aioTranslate
+          }}</span>
         </div>
         <div class="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
           @for (card of cards(); track card.title) {
@@ -137,8 +145,8 @@ import {
               [class]="card.accent"
               [title]="card.title"
               [icon]="card.icon"
-              [description]="card.value"
-              [action]="card.action"
+              [description]="card.value | aioTranslate"
+              [action]="card.action | aioTranslate"
               [loading]="card.loading"
             ></a>
           }
@@ -150,11 +158,16 @@ import {
           class="flex flex-row items-center justify-between gap-3"
         >
           <div>
-            <h2 id="next-heading" aioCardTitle>قدم‌های بعدی امروز</h2>
-            <p aioCardDescription>فقط همین قدم بعدی را بردار.</p>
+            <h2 id="next-heading" aioCardTitle>
+              {{ 'قدم‌های بعدی امروز' | aioTranslate }}
+            </h2>
+            <p aioCardDescription>
+              {{ 'فقط همین قدم بعدی را بردار.' | aioTranslate }}
+            </p>
           </div>
           <a aioBtn variant="ghost" routerLink="/planner"
-            >همه کارها<aio-icon name="lucideChevronLeft" size="sm"
+            >{{ 'همه کارها' | aioTranslate
+            }}<aio-icon name="lucideChevronLeft" size="sm"
           /></a>
         </div>
         <div aioCardContent>
@@ -162,7 +175,7 @@ import {
             <div
               class="flex flex-col gap-3 py-4"
               role="status"
-              aria-label="در حال دریافت برنامه امروز"
+              [attr.aria-label]="'در حال دریافت برنامه امروز' | aioTranslate"
             >
               <div
                 aioSkeletonRows
@@ -173,9 +186,11 @@ import {
             </div>
           } @else if (tasks.error()) {
             <div class="flex flex-wrap items-center justify-between gap-3 py-4">
-              <p role="alert">برنامه امروز دریافت نشد.</p>
+              <p role="alert">
+                {{ 'برنامه امروز دریافت نشد.' | aioTranslate }}
+              </p>
               <button aioBtn variant="outline" (click)="tasks.reload()">
-                تلاش دوباره
+                {{ 'تلاش دوباره' | aioTranslate }}
               </button>
             </div>
           } @else if (!openTasks().length) {
@@ -183,13 +198,18 @@ import {
               <span class="aio-module-icon"
                 ><aio-icon name="lucideCalendarCheck"
               /></span>
-              <p class="font-semibold">امروز هنوز جای یک کار خوب دارد.</p>
-              <p class="text-muted-foreground text-sm">
-                یک کار کوچک اضافه کن؛ یا از این فرصت برای استراحت استفاده کن.
+              <p class="font-semibold">
+                {{ 'امروز هنوز جای یک کار خوب دارد.' | aioTranslate }}
               </p>
-              <a aioBtn variant="outline" routerLink="/planner"
-                >برنامه‌ریزی امروز</a
-              >
+              <p class="text-muted-foreground text-sm">
+                {{
+                  'یک کار کوچک اضافه کن؛ یا از این فرصت برای استراحت استفاده کن.'
+                    | aioTranslate
+                }}
+              </p>
+              <a aioBtn variant="outline" routerLink="/planner">{{
+                'برنامه‌ریزی امروز' | aioTranslate
+              }}</a>
             </div>
           } @else {
             @for (task of openTasks().slice(0, 4); track task.id) {
@@ -213,18 +233,23 @@ import {
   `,
 })
 export class Home {
+  protected readonly locale = inject(AioLocale);
+
   private readonly api = inject(API_BASE_URL);
   private readonly auth = inject(AuthStore);
   private readonly today = toIsoDate(new Date());
-  protected readonly todayLabel = faDate(this.today, {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  protected readonly todayLabel = computed(() =>
+    this.locale.date(this.today, {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }),
+  );
   protected readonly name = computed(() => this.auth.user()?.name ?? '');
 
-  protected readonly fa = faNumber;
+  protected readonly fa = (value: number, options?: Intl.NumberFormatOptions) =>
+    this.locale.number(value, options);
   protected readonly tasks = httpResource<PlannerTask[]>(
     () => `${this.api}/planner/tasks?preset=today`,
   );
@@ -256,7 +281,9 @@ export class Home {
         action: 'روزت را بچین',
         icon: 'lucideCalendarCheck',
         link: '/planner',
-        value: open ? `${faNumber(open)} کار باقی مانده` : 'کاری باقی نمانده',
+        value: open
+          ? `${this.locale.number(open)} کار باقی مانده`
+          : 'کاری باقی نمانده',
         accent: 'applet-planner',
       },
       {
@@ -265,7 +292,9 @@ export class Home {
         action: 'ادامه یادگیری',
         icon: 'lucideLanguages',
         link: '/english',
-        value: due ? `${faNumber(due)} کارت آماده مرور` : 'مروری باقی نمانده',
+        value: due
+          ? `${this.locale.number(due)} کارت آماده مرور`
+          : 'مروری باقی نمانده',
         accent: 'applet-english',
       },
       {
@@ -275,7 +304,9 @@ export class Home {
         icon: 'lucideSalad',
         link: '/health/nutrition',
         value:
-          avg === null ? 'وعده‌ای ثبت نشده' : `میانگین امتیاز ${faNumber(avg)}`,
+          avg === null
+            ? 'وعده‌ای ثبت نشده'
+            : `میانگین امتیاز ${this.locale.number(avg)}`,
         accent: 'applet-health',
       },
       {
@@ -284,7 +315,7 @@ export class Home {
         action: 'برنامه تمرین من',
         icon: 'lucideDumbbell',
         link: '/health/fitness',
-        value: `${faNumber(this.week.value()?.minutes ?? 0)} از ۱۵۰ دقیقه`,
+        value: `${this.locale.number(this.week.value()?.minutes ?? 0)} از ۱۵۰ دقیقه`,
         accent: 'applet-health',
       },
     ];

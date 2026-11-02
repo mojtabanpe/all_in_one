@@ -14,19 +14,21 @@ import {
   type WritingTask,
 } from '@all-in-one/applets/english-learning/contracts';
 import {
+  AioTranslate,
   AioButton,
   AioIcon,
   AioNativeSelect,
   AioNativeSelectOption,
   AioSpinner,
   AioTextarea,
-  aioToast,
   AioToggleGroupDirectives,
   provideIcons,
   AioEmptyState,
   AioSectionHeading,
   AioAsyncButton,
   AioSelectField,
+  AioNotifications,
+  AioLocale,
 } from '@all-in-one/ui';
 import { englishErrorMessage as apiErrorMessage } from './english-locale';
 import {
@@ -69,7 +71,6 @@ const freshTask = (): TaskState => ({
 
 /** Everyday conversation, listening and sentence-by-sentence shadowing. */
 @Component({
-  host: { dir: 'ltr', lang: 'en' },
   selector: 'english-learning-practice',
   imports: [
     AioButton,
@@ -84,6 +85,7 @@ const freshTask = (): TaskState => ({
     AioSectionHeading,
     AioAsyncButton,
     AioSelectField,
+    AioTranslate,
   ],
   providers: [
     provideIcons({
@@ -106,8 +108,10 @@ const freshTask = (): TaskState => ({
     <div class="flex flex-col gap-6">
       <header
         aioSectionHeading
-        title="Conversation practice"
-        description="Everyday English: write, speak, listen and shadow."
+        [title]="'Conversation practice' | aioTranslate"
+        [description]="
+          'Everyday English: write, speak, listen and shadow.' | aioTranslate
+        "
         [level]="1"
         titleClass="text-2xl font-bold"
         descriptionClass="text-muted-foreground text-sm"
@@ -119,7 +123,7 @@ const freshTask = (): TaskState => ({
         type="single"
         spacing="1"
         class="lx-glass grid w-full grid-cols-2 rounded-2xl p-1 sm:grid-cols-4"
-        aria-label="Practice mode"
+        [attr.aria-label]="'Practice mode' | aioTranslate"
         [value]="mode()"
         (valueChange)="setMode($event)"
       >
@@ -130,14 +134,14 @@ const freshTask = (): TaskState => ({
             class="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-11 gap-1.5 rounded-xl"
           >
             <aio-icon [name]="modeIcons[m]" size="sm" />
-            {{ modeLabels[m] }}
+            {{ modeLabels[m] | aioTranslate }}
           </button>
         }
       </div>
 
       <div class="grid grid-cols-2 gap-3">
         <aio-select-field
-          label="Situation"
+          [label]="'Situation' | aioTranslate"
           controlId="practice-situation"
           [value]="situation()"
           [options]="situations"
@@ -146,7 +150,7 @@ const freshTask = (): TaskState => ({
           (valueChange)="situation.set($any($event))"
         />
         <aio-select-field
-          label="Level"
+          [label]="'Level' | aioTranslate"
           controlId="practice-level"
           [value]="level()"
           [options]="levels"
@@ -157,7 +161,9 @@ const freshTask = (): TaskState => ({
       </div>
 
       @if (error()) {
-        <p class="text-destructive text-sm" role="alert">{{ error() }}</p>
+        <p class="text-destructive text-sm" role="alert">
+          {{ error() | aioTranslate }}
+        </p>
       }
 
       @if (mode() === 'shadowing') {
@@ -165,11 +171,14 @@ const freshTask = (): TaskState => ({
           class="lx-glass flex flex-col gap-4 rounded-2xl p-4"
           aria-labelledby="shadowing-title"
         >
-          <h2 id="shadowing-title" class="text-lg font-bold">Shadowing</h2>
+          <h2 id="shadowing-title" class="text-lg font-bold">
+            {{ 'Shadowing' | aioTranslate }}
+          </h2>
           <p class="text-muted-foreground text-sm leading-7">
-            Listen to the sentence first. Play it again and repeat just behind
-            the speaker, matching their rhythm and intonation. Use headphones
-            and record yourself to hear the difference.
+            {{
+              'Listen to the sentence first. Play it again and repeat just behind the speaker, matching their rhythm and intonation. Use headphones and record yourself to hear the difference.'
+                | aioTranslate
+            }}
           </p>
           <button
             size="lg"
@@ -177,13 +186,15 @@ const freshTask = (): TaskState => ({
             (click)="newDialogue()"
             aioAsyncButton
             [busy]="busy()"
-            label="New exercise"
-            busyLabel="Preparing…"
+            [label]="'New exercise' | aioTranslate"
+            [busyLabel]="'Preparing…' | aioTranslate"
             icon="lucideHeadphones"
           ></button>
           <p class="text-muted-foreground text-sm">
-            To generate exercises and audio, configure chat and text-to-speech
-            in Account → AI.
+            {{
+              'To generate exercises and audio, configure chat and text-to-speech in Account → AI.'
+                | aioTranslate
+            }}
           </p>
         </section>
         @if (shadowLine(); as sentence) {
@@ -196,13 +207,21 @@ const freshTask = (): TaskState => ({
               class="font-semibold"
               aria-live="polite"
             >
-              Sentence {{ number(shadowIndex() + 1) }} of
-              {{ number(dialogue()!.lines.length) }}
+              {{
+                'Sentence {0} of {1}'
+                  | aioTranslate
+                    : [
+                        number(shadowIndex() + 1),
+                        number(dialogue()!.lines.length),
+                      ]
+              }}
             </h2>
             @if (shadowFinished()) {
               <p class="text-success font-semibold" role="status">
-                Well done! You practised every sentence. Try another round to
-                build fluency.
+                {{
+                  'Well done! You practised every sentence. Try another round to build fluency.'
+                    | aioTranslate
+                }}
               </p>
             }
             <div class="flex flex-wrap gap-2">
@@ -212,13 +231,13 @@ const freshTask = (): TaskState => ({
                 variant="outline"
                 [value]="speedValue()"
                 (valueChange)="setShadowSpeed($event)"
-                aria-label="Speaker speed"
+                [attr.aria-label]="'Speaker speed' | aioTranslate"
               >
                 <button aioToggleGroupItem value="0.75" class="min-h-11">
-                  Slow
+                  {{ 'Slow' | aioTranslate }}
                 </button>
                 <button aioToggleGroupItem value="1" class="min-h-11">
-                  Normal
+                  {{ 'Normal' | aioTranslate }}
                 </button>
               </div>
               <button
@@ -231,7 +250,10 @@ const freshTask = (): TaskState => ({
                   [name]="showText() ? 'lucideEyeOff' : 'lucideEye'"
                   size="sm"
                 />
-                {{ showText() ? 'Hide transcript' : 'Show transcript' }}
+                {{
+                  (showText() ? 'Hide transcript' : 'Show transcript')
+                    | aioTranslate
+                }}
               </button>
             </div>
             @if (showText()) {
@@ -240,7 +262,7 @@ const freshTask = (): TaskState => ({
                 lang="en"
                 class="text-start text-xl leading-9 wrap-anywhere"
               >
-                {{ sentence.text }}
+                {{ sentence.text | aioTranslate }}
               </p>
             }
             <div class="flex flex-wrap gap-3">
@@ -253,7 +275,9 @@ const freshTask = (): TaskState => ({
                   [name]="playing() ? 'lucideSquare' : 'lucidePlay'"
                   size="sm"
                 />
-                {{ playing() ? 'Stop speaker' : 'Play sentence' }}
+                {{
+                  (playing() ? 'Stop speaker' : 'Play sentence') | aioTranslate
+                }}
               </button>
               <button
                 aioBtn
@@ -262,7 +286,7 @@ const freshTask = (): TaskState => ({
                 (click)="record()"
               >
                 @if (recordingPending()) {
-                  <aio-spinner aria-label="Loading" />
+                  <aio-spinner [aria-label]="'Loading' | aioTranslate" />
                 } @else {
                   <aio-icon
                     [name]="recording() ? 'lucideSquare' : 'lucideMic'"
@@ -270,24 +294,26 @@ const freshTask = (): TaskState => ({
                   />
                 }
                 {{
-                  recording()
+                  (recording()
                     ? 'Stop recording'
                     : 'Record along with the speaker'
+                  ) | aioTranslate
                 }}
               </button>
             </div>
             <p class="text-muted-foreground text-sm" role="status">
               {{
-                recording()
+                (recording()
                   ? 'Recording. Play the sentence and repeat along. Recording stops after one minute.'
                   : 'Your recording stays on this device and is cleared when you change sentences.'
+                ) | aioTranslate
               }}
             </p>
             @if (recordingUrl()) {
               <div class="flex min-w-0 flex-col gap-2">
-                <span id="shadow-recording-label" class="text-sm font-medium"
-                  >Your recording — compare it with the speaker</span
-                >
+                <span id="shadow-recording-label" class="text-sm font-medium">{{
+                  'Your recording — compare it with the speaker' | aioTranslate
+                }}</span>
                 <audio
                   [src]="recordingUrl()"
                   controls
@@ -306,7 +332,7 @@ const freshTask = (): TaskState => ({
                 "
                 (click)="moveShadow(-1)"
               >
-                Previous sentence
+                {{ 'Previous sentence' | aioTranslate }}
               </button>
               <button
                 aioBtn
@@ -314,11 +340,12 @@ const freshTask = (): TaskState => ({
                 (click)="moveShadow(1)"
               >
                 {{
-                  shadowFinished()
+                  (shadowFinished()
                     ? 'Practise again'
                     : shadowIndex() === dialogue()!.lines.length - 1
                       ? 'Finish practice'
                       : 'Practised; next sentence'
+                  ) | aioTranslate
                 }}
               </button>
             </div>
@@ -332,8 +359,8 @@ const freshTask = (): TaskState => ({
           (click)="newDialogue()"
           aioAsyncButton
           [busy]="busy()"
-          label="New dialogue"
-          busyLabel="Preparing…"
+          [label]="'New dialogue' | aioTranslate"
+          [busyLabel]="'Preparing…' | aioTranslate"
           icon="lucideHeadphones"
         ></button>
 
@@ -348,7 +375,7 @@ const freshTask = (): TaskState => ({
               lang="en"
               class="text-start text-lg font-bold"
             >
-              {{ d.title }}
+              {{ d.title | aioTranslate }}
             </h2>
             <div class="flex flex-wrap items-center gap-2">
               <button aioBtn (click)="playAll()">
@@ -356,7 +383,7 @@ const freshTask = (): TaskState => ({
                   [name]="playing() ? 'lucidePause' : 'lucidePlay'"
                   size="sm"
                 />
-                {{ playing() ? 'Stop' : 'Play dialogue' }}
+                {{ (playing() ? 'Stop' : 'Play dialogue') | aioTranslate }}
               </button>
               <div
                 aioToggleGroup
@@ -364,10 +391,14 @@ const freshTask = (): TaskState => ({
                 variant="outline"
                 [value]="speedValue()"
                 (valueChange)="setSpeed($event)"
-                aria-label="Speed"
+                [attr.aria-label]="'Speed' | aioTranslate"
               >
-                <button aioToggleGroupItem value="0.75">Slow</button>
-                <button aioToggleGroupItem value="1">Normal</button>
+                <button aioToggleGroupItem value="0.75">
+                  {{ 'Slow' | aioTranslate }}
+                </button>
+                <button aioToggleGroupItem value="1">
+                  {{ 'Normal' | aioTranslate }}
+                </button>
               </div>
               <button
                 aioBtn
@@ -378,7 +409,10 @@ const freshTask = (): TaskState => ({
                   [name]="showText() ? 'lucideEyeOff' : 'lucideEye'"
                   size="sm"
                 />
-                {{ showText() ? 'Hide transcript' : 'Show transcript' }}
+                {{
+                  (showText() ? 'Hide transcript' : 'Show transcript')
+                    | aioTranslate
+                }}
               </button>
             </div>
             @if (showText()) {
@@ -392,11 +426,13 @@ const freshTask = (): TaskState => ({
                       type="button"
                       class="text-primary shrink-0 font-bold"
                       (click)="speak(l.text, speakerVoice(l.speaker))"
-                      [attr.aria-label]="'Play sentence ' + l.speaker"
+                      [attr.aria-label]="
+                        'Play sentence ' + l.speaker | aioTranslate
+                      "
                     >
                       {{ l.speaker }}:
                     </button>
-                    <span>{{ l.text }}</span>
+                    <span>{{ l.text | aioTranslate }}</span>
                   </li>
                 }
               </ol>
@@ -408,7 +444,9 @@ const freshTask = (): TaskState => ({
               class="flex flex-col gap-3"
               aria-labelledby="questions-title"
             >
-              <h2 id="questions-title" class="text-lg font-bold">Questions</h2>
+              <h2 id="questions-title" class="text-lg font-bold">
+                {{ 'Questions' | aioTranslate }}
+              </h2>
               @for (q of d.questions; track $index; let qi = $index) {
                 <div
                   class="lx-glass flex flex-col gap-2 rounded-2xl p-4"
@@ -421,7 +459,7 @@ const freshTask = (): TaskState => ({
                     lang="en"
                     class="mb-1 text-start font-semibold"
                   >
-                    {{ q.question }}
+                    {{ q.question | aioTranslate }}
                   </p>
                   @for (o of q.options; track $index; let oi = $index) {
                     <button
@@ -433,18 +471,18 @@ const freshTask = (): TaskState => ({
                       [disabled]="qi in choices()"
                       (click)="choose(qi, oi)"
                     >
-                      <span>{{ o }}</span>
+                      <span>{{ o | aioTranslate }}</span>
                       @if (qi in choices() && oi === q.answer) {
                         <aio-icon
                           name="lucideCheck"
                           size="sm"
-                          aria-label="Correct"
+                          [aria-label]="'Correct' | aioTranslate"
                         />
                       } @else if (choices()[qi] === oi) {
                         <aio-icon
                           name="lucideX"
                           size="sm"
-                          aria-label="Incorrect"
+                          [aria-label]="'Incorrect' | aioTranslate"
                         />
                       }
                     </button>
@@ -466,12 +504,13 @@ const freshTask = (): TaskState => ({
           (click)="newTask()"
         >
           @if (busy() && !current().task) {
-            <aio-spinner aria-label="Loading" /> Preparing…
+            <aio-spinner [aria-label]="'Loading' | aioTranslate" />
+            {{ 'Preparing…' | aioTranslate }}
           } @else {
             <aio-icon
               [name]="mode() === 'speaking' ? 'lucideMic' : 'lucidePenLine'"
             />
-            New exercise
+            {{ 'New exercise' | aioTranslate }}
           }
         </button>
 
@@ -480,8 +519,12 @@ const freshTask = (): TaskState => ({
             class="lx-glass flex flex-col gap-3 rounded-2xl p-4"
             aria-labelledby="task-title"
           >
-            <h2 id="task-title" class="sr-only">Exercise</h2>
-            <p dir="ltr" lang="en" class="text-start">{{ task.scenario }}</p>
+            <h2 id="task-title" class="sr-only">
+              {{ 'Exercise' | aioTranslate }}
+            </h2>
+            <p dir="ltr" lang="en" class="text-start">
+              {{ task.scenario | aioTranslate }}
+            </p>
             @if (task.message) {
               <div
                 dir="ltr"
@@ -493,13 +536,13 @@ const freshTask = (): TaskState => ({
                   size="sm"
                   class="mt-1 shrink-0"
                 />
-                <span>{{ task.message }}</span>
+                <span>{{ task.message | aioTranslate }}</span>
                 <button
                   aioBtn
                   variant="ghost"
                   size="icon-sm"
                   (click)="speak(task.message)"
-                  aria-label="Listen to message"
+                  [attr.aria-label]="'Listen to message' | aioTranslate"
                 >
                   <aio-icon name="lucideVolume2" size="sm" />
                 </button>
@@ -519,12 +562,16 @@ const freshTask = (): TaskState => ({
                   <aio-icon
                     [name]="recording() ? 'lucideSquare' : 'lucideMic'"
                   />
-                  {{ recording() ? 'Stop recording' : 'Record answer' }}
+                  {{
+                    (recording() ? 'Stop recording' : 'Record answer')
+                      | aioTranslate
+                  }}
                 </button>
                 @if (transcribing()) {
                   <span
                     class="text-muted-foreground flex items-center gap-2 text-sm"
-                    ><aio-spinner aria-label="Loading" /> Transcribing…</span
+                    ><aio-spinner [aria-label]="'Loading' | aioTranslate" />
+                    {{ 'Transcribing…' | aioTranslate }}</span
                   >
                 }
                 @if (recordingUrl()) {
@@ -539,11 +586,12 @@ const freshTask = (): TaskState => ({
 
             <label for="practice-answer" class="text-sm font-medium">
               {{
-                mode() === 'speaking'
+                (mode() === 'speaking'
                   ? 'What you said (you can edit it)'
                   : 'Your answer'
-              }}
-            </label>
+                ) | aioTranslate
+              }}</label
+            >
             <textarea
               aioTextarea
               id="practice-answer"
@@ -561,7 +609,7 @@ const freshTask = (): TaskState => ({
               (click)="check()"
               aioAsyncButton
               [busy]="busy()"
-              label="Check answer"
+              [label]="'Check answer' | aioTranslate"
               icon="lucideCheck"
               iconSize="sm"
             ></button>
@@ -572,34 +620,42 @@ const freshTask = (): TaskState => ({
               class="lx-glass flex flex-col gap-4 rounded-2xl p-4"
               aria-labelledby="feedback-title"
             >
-              <h2 id="feedback-title" class="text-lg font-bold">Feedback</h2>
+              <h2 id="feedback-title" class="text-lg font-bold">
+                {{ 'Feedback' | aioTranslate }}
+              </h2>
               @if (f.comment) {
                 <p
                   dir="ltr"
                   lang="en"
                   class="text-primary text-start font-semibold"
                 >
-                  {{ f.comment }}
+                  {{ f.comment | aioTranslate }}
                 </p>
               }
               <div class="flex flex-col gap-1">
-                <span class="text-muted-foreground text-sm">Corrected</span>
-                <p dir="ltr" lang="en" class="text-start">{{ f.corrected }}</p>
+                <span class="text-muted-foreground text-sm">{{
+                  'Corrected' | aioTranslate
+                }}</span>
+                <p dir="ltr" lang="en" class="text-start">
+                  {{ f.corrected | aioTranslate }}
+                </p>
               </div>
               <div class="flex flex-col gap-1">
-                <span class="text-muted-foreground text-sm">More natural</span>
+                <span class="text-muted-foreground text-sm">{{
+                  'More natural' | aioTranslate
+                }}</span>
                 <p
                   dir="ltr"
                   lang="en"
                   class="flex items-start gap-2 text-start"
                 >
-                  {{ f.natural }}
-                  <button
+                  {{ f.natural | aioTranslate
+                  }}<button
                     aioBtn
                     variant="ghost"
                     size="icon-sm"
                     (click)="speak(f.natural)"
-                    aria-label="Listening"
+                    [attr.aria-label]="'Listening' | aioTranslate"
                   >
                     <aio-icon name="lucideVolume2" size="sm" />
                   </button>
@@ -607,20 +663,22 @@ const freshTask = (): TaskState => ({
               </div>
               @if (f.mistakes.length) {
                 <div class="flex flex-col gap-2">
-                  <span class="text-muted-foreground text-sm">Corrections</span>
+                  <span class="text-muted-foreground text-sm">{{
+                    'Corrections' | aioTranslate
+                  }}</span>
                   <ul dir="ltr" lang="en" class="flex flex-col gap-2">
                     @for (m of f.mistakes; track $index) {
                       <li class="bg-background/60 rounded-xl p-3 text-start">
                         <span class="text-destructive line-through">{{
-                          m.original
+                          m.original | aioTranslate
                         }}</span>
                         →
                         <span class="text-success font-semibold">{{
-                          m.fix
+                          m.fix | aioTranslate
                         }}</span>
                         @if (m.why) {
                           <p class="text-muted-foreground text-sm">
-                            {{ m.why }}
+                            {{ m.why | aioTranslate }}
                           </p>
                         }
                       </li>
@@ -638,9 +696,13 @@ const freshTask = (): TaskState => ({
             class="lx-glass rounded-2xl"
             aioEmptyState
             [title]="
-              mode() === 'speaking' ? 'Answer aloud' : 'Write a short answer'
+              (mode() === 'speaking' ? 'Answer aloud' : 'Write a short answer')
+                | aioTranslate
             "
-            description="Choose a situation and select “New exercise”. Then check your answer."
+            [description]="
+              'Choose a situation and select “New exercise”. Then check your answer.'
+                | aioTranslate
+            "
             [level]="2"
           ></div>
         }
@@ -651,7 +713,9 @@ const freshTask = (): TaskState => ({
       @if (phrases.length) {
         <section class="flex flex-col gap-3" aria-labelledby="phrases-title">
           <div class="flex items-center justify-between gap-3">
-            <h2 id="phrases-title" class="text-lg font-bold">Useful phrases</h2>
+            <h2 id="phrases-title" class="text-lg font-bold">
+              {{ 'Useful phrases' | aioTranslate }}
+            </h2>
             @if (decks().length) {
               <aio-native-select
                 class="w-40"
@@ -661,7 +725,7 @@ const freshTask = (): TaskState => ({
               >
                 @for (d of decks(); track d.id) {
                   <option aioNativeSelectOption [value]="d.id">
-                    {{ d.name }}
+                    {{ d.name | aioTranslate }}
                   </option>
                 }
               </aio-native-select>
@@ -677,9 +741,11 @@ const freshTask = (): TaskState => ({
                   lang="en"
                   class="flex min-w-0 flex-1 flex-col text-start"
                 >
-                  <span class="font-semibold">{{ p.phrase }}</span>
+                  <span class="font-semibold">{{
+                    p.phrase | aioTranslate
+                  }}</span>
                   <span class="text-muted-foreground text-sm">{{
-                    p.meaning
+                    p.meaning | aioTranslate
                   }}</span>
                 </span>
                 <button
@@ -687,7 +753,7 @@ const freshTask = (): TaskState => ({
                   variant="ghost"
                   size="icon"
                   (click)="speak(p.phrase)"
-                  [attr.aria-label]="'Pronunciation ' + p.phrase"
+                  [attr.aria-label]="'Pronunciation ' + p.phrase | aioTranslate"
                 >
                   <aio-icon name="lucideVolume2" size="sm" />
                 </button>
@@ -697,7 +763,9 @@ const freshTask = (): TaskState => ({
                   size="icon"
                   [disabled]="added().has(p.phrase)"
                   (click)="addPhrase(p)"
-                  [attr.aria-label]="'Add ' + p.phrase + ' to deck'"
+                  [attr.aria-label]="
+                    'Add ' + p.phrase + ' to deck' | aioTranslate
+                  "
                 >
                   <aio-icon
                     [name]="
@@ -715,6 +783,10 @@ const freshTask = (): TaskState => ({
   `,
 })
 export class PracticePage {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   private readonly api = inject(EnglishApi);
   private readonly tts = inject(Tts);
   private readonly router = inject(Router);
@@ -760,7 +832,7 @@ export class PracticePage {
   protected readonly shadowLine = computed(
     () => this.dialogue()?.lines[this.shadowIndex()],
   );
-  protected readonly number = (value: number) => value.toLocaleString('en-US');
+  protected readonly number = (value: number) => this.locale.number(value);
   private playbackRun = 0;
   protected readonly playing = signal(false);
   protected readonly line = signal(-1);
@@ -990,7 +1062,7 @@ export class PracticePage {
   protected async addPhrase(phrase: UsefulPhrase) {
     const deckId = this.deckId();
     if (!deckId) {
-      aioToast.error('Create a deck before saving phrases.');
+      this.notifications.error('Create a deck before saving phrases.');
       return;
     }
     try {
@@ -1002,9 +1074,13 @@ export class PracticePage {
       remember(DECK_KEY, deckId);
       this.added.update((set) => new Set(set).add(phrase.phrase));
       const deck = this.decks().find((d) => d.id === deckId);
-      aioToast.success(`“${phrase.phrase}” added to ${deck?.name ?? 'deck'}`);
+      this.notifications.success(
+        `“${phrase.phrase}” added to ${deck?.name ?? 'deck'}`,
+      );
     } catch (error) {
-      aioToast.error(apiErrorMessage(error, 'Unable to add the card.'));
+      this.notifications.error(
+        apiErrorMessage(error, 'Unable to add the card.'),
+      );
     }
   }
 

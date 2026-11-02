@@ -15,12 +15,13 @@ import {
   type HealthProfile,
 } from '@all-in-one/applets/health/contracts';
 import {
+  AioTranslate,
   AioButton,
   AioTextarea,
-  aioToast,
   AioToggleGroupDirectives,
   AioFormField,
   AioSelectField,
+  AioNotifications,
 } from '@all-in-one/ui';
 import { apiErrorMessage } from '@all-in-one/web/shared';
 import { HealthApi } from './health-api';
@@ -37,10 +38,11 @@ import { HealthApi } from './health-api';
     AioToggleGroupDirectives,
     AioFormField,
     AioSelectField,
+    AioTranslate,
   ],
   template: `
     <div class="flex flex-col gap-4">
-      <aio-form-field label="رژیم غذایی خاصی دارید؟">
+      <aio-form-field [label]="'رژیم غذایی خاصی دارید؟' | aioTranslate">
         <div
           aioToggleGroup
           type="single"
@@ -57,25 +59,31 @@ import { HealthApi } from './health-api';
               [value]="m"
               class="h-auto justify-start py-2.5 text-start whitespace-normal"
             >
-              {{ modeLabels[m] }}
+              {{ modeLabels[m] | aioTranslate }}
             </button>
           }
         </div>
       </aio-form-field>
 
       @if (mode() === 'OWN') {
-        <aio-form-field label="رژیمتان را توضیح دهید" controlId="own-diet">
+        <aio-form-field
+          [label]="'رژیمتان را توضیح دهید' | aioTranslate"
+          controlId="own-diet"
+        >
           <textarea
             aioTextarea
             id="own-diet"
             rows="3"
-            placeholder="مثلاً: نان و برنج فقط ناهار، شام سبک، روزی ۲ لیوان شیر"
+            [placeholder]="
+              'مثلاً: نان و برنج فقط ناهار، شام سبک، روزی ۲ لیوان شیر'
+                | aioTranslate
+            "
             [value]="notes()"
             (input)="notes.set($any($event.target).value)"
           ></textarea>
         </aio-form-field>
         <aio-select-field
-          label="نزدیک‌ترین رژیم برای سنجش وعده‌ها"
+          [label]="'نزدیک‌ترین رژیم برای سنجش وعده‌ها' | aioTranslate"
           controlId="own-closest"
           [value]="dietSlug()"
           [options]="diets()"
@@ -88,9 +96,10 @@ import { HealthApi } from './health-api';
       @if (mode() === 'APP_DIET' || mode() === 'APP_PLAN') {
         <aio-form-field
           [label]="
-            mode() === 'APP_PLAN'
+            (mode() === 'APP_PLAN'
               ? 'برنامه بر اساس کدام رژیم چیده شود؟'
               : 'کدام رژیم؟'
+            ) | aioTranslate
           "
         >
           <div
@@ -109,9 +118,9 @@ import { HealthApi } from './health-api';
                 [value]="d.slug"
                 class="h-auto flex-col items-start gap-0.5 py-2.5 text-start whitespace-normal"
               >
-                <span class="font-semibold">{{ d.name }}</span>
+                <span class="font-semibold">{{ d.name | aioTranslate }}</span>
                 <span class="text-muted-foreground text-xs">{{
-                  d.summary
+                  d.summary | aioTranslate
                 }}</span>
               </button>
             }
@@ -120,12 +129,14 @@ import { HealthApi } from './health-api';
       }
 
       <button aioBtn [disabled]="saving() || !valid()" (click)="save()">
-        ذخیره
+        {{ 'ذخیره' | aioTranslate }}
       </button>
     </div>
   `,
 })
 export class DietChooser {
+  private readonly notifications = inject(AioNotifications);
+
   readonly profile = input.required<HealthProfile>();
   readonly diets = input.required<readonly Diet[]>();
   readonly saved = output<HealthProfile>();
@@ -167,10 +178,10 @@ export class DietChooser {
         dietSlug: mode === 'NONE' ? null : this.dietSlug(),
         ownDietNotes: mode === 'OWN' ? this.notes().trim() : null,
       });
-      aioToast.success('ذخیره شد');
+      this.notifications.success('ذخیره شد');
       this.saved.emit(profile);
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.saving.set(false);
     }

@@ -10,6 +10,7 @@ import {
   toIsoDate,
 } from '@all-in-one/applets/planner/contracts';
 import {
+  AioTranslate,
   AioButton,
   AioConfirm,
   AioDialog,
@@ -18,12 +19,13 @@ import {
   AioIcon,
   AioInput,
   AioSkeleton,
-  aioToast,
   provideIcons,
   AioFormField,
   AioSectionHeading,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
-import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
+import { apiErrorMessage } from '@all-in-one/web/shared';
 import {
   lucideChevronLeft,
   lucideChevronRight,
@@ -60,6 +62,7 @@ interface AgendaItem {
     AioSkeleton,
     AioFormField,
     AioSectionHeading,
+    AioTranslate,
   ],
   providers: [
     provideIcons({
@@ -77,8 +80,8 @@ interface AgendaItem {
     <header
       class="flex items-center gap-2"
       aioSectionHeading
-      title="تقویم"
-      [description]="rangeLabel()"
+      [title]="'تقویم' | aioTranslate"
+      [description]="rangeLabel() | aioTranslate"
       [level]="1"
       titleClass="text-2xl font-bold"
       descriptionClass="text-muted-foreground text-sm"
@@ -88,7 +91,7 @@ interface AgendaItem {
         aioBtn
         variant="outline"
         size="icon"
-        aria-label="دو هفته قبل"
+        [attr.aria-label]="'دو هفته قبل' | aioTranslate"
         (click)="shift(-1)"
       >
         <aio-icon name="lucideChevronRight" />
@@ -97,7 +100,7 @@ interface AgendaItem {
         aioBtn
         variant="outline"
         size="icon"
-        aria-label="دو هفته بعد"
+        [attr.aria-label]="'دو هفته بعد' | aioTranslate"
         (click)="shift(1)"
       >
         <aio-icon name="lucideChevronLeft" />
@@ -106,7 +109,7 @@ interface AgendaItem {
         aioBtn
         variant="ghost"
         size="icon"
-        aria-label="تقویم‌های اشتراکی"
+        [attr.aria-label]="'تقویم‌های اشتراکی' | aioTranslate"
         (click)="manage.set(true)"
       >
         <aio-icon name="lucideSettings2" />
@@ -120,7 +123,9 @@ interface AgendaItem {
           role="status"
         >
           <aio-icon name="lucideCircleAlert" size="sm" />
-          تقویم «{{ c.name }}» خوانده نشد: {{ c.lastError }}
+          {{
+            'تقویم «{0}» خوانده نشد: {1}' | aioTranslate: [c.name, c.lastError]
+          }}
         </p>
       }
     }
@@ -130,13 +135,16 @@ interface AgendaItem {
       <div aioSkeleton class="h-24 rounded-2xl"></div>
     } @else {
       @for (day of agenda(); track day.date) {
-        <section class="flex flex-col gap-2" [attr.aria-label]="day.label">
+        <section
+          class="flex flex-col gap-2"
+          [attr.aria-label]="day.label | aioTranslate"
+        >
           <h2
             class="px-1 text-sm font-semibold"
             [class.text-primary]="day.date === today"
             [class.text-muted-foreground]="day.date !== today"
           >
-            {{ day.label }}
+            {{ day.label | aioTranslate }}
           </h2>
           <ul class="glass divide-border/60 flex flex-col divide-y rounded-2xl">
             @for (item of day.items; track item.key) {
@@ -145,15 +153,15 @@ interface AgendaItem {
                   [class]="'size-2.5 shrink-0 rounded-full ' + item.dot"
                 ></span>
                 <span class="flex min-w-0 flex-1 flex-col">
-                  <span class="truncate">{{ item.title }}</span>
+                  <span class="truncate">{{ item.title | aioTranslate }}</span>
                   @if (item.location) {
                     <span class="text-muted-foreground truncate text-xs">{{
-                      item.location
+                      item.location | aioTranslate
                     }}</span>
                   }
                 </span>
                 <span class="text-muted-foreground shrink-0 text-xs">{{
-                  item.time
+                  item.time | aioTranslate
                 }}</span>
               </li>
             }
@@ -161,9 +169,12 @@ interface AgendaItem {
         </section>
       } @empty {
         <div class="glass text-muted-foreground rounded-2xl p-4 text-sm">
-          در این دو هفته کار تاریخ‌دار یا رویدادی نیست.
+          {{ 'در این دو هفته کار تاریخ‌دار یا رویدادی نیست.' | aioTranslate }}
           @if (!calendars().length) {
-            تقویم گوگل، اوت‌لوک یا آی‌کلاد را از دکمه تنظیمات اضافه کن.
+            {{
+              'تقویم گوگل، اوت‌لوک یا آی‌کلاد را از دکمه تنظیمات اضافه کن.'
+                | aioTranslate
+            }}
           }
         </div>
       }
@@ -171,8 +182,10 @@ interface AgendaItem {
 
     <aio-dialog
       [(open)]="manage"
-      title="تقویم‌های اشتراکی"
-      description="نشانی iCal (ics) تقویم را بگذار؛ فقط خوانده می‌شود."
+      [title]="'تقویم‌های اشتراکی' | aioTranslate"
+      [description]="
+        'نشانی iCal (ics) تقویم را بگذار؛ فقط خوانده می‌شود.' | aioTranslate
+      "
       contentClass="applet-planner sm:max-w-md"
     >
       <ng-template aioDialogBody>
@@ -186,7 +199,7 @@ interface AgendaItem {
                   <span
                     class="text-muted-foreground truncate text-xs"
                     dir="ltr"
-                    >{{ c.url }}</span
+                    >{{ c.url | aioTranslate }}</span
                   >
                 </span>
                 <button
@@ -206,16 +219,19 @@ interface AgendaItem {
             class="flex flex-col gap-3"
             (submit)="$event.preventDefault(); add()"
           >
-            <aio-form-field label="نام" controlId="cal-name">
+            <aio-form-field [label]="'نام' | aioTranslate" controlId="cal-name">
               <input
                 aioInput
                 id="cal-name"
-                placeholder="مثلاً: تعطیلات رسمی"
+                [placeholder]="'مثلاً: تعطیلات رسمی' | aioTranslate"
                 [value]="name()"
                 (input)="name.set($any($event.target).value)"
               />
             </aio-form-field>
-            <aio-form-field label="نشانی iCal" controlId="cal-url">
+            <aio-form-field
+              [label]="'نشانی iCal' | aioTranslate"
+              controlId="cal-url"
+            >
               <input
                 aioInput
                 id="cal-url"
@@ -232,13 +248,17 @@ interface AgendaItem {
       <ng-template aioDialogActions>
         <button aioBtn type="submit" form="calendar-form" [disabled]="saving()">
           <aio-icon name="lucidePlus" size="sm" />
-          افزودن تقویم
+          {{ 'افزودن تقویم' | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>
   `,
 })
 export class CalendarPage {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   private readonly api = inject(PlannerApi);
   private readonly confirm = inject(AioConfirm);
 
@@ -299,7 +319,7 @@ export class CalendarPage {
         add(isoDateIn(at), {
           key: e.uid + e.start,
           title: e.title,
-          time: faDate(e.start, {
+          time: this.locale.date(e.start, {
             hour: '2-digit',
             minute: '2-digit',
             timeZone: 'Asia/Tehran',
@@ -315,7 +335,9 @@ export class CalendarPage {
       add(t.date, {
         key: t.id,
         title: (t.done ? '✓ ' : '') + (t.repeatRule ? '↻ ' : '') + t.title,
-        time: t.time ? t.time.replace(/\d/g, (d) => faNumber(Number(d))) : '',
+        time: t.time
+          ? t.time.replace(/\d/g, (d) => this.locale.number(Number(d)))
+          : '',
         dot: 'bg-primary',
         kind: 'task',
       });
@@ -337,7 +359,7 @@ export class CalendarPage {
 
   protected readonly rangeLabel = computed(
     () =>
-      `${faDate(this.start(), { day: 'numeric', month: 'long' })} تا ${faDate(this.end(), { day: 'numeric', month: 'long' })}`,
+      `${this.locale.date(this.start(), { day: 'numeric', month: 'long' })} تا ${this.locale.date(this.end(), { day: 'numeric', month: 'long' })}`,
   );
 
   protected dot(color: PlannerColor) {
@@ -352,7 +374,8 @@ export class CalendarPage {
           ? 'فردا، '
           : '';
     return (
-      prefix + faDate(iso, { weekday: 'long', day: 'numeric', month: 'long' })
+      prefix +
+      this.locale.date(iso, { weekday: 'long', day: 'numeric', month: 'long' })
     );
   }
 
@@ -362,7 +385,7 @@ export class CalendarPage {
 
   protected async add() {
     if (!this.name().trim() || !this.url().trim()) {
-      aioToast.error('نام و نشانی تقویم را بنویس.');
+      this.notifications.error('نام و نشانی تقویم را بنویس.');
       return;
     }
     this.saving.set(true);
@@ -375,9 +398,9 @@ export class CalendarPage {
       this.url.set('');
       this.calendarsRes.reload();
       this.eventsRes.reload();
-      aioToast.success('تقویم اضافه شد');
+      this.notifications.success('تقویم اضافه شد');
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.saving.set(false);
     }
@@ -395,7 +418,7 @@ export class CalendarPage {
       this.calendarsRes.reload();
       this.eventsRes.reload();
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 }

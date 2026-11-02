@@ -16,6 +16,7 @@ import {
 } from '@all-in-one/applets/health/contracts';
 import { addDays, toIsoDate } from '@all-in-one/shared/schemas';
 import {
+  AioTranslate,
   AioButton,
   AioDateInput,
   AioConfirm,
@@ -26,14 +27,15 @@ import {
   AioIcon,
   AioProgressDirectives,
   AioSkeleton,
-  aioToast,
   AioToggleGroupDirectives,
   provideIcons,
   AioFormField,
   AioFormErrors,
   AioNumberField,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
-import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
+import { apiErrorMessage } from '@all-in-one/web/shared';
 import { lucideScale, lucideTrash2 } from '@ng-icons/lucide';
 import { HealthApi } from './health-api';
 
@@ -71,6 +73,7 @@ function addMonths(iso: string, months: number): string {
     AioFormField,
     AioFormErrors,
     AioNumberField,
+    AioTranslate,
   ],
   providers: [provideIcons({ lucideScale, lucideTrash2 })],
   template: `
@@ -80,7 +83,7 @@ function addMonths(iso: string, months: number): string {
     >
       <div class="flex items-center justify-between gap-2">
         <h2 id="weight-title" class="health-metric-label">
-          {{ goalSet() ? 'هدف وزن' : 'وزن' }}
+          {{ (goalSet() ? 'هدف وزن' : 'وزن') | aioTranslate }}
         </h2>
         <span class="health-icon-disc text-[var(--health-purple)]"
           ><aio-icon name="lucideScale" size="sm"
@@ -90,36 +93,50 @@ function addMonths(iso: string, months: number): string {
         <div
           aioSkeleton
           class="h-24 rounded-2xl"
-          aria-label="در حال دریافت"
+          [attr.aria-label]="'در حال دریافت' | aioTranslate"
         ></div>
       } @else if (weight.error()) {
-        <p class="health-metric-label">وزن دریافت نشد.</p>
+        <p class="health-metric-label">
+          {{ 'وزن دریافت نشد.' | aioTranslate }}
+        </p>
         <button aioBtn variant="link" (click)="weight.reload()">
-          تلاش دوباره
+          {{ 'تلاش دوباره' | aioTranslate }}
         </button>
       } @else if (weight.value(); as w) {
         @if (w.currentKg === null) {
           <div class="flex flex-col gap-1">
-            <p class="text-lg font-semibold">الان چند کیلویی؟</p>
+            <p class="text-lg font-semibold">
+              {{ 'الان چند کیلویی؟' | aioTranslate }}
+            </p>
             <p class="health-metric-label">
-              وزنت را ثبت کن و بعد هدفت را بگذار؛ مثلاً ۸۵ کیلو تا دو ماه دیگر.
+              {{
+                'وزنت را ثبت کن و بعد هدفت را بگذار؛ مثلاً ۸۵ کیلو تا دو ماه دیگر.'
+                  | aioTranslate
+              }}
             </p>
           </div>
           <button aioBtn class="health-primary-action" (click)="openWeigh()">
-            ثبت وزن
+            {{ 'ثبت وزن' | aioTranslate }}
           </button>
         } @else {
           <div class="flex flex-col gap-1">
             <p class="health-number">
-              {{ kg(w.currentKg) }}
-              <span class="text-base font-normal">کیلوگرم</span>
+              {{ kg(w.currentKg) | aioTranslate
+              }}<span class="text-base font-normal">{{
+                'کیلوگرم' | aioTranslate
+              }}</span>
             </p>
             <p class="health-metric-label">
               @if (w.targetKg !== null && w.targetDate) {
-                هدف {{ kg(w.targetKg) }} کیلوگرم تا
-                {{ dateLabel(w.targetDate) }}
+                {{
+                  'هدف {0} کیلوگرم تا {1}'
+                    | aioTranslate: [kg(w.targetKg), dateLabel(w.targetDate)]
+                }}
               } @else if (w.entries[0]; as last) {
-                وزن فعلی، ثبت‌شده در {{ dateLabel(last.date) }}
+                {{
+                  'وزن فعلی، ثبت‌شده در {0}'
+                    | aioTranslate: [dateLabel(last.date)]
+                }}
               }
             </p>
           </div>
@@ -129,6 +146,7 @@ function addMonths(iso: string, months: number): string {
               [value]="plan.progressPct"
               [attr.aria-label]="
                 'پیشرفت تا هدف وزن: ' + fa(plan.progressPct) + ' درصد'
+                  | aioTranslate
               "
             >
               <div aioProgressIndicator></div>
@@ -136,8 +154,8 @@ function addMonths(iso: string, months: number): string {
             <p class="text-sm leading-7">
               @switch (plan.pace) {
                 @case ('done') {
-                  <strong>به هدفت رسیدی.</strong>
-                  حالا می‌توانی هدف تازه‌ای بگذاری.
+                  <strong> {{ 'به هدفت رسیدی.' | aioTranslate }} </strong>
+                  {{ 'حالا می‌توانی هدف تازه‌ای بگذاری.' | aioTranslate }}
                 }
                 @case ('overdue') {
                   {{ kg(Math.abs(plan.remainingKg)) }} کیلوگرم مانده و تاریخ هدف
@@ -151,7 +169,7 @@ function addMonths(iso: string, months: number): string {
               }
             </p>
             <span class="health-pace" [attr.data-pace]="plan.pace">{{
-              paceLabels[plan.pace]
+              paceLabels[plan.pace] | aioTranslate
             }}</span>
           }
           <div class="flex flex-wrap gap-2">
@@ -160,7 +178,7 @@ function addMonths(iso: string, months: number): string {
               class="health-primary-action flex-1"
               (click)="openWeigh()"
             >
-              ثبت وزن امروز
+              {{ 'ثبت وزن امروز' | aioTranslate }}
             </button>
             <button
               aioBtn
@@ -168,7 +186,7 @@ function addMonths(iso: string, months: number): string {
               class="health-soft-action"
               (click)="openGoal()"
             >
-              {{ goalSet() ? 'ویرایش هدف' : 'تعیین هدف' }}
+              {{ (goalSet() ? 'ویرایش هدف' : 'تعیین هدف') | aioTranslate }}
             </button>
           </div>
         }
@@ -177,8 +195,10 @@ function addMonths(iso: string, months: number): string {
 
     <aio-dialog
       [(open)]="weighOpen"
-      title="ثبت وزن"
-      description="هر روز یک وزن؛ ثبت دوباره، وزن همان روز را عوض می‌کند."
+      [title]="'ثبت وزن' | aioTranslate"
+      [description]="
+        'هر روز یک وزن؛ ثبت دوباره، وزن همان روز را عوض می‌کند.' | aioTranslate
+      "
       contentClass="applet-health health-calm"
     >
       <ng-template aioDialogBody>
@@ -190,26 +210,33 @@ function addMonths(iso: string, months: number): string {
         >
           <div class="grid grid-cols-2 gap-3">
             <aio-number-field
-              label="وزن (کیلوگرم)"
+              [label]="'وزن (کیلوگرم)' | aioTranslate"
               controlId="weigh-kg"
               [field]="weighForm.weightKg"
               inputMode="decimal"
               step="0.1"
               [showErrors]="true"
             />
-            <aio-form-field label="روز" controlId="weigh-date">
+            <aio-form-field
+              [label]="'روز' | aioTranslate"
+              controlId="weigh-date"
+            >
               <aio-date-input
                 contentClass="applet-health"
                 inputId="weigh-date"
                 [maxDate]="today"
                 [formField]="weighForm.date"
               />
-              <p aioFieldDescription>{{ dateLabel(weighModel().date) }}</p>
+              <p aioFieldDescription>
+                {{ dateLabel(weighModel().date) | aioTranslate }}
+              </p>
             </aio-form-field>
           </div>
         </form>
         @if (weight.value()?.entries?.length) {
-          <h3 class="mt-6 mb-2 font-semibold">وزن‌های اخیر</h3>
+          <h3 class="mt-6 mb-2 font-semibold">
+            {{ 'وزن‌های اخیر' | aioTranslate }}
+          </h3>
           <ul class="flex flex-col">
             @for (
               entry of weight.value()!.entries.slice(0, 10);
@@ -218,16 +245,20 @@ function addMonths(iso: string, months: number): string {
               <li
                 class="flex items-center gap-3 border-b border-border py-2 last:border-0"
               >
-                <span class="flex-1 text-sm">{{ dateLabel(entry.date) }}</span>
-                <strong class="text-sm tabular-nums"
-                  >{{ kg(entry.weightKg) }} کیلوگرم</strong
-                >
+                <span class="flex-1 text-sm">{{
+                  dateLabel(entry.date) | aioTranslate
+                }}</span>
+                <strong class="text-sm tabular-nums">{{
+                  '{0} کیلوگرم' | aioTranslate: [kg(entry.weightKg)]
+                }}</strong>
                 <button
                   aioBtn
                   variant="ghost"
                   size="icon"
                   class="size-11 shrink-0"
-                  [attr.aria-label]="'حذف وزن ' + dateLabel(entry.date)"
+                  [attr.aria-label]="
+                    'حذف وزن ' + dateLabel(entry.date) | aioTranslate
+                  "
                   (click)="removeWeight(entry.id, entry.date)"
                 >
                   <aio-icon name="lucideTrash2" size="sm" />
@@ -239,7 +270,7 @@ function addMonths(iso: string, months: number): string {
       </ng-template>
       <ng-template aioDialogActions>
         <button aioBtn variant="outline" (click)="weighOpen.set(false)">
-          انصراف
+          {{ 'انصراف' | aioTranslate }}
         </button>
         <button
           aioBtn
@@ -248,15 +279,15 @@ function addMonths(iso: string, months: number): string {
           class="health-primary-action"
           [disabled]="busy()"
         >
-          ثبت
+          {{ 'ثبت' | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>
 
     <aio-dialog
       [(open)]="goalOpen"
-      title="هدف وزن"
-      description="به چه وزنی و تا کی می‌خواهی برسی؟"
+      [title]="'هدف وزن' | aioTranslate"
+      [description]="'به چه وزنی و تا کی می‌خواهی برسی؟' | aioTranslate"
       contentClass="applet-health health-calm"
     >
       <ng-template aioDialogBody>
@@ -268,7 +299,7 @@ function addMonths(iso: string, months: number): string {
         >
           <div class="grid grid-cols-2 gap-3">
             <aio-number-field
-              label="وزن الان (کیلوگرم)"
+              [label]="'وزن الان (کیلوگرم)' | aioTranslate"
               controlId="goal-current"
               [field]="goalForm.currentKg"
               inputMode="decimal"
@@ -276,7 +307,7 @@ function addMonths(iso: string, months: number): string {
               [showErrors]="true"
             />
             <aio-number-field
-              label="وزن هدف (کیلوگرم)"
+              [label]="'وزن هدف (کیلوگرم)' | aioTranslate"
               controlId="goal-target"
               [field]="goalForm.targetKg"
               inputMode="decimal"
@@ -285,7 +316,9 @@ function addMonths(iso: string, months: number): string {
             />
           </div>
           <div aioField>
-            <span aioFieldLabel id="goal-months-label">تا کی؟</span>
+            <span aioFieldLabel id="goal-months-label">{{
+              'تا کی؟' | aioTranslate
+            }}</span>
             <div
               aioToggleGroup
               type="single"
@@ -301,13 +334,13 @@ function addMonths(iso: string, months: number): string {
                   [value]="'' + m"
                   class="flex-1"
                 >
-                  {{ fa(m) }} ماه
+                  {{ '{0} ماه' | aioTranslate: [fa(m)] }}
                 </button>
               }
             </div>
-            <label aioFieldLabel for="goal-date" class="mt-2"
-              >یا تاریخ دلخواه</label
-            >
+            <label aioFieldLabel for="goal-date" class="mt-2">{{
+              'یا تاریخ دلخواه' | aioTranslate
+            }}</label>
             <aio-date-input
               contentClass="applet-health"
               inputId="goal-date"
@@ -316,12 +349,13 @@ function addMonths(iso: string, months: number): string {
             />
             <p aioFieldDescription>
               {{
-                goalModel().targetDate
+                (goalModel().targetDate
                   ? dateLabel(goalModel().targetDate) +
                     '، ' +
                     fa(daysLeft()) +
                     ' روز دیگر'
                   : 'تاریخ را انتخاب کن'
+                ) | aioTranslate
               }}
             </p>
             <aio-form-errors [errors]="goalForm.targetDate().errors()" />
@@ -333,24 +367,36 @@ function addMonths(iso: string, months: number): string {
               aria-live="polite"
             >
               <span class="health-pace" [attr.data-pace]="p.pace">{{
-                paceLabels[p.pace]
+                paceLabels[p.pace] | aioTranslate
               }}</span>
               <p class="text-sm leading-7">
                 @if (p.pace === 'done') {
-                  وزن هدف با وزن فعلی یکی است؛ یعنی حفظ وزن.
+                  {{
+                    'وزن هدف با وزن فعلی یکی است؛ یعنی حفظ وزن.' | aioTranslate
+                  }}
                 } @else {
-                  {{ p.weeklyKg > 0 ? 'کاهش' : 'افزایش' }} هفته‌ای
-                  <strong>{{ kg(Math.abs(p.weeklyKg)) }} کیلوگرم</strong>؛
-                  روزانه حدود
-                  <strong>{{ fa(Math.abs(p.dailyCalories)) }} کالری</strong>
-                  {{ p.dailyCalories < 0 ? 'کمتر' : 'بیشتر' }} از نیاز نگهداری.
-                  هدف کالری روزانه‌ات با همین حساب می‌شود.
+                  {{
+                    '{0} هفته‌ای'
+                      | aioTranslate: [p.weeklyKg > 0 ? 'کاهش' : 'افزایش']
+                  }}<strong>{{
+                    '{0} کیلوگرم' | aioTranslate: [kg(Math.abs(p.weeklyKg))]
+                  }}</strong
+                  >{{ '؛ روزانه حدود' | aioTranslate }}
+                  <strong>{{
+                    '{0} کالری' | aioTranslate: [fa(Math.abs(p.dailyCalories))]
+                  }}</strong>
+                  {{
+                    '{0} از نیاز نگهداری. هدف کالری روزانه‌ات با همین حساب می‌شود.'
+                      | aioTranslate: [p.dailyCalories < 0 ? 'کمتر' : 'بیشتر']
+                  }}
                 }
               </p>
               @if (p.pace === 'too-fast') {
                 <p class="text-sm leading-7">
-                  این سرعت برای بدن سخت است و وزن کم‌شده معمولاً برمی‌گردد.
-                  تاریخ را عقب‌تر ببر؛ کالری روزانه هم از حد امن کمتر نمی‌شود.
+                  {{
+                    'این سرعت برای بدن سخت است و وزن کم‌شده معمولاً برمی‌گردد. تاریخ را عقب‌تر ببر؛ کالری روزانه هم از حد امن کمتر نمی‌شود.'
+                      | aioTranslate
+                  }}
                 </p>
               }
             </div>
@@ -366,11 +412,11 @@ function addMonths(iso: string, months: number): string {
             [disabled]="busy()"
             (click)="clearGoal()"
           >
-            حذف هدف
+            {{ 'حذف هدف' | aioTranslate }}
           </button>
         }
         <button aioBtn variant="outline" (click)="goalOpen.set(false)">
-          انصراف
+          {{ 'انصراف' | aioTranslate }}
         </button>
         <button
           aioBtn
@@ -379,13 +425,17 @@ function addMonths(iso: string, months: number): string {
           class="health-primary-action"
           [disabled]="busy()"
         >
-          ذخیره هدف
+          {{ 'ذخیره هدف' | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>
   `,
 })
 export class WeightCard {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   private readonly api = inject(HealthApi);
   private readonly confirm = inject(AioConfirm);
   /** Emitted after a change that moves the calorie target. */
@@ -396,11 +446,17 @@ export class WeightCard {
   protected readonly paceLabels = PACE_LABELS;
   protected readonly today = toIsoDate(new Date());
   protected readonly minDate = addDays(this.today, 7);
-  protected readonly fa = (n: number) => faNumber(n);
+  protected readonly fa = (n: number) => this.locale.number(n);
   protected readonly kg = (n: number) =>
-    faNumber(n, { maximumFractionDigits: 1 });
+    this.locale.number(n, { maximumFractionDigits: 1 });
   protected readonly dateLabel = (iso: string) =>
-    iso ? faDate(iso, { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+    iso
+      ? this.locale.date(iso, {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : '';
 
   protected readonly weight = httpResource<WeightProgress>(
     () => `${this.api.base}/weight`,
@@ -502,7 +558,10 @@ export class WeightCard {
         this.weight.set(await this.api.logWeight(m));
         this.weighOpen.set(false);
         this.changed.emit();
-        aioToast.success('وزن ثبت شد', `${this.kg(m.weightKg)} کیلوگرم`);
+        this.notifications.success(
+          'وزن ثبت شد',
+          `${this.kg(m.weightKg)} کیلوگرم`,
+        );
       });
     });
   }
@@ -510,7 +569,7 @@ export class WeightCard {
   protected saveGoal() {
     submit(this.goalForm, async () => {
       if (this.daysLeft() < 7) {
-        aioToast.error('تاریخ هدف باید دست‌کم یک هفته بعد باشد');
+        this.notifications.error('تاریخ هدف باید دست‌کم یک هفته بعد باشد');
         return;
       }
       await this.run(async () => {
@@ -524,7 +583,7 @@ export class WeightCard {
         this.weight.set(saved);
         this.goalOpen.set(false);
         this.changed.emit();
-        aioToast.success(
+        this.notifications.success(
           'هدفت ثبت شد',
           `${this.kg(m.targetKg)} کیلوگرم تا ${this.dateLabel(m.targetDate)}`,
         );
@@ -570,7 +629,7 @@ export class WeightCard {
     try {
       await work();
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.busy.set(false);
     }

@@ -11,6 +11,7 @@ import {
   matchesCard,
 } from '@all-in-one/applets/english-learning/contracts';
 import {
+  AioTranslate,
   AioButton,
   AioConfirm,
   AioDialog,
@@ -24,17 +25,15 @@ import {
   AioNativeSelectOption,
   AioSkeleton,
   AioTextarea,
-  aioToast,
   provideIcons,
   AioFormField,
   AioEmptyState,
   AioSectionHeading,
   AioAsyncButton,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
-import {
-  englishErrorMessage as apiErrorMessage,
-  englishNumber as faNumber,
-} from './english-locale';
+import { englishErrorMessage as apiErrorMessage } from './english-locale';
 import {
   lucideArrowLeft,
   lucideBookOpen,
@@ -57,7 +56,6 @@ const UNIT = /^(?:u\d+)?$/i;
 
 /** A deck (Recall deck-detail): quick add with AI, search, preview, edit, paused cards. */
 @Component({
-  host: { dir: 'ltr', lang: 'en' },
   selector: 'english-learning-deck',
   imports: [
     AioButton,
@@ -77,6 +75,7 @@ const UNIT = /^(?:u\d+)?$/i;
     AioEmptyState,
     AioSectionHeading,
     AioAsyncButton,
+    AioTranslate,
   ],
   providers: [
     provideIcons({
@@ -107,7 +106,7 @@ const UNIT = /^(?:u\d+)?$/i;
             variant="ghost"
             size="icon"
             routerLink="../.."
-            aria-label="Back to library"
+            [attr.aria-label]="'Back to library' | aioTranslate"
           >
             <aio-icon name="lucideArrowLeft" />
           </a>
@@ -117,16 +116,20 @@ const UNIT = /^(?:u\d+)?$/i;
                 class="size-3 shrink-0 rounded-full"
                 [class]="tone(d.color).bar"
               ></span>
-              <span class="truncate">{{ d.name }}</span>
+              <span class="truncate">{{ d.name | aioTranslate }}</span>
             </h1>
             @if (d.description) {
-              <p class="text-muted-foreground text-sm">{{ d.description }}</p>
+              <p class="text-muted-foreground text-sm">
+                {{ d.description | aioTranslate }}
+              </p>
             }
             <p class="text-muted-foreground text-sm">
-              {{ fa(cards().length) }} cards, {{ fa(dueCount()) }} due for
-              review
+              {{
+                '{0} cards, {1} due for review'
+                  | aioTranslate: [fa(cards().length), fa(dueCount())]
+              }}
               @if (pausedCount()) {
-                , {{ fa(pausedCount()) }} paused
+                {{ ', {0} paused' | aioTranslate: [fa(pausedCount())] }}
               }
             </p>
           </div>
@@ -135,7 +138,7 @@ const UNIT = /^(?:u\d+)?$/i;
             variant="ghost"
             size="icon"
             (click)="openEditDeck()"
-            aria-label="Deck settings"
+            [attr.aria-label]="'Deck settings' | aioTranslate"
           >
             <aio-icon name="lucideSettings2" />
           </button>
@@ -152,29 +155,35 @@ const UNIT = /^(?:u\d+)?$/i;
         >
           <aio-icon name="lucideBookOpen" />
           {{
-            dueCount()
+            (dueCount()
               ? 'Review ' + fa(dueCount()) + ' cards'
               : 'No cards due right now'
-          }}
-        </a>
+            ) | aioTranslate
+          }}</a
+        >
 
         <section
           class="lx-glass flex flex-col gap-4 rounded-2xl p-4"
           aria-labelledby="add-title"
         >
-          <h2 id="add-title" class="font-bold">New card</h2>
+          <h2 id="add-title" class="font-bold">
+            {{ 'New card' | aioTranslate }}
+          </h2>
           <form
             class="flex flex-col gap-3"
             (submit)="$event.preventDefault(); addCard()"
           >
-            <aio-form-field label="Word or phrase" controlId="card-front">
+            <aio-form-field
+              [label]="'Word or phrase' | aioTranslate"
+              controlId="card-front"
+            >
               <input
                 aioInput
                 id="card-front"
                 dir="ltr"
                 lang="en"
                 autocomplete="off"
-                placeholder="e.g. take off"
+                [placeholder]="'e.g. take off' | aioTranslate"
                 [value]="front()"
                 (input)="front.set($any($event.target).value)"
                 (blur)="autoFill()"
@@ -182,9 +191,9 @@ const UNIT = /^(?:u\d+)?$/i;
             </aio-form-field>
             <div aioField>
               <div class="flex items-center justify-between">
-                <label aioFieldLabel for="card-back"
-                  >Meaning or definition</label
-                >
+                <label aioFieldLabel for="card-back">{{
+                  'Meaning or definition' | aioTranslate
+                }}</label>
                 <button
                   type="button"
                   variant="ghost"
@@ -193,7 +202,7 @@ const UNIT = /^(?:u\d+)?$/i;
                   (click)="fillWithAi()"
                   aioAsyncButton
                   [busy]="generating()"
-                  label="Fill with AI"
+                  [label]="'Fill with AI' | aioTranslate"
                   icon="lucideSparkles"
                   iconSize="sm"
                 ></button>
@@ -208,18 +217,21 @@ const UNIT = /^(?:u\d+)?$/i;
               ></textarea>
             </div>
             <div class="grid grid-cols-[6rem_1fr] gap-3">
-              <aio-form-field label="Unit" controlId="card-unit">
+              <aio-form-field
+                [label]="'Unit' | aioTranslate"
+                controlId="card-unit"
+              >
                 <input
                   aioInput
                   id="card-unit"
                   dir="ltr"
-                  placeholder="u19"
+                  [placeholder]="'u19' | aioTranslate"
                   [value]="unit()"
                   (input)="unit.set($any($event.target).value)"
                 />
               </aio-form-field>
               <aio-form-field
-                label="Examples (optional)"
+                [label]="'Examples (optional)' | aioTranslate"
                 controlId="card-examples"
               >
                 <textarea
@@ -228,7 +240,7 @@ const UNIT = /^(?:u\d+)?$/i;
                   dir="ltr"
                   lang="en"
                   rows="2"
-                  placeholder="- One example per line"
+                  [placeholder]="'- One example per line' | aioTranslate"
                   [value]="examples()"
                   (input)="examples.set($any($event.target).value)"
                 ></textarea>
@@ -236,7 +248,7 @@ const UNIT = /^(?:u\d+)?$/i;
             </div>
             @if (composerError()) {
               <p class="text-destructive text-sm" role="alert">
-                {{ composerError() }}
+                {{ composerError() | aioTranslate }}
               </p>
             }
             <button
@@ -246,13 +258,15 @@ const UNIT = /^(?:u\d+)?$/i;
               [disabled]="adding()"
             >
               <aio-icon name="lucidePlus" size="sm" />
-              Add card
+              {{ 'Add card' | aioTranslate }}
             </button>
           </form>
         </section>
 
         <section class="flex flex-col gap-3" aria-labelledby="cards-title">
-          <h2 id="cards-title" class="text-lg font-bold">Cards</h2>
+          <h2 id="cards-title" class="text-lg font-bold">
+            {{ 'Cards' | aioTranslate }}
+          </h2>
           <div class="flex gap-2">
             <div aioInputGroup class="flex-1">
               <aio-input-group-addon>
@@ -261,8 +275,8 @@ const UNIT = /^(?:u\d+)?$/i;
               <input
                 aioInputGroupInput
                 type="search"
-                placeholder="Search cards"
-                aria-label="Search cards"
+                [placeholder]="'Search cards' | aioTranslate"
+                [attr.aria-label]="'Search cards' | aioTranslate"
                 [value]="search()"
                 (input)="setSearch($any($event.target).value)"
               />
@@ -271,13 +285,17 @@ const UNIT = /^(?:u\d+)?$/i;
               <aio-native-select
                 class="w-28"
                 selectId="unit-filter"
-                aria-label="Unit"
+                [aria-label]="'Unit' | aioTranslate"
                 [value]="selectedUnit()"
                 (valueChange)="setUnit($event)"
               >
-                <option aioNativeSelectOption value="">All units</option>
+                <option aioNativeSelectOption value="">
+                  {{ 'All units' | aioTranslate }}
+                </option>
                 @for (u of units(); track u) {
-                  <option aioNativeSelectOption [value]="u">{{ u }}</option>
+                  <option aioNativeSelectOption [value]="u">
+                    {{ u | aioTranslate }}
+                  </option>
                 }
               </aio-native-select>
             }
@@ -287,11 +305,15 @@ const UNIT = /^(?:u\d+)?$/i;
             <div
               class="lx-glass rounded-2xl"
               aioEmptyState
-              [title]="cards().length ? 'No cards found' : 'No cards yet'"
+              [title]="
+                (cards().length ? 'No cards found' : 'No cards yet')
+                  | aioTranslate
+              "
               [description]="
-                cards().length
+                (cards().length
                   ? 'Try another search.'
                   : 'Add your first card above.'
+                ) | aioTranslate
               "
               [level]="3"
             ></div>
@@ -317,14 +339,14 @@ const UNIT = /^(?:u\d+)?$/i;
                         <span
                           class="bg-accent text-accent-foreground rounded-full px-2 text-xs"
                           dir="ltr"
-                          >{{ u }}</span
+                          >{{ u | aioTranslate }}</span
                         >
                       }
                     </span>
                     <span
                       dir="ltr"
                       class="text-muted-foreground line-clamp-1 text-sm"
-                      >{{ parts(card).body }}</span
+                      >{{ parts(card).body | aioTranslate }}</span
                     >
                   </button>
                   <button
@@ -346,9 +368,11 @@ const UNIT = /^(?:u\d+)?$/i;
                 class="self-center"
                 (click)="visibleCount.update((n) => n + page)"
               >
-                Show more ({{
-                  fa(activeCards().length - visibleCards().length)
-                }})
+                {{
+                  'Show more ({0})'
+                    | aioTranslate
+                      : [fa(activeCards().length - visibleCards().length)]
+                }}
               </button>
             }
           }
@@ -358,8 +382,11 @@ const UNIT = /^(?:u\d+)?$/i;
           <section class="flex flex-col gap-3" aria-labelledby="paused-title">
             <div
               aioSectionHeading
-              title="Paused cards"
-              description="Cards you repeatedly forgot are paused from review (the Leitner method)."
+              [title]="'Paused cards' | aioTranslate"
+              [description]="
+                'Cards you repeatedly forgot are paused from review (the Leitner method).'
+                  | aioTranslate
+              "
               [level]="2"
               headingId="paused-title"
               titleClass="text-lg font-bold"
@@ -379,10 +406,10 @@ const UNIT = /^(?:u\d+)?$/i;
                       >{{ card.front }}</span
                     >
                     @if (beyondSalvage(card)) {
-                      <span class="text-destructive text-xs"
-                        >Paused twice. Consider rewriting or deleting this
-                        card.</span
-                      >
+                      <span class="text-destructive text-xs">{{
+                        'Paused twice. Consider rewriting or deleting this card.'
+                          | aioTranslate
+                      }}</span>
                     }
                   </span>
                   <button
@@ -392,7 +419,7 @@ const UNIT = /^(?:u\d+)?$/i;
                     (click)="unsuspend(card)"
                   >
                     <aio-icon name="lucideRotateCcw" size="sm" />
-                    Resume
+                    {{ 'Resume' | aioTranslate }}
                   </button>
                   <button
                     aioBtn
@@ -415,9 +442,8 @@ const UNIT = /^(?:u\d+)?$/i;
     <aio-dialog
       [open]="!!previewCard()"
       (openChange)="$event || previewCard.set(null)"
-      [title]="previewCard()?.front ?? ''"
+      [title]="previewCard()?.front ?? '' | aioTranslate"
       contentClass="applet-english"
-      language="en"
     >
       <ng-template aioDialogBody>
         @if (previewCard(); as card) {
@@ -426,22 +452,26 @@ const UNIT = /^(?:u\d+)?$/i;
               type="button"
               class="lx-glass flex min-h-40 flex-col items-center justify-center gap-2 rounded-2xl p-6 text-center"
               (click)="previewFlipped.update((f) => !f)"
-              [attr.aria-label]="previewFlipped() ? 'Show front' : 'Show back'"
+              [attr.aria-label]="
+                (previewFlipped() ? 'Show front' : 'Show back') | aioTranslate
+              "
             >
               @if (previewFlipped()) {
                 @if (parts(card).unit; as u) {
                   <span class="text-muted-foreground text-xs" dir="ltr">{{
-                    u
+                    u | aioTranslate
                   }}</span>
                 }
-                <span dir="ltr" class="text-lg">{{ parts(card).body }}</span>
+                <span dir="ltr" class="text-lg">{{
+                  parts(card).body | aioTranslate
+                }}</span>
               } @else {
                 <span dir="ltr" lang="en" class="text-3xl font-bold">{{
                   card.front
                 }}</span>
-                <span class="text-muted-foreground text-xs"
-                  >Select to reveal the answer</span
-                >
+                <span class="text-muted-foreground text-xs">{{
+                  'Select to reveal the answer' | aioTranslate
+                }}</span>
               }
             </button>
             @if (exampleList(card).length) {
@@ -451,13 +481,15 @@ const UNIT = /^(?:u\d+)?$/i;
                 class="text-muted-foreground flex list-disc flex-col gap-1 ps-5 text-sm"
               >
                 @for (line of exampleList(card); track $index) {
-                  <li>{{ line }}</li>
+                  <li>{{ line | aioTranslate }}</li>
                 }
               </ul>
             }
             <p class="text-muted-foreground text-xs">
-              Next review: {{ dueLabel(card) }};
-              {{ fa(card.repetitions) }} correct in a row
+              {{
+                'Next review: {0}; {1} correct in a row'
+                  | aioTranslate: [dueLabel(card), fa(card.repetitions)]
+              }}
             </p>
           </div>
         }
@@ -470,15 +502,15 @@ const UNIT = /^(?:u\d+)?$/i;
           (click)="deleteCard(previewCard()!)"
         >
           <aio-icon name="lucideTrash2" size="sm" />
-          Delete
+          {{ 'Delete' | aioTranslate }}
         </button>
         <button aioBtn variant="outline" (click)="speak(previewCard()!.front)">
           <aio-icon name="lucideVolume2" size="sm" />
-          Pronunciation
+          {{ 'Pronunciation' | aioTranslate }}
         </button>
         <button aioBtn (click)="openEditCard(previewCard()!)">
           <aio-icon name="lucidePencil" size="sm" />
-          Edit
+          {{ 'Edit' | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>
@@ -486,9 +518,8 @@ const UNIT = /^(?:u\d+)?$/i;
     <aio-dialog
       [open]="!!editCard()"
       (openChange)="$event || editCard.set(null)"
-      title="Edit card"
+      [title]="'Edit card' | aioTranslate"
       contentClass="applet-english"
-      language="en"
     >
       <ng-template aioDialogBody>
         <form
@@ -496,7 +527,10 @@ const UNIT = /^(?:u\d+)?$/i;
           class="flex flex-col gap-3"
           (submit)="$event.preventDefault(); saveCard()"
         >
-          <aio-form-field label="Front" controlId="edit-front">
+          <aio-form-field
+            [label]="'Front' | aioTranslate"
+            controlId="edit-front"
+          >
             <input
               aioInput
               id="edit-front"
@@ -506,7 +540,7 @@ const UNIT = /^(?:u\d+)?$/i;
               (input)="editFront.set($any($event.target).value)"
             />
           </aio-form-field>
-          <aio-form-field label="Back" controlId="edit-back">
+          <aio-form-field [label]="'Back' | aioTranslate" controlId="edit-back">
             <textarea
               aioTextarea
               id="edit-back"
@@ -516,17 +550,20 @@ const UNIT = /^(?:u\d+)?$/i;
               (input)="editBack.set($any($event.target).value)"
             ></textarea>
           </aio-form-field>
-          <aio-form-field label="Unit" controlId="edit-unit">
+          <aio-form-field [label]="'Unit' | aioTranslate" controlId="edit-unit">
             <input
               aioInput
               id="edit-unit"
               dir="ltr"
-              placeholder="u19"
+              [placeholder]="'u19' | aioTranslate"
               [value]="editUnit()"
               (input)="editUnit.set($any($event.target).value)"
             />
           </aio-form-field>
-          <aio-form-field label="Examples" controlId="edit-examples">
+          <aio-form-field
+            [label]="'Examples' | aioTranslate"
+            controlId="edit-examples"
+          >
             <textarea
               aioTextarea
               id="edit-examples"
@@ -539,14 +576,14 @@ const UNIT = /^(?:u\d+)?$/i;
           </aio-form-field>
           @if (editError()) {
             <p class="text-destructive text-sm" role="alert">
-              {{ editError() }}
+              {{ editError() | aioTranslate }}
             </p>
           }
         </form>
       </ng-template>
       <ng-template aioDialogActions>
         <button aioBtn variant="outline" (click)="editCard.set(null)">
-          Cancel
+          {{ 'Cancel' | aioTranslate }}
         </button>
         <button
           aioBtn
@@ -554,16 +591,15 @@ const UNIT = /^(?:u\d+)?$/i;
           form="edit-card-form"
           [disabled]="savingCard()"
         >
-          Save
+          {{ 'Save' | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>
 
     <aio-dialog
       [(open)]="deckModal"
-      title="Deck settings"
+      [title]="'Deck settings' | aioTranslate"
       contentClass="applet-english"
-      language="en"
     >
       <ng-template aioDialogBody>
         <form
@@ -571,7 +607,10 @@ const UNIT = /^(?:u\d+)?$/i;
           class="flex flex-col gap-4"
           (submit)="$event.preventDefault(); saveDeck()"
         >
-          <aio-form-field label="Name" controlId="deck-edit-name">
+          <aio-form-field
+            [label]="'Name' | aioTranslate"
+            controlId="deck-edit-name"
+          >
             <input
               aioInput
               id="deck-edit-name"
@@ -579,7 +618,10 @@ const UNIT = /^(?:u\d+)?$/i;
               (input)="dName.set($any($event.target).value)"
             />
           </aio-form-field>
-          <aio-form-field label="Description" controlId="deck-edit-desc">
+          <aio-form-field
+            [label]="'Description' | aioTranslate"
+            controlId="deck-edit-desc"
+          >
             <textarea
               aioTextarea
               id="deck-edit-desc"
@@ -589,7 +631,9 @@ const UNIT = /^(?:u\d+)?$/i;
             ></textarea>
           </aio-form-field>
           <fieldset>
-            <legend class="mb-2 text-sm font-medium">Colour</legend>
+            <legend class="mb-2 text-sm font-medium">
+              {{ 'Colour' | aioTranslate }}
+            </legend>
             <div class="flex flex-wrap gap-2">
               @for (c of colors; track c) {
                 <button
@@ -599,7 +643,7 @@ const UNIT = /^(?:u\d+)?$/i;
                   [class.ring-2]="dColor() === c"
                   [class.ring-foreground]="dColor() === c"
                   [attr.aria-pressed]="dColor() === c"
-                  [attr.aria-label]="colorLabels[c]"
+                  [attr.aria-label]="colorLabels[c] | aioTranslate"
                   (click)="dColor.set(c)"
                 >
                   @if (dColor() === c) {
@@ -619,7 +663,7 @@ const UNIT = /^(?:u\d+)?$/i;
           (click)="deleteDeck()"
         >
           <aio-icon name="lucideTrash2" size="sm" />
-          Delete deck
+          {{ 'Delete deck' | aioTranslate }}
         </button>
         <button
           aioBtn
@@ -627,13 +671,17 @@ const UNIT = /^(?:u\d+)?$/i;
           form="edit-deck-form"
           [disabled]="savingDeck()"
         >
-          Save
+          {{ 'Save' | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>
   `,
 })
 export class DeckPage {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   /** Route param, bound by withComponentInputBinding(). */
   readonly id = input<string>();
   private readonly api = inject(EnglishApi);
@@ -676,7 +724,7 @@ export class DeckPage {
   protected readonly dColor = signal<DeckColor>('sky');
   protected readonly savingDeck = signal(false);
 
-  protected readonly fa = (n: number) => faNumber(n);
+  protected readonly fa = (n: number) => this.locale.number(n);
   protected readonly tone = (c: DeckColor) => DECK_TONE[c];
   protected readonly parts = cardParts;
   protected readonly beyondSalvage = isBeyondSalvage;
@@ -732,7 +780,9 @@ export class DeckPage {
       this.deck.set(deck);
       this.cards.set(cards);
     } catch (error) {
-      aioToast.error(apiErrorMessage(error, 'Unable to load this deck.'));
+      this.notifications.error(
+        apiErrorMessage(error, 'Unable to load this deck.'),
+      );
       await this.router.navigate(['../..'], { relativeTo: this.route });
     } finally {
       this.loading.set(false);
@@ -759,14 +809,14 @@ export class DeckPage {
     );
     if (days <= 0) return 'Today';
     if (days === 1) return 'Tomorrow';
-    return `In ${faNumber(days)} days`;
+    return `In ${this.locale.number(days)} days`;
   }
 
   /** Fills the answer (and empty examples) with an AI suggestion for the front. */
   protected async fillWithAi() {
     const front = this.front().trim();
     if (!front) {
-      aioToast.error('Enter the front of the card first.');
+      this.notifications.error('Enter the front of the card first.');
       return;
     }
     if (this.generating()) return;
@@ -778,7 +828,9 @@ export class DeckPage {
       this.back.set(answer.back);
       if (!this.examples().trim()) this.examples.set(answer.examples);
     } catch (error) {
-      aioToast.error(apiErrorMessage(error, 'Unable to generate an answer.'));
+      this.notifications.error(
+        apiErrorMessage(error, 'Unable to generate an answer.'),
+      );
     } finally {
       this.generating.set(false);
     }
@@ -812,12 +864,14 @@ export class DeckPage {
         examples: this.examples().trim(),
       });
       this.cards.update((list) => [...list, card]);
-      aioToast.success(`«${card.front.slice(0, 40)}» Added`);
+      this.notifications.success(`«${card.front.slice(0, 40)}» Added`);
       this.front.set('');
       this.back.set('');
       this.examples.set('');
     } catch (error) {
-      aioToast.error(apiErrorMessage(error, 'Unable to add the card.'));
+      this.notifications.error(
+        apiErrorMessage(error, 'Unable to add the card.'),
+      );
     } finally {
       this.adding.set(false);
     }
@@ -864,7 +918,7 @@ export class DeckPage {
         list.map((c) => (c.id === card.id ? saved : c)),
       );
       this.editCard.set(null);
-      aioToast.success('Card updated');
+      this.notifications.success('Card updated');
     } catch (error) {
       this.editError.set(apiErrorMessage(error, 'Unable to save the card.'));
     } finally {
@@ -875,7 +929,6 @@ export class DeckPage {
   protected async deleteCard(card: Card) {
     this.previewCard.set(null);
     const ok = await this.confirm.ask({
-      language: 'en',
       title: 'Delete this card?',
       description: `“${card.front}” will be permanently deleted.`,
       confirmText: 'Delete',
@@ -885,9 +938,9 @@ export class DeckPage {
     try {
       await this.api.removeCard(card.id);
       this.cards.update((list) => list.filter((c) => c.id !== card.id));
-      aioToast.success('Card deleted');
+      this.notifications.success('Card deleted');
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
@@ -897,9 +950,9 @@ export class DeckPage {
       this.cards.update((list) =>
         list.map((c) => (c.id === card.id ? saved : c)),
       );
-      aioToast.success('Card returned to review');
+      this.notifications.success('Card returned to review');
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
@@ -917,7 +970,7 @@ export class DeckPage {
     const name = this.dName().trim();
     if (!d) return;
     if (!name) {
-      aioToast.error('Enter a name for the deck.');
+      this.notifications.error('Enter a name for the deck.');
       return;
     }
     this.savingDeck.set(true);
@@ -930,9 +983,9 @@ export class DeckPage {
         }),
       );
       this.deckModal.set(false);
-      aioToast.success('Deck updated');
+      this.notifications.success('Deck updated');
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.savingDeck.set(false);
     }
@@ -943,7 +996,6 @@ export class DeckPage {
     if (!d) return;
     this.deckModal.set(false);
     const ok = await this.confirm.ask({
-      language: 'en',
       title: 'Delete this deck?',
       description: `“${d.name}” and all its cards will be permanently deleted.`,
       confirmText: 'Delete deck',
@@ -952,10 +1004,10 @@ export class DeckPage {
     if (!ok) return;
     try {
       await this.api.removeDeck(d.id);
-      aioToast.success('Deck deleted');
+      this.notifications.success('Deck deleted');
       await this.router.navigate(['../..'], { relativeTo: this.route });
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 }

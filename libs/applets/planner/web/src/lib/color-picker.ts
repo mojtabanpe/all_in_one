@@ -1,3 +1,4 @@
+import { AioTranslate } from '@all-in-one/ui';
 import { Component, model } from '@angular/core';
 import {
   PLANNER_COLORS,
@@ -8,15 +9,20 @@ import { COLOR_LABELS, TONE } from './colors';
 /** Round colour swatches with 44px targets; `[(value)]`. */
 @Component({
   selector: 'planner-color-picker',
+  imports: [AioTranslate],
   template: `
-    <div class="flex flex-wrap gap-1" role="radiogroup" aria-label="رنگ">
+    <div
+      class="flex flex-wrap gap-1"
+      role="radiogroup"
+      [attr.aria-label]="'رنگ' | aioTranslate"
+    >
       @for (c of colors; track c) {
         <button
           type="button"
           role="radio"
           class="grid size-11 place-items-center rounded-full"
           [attr.aria-checked]="value() === c"
-          [attr.aria-label]="labels[c]"
+          [attr.aria-label]="labels[c] | aioTranslate"
           (click)="value.set(c)"
         >
           <span [class]="swatch(c)"></span>

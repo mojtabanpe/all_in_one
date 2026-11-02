@@ -9,6 +9,7 @@ import {
   type ReadingTopic,
 } from '@all-in-one/applets/english-learning/contracts';
 import {
+  AioTranslate,
   AioButton,
   AioConfirm,
   AioDialog,
@@ -18,7 +19,6 @@ import {
   AioInput,
   AioSkeleton,
   AioTextarea,
-  aioToast,
   provideIcons,
   AioFormField,
   AioEmptyState,
@@ -26,11 +26,12 @@ import {
   AioSkeletonLines,
   AioAsyncButton,
   AioSelectField,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
 import {
   englishErrorMessage as apiErrorMessage,
   englishDate as faDate,
-  englishNumber as faNumber,
 } from './english-locale';
 import {
   lucideFileText,
@@ -43,7 +44,6 @@ import { EnglishApi } from './english-api';
 
 /** Reading texts (Recall texts page): paste your own or let AI write ~1,000 words. */
 @Component({
-  host: { dir: 'ltr', lang: 'en' },
   selector: 'english-learning-texts',
   imports: [
     AioButton,
@@ -61,6 +61,7 @@ import { EnglishApi } from './english-api';
     AioSkeletonLines,
     AioAsyncButton,
     AioSelectField,
+    AioTranslate,
   ],
   providers: [
     provideIcons({
@@ -75,17 +76,19 @@ import { EnglishApi } from './english-api';
     <div class="flex flex-col gap-6">
       @if (texts.error()) {
         <p role="alert" class="text-destructive text-sm">
-          {{ errorMessage(texts.error()) }}
+          {{ errorMessage(texts.error()) | aioTranslate }}
         </p>
         <button aioBtn variant="outline" (click)="texts.reload()">
-          Try again
+          {{ 'Try again' | aioTranslate }}
         </button>
       }
       <header
         class="flex items-center justify-between gap-3"
         aioSectionHeading
-        title="Reading"
-        description="Read, listen and turn new words into flashcards."
+        [title]="'Reading' | aioTranslate"
+        [description]="
+          'Read, listen and turn new words into flashcards.' | aioTranslate
+        "
         [level]="1"
         titleClass="text-2xl font-bold"
         descriptionClass="text-muted-foreground text-sm"
@@ -93,7 +96,7 @@ import { EnglishApi } from './english-api';
       >
         <button aioBtn (click)="openNew()">
           <aio-icon name="lucidePlus" size="sm" />
-          New text
+          {{ 'New text' | aioTranslate }}
         </button>
       </header>
 
@@ -101,7 +104,7 @@ import { EnglishApi } from './english-api';
         <ul
           class="lx-glass divide-border/60 flex flex-col divide-y rounded-2xl"
           aria-busy="true"
-          aria-label="Loading reading texts"
+          [attr.aria-label]="'Loading reading texts' | aioTranslate"
         >
           @for (row of [1, 2, 3]; track row) {
             <li
@@ -121,13 +124,18 @@ import { EnglishApi } from './english-api';
         <div
           class="lx-glass rounded-2xl"
           aioEmptyState
-          title="No reading texts yet"
-          description="Paste an English text or let AI write about a topic you choose."
+          [title]="'No reading texts yet' | aioTranslate"
+          [description]="
+            'Paste an English text or let AI write about a topic you choose.'
+              | aioTranslate
+          "
           [level]="2"
           icon="lucideFileText"
           iconClass="text-primary"
         >
-          <button aioBtn (click)="openNew()">Add your first text</button>
+          <button aioBtn (click)="openNew()">
+            {{ 'Add your first text' | aioTranslate }}
+          </button>
         </div>
       } @else {
         <ul
@@ -148,22 +156,27 @@ import { EnglishApi } from './english-api';
                 <span
                   class="text-muted-foreground flex items-center gap-2 text-sm"
                 >
-                  {{ fa(words(text)) }} words, {{ faDate(text.createdAt) }}
+                  {{
+                    '{0} words, {1}'
+                      | aioTranslate: [fa(words(text)), faDate(text.createdAt)]
+                  }}
                   @if (text.ai) {
                     <span
                       class="bg-accent text-accent-foreground rounded-full px-2 text-xs"
-                      >AI</span
+                      >{{ 'AI' | aioTranslate }}</span
                     >
                   }
                   @if (text.rating) {
                     <span
                       class="flex items-center gap-0.5 text-[var(--streak)]"
-                      [attr.aria-label]="fa(text.rating) + ' stars'"
+                      [attr.aria-label]="
+                        fa(text.rating) + ' stars' | aioTranslate
+                      "
                     >
                       <aio-icon name="lucideStar" size="xs" />{{
-                        fa(text.rating)
-                      }}
-                    </span>
+                        fa(text.rating) | aioTranslate
+                      }}</span
+                    >
                   }
                 </span>
               </a>
@@ -186,10 +199,11 @@ import { EnglishApi } from './english-api';
     <aio-dialog
       [open]="modalOpen()"
       (openChange)="$event || closeModal()"
-      title="New text"
-      description="Paste your own text or generate one with AI."
+      [title]="'New text' | aioTranslate"
+      [description]="
+        'Paste your own text or generate one with AI.' | aioTranslate
+      "
       contentClass="applet-english"
-      language="en"
     >
       <ng-template aioDialogBody>
         <form
@@ -200,7 +214,7 @@ import { EnglishApi } from './english-api';
           <div class="lx-glass flex flex-col gap-3 rounded-2xl p-3">
             <div class="grid grid-cols-2 gap-3">
               <aio-select-field
-                label="Topic"
+                [label]="'Topic' | aioTranslate"
                 controlId="text-topic"
                 [value]="topic()"
                 [options]="topics"
@@ -209,7 +223,7 @@ import { EnglishApi } from './english-api';
                 (valueChange)="topic.set($any($event))"
               />
               <aio-select-field
-                label="Level"
+                [label]="'Level' | aioTranslate"
                 controlId="text-level"
                 [value]="level()"
                 [options]="levels"
@@ -225,21 +239,23 @@ import { EnglishApi } from './english-api';
               (click)="generate()"
               aioAsyncButton
               [busy]="generating()"
-              label="Generate with AI"
-              busyLabel="Writing (about a minute)…"
+              [label]="'Generate with AI' | aioTranslate"
+              [busyLabel]="'Writing (about a minute)…' | aioTranslate"
               icon="lucideSparkles"
               iconSize="sm"
             ></button>
             @if (feedbackFrom()) {
               <p class="text-muted-foreground text-xs">
-                Based on your feedback on “<span dir="ltr">{{
-                  feedbackFrom()
-                }}</span
+                {{ 'Based on your feedback on “' | aioTranslate
+                }}<span dir="ltr">{{ feedbackFrom() | aioTranslate }}</span
                 >”.
               </p>
             }
           </div>
-          <aio-form-field label="Title" controlId="text-title">
+          <aio-form-field
+            [label]="'Title' | aioTranslate"
+            controlId="text-title"
+          >
             <input
               aioInput
               id="text-title"
@@ -249,14 +265,14 @@ import { EnglishApi } from './english-api';
               (input)="title.set($any($event.target).value)"
             />
           </aio-form-field>
-          <aio-form-field label="Text" controlId="text-body">
+          <aio-form-field [label]="'Text' | aioTranslate" controlId="text-body">
             <textarea
               aioTextarea
               id="text-body"
               dir="ltr"
               lang="en"
               rows="8"
-              placeholder="Paste an English text here…"
+              [placeholder]="'Paste an English text here…' | aioTranslate"
               [value]="body()"
               (input)="
                 body.set($any($event.target).value); aiWritten.set(false)
@@ -265,26 +281,32 @@ import { EnglishApi } from './english-api';
           </aio-form-field>
           @if (formError()) {
             <p class="text-destructive text-sm" role="alert">
-              {{ formError() }}
+              {{ formError() | aioTranslate }}
             </p>
           }
         </form>
       </ng-template>
       <ng-template aioDialogActions>
-        <button aioBtn variant="outline" (click)="closeModal()">Cancel</button>
+        <button aioBtn variant="outline" (click)="closeModal()">
+          {{ 'Cancel' | aioTranslate }}
+        </button>
         <button
           aioBtn
           type="submit"
           form="english-text-form"
           [disabled]="saving() || generating()"
         >
-          Save and read
+          {{ 'Save and read' | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>
   `,
 })
 export class TextsPage {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   protected readonly errorMessage = apiErrorMessage;
   private readonly api = inject(EnglishApi);
   private readonly confirm = inject(AioConfirm);
@@ -310,8 +332,8 @@ export class TextsPage {
   /** Ignores a generation that finishes after the sheet was closed. */
   private generation = 0;
 
-  protected readonly fa = (n: number) => faNumber(n);
-  protected readonly faDate = (iso: string) => faDate(iso);
+  protected readonly fa = (n: number) => this.locale.number(n);
+  protected readonly faDate = (iso: string) => this.locale.date(iso);
   protected readonly words = (t: ReadingText) =>
     t.body.split(/\s+/).filter(Boolean).length;
 
@@ -385,7 +407,6 @@ export class TextsPage {
 
   protected async remove(text: ReadingText) {
     const ok = await this.confirm.ask({
-      language: 'en',
       title: 'Delete this text?',
       description: 'Cards created from this text will stay in their decks.',
       confirmText: 'Delete',
@@ -395,9 +416,9 @@ export class TextsPage {
     try {
       await this.api.removeText(text.id);
       this.texts.update((list) => (list ?? []).filter((t) => t.id !== text.id));
-      aioToast.success('Text deleted');
+      this.notifications.success('Text deleted');
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 }

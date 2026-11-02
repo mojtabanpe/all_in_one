@@ -12,6 +12,7 @@ import {
   validTimeZone,
 } from '@all-in-one/applets/planner/contracts';
 import {
+  AioTranslate,
   AioButton,
   AioDateInput,
   AioCheckbox,
@@ -82,13 +83,14 @@ export function recurrencePreset(rule: string | null | undefined): string {
     AioNativeSelect,
     AioNativeSelectDirectives,
     AioFormField,
+    AioTranslate,
   ],
   host: { class: 'block min-w-0 w-full' },
   template: `
     <fieldset aioFieldSet class="min-w-0 gap-4 border-t border-border pt-5">
       <aio-form-field
         class="min-w-0 gap-2"
-        label="تکرار"
+        [label]="'تکرار' | aioTranslate"
         [controlId]="prefix() + 'preset'"
       >
         <aio-native-select
@@ -96,15 +98,27 @@ export function recurrencePreset(rule: string | null | undefined): string {
           [value]="preset()"
           (valueChange)="preset.set($event)"
         >
-          <option aioNativeSelectOption value="NONE">تکرار نمی‌شود</option>
-          <option aioNativeSelectOption value="DAILY">هر روز</option>
-          <option aioNativeSelectOption value="WORKDAYS">
-            روزهای کاری (شنبه تا چهارشنبه)
+          <option aioNativeSelectOption value="NONE">
+            {{ 'تکرار نمی‌شود' | aioTranslate }}
           </option>
-          <option aioNativeSelectOption value="WEEKLY">هر هفته</option>
-          <option aioNativeSelectOption value="MONTHLY">هر ماه</option>
-          <option aioNativeSelectOption value="YEARLY">هر سال</option>
-          <option aioNativeSelectOption value="CUSTOM">دلخواه</option>
+          <option aioNativeSelectOption value="DAILY">
+            {{ 'هر روز' | aioTranslate }}
+          </option>
+          <option aioNativeSelectOption value="WORKDAYS">
+            {{ 'روزهای کاری (شنبه تا چهارشنبه)' | aioTranslate }}
+          </option>
+          <option aioNativeSelectOption value="WEEKLY">
+            {{ 'هر هفته' | aioTranslate }}
+          </option>
+          <option aioNativeSelectOption value="MONTHLY">
+            {{ 'هر ماه' | aioTranslate }}
+          </option>
+          <option aioNativeSelectOption value="YEARLY">
+            {{ 'هر سال' | aioTranslate }}
+          </option>
+          <option aioNativeSelectOption value="CUSTOM">
+            {{ 'دلخواه' | aioTranslate }}
+          </option>
         </aio-native-select>
       </aio-form-field>
       @if (preset() !== 'NONE') {
@@ -112,7 +126,7 @@ export function recurrencePreset(rule: string | null | undefined): string {
           <div class="grid min-w-0 grid-cols-2 gap-3">
             <aio-form-field
               class="min-w-0 gap-2"
-              label="واحد تکرار"
+              [label]="'واحد تکرار' | aioTranslate"
               [controlId]="prefix() + 'freq'"
             >
               <aio-native-select
@@ -120,15 +134,23 @@ export function recurrencePreset(rule: string | null | undefined): string {
                 [value]="frequency()"
                 (valueChange)="frequency.set($event); raw.set('')"
               >
-                <option aioNativeSelectOption value="DAILY">روز</option>
-                <option aioNativeSelectOption value="WEEKLY">هفته</option>
-                <option aioNativeSelectOption value="MONTHLY">ماه</option>
-                <option aioNativeSelectOption value="YEARLY">سال</option>
+                <option aioNativeSelectOption value="DAILY">
+                  {{ 'روز' | aioTranslate }}
+                </option>
+                <option aioNativeSelectOption value="WEEKLY">
+                  {{ 'هفته' | aioTranslate }}
+                </option>
+                <option aioNativeSelectOption value="MONTHLY">
+                  {{ 'ماه' | aioTranslate }}
+                </option>
+                <option aioNativeSelectOption value="YEARLY">
+                  {{ 'سال' | aioTranslate }}
+                </option>
               </aio-native-select>
             </aio-form-field>
             <aio-form-field
               class="min-w-0 gap-2"
-              label="فاصلهٔ تکرار"
+              [label]="'فاصلهٔ تکرار' | aioTranslate"
               [controlId]="prefix() + 'interval'"
             >
               <input
@@ -148,9 +170,14 @@ export function recurrencePreset(rule: string | null | undefined): string {
           (preset() === 'CUSTOM' && frequency() === 'WEEKLY')
         ) {
           <fieldset aioFieldSet class="min-w-0 gap-2">
-            <legend aioFieldLegend class="text-sm">روزهای هفته</legend>
+            <legend aioFieldLegend class="text-sm">
+              {{ 'روزهای هفته' | aioTranslate }}
+            </legend>
             <p class="text-muted-foreground text-xs">
-              اگر روزی انتخاب نکنی، روز تاریخ شروع تکرار می‌شود.
+              {{
+                'اگر روزی انتخاب نکنی، روز تاریخ شروع تکرار می‌شود.'
+                  | aioTranslate
+              }}
             </p>
             <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
               @for (d of weekdays; track d[0]) {
@@ -162,16 +189,16 @@ export function recurrencePreset(rule: string | null | undefined): string {
                     [inputId]="prefix() + 'day-' + d[0]"
                     [checked]="selectedDays().includes(d[0])"
                     (checkedChange)="toggleDay(d[0], $event)"
-                    [aria-label]="d[1]"
-                  />{{ d[1] }}
-                </label>
+                    [aria-label]="d[1] | aioTranslate"
+                  />{{ d[1] | aioTranslate }}</label
+                >
               }
             </div>
           </fieldset>
         }
         <aio-form-field
           class="min-w-0 gap-2"
-          label="پایان تکرار"
+          [label]="'پایان تکرار' | aioTranslate"
           [controlId]="prefix() + 'end'"
         >
           <aio-native-select
@@ -179,14 +206,20 @@ export function recurrencePreset(rule: string | null | undefined): string {
             [value]="ending()"
             (valueChange)="ending.set($event); endTouched.set(true)"
           >
-            <option aioNativeSelectOption value="NEVER">بدون پایان</option>
-            <option aioNativeSelectOption value="DATE">در تاریخ</option>
-            <option aioNativeSelectOption value="COUNT">پس از چند نوبت</option>
+            <option aioNativeSelectOption value="NEVER">
+              {{ 'بدون پایان' | aioTranslate }}
+            </option>
+            <option aioNativeSelectOption value="DATE">
+              {{ 'در تاریخ' | aioTranslate }}
+            </option>
+            <option aioNativeSelectOption value="COUNT">
+              {{ 'پس از چند نوبت' | aioTranslate }}
+            </option>
           </aio-native-select>
           @if (ending() === 'DATE') {
             <aio-date-input
               contentClass="applet-planner"
-              aria-label="تاریخ پایان تکرار"
+              [aria-label]="'تاریخ پایان تکرار' | aioTranslate"
               [value]="until()"
               (valueChange)="until.set($event)"
             />
@@ -195,7 +228,7 @@ export function recurrencePreset(rule: string | null | undefined): string {
             <input
               aioInput
               type="number"
-              aria-label="تعداد نوبت‌ها"
+              [attr.aria-label]="'تعداد نوبت‌ها' | aioTranslate"
               min="1"
               max="10000"
               [value]="count()"
@@ -213,14 +246,17 @@ export function recurrencePreset(rule: string | null | undefined): string {
         [attr.aria-controls]="prefix() + 'advanced'"
         (click)="advanced.set(!advanced())"
       >
-        {{ advanced() ? 'بستن تنظیمات پیشرفته' : 'تنظیمات پیشرفته' }}
+        {{
+          (advanced() ? 'بستن تنظیمات پیشرفته' : 'تنظیمات پیشرفته')
+            | aioTranslate
+        }}
       </button>
       @if (advanced()) {
         <div [id]="prefix() + 'advanced'" class="flex min-w-0 flex-col gap-4">
           @if (preset() !== 'NONE') {
             <aio-form-field
               class="min-w-0 gap-2"
-              label="مبنای تکرار"
+              [label]="'مبنای تکرار' | aioTranslate"
               [controlId]="prefix() + 'from'"
             >
               <aio-native-select
@@ -229,16 +265,16 @@ export function recurrencePreset(rule: string | null | undefined): string {
                 (valueChange)="repeatFrom.set($event)"
               >
                 <option aioNativeSelectOption value="SCHEDULE">
-                  تاریخ برنامه‌ریزی‌شده
+                  {{ 'تاریخ برنامه‌ریزی‌شده' | aioTranslate }}
                 </option>
                 <option aioNativeSelectOption value="COMPLETION">
-                  زمان انجام نوبت قبلی
+                  {{ 'زمان انجام نوبت قبلی' | aioTranslate }}
                 </option>
               </aio-native-select>
             </aio-form-field>
             <aio-form-field
               class="min-w-0 gap-2"
-              label="منطقهٔ زمانی"
+              [label]="'منطقهٔ زمانی' | aioTranslate"
               [controlId]="prefix() + 'zone'"
             >
               <input
@@ -249,14 +285,16 @@ export function recurrencePreset(rule: string | null | undefined): string {
                 (input)="zone.set($any($event.target).value)"
               />
               <p aioFieldDescription>
-                زمان شروع بر اساس این منطقه است. نمایش روزانه با تهران هماهنگ
-                می‌شود.
+                {{
+                  'زمان شروع بر اساس این منطقه است. نمایش روزانه با تهران هماهنگ می‌شود.'
+                    | aioTranslate
+                }}
               </p>
             </aio-form-field>
             @if (preset() === 'CUSTOM') {
               <aio-form-field
                 class="min-w-0 gap-2"
-                label="قانون RRULE (اختیاری)"
+                [label]="'قانون RRULE (اختیاری)' | aioTranslate"
                 [controlId]="prefix() + 'rule'"
               >
                 <input
@@ -265,14 +303,14 @@ export function recurrencePreset(rule: string | null | undefined): string {
                   [id]="prefix() + 'rule'"
                   [value]="raw()"
                   (input)="raw.set($any($event.target).value)"
-                  placeholder="RRULE:FREQ=MONTHLY;BYDAY=-1FR"
+                  [placeholder]="'RRULE:FREQ=MONTHLY;BYDAY=-1FR' | aioTranslate"
                 />
               </aio-form-field>
             }
           }
           <aio-form-field
             class="min-w-0 gap-2"
-            label="مدت کار (دقیقه، اختیاری)"
+            [label]="'مدت کار (دقیقه، اختیاری)' | aioTranslate"
             [controlId]="prefix() + 'duration'"
           >
             <input
@@ -292,7 +330,9 @@ export function recurrencePreset(rule: string | null | undefined): string {
         </div>
       }
       @if (error()) {
-        <p role="alert" class="text-destructive text-sm">{{ error() }}</p>
+        <p role="alert" class="text-destructive text-sm">
+          {{ error() | aioTranslate }}
+        </p>
       }
       <button
         aioBtn
@@ -302,7 +342,7 @@ export function recurrencePreset(rule: string | null | undefined): string {
         [disabled]="!!error()"
         (click)="apply()"
       >
-        ثبت تنظیمات تکرار
+        {{ 'ثبت تنظیمات تکرار' | aioTranslate }}
       </button>
     </fieldset>
   `,

@@ -1,4 +1,12 @@
-import { booleanAttribute, Component, input } from '@angular/core';
+import { AioLocale } from '../locale';
+import { AioTranslate } from '../locale';
+import {
+  booleanAttribute,
+  Component,
+  inject,
+  Injectable,
+  input,
+} from '@angular/core';
 import { toast } from '@spartan-ng/brain/sonner';
 import { HlmFieldError } from '@spartan-ng/helm/field';
 import { HlmToaster } from '@spartan-ng/helm/sonner';
@@ -7,8 +15,8 @@ import { HlmSpinner } from '@spartan-ng/helm/spinner';
 /** Wraps spartan `hlm-spinner`. */
 @Component({
   selector: 'aio-spinner',
-  imports: [HlmSpinner],
-  template: `<hlm-spinner [aria-label]="ariaLabel()" />`,
+  imports: [HlmSpinner, AioTranslate],
+  template: `<hlm-spinner [aria-label]="ariaLabel() | aioTranslate" />`,
 })
 export class AioSpinner {
   readonly ariaLabel = input('در حال بارگذاری', { alias: 'aria-label' });
@@ -63,3 +71,34 @@ export const aioToast = {
   action: (message: string, label: string, onClick: () => void) =>
     toast(message, { action: { label, onClick } }),
 };
+
+/** Locale-aware notifications; translated at delivery time, including action labels. */
+@Injectable({ providedIn: 'root' })
+export class AioNotifications {
+  private readonly locale = inject(AioLocale);
+  show(message: string, description?: string) {
+    return toast(this.locale.text(message), {
+      description: description ? this.locale.text(description) : undefined,
+    });
+  }
+  success(message: string, description?: string) {
+    return toast.success(this.locale.text(message), {
+      description: description ? this.locale.text(description) : undefined,
+    });
+  }
+  error(message: string, description?: string) {
+    return toast.error(this.locale.text(message), {
+      description: description ? this.locale.text(description) : undefined,
+    });
+  }
+  info(message: string, description?: string) {
+    return toast.info(this.locale.text(message), {
+      description: description ? this.locale.text(description) : undefined,
+    });
+  }
+  action(message: string, label: string, onClick: () => void) {
+    return toast(this.locale.text(message), {
+      action: { label: this.locale.text(label), onClick },
+    });
+  }
+}

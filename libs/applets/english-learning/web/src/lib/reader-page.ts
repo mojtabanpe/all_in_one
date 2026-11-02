@@ -15,6 +15,7 @@ import {
   type ReadingToken,
 } from '@all-in-one/applets/english-learning/contracts';
 import {
+  AioTranslate,
   AioButton,
   AioDialog,
   AioDialogActions,
@@ -24,10 +25,10 @@ import {
   AioSkeleton,
   AioSpinner,
   AioTextarea,
-  aioToast,
   provideIcons,
   AioFormField,
   AioSelectField,
+  AioNotifications,
 } from '@all-in-one/ui';
 import { englishErrorMessage as apiErrorMessage } from './english-locale';
 import {
@@ -50,7 +51,6 @@ const UNIT_KEY = 'aio.english.reader.unit';
  * AI-written texts so the next one fits better.
  */
 @Component({
-  host: { dir: 'ltr', lang: 'en' },
   selector: 'english-learning-reader',
   imports: [
     AioButton,
@@ -65,6 +65,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
     RouterLink,
     AioFormField,
     AioSelectField,
+    AioTranslate,
   ],
   providers: [
     provideIcons({
@@ -90,7 +91,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
             variant="ghost"
             size="icon"
             routerLink="../../texts"
-            aria-label="Back to texts"
+            [attr.aria-label]="'Back to texts' | aioTranslate"
           >
             <aio-icon name="lucideArrowLeft" />
           </a>
@@ -99,7 +100,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
             lang="en"
             class="min-w-0 flex-1 text-start text-2xl font-bold"
           >
-            {{ t.title }}
+            {{ t.title | aioTranslate }}
           </h1>
         </header>
 
@@ -111,10 +112,13 @@ const UNIT_KEY = 'aio.english.reader.unit';
               [name]="reading() ? 'lucidePause' : 'lucidePlay'"
               size="sm"
             />
-            {{ reading() ? 'Stop' : 'Read aloud' }}
+            {{ (reading() ? 'Stop' : 'Read aloud') | aioTranslate }}
           </button>
           <p class="text-muted-foreground text-xs">
-            Double-tap a word to see its meaning and create a card.
+            {{
+              'Double-tap a word to see its meaning and create a card.'
+                | aioTranslate
+            }}
           </p>
         </div>
 
@@ -133,10 +137,12 @@ const UNIT_KEY = 'aio.english.reader.unit';
                     [attr.data-t]="token.id"
                     class="cursor-pointer rounded"
                     [class]="tokenClass(token)"
-                    >{{ token.text }}</span
+                    >{{ token.text | aioTranslate }}</span
                   >
                 } @else {
-                  <span [class]="tokenClass(token)">{{ token.text }}</span>
+                  <span [class]="tokenClass(token)">{{
+                    token.text | aioTranslate
+                  }}</span>
                 }
               }
             </p>
@@ -148,11 +154,20 @@ const UNIT_KEY = 'aio.english.reader.unit';
             class="lx-glass flex flex-col gap-3 rounded-2xl p-4"
             aria-labelledby="rate-title"
           >
-            <h2 id="rate-title" class="font-bold">How was this text?</h2>
+            <h2 id="rate-title" class="font-bold">
+              {{ 'How was this text?' | aioTranslate }}
+            </h2>
             <p class="text-muted-foreground text-sm">
-              Your rating and notes help improve the next AI-generated text.
+              {{
+                'Your rating and notes help improve the next AI-generated text.'
+                  | aioTranslate
+              }}
             </p>
-            <div class="flex gap-1" role="radiogroup" aria-label="Points">
+            <div
+              class="flex gap-1"
+              role="radiogroup"
+              [attr.aria-label]="'Points' | aioTranslate"
+            >
               @for (s of stars; track s) {
                 <button
                   type="button"
@@ -161,7 +176,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
                   [class.text-[var(--streak)]]="s <= rating()"
                   [class.text-muted-foreground]="s > rating()"
                   [attr.aria-checked]="s === rating()"
-                  [attr.aria-label]="s + ' stars'"
+                  [attr.aria-label]="s + ' stars' | aioTranslate"
                   (click)="rating.set(s)"
                 >
                   <aio-icon
@@ -171,12 +186,17 @@ const UNIT_KEY = 'aio.english.reader.unit';
                 </button>
               }
             </div>
-            <label for="rate-note" class="sr-only">Notes</label>
+            <label for="rate-note" class="sr-only">{{
+              'Notes' | aioTranslate
+            }}</label>
             <textarea
               aioTextarea
               id="rate-note"
               rows="2"
-              placeholder="For example: more challenging, with more dialogue…"
+              [placeholder]="
+                'For example: more challenging, with more dialogue…'
+                  | aioTranslate
+              "
               [value]="note()"
               (input)="note.set($any($event.target).value)"
             ></textarea>
@@ -186,7 +206,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
               [disabled]="savingReview()"
               (click)="saveReview()"
             >
-              Save rating
+              {{ 'Save rating' | aioTranslate }}
             </button>
           </section>
         }
@@ -196,10 +216,9 @@ const UNIT_KEY = 'aio.english.reader.unit';
     <aio-dialog
       [open]="!!lookup()"
       (openChange)="$event || close()"
-      [title]="lookup()?.text ?? ''"
-      description="Meaning in this sentence"
+      [title]="lookup()?.text ?? '' | aioTranslate"
+      [description]="'Meaning in this sentence' | aioTranslate"
       contentClass="applet-english"
-      language="en"
     >
       <ng-template aioDialogBody>
         <form
@@ -209,24 +228,28 @@ const UNIT_KEY = 'aio.english.reader.unit';
         >
           @if (looking()) {
             <p class="text-muted-foreground flex items-center gap-2 text-sm">
-              <aio-spinner aria-label="Loading" /> Finding a definition…
+              <aio-spinner [aria-label]="'Loading' | aioTranslate" />
+              {{ 'Finding a definition…' | aioTranslate }}
             </p>
           }
           @if (lookupError()) {
             <p class="text-destructive text-sm" role="alert">
-              {{ lookupError() }}
-              <button
+              {{ lookupError() | aioTranslate
+              }}<button
                 aioBtn
                 variant="link"
                 size="sm"
                 type="button"
                 (click)="define()"
               >
-                Again
+                {{ 'Again' | aioTranslate }}
               </button>
             </p>
           }
-          <aio-form-field label="Front" controlId="lookup-front">
+          <aio-form-field
+            [label]="'Front' | aioTranslate"
+            controlId="lookup-front"
+          >
             <div class="flex gap-2">
               <input
                 aioInput
@@ -242,18 +265,21 @@ const UNIT_KEY = 'aio.english.reader.unit';
                 variant="outline"
                 size="icon"
                 (click)="speak(front())"
-                aria-label="Pronunciation"
+                [attr.aria-label]="'Pronunciation' | aioTranslate"
               >
                 <aio-icon name="lucideVolume2" size="sm" />
               </button>
             </div>
             @if (duplicate()) {
               <p class="text-xs text-[var(--streak)]">
-                This word is already in this deck.
+                {{ 'This word is already in this deck.' | aioTranslate }}
               </p>
             }
           </aio-form-field>
-          <aio-form-field label="Definition" controlId="lookup-back">
+          <aio-form-field
+            [label]="'Definition' | aioTranslate"
+            controlId="lookup-back"
+          >
             <textarea
               aioTextarea
               id="lookup-back"
@@ -263,7 +289,10 @@ const UNIT_KEY = 'aio.english.reader.unit';
               (input)="back.set($any($event.target).value)"
             ></textarea>
           </aio-form-field>
-          <aio-form-field label="Examples" controlId="lookup-examples">
+          <aio-form-field
+            [label]="'Examples' | aioTranslate"
+            controlId="lookup-examples"
+          >
             <textarea
               aioTextarea
               id="lookup-examples"
@@ -276,7 +305,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
           </aio-form-field>
           <div class="grid grid-cols-[1fr_6rem] gap-3">
             <aio-select-field
-              label="deck"
+              [label]="'deck' | aioTranslate"
               controlId="lookup-deck"
               [value]="deckId()"
               [options]="decks()"
@@ -284,12 +313,15 @@ const UNIT_KEY = 'aio.english.reader.unit';
               labelKey="name"
               (valueChange)="setDeck($event)"
             />
-            <aio-form-field label="Unit" controlId="lookup-unit">
+            <aio-form-field
+              [label]="'Unit' | aioTranslate"
+              controlId="lookup-unit"
+            >
               <input
                 aioInput
                 id="lookup-unit"
                 dir="ltr"
-                placeholder="u19"
+                [placeholder]="'u19' | aioTranslate"
                 [value]="unit()"
                 (input)="unit.set($any($event.target).value)"
               />
@@ -297,13 +329,15 @@ const UNIT_KEY = 'aio.english.reader.unit';
           </div>
           @if (formError()) {
             <p class="text-destructive text-sm" role="alert">
-              {{ formError() }}
+              {{ formError() | aioTranslate }}
             </p>
           }
         </form>
       </ng-template>
       <ng-template aioDialogActions>
-        <button aioBtn variant="outline" (click)="close()">Close</button>
+        <button aioBtn variant="outline" (click)="close()">
+          {{ 'Close' | aioTranslate }}
+        </button>
         <button
           aioBtn
           type="submit"
@@ -311,13 +345,15 @@ const UNIT_KEY = 'aio.english.reader.unit';
           [disabled]="adding() || !decks().length"
         >
           <aio-icon name="lucidePlus" size="sm" />
-          Add card
+          {{ 'Add card' | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>
   `,
 })
 export class ReaderPage {
+  private readonly notifications = inject(AioNotifications);
+
   /** Route param, bound by withComponentInputBinding(). */
   readonly id = input<string>();
   private readonly api = inject(EnglishApi);
@@ -391,7 +427,9 @@ export class ReaderPage {
       this.doc.set(parseReading(text.body));
       this.decks.set(decks);
     } catch (error) {
-      aioToast.error(apiErrorMessage(error, 'Unable to load this text.'));
+      this.notifications.error(
+        apiErrorMessage(error, 'Unable to load this text.'),
+      );
       await this.router.navigate(['../../texts'], { relativeTo: this.route });
     } finally {
       this.loading.set(false);
@@ -401,7 +439,7 @@ export class ReaderPage {
   protected async saveReview() {
     const text = this.text();
     if (!text || !this.rating()) {
-      aioToast.error('Choose a star rating first.');
+      this.notifications.error('Choose a star rating first.');
       return;
     }
     this.savingReview.set(true);
@@ -409,9 +447,11 @@ export class ReaderPage {
       this.text.set(
         await this.api.rateText(text.id, this.rating(), this.note().trim()),
       );
-      aioToast.success('Thanks! Your feedback will guide the next text.');
+      this.notifications.success(
+        'Thanks! Your feedback will guide the next text.',
+      );
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.savingReview.set(false);
     }
@@ -588,7 +628,7 @@ export class ReaderPage {
       this.deckFronts.get(this.deckId())?.add(front.toLowerCase());
       this.saved.update((set) => new Set(set).add(token.text.toLowerCase()));
       const deck = this.decks().find((d) => d.id === this.deckId());
-      aioToast.success(
+      this.notifications.success(
         `“${front.slice(0, 40)}” added to ${deck?.name ?? 'deck'}`,
       );
       this.close();

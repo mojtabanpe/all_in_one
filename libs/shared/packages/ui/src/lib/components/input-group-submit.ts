@@ -1,15 +1,16 @@
+import { AioTranslate } from '../locale';
 import { Component, input } from '@angular/core';
 import { AioInputGroupAddon, AioInputGroupButton } from '../spartan';
 import { AioIcon } from './icon';
 
 @Component({
   selector: 'aio-input-group-submit',
-  imports: [AioInputGroupButton, AioIcon],
+  imports: [AioInputGroupButton, AioIcon, AioTranslate],
   template: `<button
     aioInputGroupButton
     type="submit"
     size="icon-sm"
-    [attr.aria-label]="label()"
+    [attr.aria-label]="label() | aioTranslate"
   >
     <aio-icon [name]="icon()" size="sm" />
   </button>`,

@@ -19,6 +19,7 @@ import {
 } from '@all-in-one/applets/health/contracts';
 import { toIsoDate, type AiStatus } from '@all-in-one/shared/schemas';
 import {
+  AioTranslate,
   AioAccordionContent,
   AioAccordionDirectives,
   AioAccordionTrigger,
@@ -33,15 +34,16 @@ import {
   AioIcon,
   AioItemDirectives,
   AioTextarea,
-  aioToast,
   provideIcons,
   AioFormField,
   AioEmptyState,
   AioCardHeading,
   AioSkeletonLines,
   AioSkeletonRows,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
-import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
+import { apiErrorMessage, faDate } from '@all-in-one/web/shared';
 import {
   lucideCalendarDays,
   lucideChefHat,
@@ -77,6 +79,7 @@ import { MealForm } from './meal-form';
     AioCardHeading,
     AioSkeletonLines,
     AioSkeletonRows,
+    AioTranslate,
   ],
   providers: [
     provideIcons({
@@ -91,7 +94,7 @@ import { MealForm } from './meal-form';
     <div class="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-2">
       <section aioCard>
         <div aioCardHeader>
-          <h2 aioCardTitle>رژیم شما</h2>
+          <h2 aioCardTitle>{{ 'رژیم شما' | aioTranslate }}</h2>
           <p aioCardDescription class="min-h-6">
             @if (initialLoading()) {
               <span
@@ -100,7 +103,7 @@ import { MealForm } from './meal-form';
                 aria-hidden="true"
               ></span>
             } @else {
-              {{ modeLabel() }}
+              {{ modeLabel() | aioTranslate }}
             }
           </p>
         </div>
@@ -112,7 +115,7 @@ import { MealForm } from './meal-form';
             <div
               class="flex w-full flex-col gap-3"
               role="status"
-              aria-label="در حال دریافت رژیم"
+              [attr.aria-label]="'در حال دریافت رژیم' | aioTranslate"
               aioSkeletonLines
               [lines]="[
                 'h-5 w-2/3 rounded-lg',
@@ -123,19 +126,22 @@ import { MealForm } from './meal-form';
           } @else {
             <div class="text-sm">
               @if (diet(); as d) {
-                <span class="font-semibold">{{ d.name }}</span>
+                <span class="font-semibold">{{ d.name | aioTranslate }}</span>
                 <span class="text-muted-foreground">
-                  ، کربوهیدرات {{ fa(d.carbsPct) }}٪، پروتئین
-                  {{ fa(d.proteinPct) }}٪، چربی {{ fa(d.fatPct) }}٪</span
+                  {{
+                    '، کربوهیدرات {0}٪، پروتئین {1}٪، چربی {2}٪'
+                      | aioTranslate
+                        : [fa(d.carbsPct), fa(d.proteinPct), fa(d.fatPct)]
+                  }}</span
                 >
               } @else {
-                <span class="text-muted-foreground"
-                  >وعده‌ها با الگوی تغذیه متعادل سنجیده می‌شوند.</span
-                >
+                <span class="text-muted-foreground">{{
+                  'وعده‌ها با الگوی تغذیه متعادل سنجیده می‌شوند.' | aioTranslate
+                }}</span>
               }
               @if (profile.value()?.calorieTarget; as t) {
                 <div class="text-muted-foreground mt-1">
-                  نیاز روزانه: {{ fa(t) }} کالری
+                  {{ 'نیاز روزانه: {0} کالری' | aioTranslate: [fa(t)] }}
                 </div>
               }
             </div>
@@ -146,9 +152,10 @@ import { MealForm } from './meal-form';
               (click)="choosing.set(true)"
             >
               {{
-                profile.value()?.dietMode === 'NONE'
+                (profile.value()?.dietMode === 'NONE'
                   ? 'رژیم خاصی دارید؟'
                   : 'تغییر رژیم'
+                ) | aioTranslate
               }}
             </button>
             @if (hasActiveDiet()) {
@@ -161,7 +168,10 @@ import { MealForm } from './meal-form';
                 aria-controls="diet-suggestions"
                 (click)="browsingDiets.set(!browsingDiets())"
               >
-                {{ browsingDiets() ? 'بستن پیشنهادها' : 'بررسی رژیم‌های دیگر' }}
+                {{
+                  (browsingDiets() ? 'بستن پیشنهادها' : 'بررسی رژیم‌های دیگر')
+                    | aioTranslate
+                }}
               </button>
             }
           }
@@ -182,20 +192,27 @@ import { MealForm } from './meal-form';
               aria-hidden="true"
             ></div>
           } @else if (diet(); as d) {
-            <p>بیشتر: {{ d.encourage.join('، ') }}</p>
-            <p>کمتر: {{ d.limit.join('، ') }}</p>
+            <p>{{ 'بیشتر: {0}' | aioTranslate: [d.encourage.join('، ')] }}</p>
+            <p>{{ 'کمتر: {0}' | aioTranslate: [d.limit.join('، ')] }}</p>
           } @else {
-            <p>با انتخاب رژیم، پیشنهادها بر اساس نیازت تنظیم می‌شوند.</p>
+            <p>
+              {{
+                'با انتخاب رژیم، پیشنهادها بر اساس نیازت تنظیم می‌شوند.'
+                  | aioTranslate
+              }}
+            </p>
           }
         </div>
       </section>
 
       <section class="flex flex-col gap-3">
         <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold">وعده‌های امروز</h2>
+          <h2 class="text-lg font-semibold">
+            {{ 'وعده‌های امروز' | aioTranslate }}
+          </h2>
           <button aioBtn size="sm" (click)="logging.set(true)">
             <aio-icon name="lucidePlus" size="sm" />
-            ثبت وعده
+            {{ 'ثبت وعده' | aioTranslate }}
           </button>
         </div>
         @if (meals.isLoading() && !meals.hasValue()) {
@@ -209,8 +226,11 @@ import { MealForm } from './meal-form';
           <div
             class="glass rounded-3xl"
             aioEmptyState
-            title="هنوز وعده‌ای ثبت نشده"
-            description="هر وعده را ثبت کنید تا بر اساس رژیمتان امتیاز و پیشنهاد بگیرید."
+            [title]="'هنوز وعده‌ای ثبت نشده' | aioTranslate"
+            [description]="
+              'هر وعده را ثبت کنید تا بر اساس رژیمتان امتیاز و پیشنهاد بگیرید.'
+                | aioTranslate
+            "
             [level]="3"
             icon="lucideSalad"
             iconClass=""
@@ -227,8 +247,8 @@ import { MealForm } from './meal-form';
                   <span
                     aioBadge
                     [class]="scoreClass(m.score)"
-                    [attr.aria-label]="'امتیاز ' + m.score"
-                    >{{ fa(m.score) }}</span
+                    [attr.aria-label]="'امتیاز ' + m.score | aioTranslate"
+                    >{{ fa(m.score) | aioTranslate }}</span
                   >
                 </div>
                 <div aioItemContent>
@@ -236,7 +256,7 @@ import { MealForm } from './meal-form';
                     {{ mealTypeLabels[m.mealType] }}: {{ m.description }}
                   </div>
                   @for (line of m.feedback; track line) {
-                    <p aioItemDescription>{{ line }}</p>
+                    <p aioItemDescription>{{ line | aioTranslate }}</p>
                   }
                 </div>
                 <div aioItemActions>
@@ -245,7 +265,7 @@ import { MealForm } from './meal-form';
                     variant="ghost"
                     size="icon"
                     (click)="removeMeal(m)"
-                    aria-label="حذف"
+                    [attr.aria-label]="'حذف' | aioTranslate"
                   >
                     <aio-icon name="lucideTrash2" size="sm" />
                   </button>
@@ -258,7 +278,9 @@ import { MealForm } from './meal-form';
 
       <section class="flex flex-col gap-3">
         <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold">برنامه غذایی</h2>
+          <h2 class="text-lg font-semibold">
+            {{ 'برنامه غذایی' | aioTranslate }}
+          </h2>
           <button
             aioBtn
             variant="outline"
@@ -267,7 +289,7 @@ import { MealForm } from './meal-form';
             (click)="makePlan()"
           >
             <aio-icon name="lucideCalendarDays" size="sm" />
-            {{ plan.value() ? 'چیدن دوباره' : 'برایم بچین' }}
+            {{ (plan.value() ? 'چیدن دوباره' : 'برایم بچین') | aioTranslate }}
           </button>
         </div>
         @if (plan.isLoading() && !plan.hasValue()) {
@@ -289,11 +311,21 @@ import { MealForm } from './meal-form';
           ></div>
         } @else if (plan.value(); as p) {
           <p class="text-muted-foreground text-sm">
-            {{ fa(p.days.length) }} روز از {{ faDate(p.startDate) }}، هدف
-            {{ fa(p.calorieTarget) }} کالری در روز
+            {{
+              '{0} روز از {1}، هدف {2} کالری در روز'
+                | aioTranslate
+                  : [
+                      fa(p.days.length),
+                      faDate(p.startDate),
+                      fa(p.calorieTarget),
+                    ]
+            }}
           </p>
           <p class="text-muted-foreground text-sm">
-            مقدار هر غذا نسبت به یک سهم دستور پخت است؛ کالری‌ها برآوردی‌اند.
+            {{
+              'مقدار هر غذا نسبت به یک سهم دستور پخت است؛ کالری‌ها برآوردی‌اند.'
+                | aioTranslate
+            }}
           </p>
           <button
             aioBtn
@@ -301,7 +333,10 @@ import { MealForm } from './meal-form';
             [disabled]="shoppingBusy()"
             (click)="showShopping()"
           >
-            {{ shoppingBusy() ? 'در حال دریافت…' : 'فهرست خرید این برنامه' }}
+            {{
+              (shoppingBusy() ? 'در حال دریافت…' : 'فهرست خرید این برنامه')
+                | aioTranslate
+            }}
           </button>
           <div aioAccordion type="single" class="glass rounded-3xl px-4">
             @for (day of p.days; track day.date) {
@@ -312,11 +347,10 @@ import { MealForm } from './meal-form';
                       weekday: 'long',
                       day: 'numeric',
                       month: 'long',
-                    })
-                  }}
-                  <span class="text-muted-foreground ms-2 text-xs"
-                    >{{ fa(dayCalories(p, day.meals)) }} کالری</span
-                  >
+                    }) | aioTranslate
+                  }}<span class="text-muted-foreground ms-2 text-xs">{{
+                    '{0} کالری' | aioTranslate: [fa(dayCalories(p, day.meals))]
+                  }}</span>
                 </aio-accordion-trigger>
                 <aio-accordion-content>
                   <ul class="divide-border flex min-w-0 flex-col divide-y">
@@ -328,13 +362,17 @@ import { MealForm } from './meal-form';
                         <div
                           class="flex items-center justify-between gap-2 text-xs text-muted-foreground"
                         >
-                          <span>{{ mealTypeLabels[meal.mealType] }}</span>
-                          <span>{{ fa(meal.servings ?? 1) }} سهم</span>
+                          <span>{{
+                            mealTypeLabels[meal.mealType] | aioTranslate
+                          }}</span>
+                          <span>{{
+                            '{0} سهم' | aioTranslate: [fa(meal.servings ?? 1)]
+                          }}</span>
                         </div>
                         <div
                           class="min-w-0 text-sm leading-7 [overflow-wrap:anywhere]"
                         >
-                          {{ r.title }}
+                          {{ r.title | aioTranslate }}
                         </div>
                         <div class="grid min-w-0 grid-cols-2 gap-2">
                           <button
@@ -342,18 +380,22 @@ import { MealForm } from './meal-form';
                             type="button"
                             variant="outline"
                             class="h-11 min-w-0 w-full"
-                            [attr.aria-label]="'جایگزین کردن ' + r.title"
+                            [attr.aria-label]="
+                              'جایگزین کردن ' + r.title | aioTranslate
+                            "
                             (click)="openSwap(day.date, meal.mealType)"
                           >
-                            جایگزین
+                            {{ 'جایگزین' | aioTranslate }}
                           </button>
                           <a
                             aioBtn
                             variant="outline"
                             class="h-11 min-w-0 w-full no-underline hover:no-underline"
-                            [attr.aria-label]="'دستور پخت ' + r.title"
+                            [attr.aria-label]="
+                              'دستور پخت ' + r.title | aioTranslate
+                            "
                             [routerLink]="['recipes', r.slug]"
-                            >دستور پخت</a
+                            >{{ 'دستور پخت' | aioTranslate }}</a
                           >
                         </div>
                       </li>
@@ -365,8 +407,10 @@ import { MealForm } from './meal-form';
           </div>
         } @else {
           <p class="text-muted-foreground text-sm">
-            بر اساس رژیم و نیاز کالری شما، وعده‌های ۷ روز آینده را با دستور پخت
-            می‌چینیم.
+            {{
+              'بر اساس رژیم و نیاز کالری شما، وعده‌های ۷ روز آینده را با دستور پخت می‌چینیم.'
+                | aioTranslate
+            }}
           </p>
         }
       </section>
@@ -374,9 +418,12 @@ import { MealForm } from './meal-form';
         <section aioCard id="diet-suggestions">
           <div
             aioCardHeading
-            title="کدام رژیم به سلیقه شما نزدیک‌تر است؟"
+            [title]="'کدام رژیم به سلیقه شما نزدیک‌تر است؟' | aioTranslate"
             [level]="2"
-            description="پیشنهادهای اولیه برای مقایسه؛ انتخاب رژیم را خودتان انجام می‌دهید."
+            [description]="
+              'پیشنهادهای اولیه برای مقایسه؛ انتخاب رژیم را خودتان انجام می‌دهید.'
+                | aioTranslate
+            "
           ></div>
           <div aioCardContent class="flex flex-col gap-3">
             @for (
@@ -384,34 +431,39 @@ import { MealForm } from './meal-form';
               track suggestion.slug
             ) {
               <div>
-                <strong>{{ suggestion.name }}</strong>
+                <strong>{{ suggestion.name | aioTranslate }}</strong>
                 <p class="text-muted-foreground text-sm">
-                  {{ suggestion.reason }}
+                  {{ suggestion.reason | aioTranslate }}
                 </p>
               </div>
             }
             <button aioBtn variant="outline" (click)="choosing.set(true)">
-              مقایسه و انتخاب رژیم
+              {{ 'مقایسه و انتخاب رژیم' | aioTranslate }}
             </button>
-            <a aioBtn variant="link" routerLink="../profile"
-              >تنظیم مواد غذایی مستثنا</a
-            >
+            <a aioBtn variant="link" routerLink="../profile">{{
+              'تنظیم مواد غذایی مستثنا' | aioTranslate
+            }}</a>
           </div>
         </section>
       }
     </div>
 
-    <aio-dialog [(open)]="shoppingOpen" title="فهرست خرید">
+    <aio-dialog [(open)]="shoppingOpen" [title]="'فهرست خرید' | aioTranslate">
       <ng-template aioDialogBody
         ><div class="flex flex-col gap-3">
           <p class="text-muted-foreground text-sm">
-            مقدار پایه هر ماده را در تعداد سهم ضرب کنید. واحدهای متفاوت با هم
-            جمع نشده‌اند.
+            {{
+              'مقدار پایه هر ماده را در تعداد سهم ضرب کنید. واحدهای متفاوت با هم جمع نشده‌اند.'
+                | aioTranslate
+            }}
           </p>
           @for (item of shoppingItems(); track $index) {
             <p>
-              <strong>{{ item.item }}</strong
-              >: {{ item.amountPerServing }} × {{ fa(item.servings) }} سهم
+              <strong>{{ item.item | aioTranslate }}</strong
+              >{{
+                ': {0} × {1} سهم'
+                  | aioTranslate: [item.amountPerServing, fa(item.servings)]
+              }}
             </p>
           }
         </div></ng-template
@@ -420,40 +472,52 @@ import { MealForm } from './meal-form';
     <aio-dialog
       contentClass="applet-health health-calm sm:max-w-lg"
       [(open)]="swapOpen"
-      title="جایگزینی وعده"
-      description="فقط غذاهای سازگار با نوع وعده، رژیم برنامه و مواد مستثنا نمایش داده می‌شوند."
+      [title]="'جایگزینی وعده' | aioTranslate"
+      [description]="
+        'فقط غذاهای سازگار با نوع وعده، رژیم برنامه و مواد مستثنا نمایش داده می‌شوند.'
+          | aioTranslate
+      "
     >
       <ng-template aioDialogBody
         ><div class="flex min-w-0 flex-col gap-5 pb-3">
           <section
             class="flex min-w-0 flex-col gap-3"
-            aria-label="پیشنهاد هوش مصنوعی"
+            [attr.aria-label]="'پیشنهاد هوش مصنوعی' | aioTranslate"
           >
-            <h3 class="text-sm font-semibold">با هوش مصنوعی انتخاب کن</h3>
+            <h3 class="text-sm font-semibold">
+              {{ 'با هوش مصنوعی انتخاب کن' | aioTranslate }}
+            </h3>
             <p class="text-muted-foreground text-sm leading-6">
-              خواسته‌ات را بنویس تا از غذاهای سازگار پیشنهاد بگیری. جایگزینی با
-              انتخاب خودت انجام می‌شود.
+              {{
+                'خواسته‌ات را بنویس تا از غذاهای سازگار پیشنهاد بگیری. جایگزینی با انتخاب خودت انجام می‌شود.'
+                  | aioTranslate
+              }}
             </p>
             @if (swapAiStatus.isLoading()) {
               <p role="status" class="text-muted-foreground text-sm">
-                در حال بررسی اتصال هوش مصنوعی…
+                {{ 'در حال بررسی اتصال هوش مصنوعی…' | aioTranslate }}
               </p>
             } @else if (swapAiStatus.error()) {
-              <p class="text-sm">وضعیت هوش مصنوعی دریافت نشد.</p>
+              <p class="text-sm">
+                {{ 'وضعیت هوش مصنوعی دریافت نشد.' | aioTranslate }}
+              </p>
               <button aioBtn variant="outline" (click)="swapAiStatus.reload()">
-                بررسی دوباره
+                {{ 'بررسی دوباره' | aioTranslate }}
               </button>
             } @else if (!swapAiStatus.value()?.chat) {
               <p class="text-muted-foreground text-sm">
-                برای پیشنهاد شخصی، سرویس گفتگوی خودت را در حساب کاربری تنظیم کن.
+                {{
+                  'برای پیشنهاد شخصی، سرویس گفتگوی خودت را در حساب کاربری تنظیم کن.'
+                    | aioTranslate
+                }}
               </p>
-              <a aioBtn variant="outline" routerLink="/account"
-                >تنظیم هوش مصنوعی</a
-              >
+              <a aioBtn variant="outline" routerLink="/account">{{
+                'تنظیم هوش مصنوعی' | aioTranslate
+              }}</a>
             } @else {
               <aio-form-field
                 class="min-w-0 gap-2"
-                label="چه غذایی دوست داری؟ (اختیاری)"
+                [label]="'چه غذایی دوست داری؟ (اختیاری)' | aioTranslate"
                 controlId="swap-preference"
               >
                 <textarea
@@ -462,7 +526,7 @@ import { MealForm } from './meal-form';
                   rows="2"
                   maxlength="500"
                   class="min-w-0 resize-y"
-                  placeholder="مثلاً غذای سریع و بدون گوشت"
+                  [placeholder]="'مثلاً غذای سریع و بدون گوشت' | aioTranslate"
                   [disabled]="aiSuggesting() || swapping()"
                   [value]="swapPreference()"
                   (input)="
@@ -479,20 +543,23 @@ import { MealForm } from './meal-form';
                 (click)="suggestSwap()"
               >
                 {{
-                  aiSuggesting()
+                  (aiSuggesting()
                     ? 'در حال پیدا کردن پیشنهاد…'
                     : 'پیشنهاد با هوش مصنوعی'
+                  ) | aioTranslate
                 }}
               </button>
             }
             @if (aiSuggesting()) {
               <p role="status" class="text-muted-foreground text-sm">
-                هوش مصنوعی در حال بررسی غذاهای سازگار است…
+                {{
+                  'هوش مصنوعی در حال بررسی غذاهای سازگار است…' | aioTranslate
+                }}
               </p>
             }
             @if (swapAiError()) {
               <p role="alert" class="text-destructive text-sm">
-                {{ swapAiError() }}
+                {{ swapAiError() | aioTranslate }}
               </p>
             }
             @for (
@@ -503,13 +570,16 @@ import { MealForm } from './meal-form';
                 class="flex min-w-0 flex-col gap-2 rounded-2xl border border-border p-4"
               >
                 <strong class="text-sm [overflow-wrap:anywhere]">{{
-                  suggestion.recipe.title
+                  suggestion.recipe.title | aioTranslate
                 }}</strong>
                 <p class="text-muted-foreground text-xs">
-                  {{ fa(suggestion.recipe.calories) }} کالری در سهم پایه
+                  {{
+                    '{0} کالری در سهم پایه'
+                      | aioTranslate: [fa(suggestion.recipe.calories)]
+                  }}
                 </p>
                 <p class="text-sm leading-6 [overflow-wrap:anywhere]">
-                  {{ suggestion.reason }}
+                  {{ suggestion.reason | aioTranslate }}
                 </p>
                 <button
                   aioBtn
@@ -518,23 +588,25 @@ import { MealForm } from './meal-form';
                   [disabled]="swapping()"
                   (click)="swapRecipe(suggestion.recipe.slug)"
                 >
-                  انتخاب این پیشنهاد
+                  {{ 'انتخاب این پیشنهاد' | aioTranslate }}
                 </button>
               </div>
             }
           </section>
           <section
             class="flex min-w-0 flex-col gap-3 border-t border-border pt-4"
-            aria-label="انتخاب از غذاها"
+            [attr.aria-label]="'انتخاب از غذاها' | aioTranslate"
           >
-            <h3 class="text-sm font-semibold">یا خودت انتخاب کن</h3>
+            <h3 class="text-sm font-semibold">
+              {{ 'یا خودت انتخاب کن' | aioTranslate }}
+            </h3>
             @if (recipes.isLoading()) {
-              <p role="status">در حال دریافت غذاها…</p>
+              <p role="status">{{ 'در حال دریافت غذاها…' | aioTranslate }}</p>
             }
             @if (recipes.error()) {
-              <p role="alert">دریافت غذاها ممکن نشد.</p>
+              <p role="alert">{{ 'دریافت غذاها ممکن نشد.' | aioTranslate }}</p>
               <button aioBtn variant="outline" (click)="recipes.reload()">
-                تلاش دوباره
+                {{ 'تلاش دوباره' | aioTranslate }}
               </button>
             }
             @for (recipe of swapOptions(); track recipe.slug) {
@@ -546,17 +618,17 @@ import { MealForm } from './meal-form';
                 (click)="swapRecipe(recipe.slug)"
               >
                 <span class="text-sm leading-6 [overflow-wrap:anywhere]">{{
-                  recipe.title
+                  recipe.title | aioTranslate
                 }}</span>
-                <span class="text-muted-foreground text-xs"
-                  >{{ fa(recipe.calories) }} کالری در سهم پایه</span
-                >
+                <span class="text-muted-foreground text-xs">{{
+                  '{0} کالری در سهم پایه' | aioTranslate: [fa(recipe.calories)]
+                }}</span>
               </button>
             }
             @if (
               !recipes.isLoading() && !recipes.error() && !swapOptions().length
             ) {
-              <p>غذای جایگزین سازگار موجود نیست.</p>
+              <p>{{ 'غذای جایگزین سازگار موجود نیست.' | aioTranslate }}</p>
             }
           </section>
         </div></ng-template
@@ -568,14 +640,14 @@ import { MealForm } from './meal-form';
           class="min-h-11 w-full"
           (click)="swapOpen.set(false)"
         >
-          بستن
+          {{ 'بستن' | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>
     <aio-dialog
       contentClass="applet-health health-calm"
       [(open)]="choosing"
-      title="رژیم غذایی"
+      [title]="'رژیم غذایی' | aioTranslate"
     >
       <ng-template aioDialogBody>
         @if (profile.value(); as p) {
@@ -591,8 +663,10 @@ import { MealForm } from './meal-form';
     <aio-dialog
       contentClass="applet-health health-calm"
       [(open)]="logging"
-      title="ثبت وعده"
-      [description]="'امتیاز بر اساس ' + (diet()?.name ?? 'تغذیه متعادل')"
+      [title]="'ثبت وعده' | aioTranslate"
+      [description]="
+        'امتیاز بر اساس ' + (diet()?.name ?? 'تغذیه متعادل') | aioTranslate
+      "
     >
       <ng-template aioDialogBody>
         <health-meal-form
@@ -604,24 +678,31 @@ import { MealForm } from './meal-form';
       </ng-template>
       <ng-template aioDialogActions>
         <button aioBtn variant="outline" (click)="logging.set(false)">
-          انصراف
+          {{ 'انصراف' | aioTranslate }}
         </button>
         <button aioBtn type="submit" form="meal-form" [disabled]="saving()">
-          ثبت و سنجش
+          {{ 'ثبت و سنجش' | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>
   `,
 })
 export class NutritionPage {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   private readonly api = inject(HealthApi);
   private readonly confirm = inject(AioConfirm);
   protected readonly today = toIsoDate(new Date());
   protected readonly balanced = BALANCED_RULES;
   protected readonly mealTypeLabels = MEAL_TYPE_LABELS;
   protected readonly scoreClass = scoreClass;
-  protected readonly faDate = faDate;
-  protected readonly fa = (n: number) => faNumber(n);
+  protected readonly faDate = (
+    iso: string,
+    options?: Intl.DateTimeFormatOptions,
+  ) => this.locale.date(iso, options);
+  protected readonly fa = (n: number) => this.locale.number(n);
 
   protected readonly profile = httpResource<HealthProfile>(
     () => `${this.api.base}/profile`,
@@ -737,7 +818,7 @@ export class NutritionPage {
       this.shoppingItems.set(await this.api.shopping());
       this.shoppingOpen.set(true);
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.shoppingBusy.set(false);
     }
@@ -749,9 +830,9 @@ export class NutritionPage {
     try {
       this.plan.set(await this.api.swapMeal({ ...target, recipeSlug }));
       this.swapOpen.set(false);
-      aioToast.success('وعده جایگزین شد');
+      this.notifications.success('وعده جایگزین شد');
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.swapping.set(false);
     }
@@ -796,12 +877,12 @@ export class NutritionPage {
       const meal = await this.api.logMeal(input);
       this.meals.update((list) => [...(list ?? []), meal]);
       this.logging.set(false);
-      aioToast.success(
-        `امتیاز این وعده: ${faNumber(meal.score)}`,
+      this.notifications.success(
+        `امتیاز این وعده: ${this.locale.number(meal.score)}`,
         meal.feedback[0],
       );
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.saving.set(false);
     }
@@ -821,7 +902,7 @@ export class NutritionPage {
       await this.api.removeMeal(meal.id);
       this.meals.update((list) => (list ?? []).filter((m) => m.id !== meal.id));
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
@@ -831,9 +912,9 @@ export class NutritionPage {
       this.plan.set(
         await this.api.generatePlan({ startDate: this.today, days: 7 }),
       );
-      aioToast.success('برنامه ۷ روزه آماده شد');
+      this.notifications.success('برنامه ۷ روزه آماده شد');
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.planning.set(false);
     }

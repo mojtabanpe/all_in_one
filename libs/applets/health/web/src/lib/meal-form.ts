@@ -27,19 +27,21 @@ import {
   type MealType,
 } from '@all-in-one/applets/health/contracts';
 import {
+  AioTranslate,
   AioBadge,
   AioButton,
   AioIcon,
   AioInput,
-  aioToast,
   AioToggleGroupDirectives,
   provideIcons,
   AioFormField,
   AioFormErrors,
   AioAsyncButton,
   AioNumberField,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
-import { apiErrorMessage, faNumber } from '@all-in-one/web/shared';
+import { apiErrorMessage } from '@all-in-one/web/shared';
 import { lucideMinus, lucidePlus, lucideSparkles } from '@ng-icons/lucide';
 import { HealthApi, scoreClass } from './health-api';
 
@@ -58,6 +60,7 @@ import { HealthApi, scoreClass } from './health-api';
     AioFormErrors,
     AioAsyncButton,
     AioNumberField,
+    AioTranslate,
   ],
   providers: [provideIcons({ lucideMinus, lucidePlus, lucideSparkles })],
   template: `
@@ -77,15 +80,18 @@ import { HealthApi, scoreClass } from './health-api';
       >
         @for (t of mealTypes; track t) {
           <button aioToggleGroupItem type="button" [value]="t" class="flex-1">
-            {{ mealTypeLabels[t] }}
+            {{ mealTypeLabels[t] | aioTranslate }}
           </button>
         }
       </div>
-      <aio-form-field label="چه خوردید؟" controlId="meal-desc">
+      <aio-form-field
+        [label]="'چه خوردید؟' | aioTranslate"
+        controlId="meal-desc"
+      >
         <input
           aioInput
           id="meal-desc"
-          placeholder="مثلاً: قزل‌آلا با سالاد و کمی برنج"
+          [placeholder]="'مثلاً: قزل‌آلا با سالاد و کمی برنج' | aioTranslate"
           [formField]="mealForm.description"
         />
         <aio-form-errors [errors]="mealForm.description().errors()" />
@@ -100,14 +106,16 @@ import { HealthApi, scoreClass } from './health-api';
           (click)="estimate()"
           aioAsyncButton
           [busy]="estimating()"
-          label="تخمین کالری و گروه‌ها با هوش مصنوعی"
+          [label]="'تخمین کالری و گروه‌ها با هوش مصنوعی' | aioTranslate"
           icon="lucideSparkles"
           iconSize="xs"
         ></button>
         @if (macros(); as m) {
           <p class="text-muted-foreground text-xs" aria-live="polite">
-            پروتئین {{ fa(m.proteinG) }}، کربوهیدرات {{ fa(m.carbsG) }}، چربی
-            {{ fa(m.fatG) }} گرم
+            {{
+              'پروتئین {0}، کربوهیدرات {1}، چربی {2} گرم'
+                | aioTranslate: [fa(m.proteinG), fa(m.carbsG), fa(m.fatG)]
+            }}
             @if (m.note) {
               ، {{ m.note }}
             }
@@ -115,15 +123,19 @@ import { HealthApi, scoreClass } from './health-api';
         }
       </div>
       <fieldset class="flex flex-col gap-1">
-        <legend class="mb-1 text-sm font-medium">چند واحد از هر گروه؟</legend>
+        <legend class="mb-1 text-sm font-medium">
+          {{ 'چند واحد از هر گروه؟' | aioTranslate }}
+        </legend>
         @for (g of groups; track g) {
           <div
             class="flex items-center justify-between gap-2 rounded-xl px-1 py-1"
           >
             <div class="min-w-0">
-              <div class="text-sm">{{ groupLabels[g].label }}</div>
+              <div class="text-sm">
+                {{ groupLabels[g].label | aioTranslate }}
+              </div>
               <div class="text-muted-foreground truncate text-xs">
-                {{ groupLabels[g].hint }}
+                {{ groupLabels[g].hint | aioTranslate }}
               </div>
             </div>
             <div class="flex items-center gap-1">
@@ -134,12 +146,14 @@ import { HealthApi, scoreClass } from './health-api';
                 size="icon-sm"
                 (click)="step(g, -1)"
                 [disabled]="!portions()[g]"
-                [attr.aria-label]="'کم کردن ' + groupLabels[g].label"
+                [attr.aria-label]="
+                  'کم کردن ' + groupLabels[g].label | aioTranslate
+                "
               >
                 <aio-icon name="lucideMinus" size="xs" />
               </button>
               <span class="w-6 text-center tabular-nums" aria-live="polite">{{
-                fa(portions()[g] ?? 0)
+                fa(portions()[g] ?? 0) | aioTranslate
               }}</span>
               <button
                 aioBtn
@@ -147,7 +161,9 @@ import { HealthApi, scoreClass } from './health-api';
                 variant="outline"
                 size="icon-sm"
                 (click)="step(g, 1)"
-                [attr.aria-label]="'افزودن ' + groupLabels[g].label"
+                [attr.aria-label]="
+                  'افزودن ' + groupLabels[g].label | aioTranslate
+                "
               >
                 <aio-icon name="lucidePlus" size="xs" />
               </button>
@@ -156,7 +172,7 @@ import { HealthApi, scoreClass } from './health-api';
         }
       </fieldset>
       <aio-number-field
-        label="کالری تقریبی (اختیاری)"
+        [label]="'کالری تقریبی (اختیاری)' | aioTranslate"
         controlId="meal-cal"
         [field]="mealForm.calories"
         inputMode="numeric"
@@ -166,19 +182,23 @@ import { HealthApi, scoreClass } from './health-api';
         aria-live="polite"
       >
         <div class="flex items-center gap-2 text-sm font-medium">
-          پیش‌نمایش امتیاز
+          {{ 'پیش‌نمایش امتیاز' | aioTranslate }}
           <span aioBadge [class]="scoreClass(preview().score)">{{
-            fa(preview().score)
+            fa(preview().score) | aioTranslate
           }}</span>
         </div>
         @for (line of preview().feedback; track line) {
-          <p class="text-muted-foreground text-xs">{{ line }}</p>
+          <p class="text-muted-foreground text-xs">{{ line | aioTranslate }}</p>
         }
       </div>
     </form>
   `,
 })
 export class MealForm {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   readonly initialRecipe = input<Recipe | null>(null);
   readonly date = input.required<string>();
   readonly rules = input.required<DietRules>();
@@ -193,7 +213,7 @@ export class MealForm {
   protected readonly groups = FOOD_GROUPS;
   protected readonly groupLabels = FOOD_GROUP_LABELS;
   protected readonly scoreClass = scoreClass;
-  protected readonly fa = (n: number) => faNumber(n);
+  protected readonly fa = (n: number) => this.locale.number(n);
 
   protected readonly portions = signal<Partial<Record<FoodGroup, number>>>({});
   protected readonly estimating = signal(false);
@@ -263,7 +283,7 @@ export class MealForm {
       this.model.update((m) => ({ ...m, calories: e.calories }));
       this.macros.set(e);
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.estimating.set(false);
     }

@@ -1,3 +1,4 @@
+import { AioLocale } from '@all-in-one/ui';
 import { TestBed } from '@angular/core/testing';
 import {
   ActivatedRoute,
@@ -79,6 +80,7 @@ describe('Shadowing practice', () => {
         { provide: Tts, useValue: tts },
       ],
     });
+    TestBed.inject(AioLocale).setLanguage('en');
     const fixture = TestBed.createComponent(PracticePage);
     await fixture.whenStable();
     const el = fixture.nativeElement as HTMLElement;
@@ -172,4 +174,9 @@ describe('Shadowing practice', () => {
     fixture.destroy();
     expect(tts.stop).toHaveBeenCalled();
   });
+});
+
+afterEach(() => {
+  localStorage.removeItem('poshtetgarm_language');
+  document.cookie = 'poshtetgarm_language=; Path=/; Max-Age=0';
 });

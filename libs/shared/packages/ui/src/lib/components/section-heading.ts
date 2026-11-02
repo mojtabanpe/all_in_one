@@ -1,20 +1,28 @@
+import { AioTranslate } from '../locale';
 import { Component, input } from '@angular/core';
 import { AioSkeleton } from '../spartan';
 
 @Component({
   selector: '[aioSectionHeading]',
-  imports: [AioSkeleton],
+  host: { class: 'min-w-0 flex-wrap' },
+  imports: [AioSkeleton, AioTranslate],
   template: `
-    <div [class]="textClass()">
+    <div class="min-w-0" [class]="textClass()">
       @switch (level()) {
         @case (1) {
-          <h1 [id]="headingId()" [class]="titleClass()">{{ title() }}</h1>
+          <h1 [id]="headingId()" [class]="titleClass()">
+            {{ title() | aioTranslate }}
+          </h1>
         }
         @case (3) {
-          <h3 [id]="headingId()" [class]="titleClass()">{{ title() }}</h3>
+          <h3 [id]="headingId()" [class]="titleClass()">
+            {{ title() | aioTranslate }}
+          </h3>
         }
         @default {
-          <h2 [id]="headingId()" [class]="titleClass()">{{ title() }}</h2>
+          <h2 [id]="headingId()" [class]="titleClass()">
+            {{ title() | aioTranslate }}
+          </h2>
         }
       }
       @if (description() || loading()) {
@@ -26,7 +34,7 @@ import { AioSkeleton } from '../spartan';
               aria-hidden="true"
             ></span>
           } @else {
-            {{ description() }}
+            {{ description() | aioTranslate }}
           }
         </p>
       }

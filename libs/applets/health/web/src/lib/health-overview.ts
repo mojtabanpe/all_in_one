@@ -16,6 +16,7 @@ import {
 } from '@all-in-one/applets/health/contracts';
 import { addDays, toIsoDate } from '@all-in-one/shared/schemas';
 import {
+  AioTranslate,
   AioMetric,
   AioCardDirectives,
   AioButton,
@@ -25,11 +26,12 @@ import {
   AioIcon,
   AioProgressDirectives,
   AioSkeleton,
-  aioToast,
   provideIcons,
   AioSkeletonLines,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
-import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
+import { apiErrorMessage } from '@all-in-one/web/shared';
 import {
   lucideClock,
   lucideApple,
@@ -70,6 +72,7 @@ const MEAL_ICONS: Record<MealType, string> = {
     RouterLink,
     WeightCard,
     AioSkeletonLines,
+    AioTranslate,
   ],
   providers: [
     provideIcons({
@@ -87,28 +90,33 @@ const MEAL_ICONS: Record<MealType, string> = {
     <div class="flex flex-col gap-6">
       <div class="health-topline">
         <p class="text-muted-foreground text-sm">
-          {{ selectedDate() === today ? 'امروز' : 'گزارش روز' }}،
-          {{ dateLabel(selectedDate()) }}
+          {{ (selectedDate() === today ? 'امروز' : 'گزارش روز') | aioTranslate
+          }}{{ '،' | aioTranslate }}
+          {{ dateLabel(selectedDate()) | aioTranslate }}
         </p>
         <a
           aioBtn
           variant="ghost"
           class="health-soft-action"
           routerLink="profile"
-          >مشخصات من</a
+          >{{ 'مشخصات من' | aioTranslate }}</a
         >
       </div>
-      <div class="health-day-strip" role="group" aria-label="انتخاب روز">
+      <div
+        class="health-day-strip"
+        role="group"
+        [attr.aria-label]="'انتخاب روز' | aioTranslate"
+      >
         @for (day of days; track day.date) {
           <button
             aioBtn
             variant="ghost"
             [attr.aria-pressed]="selectedDate() === day.date"
             (click)="selectedDate.set(day.date)"
-            [attr.aria-label]="dateLabel(day.date)"
+            [attr.aria-label]="dateLabel(day.date) | aioTranslate"
           >
-            <span class="text-xs">{{ day.label }}</span
-            ><strong class="text-lg">{{ day.number }}</strong>
+            <span class="text-xs">{{ day.label | aioTranslate }}</span
+            ><strong class="text-lg">{{ day.number | aioTranslate }}</strong>
           </button>
         }
       </div>
@@ -118,7 +126,10 @@ const MEAL_ICONS: Record<MealType, string> = {
             <section aioCard class="health-calorie-panel">
               <div aioCardHeader>
                 <h2 aioCardTitle class="health-metric-label min-h-10">
-                  {{ left() >= 0 ? 'کالری باقی‌مانده' : 'بیشتر از هدف روزانه' }}
+                  {{
+                    (left() >= 0 ? 'کالری باقی‌مانده' : 'بیشتر از هدف روزانه')
+                      | aioTranslate
+                  }}
                 </h2>
               </div>
               <div aioCardContent class="flex flex-col gap-4">
@@ -129,7 +140,9 @@ const MEAL_ICONS: Record<MealType, string> = {
                   <div
                     class="flex min-h-40 flex-col gap-4"
                     role="status"
-                    aria-label="در حال دریافت هدف روزانه"
+                    [attr.aria-label]="
+                      'در حال دریافت هدف روزانه' | aioTranslate
+                    "
                     aioSkeletonLines
                     [lines]="[
                       'h-14 w-24 rounded-2xl',
@@ -140,39 +153,51 @@ const MEAL_ICONS: Record<MealType, string> = {
                 } @else if (profile.error() || meals.error()) {
                   <p class="health-number">—</p>
                   <button aioBtn variant="link" (click)="reloadNutrition()">
-                    تلاش دوباره
+                    {{ 'تلاش دوباره' | aioTranslate }}
                   </button>
                 } @else if (target(); as t) {
                   <div class="flex min-h-40 flex-col gap-4">
-                    <p class="health-number">{{ fa(Math.abs(left())) }}</p>
+                    <p class="health-number">
+                      {{ fa(Math.abs(left())) | aioTranslate }}
+                    </p>
                     <p class="health-metric-label">
-                      از {{ fa(t) }} کالری هدف روزانه
+                      {{ 'از {0} کالری هدف روزانه' | aioTranslate: [fa(t)] }}
                     </p>
                     <div
                       aioProgress
                       [value]="Math.min((eaten() * 100) / t, 100)"
-                      aria-label="سهم کالری ثبت‌شده"
+                      [attr.aria-label]="'سهم کالری ثبت‌شده' | aioTranslate"
                     >
                       <div aioProgressIndicator></div>
                     </div>
                   </div>
                 } @else {
                   <div class="flex min-h-40 flex-col items-start gap-4">
-                    <p class="text-lg font-semibold">از خودت بگو</p>
-                    <p class="health-metric-label">
-                      برای محاسبه هدف روزانه، مشخصاتت را کامل کن.
+                    <p class="text-lg font-semibold">
+                      {{ 'از خودت بگو' | aioTranslate }}
                     </p>
-                    <a aioBtn class="health-soft-action" routerLink="profile"
-                      >تکمیل مشخصات</a
-                    >
+                    <p class="health-metric-label">
+                      {{
+                        'برای محاسبه هدف روزانه، مشخصاتت را کامل کن.'
+                          | aioTranslate
+                      }}
+                    </p>
+                    <a aioBtn class="health-soft-action" routerLink="profile">{{
+                      'تکمیل مشخصات' | aioTranslate
+                    }}</a>
                   </div>
                 }
                 <span class="health-helper-art" aria-hidden="true"></span>
               </div>
             </section>
-            <section class="health-metric" aria-label="کالری خورده‌شده">
+            <section
+              class="health-metric"
+              [attr.aria-label]="'کالری خورده‌شده' | aioTranslate"
+            >
               <div class="flex items-center justify-between gap-2">
-                <h2 class="health-metric-label">خورده‌شده</h2>
+                <h2 class="health-metric-label">
+                  {{ 'خورده‌شده' | aioTranslate }}
+                </h2>
                 <aio-icon
                   name="lucideApple"
                   size="sm"
@@ -181,14 +206,19 @@ const MEAL_ICONS: Record<MealType, string> = {
               </div>
               <p class="health-small-number">
                 {{
-                  meals.isLoading() ? '…' : meals.error() ? '—' : fa(eaten())
+                  (meals.isLoading() ? '…' : meals.error() ? '—' : fa(eaten()))
+                    | aioTranslate
                 }}
               </p>
-              <span class="health-metric-label">کالری ثبت‌شده</span>
+              <span class="health-metric-label">{{
+                'کالری ثبت‌شده' | aioTranslate
+              }}</span>
             </section>
             <a class="health-metric" routerLink="fitness"
               ><div class="flex items-center justify-between gap-2">
-                <h2 class="health-metric-label">فعالیت این هفته</h2>
+                <h2 class="health-metric-label">
+                  {{ 'فعالیت این هفته' | aioTranslate }}
+                </h2>
                 <aio-icon
                   name="lucideDumbbell"
                   size="sm"
@@ -197,15 +227,19 @@ const MEAL_ICONS: Record<MealType, string> = {
               </div>
               <p class="health-small-number">
                 {{
-                  week.isLoading() ? '…' : week.error() ? '—' : fa(minutes())
+                  (week.isLoading() ? '…' : week.error() ? '—' : fa(minutes()))
+                    | aioTranslate
                 }}
               </p>
-              <span class="health-metric-label"
-                >دقیقه از {{ fa(goal()) }}</span
-              ></a
+              <span class="health-metric-label">{{
+                'دقیقه از {0}' | aioTranslate: [fa(goal())]
+              }}</span></a
             >
           </div>
-          <div class="health-macro-strip" aria-label="درشت‌مغذی‌های ثبت‌شده">
+          <div
+            class="health-macro-strip"
+            [attr.aria-label]="'درشت‌مغذی‌های ثبت‌شده' | aioTranslate"
+          >
             @for (macro of macroCards(); track macro.label) {
               <div class="health-macro">
                 <span class="health-icon-disc" [style.color]="macro.color"
@@ -213,12 +247,14 @@ const MEAL_ICONS: Record<MealType, string> = {
                 /></span>
                 <div class="flex min-w-0 flex-col items-center gap-1">
                   <p class="text-muted-foreground whitespace-nowrap text-xs">
-                    {{ macro.label }}
+                    {{ macro.label | aioTranslate }}
                   </p>
                   <strong
                     class="inline-flex items-baseline justify-center gap-1 whitespace-nowrap text-sm"
-                    >{{ macro.value }}
-                    <span class="font-normal text-xs">گرم</span></strong
+                    >{{ macro.value | aioTranslate
+                    }}<span class="font-normal text-xs">{{
+                      'گرم' | aioTranslate
+                    }}</span></strong
                   >
                 </div>
               </div>
@@ -226,9 +262,10 @@ const MEAL_ICONS: Record<MealType, string> = {
           </div>
           <p class="text-muted-foreground min-h-9 px-1 text-xs">
             {{
-              macros()
+              (macros()
                 ? 'جمع مقادیر وعده‌هایی که اطلاعات تغذیه‌ای دارند؛ تقریبی است.'
                 : 'برای دیدن درشت‌مغذی‌ها، وعده‌ای با اطلاعات تغذیه‌ای ثبت کن.'
+              ) | aioTranslate
             }}
           </p>
           <div class="health-body-grid">
@@ -242,31 +279,39 @@ const MEAL_ICONS: Record<MealType, string> = {
         >
           <div class="health-topline">
             <h2 id="daily-plan-title" class="health-section-heading">
-              برنامه غذایی این روز
+              {{ 'برنامه غذایی این روز' | aioTranslate }}
             </h2>
-            <a aioBtn variant="link" routerLink="nutrition">همه</a>
+            <a aioBtn variant="link" routerLink="nutrition">{{
+              'همه' | aioTranslate
+            }}</a>
           </div>
           <div class="health-meal-list">
             @if (plan.isLoading()) {
               <div aioSkeleton class="my-5 h-24 rounded-2xl"></div>
             } @else if (plan.error()) {
-              <p role="alert" class="py-6 text-sm">برنامه غذایی دریافت نشد.</p>
+              <p role="alert" class="py-6 text-sm">
+                {{ 'برنامه غذایی دریافت نشد.' | aioTranslate }}
+              </p>
               <button aioBtn variant="link" (click)="plan.reload()">
-                تلاش دوباره
+                {{ 'تلاش دوباره' | aioTranslate }}
               </button>
             } @else if (!plannedMeals().length) {
               <div class="flex flex-col items-start gap-4 py-7">
                 <span class="health-meal-art"
                   ><aio-icon name="lucideSoup"
                 /></span>
-                <h3 class="font-semibold">برای وعده بعدی ایده بگیر.</h3>
+                <h3 class="font-semibold">
+                  {{ 'برای وعده بعدی ایده بگیر.' | aioTranslate }}
+                </h3>
                 <p class="health-metric-label">
-                  برای این روز برنامه‌ای نداری. بر اساس رژیمت برنامه بچین یا
-                  غذای خودت را ثبت کن.
+                  {{
+                    'برای این روز برنامه‌ای نداری. بر اساس رژیمت برنامه بچین یا غذای خودت را ثبت کن.'
+                      | aioTranslate
+                  }}
                 </p>
-                <a aioBtn class="health-soft-action" routerLink="nutrition"
-                  >چیدن برنامه غذایی</a
-                >
+                <a aioBtn class="health-soft-action" routerLink="nutrition">{{
+                  'چیدن برنامه غذایی' | aioTranslate
+                }}</a>
               </div>
             } @else {
               @for (meal of plannedMeals(); track meal.mealType) {
@@ -277,12 +322,19 @@ const MEAL_ICONS: Record<MealType, string> = {
                   <span class="health-meal-art" [attr.data-meal]="meal.mealType"
                     ><aio-icon [name]="mealIcons[meal.mealType]" /></span
                   ><span class="flex min-w-0 flex-1 flex-col gap-1"
-                    ><strong class="text-sm">{{ meal.recipe.title }}</strong
-                    ><span class="health-metric-label"
-                      >{{ mealLabels[meal.mealType] }}،
-                      {{ fa(Math.round(meal.recipe.calories * meal.servings)) }}
-                      کالری</span
-                    ></span
+                    ><strong class="text-sm">{{
+                      meal.recipe.title | aioTranslate
+                    }}</strong
+                    ><span class="health-metric-label">{{
+                      '{0}، {1} کالری'
+                        | aioTranslate
+                          : [
+                              mealLabels[meal.mealType],
+                              fa(
+                                Math.round(meal.recipe.calories * meal.servings)
+                              ),
+                            ]
+                    }}</span></span
                   ><aio-icon
                     name="lucideChevronLeft"
                     size="sm"
@@ -298,15 +350,18 @@ const MEAL_ICONS: Record<MealType, string> = {
           aria-labelledby="meals-title"
         >
           <div class="health-topline">
-            <h2 id="meals-title" class="health-section-heading">چی خوردی؟</h2>
+            <h2 id="meals-title" class="health-section-heading">
+              {{ 'چی خوردی؟' | aioTranslate }}
+            </h2>
             <span class="text-muted-foreground text-xs">{{
-              selectedDate() === today ? 'امروز' : dateLabel(selectedDate())
+              (selectedDate() === today ? 'امروز' : dateLabel(selectedDate()))
+                | aioTranslate
             }}</span>
           </div>
           <ul class="health-meal-list">
             @if (meals.error()) {
               <li role="alert" class="py-5 text-sm">
-                وعده‌ها دریافت نشدند؛ دوباره تلاش کن.
+                {{ 'وعده‌ها دریافت نشدند؛ دوباره تلاش کن.' | aioTranslate }}
               </li>
             } @else {
               @for (row of mealRows(); track row.type) {
@@ -323,7 +378,10 @@ const MEAL_ICONS: Record<MealType, string> = {
                   <div
                     class="flex min-w-0 flex-1 flex-col gap-1"
                     aioMetric
-                    [label]="meals.isLoading() ? 'در حال دریافت…' : row.summary"
+                    [label]="
+                      (meals.isLoading() ? 'در حال دریافت…' : row.summary)
+                        | aioTranslate
+                    "
                     [value]="row.label"
                     labelClass="health-metric-label break-words"
                     valueClass="text-sm"
@@ -335,7 +393,7 @@ const MEAL_ICONS: Record<MealType, string> = {
                     size="icon"
                     class="health-soft-action"
                     (click)="initialRecipe.set(null); logFor.set(row.type)"
-                    [attr.aria-label]="'ثبت ' + row.label"
+                    [attr.aria-label]="'ثبت ' + row.label | aioTranslate"
                   >
                     <aio-icon name="lucidePlus" size="sm" />
                   </button>
@@ -346,13 +404,21 @@ const MEAL_ICONS: Record<MealType, string> = {
         </section>
         <section class="health-workout-banner">
           <div class="flex min-w-0 flex-col items-start gap-3">
-            <span class="health-metric-label">کمی حرکت، برای حال بهتر</span>
-            <h2 class="health-section-heading">تمرین بعدی‌ات همین‌جاست.</h2>
+            <span class="health-metric-label">{{
+              'کمی حرکت، برای حال بهتر' | aioTranslate
+            }}</span>
+            <h2 class="health-section-heading">
+              {{ 'تمرین بعدی‌ات همین‌جاست.' | aioTranslate }}
+            </h2>
             <p class="health-metric-label">
-              خانه، TRX یا باشگاه؛ با زمان و تجهیزات خودت.
+              {{
+                'خانه، TRX یا باشگاه؛ با زمان و تجهیزات خودت.' | aioTranslate
+              }}
             </p>
             <a aioBtn class="health-primary-action" routerLink="fitness"
-              ><aio-icon name="lucideDumbbell" size="sm" />رفتن به تمرین</a
+              ><aio-icon name="lucideDumbbell" size="sm" />{{
+                'رفتن به تمرین' | aioTranslate
+              }}</a
             >
           </div>
           <span class="health-helper-art shrink-0" aria-hidden="true"></span>
@@ -362,7 +428,7 @@ const MEAL_ICONS: Record<MealType, string> = {
     <aio-dialog
       [open]="selectedMeal() !== null"
       (openChange)="!$event && selectedMeal.set(null)"
-      [title]="selectedMeal()?.recipe?.title ?? 'جزئیات وعده'"
+      [title]="selectedMeal()?.recipe?.title ?? 'جزئیات وعده' | aioTranslate"
       contentClass="applet-health health-calm"
     >
       <ng-template aioDialogBody>
@@ -375,15 +441,18 @@ const MEAL_ICONS: Record<MealType, string> = {
                 ><aio-icon [name]="mealIcons[meal.mealType]" size="lg"
               /></span>
               <p class="health-metric-label">
-                {{ mealLabels[meal.mealType] }}، {{ fa(meal.servings) }} سهم از
-                دستور پخت
+                {{
+                  '{0}، {1} سهم از دستور پخت'
+                    | aioTranslate
+                      : [mealLabels[meal.mealType], fa(meal.servings)]
+                }}
               </p>
             </div>
             <div class="grid grid-cols-3 gap-3 border-y border-border py-5">
               <div
                 class="health-sheet-stat"
                 aioMetric
-                label="کالری"
+                [label]="'کالری' | aioTranslate"
                 [value]="fa(Math.round(meal.recipe.calories * meal.servings))"
                 labelClass="health-metric-label"
                 valueClass="health-small-number"
@@ -394,7 +463,7 @@ const MEAL_ICONS: Record<MealType, string> = {
               <div
                 class="health-sheet-stat"
                 aioMetric
-                label="دقیقه آماده‌سازی"
+                [label]="'دقیقه آماده‌سازی' | aioTranslate"
                 [value]="fa(meal.recipe.prepMinutes)"
                 labelClass="health-metric-label"
                 valueClass="health-small-number"
@@ -405,7 +474,7 @@ const MEAL_ICONS: Record<MealType, string> = {
               <div
                 class="health-sheet-stat"
                 aioMetric
-                label="ماده اولیه"
+                [label]="'ماده اولیه' | aioTranslate"
                 [value]="fa(meal.recipe.ingredients.length)"
                 labelClass="health-metric-label"
                 valueClass="health-small-number"
@@ -417,7 +486,7 @@ const MEAL_ICONS: Record<MealType, string> = {
             <div class="grid grid-cols-3 gap-3 text-center">
               <div
                 aioMetric
-                label="پروتئین"
+                [label]="'پروتئین' | aioTranslate"
                 [value]="
                   fa(Math.round(meal.recipe.proteinG * meal.servings)) + ' گرم'
                 "
@@ -426,7 +495,7 @@ const MEAL_ICONS: Record<MealType, string> = {
               ></div>
               <div
                 aioMetric
-                label="کربوهیدرات"
+                [label]="'کربوهیدرات' | aioTranslate"
                 [value]="
                   fa(Math.round(meal.recipe.carbsG * meal.servings)) + ' گرم'
                 "
@@ -435,7 +504,7 @@ const MEAL_ICONS: Record<MealType, string> = {
               ></div>
               <div
                 aioMetric
-                label="چربی"
+                [label]="'چربی' | aioTranslate"
                 [value]="
                   fa(Math.round(meal.recipe.fatG * meal.servings)) + ' گرم'
                 "
@@ -444,23 +513,27 @@ const MEAL_ICONS: Record<MealType, string> = {
               ></div>
             </div>
             <div>
-              <h3 class="mb-3 font-semibold">مواد لازم برای هر سهم پایه</h3>
+              <h3 class="mb-3 font-semibold">
+                {{ 'مواد لازم برای هر سهم پایه' | aioTranslate }}
+              </h3>
               @for (ingredient of meal.recipe.ingredients; track $index) {
                 <p class="health-topline border-b border-border py-3 text-sm">
-                  <span>{{ ingredient.item }}</span
+                  <span>{{ ingredient.item | aioTranslate }}</span
                   ><span class="text-muted-foreground">{{
-                    ingredient.amount
+                    ingredient.amount | aioTranslate
                   }}</span>
                 </p>
               }
             </div>
             <div>
-              <h3 class="mb-3 font-semibold">طرز تهیه</h3>
+              <h3 class="mb-3 font-semibold">
+                {{ 'طرز تهیه' | aioTranslate }}
+              </h3>
               <ol
                 class="flex list-inside [list-style-type:persian] flex-col gap-3 text-sm leading-7"
               >
                 @for (step of meal.recipe.steps; track $index) {
-                  <li>{{ step }}</li>
+                  <li>{{ step | aioTranslate }}</li>
                 }
               </ol>
             </div>
@@ -473,13 +546,13 @@ const MEAL_ICONS: Record<MealType, string> = {
           variant="outline"
           routerLink="nutrition"
           (click)="selectedMeal.set(null)"
-          >دیدن جایگزین‌ها</a
+          >{{ 'دیدن جایگزین‌ها' | aioTranslate }}</a
         ><button
           aioBtn
           class="health-primary-action"
           (click)="logPlannedMeal()"
         >
-          ثبت این وعده
+          {{ 'ثبت این وعده' | aioTranslate }}
         </button></ng-template
       >
     </aio-dialog>
@@ -487,8 +560,12 @@ const MEAL_ICONS: Record<MealType, string> = {
     <aio-dialog
       [open]="!!logFor()"
       (openChange)="$event || logFor.set(null)"
-      [title]="'ثبت ' + (logFor() ? mealLabels[logFor()!] : 'وعده')"
-      [description]="'امتیاز بر اساس ' + (diet()?.name ?? 'تغذیه متعادل')"
+      [title]="
+        'ثبت ' + (logFor() ? mealLabels[logFor()!] : 'وعده') | aioTranslate
+      "
+      [description]="
+        'امتیاز بر اساس ' + (diet()?.name ?? 'تغذیه متعادل') | aioTranslate
+      "
       contentClass="applet-health health-calm"
     >
       <ng-template aioDialogBody>
@@ -503,21 +580,25 @@ const MEAL_ICONS: Record<MealType, string> = {
       </ng-template>
       <ng-template aioDialogActions>
         <button aioBtn variant="outline" (click)="logFor.set(null)">
-          انصراف
+          {{ 'انصراف' | aioTranslate }}
         </button>
         <button aioBtn type="submit" form="meal-form" [disabled]="saving()">
-          ثبت و سنجش
+          {{ 'ثبت و سنجش' | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>
   `,
 })
 export class HealthOverview {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   private readonly api = inject(HealthApi);
   protected readonly today = toIsoDate(new Date());
   protected readonly selectedDate = signal(this.today);
   protected readonly dateLabel = (date: string) =>
-    faDate(date, { day: 'numeric', month: 'long' });
+    this.locale.date(date, { day: 'numeric', month: 'long' });
   private readonly weekStart = addDays(
     this.today,
     -((new Date(`${this.today}T12:00:00Z`).getUTCDay() + 1) % 7),
@@ -526,8 +607,8 @@ export class HealthOverview {
     const date = addDays(this.weekStart, i);
     return {
       date,
-      label: faDate(date, { weekday: 'short' }),
-      number: faDate(date, { day: 'numeric' }),
+      label: this.locale.date(date, { weekday: 'short' }),
+      number: this.locale.date(date, { day: 'numeric' }),
     };
   });
   protected readonly mealIcons = MEAL_ICONS;
@@ -562,19 +643,19 @@ export class HealthOverview {
     return [
       {
         label: 'پروتئین',
-        value: known && m ? faNumber(m.protein) : '—',
+        value: known && m ? this.locale.number(m.protein) : '—',
         icon: 'lucideDumbbell',
         color: 'var(--health-green)',
       },
       {
         label: 'کربوهیدرات',
-        value: known && m ? faNumber(m.carbs) : '—',
+        value: known && m ? this.locale.number(m.carbs) : '—',
         icon: 'lucideSandwich',
         color: 'var(--health-orange)',
       },
       {
         label: 'چربی',
-        value: known && m ? faNumber(m.fat) : '—',
+        value: known && m ? this.locale.number(m.fat) : '—',
         icon: 'lucideCoffee',
         color: 'var(--health-blue)',
       },
@@ -601,7 +682,7 @@ export class HealthOverview {
   protected readonly balanced = BALANCED_RULES;
   protected readonly mealLabels = MEAL_TYPE_LABELS;
   protected readonly scoreClass = scoreClass;
-  protected readonly fa = (n: number) => faNumber(n);
+  protected readonly fa = (n: number) => this.locale.number(n);
 
   protected readonly profile = httpResource<HealthProfile>(
     () => `${this.api.base}/profile`,
@@ -658,11 +739,14 @@ export class HealthOverview {
       ? Math.round(meals.reduce((s, m) => s + m.score, 0) / meals.length)
       : null;
     return [
-      { label: 'وعده', value: faNumber(meals.length) },
-      { label: 'امتیاز تغذیه', value: score === null ? '–' : faNumber(score) },
+      { label: 'وعده', value: this.locale.number(meals.length) },
+      {
+        label: 'امتیاز تغذیه',
+        value: score === null ? '–' : this.locale.number(score),
+      },
       {
         label: 'جلسه ورزش',
-        value: faNumber(this.week.value()?.sessions ?? 0),
+        value: this.locale.number(this.week.value()?.sessions ?? 0),
       },
     ];
   });
@@ -677,7 +761,7 @@ export class HealthOverview {
         icon: MEAL_ICONS[type],
         summary: logged.length
           ? logged.map((m) => m.description).join('، ') +
-            (calories ? `، ${faNumber(calories)} کالری` : '')
+            (calories ? `، ${this.locale.number(calories)} کالری` : '')
           : 'هنوز ثبت نشده',
         score: logged.length
           ? Math.round(logged.reduce((s, m) => s + m.score, 0) / logged.length)
@@ -694,12 +778,12 @@ export class HealthOverview {
         this.meals.update((list) => [...(list ?? []), meal]);
       }
       this.logFor.set(null);
-      aioToast.success(
-        `ثبت شد! امتیاز این وعده: ${faNumber(meal.score)}`,
+      this.notifications.success(
+        `ثبت شد! امتیاز این وعده: ${this.locale.number(meal.score)}`,
         meal.feedback[0],
       );
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.saving.set(false);
     }

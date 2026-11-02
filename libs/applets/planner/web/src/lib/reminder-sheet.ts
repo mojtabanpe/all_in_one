@@ -13,13 +13,15 @@ import type {
   PlannerTask,
 } from '@all-in-one/applets/planner/contracts';
 import {
+  AioTranslate,
   AioButton,
   AioDialog,
   AioDialogActions,
   AioDialogBody,
-  aioToast,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
-import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
+import { apiErrorMessage, faNumber } from '@all-in-one/web/shared';
 import { PlannerApi } from './planner-api';
 
 /** `?remind=task:<id>` or `?remind=habit:<id>:<YYYY-MM-DD>` (set by push notifications). */
@@ -39,31 +41,43 @@ export function parseRemind(
 /** Bottom sheet opened from a reminder: mark it done, or decline it. */
 @Component({
   selector: 'planner-reminder-sheet',
-  imports: [AioButton, AioDialog, AioDialogActions, AioDialogBody],
+  imports: [
+    AioButton,
+    AioDialog,
+    AioDialogActions,
+    AioDialogBody,
+    AioTranslate,
+  ],
   template: `
     <aio-dialog
       [(open)]="open"
       (openChange)="$event || close()"
-      [title]="title()"
-      [description]="description()"
+      [title]="title() | aioTranslate"
+      [description]="description() | aioTranslate"
       contentClass="applet-planner sm:max-w-md"
     >
       <ng-template aioDialogBody>
         @if (!ready()) {
-          <p class="text-muted-foreground text-sm">در حال دریافت…</p>
+          <p class="text-muted-foreground text-sm">
+            {{ 'در حال دریافت…' | aioTranslate }}
+          </p>
         } @else if (missing()) {
           <p class="text-muted-foreground text-sm">
             {{
-              finished()
+              (finished()
                 ? 'این مورد قبلاً کامل شده.'
                 : 'این یادآوری دیگر پیدا نشد.'
+              ) | aioTranslate
             }}
           </p>
         } @else if (habit(); as h) {
           @if (h.goal > 1) {
             <p class="text-sm">
-              {{ faNumber(count()) }} از {{ faNumber(h.goal) }}
-              {{ h.unit || 'بار' }} انجام شده
+              {{
+                '{0} از {1} {2} انجام شده'
+                  | aioTranslate
+                    : [faNumber(count()), faNumber(h.goal), h.unit || 'بار']
+              }}
             </p>
           }
         }
@@ -77,7 +91,10 @@ export function parseRemind(
             [disabled]="busy()"
             (click)="decline()"
           >
-            {{ target()?.kind === 'task' ? 'انجامش نمی‌دم' : 'امروز نه' }}
+            {{
+              (target()?.kind === 'task' ? 'انجامش نمی‌دم' : 'امروز نه')
+                | aioTranslate
+            }}
           </button>
           @if ((habit()?.goal ?? 1) > 1) {
             <button
@@ -87,7 +104,7 @@ export function parseRemind(
               [disabled]="busy()"
               (click)="done(true)"
             >
-              همه انجام شد
+              {{ 'همه انجام شد' | aioTranslate }}
             </button>
             <button
               aioBtn
@@ -95,7 +112,7 @@ export function parseRemind(
               [disabled]="busy()"
               (click)="done()"
             >
-              یک {{ habit()?.unit || 'بار' }} دیگر (+۱)
+              {{ 'یک {0} دیگر (+۱)' | aioTranslate: [habit()?.unit || 'بار'] }}
             </button>
           } @else {
             <button
@@ -104,17 +121,23 @@ export function parseRemind(
               [disabled]="busy()"
               (click)="done()"
             >
-              انجام شد
+              {{ 'انجام شد' | aioTranslate }}
             </button>
           }
         } @else {
-          <button aioBtn variant="outline" (click)="close()">بستن</button>
+          <button aioBtn variant="outline" (click)="close()">
+            {{ 'بستن' | aioTranslate }}
+          </button>
         }
       </ng-template>
     </aio-dialog>
   `,
 })
 export class ReminderSheet {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   private readonly api = inject(PlannerApi);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -133,7 +156,10 @@ export class ReminderSheet {
   private readonly habitsRes = httpResource<PlannerHabit[]>(() =>
     this.target()?.kind === 'habit' ? `${this.api.base}/habits` : undefined,
   );
-  protected readonly faNumber = faNumber;
+  protected readonly faNumber = (
+    value: number,
+    options?: Intl.NumberFormatOptions,
+  ) => this.locale.number(value, options);
   protected readonly habit = computed(() => {
     const t = this.target();
     return t?.kind === 'habit' && this.habitsRes.hasValue()
@@ -171,9 +197,9 @@ export class ReminderSheet {
   );
   protected readonly description = computed(() => {
     const t = this.target();
-    if (t?.kind === 'habit') return `عادت، ${faDate(t.date)}`;
+    if (t?.kind === 'habit') return `عادت، ${this.locale.date(t.date)}`;
     const task = this.task();
-    return task?.date ? `کار، ${faDate(task.date)}` : 'کار';
+    return task?.date ? `کار، ${this.locale.date(task.date)}` : 'کار';
   });
 
   protected close() {
@@ -190,10 +216,10 @@ export class ReminderSheet {
     this.busy.set(true);
     try {
       await action();
-      if (message) aioToast.success(message, this.title());
+      if (message) this.notifications.success(message, this.title());
       this.close();
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.busy.set(false);
     }
@@ -213,7 +239,7 @@ export class ReminderSheet {
         () => this.api.checkin(t.id, { date: t.date, value }),
         value >= goal
           ? 'امروز کامل شد'
-          : `${faNumber(value)} از ${faNumber(goal)} ثبت شد`,
+          : `${this.locale.number(value)} از ${this.locale.number(goal)} ثبت شد`,
       );
     }
   }

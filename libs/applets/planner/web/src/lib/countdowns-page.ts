@@ -10,6 +10,7 @@ import {
   toIsoDate,
 } from '@all-in-one/applets/planner/contracts';
 import {
+  AioTranslate,
   AioButton,
   AioDateInput,
   AioConfirm,
@@ -21,13 +22,14 @@ import {
   AioInput,
   AioSkeleton,
   AioSwitch,
-  aioToast,
   provideIcons,
   AioFormField,
   AioSectionHeading,
   AioSelectField,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
-import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
+import { apiErrorMessage } from '@all-in-one/web/shared';
 import { lucideHourglass, lucidePlus, lucideRepeat } from '@ng-icons/lucide';
 import { ColorPicker } from './color-picker';
 import { TONE } from './colors';
@@ -64,6 +66,7 @@ const emptyDraft = (): Draft => ({
     AioFormField,
     AioSectionHeading,
     AioSelectField,
+    AioTranslate,
   ],
   providers: [provideIcons({ lucideHourglass, lucidePlus, lucideRepeat })],
   host: { class: 'flex flex-col gap-5' },
@@ -71,8 +74,8 @@ const emptyDraft = (): Draft => ({
     <header
       class="flex items-center justify-between gap-3"
       aioSectionHeading
-      title="روزشمار"
-      description="تولدها، سالگردها و روزهای مهم"
+      [title]="'روزشمار' | aioTranslate"
+      [description]="'تولدها، سالگردها و روزهای مهم' | aioTranslate"
       [level]="1"
       titleClass="text-2xl font-bold"
       descriptionClass="text-muted-foreground text-sm"
@@ -80,7 +83,7 @@ const emptyDraft = (): Draft => ({
     >
       <button aioBtn (click)="open()">
         <aio-icon name="lucidePlus" size="sm" />
-        روز تازه
+        {{ 'روز تازه' | aioTranslate }}
       </button>
     </header>
 
@@ -103,19 +106,25 @@ const emptyDraft = (): Draft => ({
               "
             >
               <span class="text-2xl leading-none font-bold">{{
-                fa(abs(c.daysLeft))
+                fa(abs(c.daysLeft)) | aioTranslate
               }}</span>
-              <span class="text-xs">روز</span>
+              <span class="text-xs">{{ 'روز' | aioTranslate }}</span>
             </span>
             <span class="flex min-w-0 flex-1 flex-col gap-0.5">
               <span class="truncate font-semibold">{{ c.title }}</span>
-              <span class="text-muted-foreground text-xs">{{ phrase(c) }}</span>
+              <span class="text-muted-foreground text-xs">{{
+                phrase(c) | aioTranslate
+              }}</span>
               <span
                 class="text-muted-foreground flex items-center gap-1 text-xs"
               >
                 {{ kindLabels[c.kind] }}، {{ dateLabel(c.nextDate) }}
                 @if (c.repeatYearly) {
-                  <aio-icon name="lucideRepeat" size="xs" aria-label="هر سال" />
+                  <aio-icon
+                    name="lucideRepeat"
+                    size="xs"
+                    [aria-label]="'هر سال' | aioTranslate"
+                  />
                 }
               </span>
             </span>
@@ -126,9 +135,12 @@ const emptyDraft = (): Draft => ({
               <div aioEmptyMedia variant="icon" class="text-primary">
                 <aio-icon name="lucideHourglass" />
               </div>
-              <h2 aioEmptyTitle>هنوز روزی نشمرده‌ای</h2>
+              <h2 aioEmptyTitle>{{ 'هنوز روزی نشمرده‌ای' | aioTranslate }}</h2>
               <p aioEmptyDescription>
-                تولد عزیزان، سالگرد ازدواج یا روز امتحان را اضافه کن.
+                {{
+                  'تولد عزیزان، سالگرد ازدواج یا روز امتحان را اضافه کن.'
+                    | aioTranslate
+                }}
               </p>
             </div>
           </div>
@@ -148,17 +160,20 @@ const emptyDraft = (): Draft => ({
           class="flex flex-col gap-4 pb-2"
           (submit)="$event.preventDefault(); save()"
         >
-          <aio-form-field label="عنوان" controlId="cd-title">
+          <aio-form-field [label]="'عنوان' | aioTranslate" controlId="cd-title">
             <input
               aioInput
               id="cd-title"
-              placeholder="مثلاً: تولد مامان"
+              [placeholder]="'مثلاً: تولد مامان' | aioTranslate"
               [value]="d.title"
               (input)="patch({ title: $any($event.target).value })"
             />
           </aio-form-field>
           <div class="grid grid-cols-2 gap-3">
-            <aio-form-field label="تاریخ" controlId="cd-date">
+            <aio-form-field
+              [label]="'تاریخ' | aioTranslate"
+              controlId="cd-date"
+            >
               <aio-date-input
                 contentClass="applet-planner"
                 inputId="cd-date"
@@ -168,7 +183,7 @@ const emptyDraft = (): Draft => ({
               />
             </aio-form-field>
             <aio-select-field
-              label="نوع"
+              [label]="'نوع' | aioTranslate"
               controlId="cd-kind"
               [value]="d.kind"
               [options]="kinds"
@@ -177,10 +192,12 @@ const emptyDraft = (): Draft => ({
             />
           </div>
           <p class="text-muted-foreground -mt-2 text-xs">
-            {{ dateLabel(d.date, true) }}
+            {{ dateLabel(d.date, true) | aioTranslate }}
           </p>
           <div class="flex min-h-11 items-center justify-between text-sm">
-            <label for="cd-repeat">هر سال تکرار شود</label>
+            <label for="cd-repeat">{{
+              'هر سال تکرار شود' | aioTranslate
+            }}</label>
             <aio-switch
               inputId="cd-repeat"
               [checked]="d.repeatYearly"
@@ -191,7 +208,10 @@ const emptyDraft = (): Draft => ({
             [value]="d.color"
             (valueChange)="patch({ color: $event })"
           />
-          <aio-form-field label="یادداشت" controlId="cd-note">
+          <aio-form-field
+            [label]="'یادداشت' | aioTranslate"
+            controlId="cd-note"
+          >
             <input
               aioInput
               id="cd-note"
@@ -209,7 +229,7 @@ const emptyDraft = (): Draft => ({
             class="text-destructive"
             (click)="remove()"
           >
-            حذف
+            {{ 'حذف' | aioTranslate }}
           </button>
         }
         <button
@@ -218,13 +238,17 @@ const emptyDraft = (): Draft => ({
           form="countdown-form"
           [disabled]="saving()"
         >
-          ذخیره
+          {{ 'ذخیره' | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>
   `,
 })
 export class CountdownsPage {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   private readonly api = inject(PlannerApi);
   private readonly confirm = inject(AioConfirm);
 
@@ -241,18 +265,18 @@ export class CountdownsPage {
   protected readonly saving = signal(false);
   protected readonly draft = signal<Draft>(emptyDraft());
 
-  protected readonly fa = (n: number) => faNumber(n);
+  protected readonly fa = (n: number) => this.locale.number(n);
   protected readonly abs = Math.abs;
   protected readonly tone = (c: PlannerColor) => TONE[c];
 
   protected phrase(c: PlannerCountdown) {
     if (c.daysLeft === 0) return 'امروز است!';
-    if (c.daysLeft > 0) return `${faNumber(c.daysLeft)} روز مانده`;
-    return `${faNumber(-c.daysLeft)} روز گذشته`;
+    if (c.daysLeft > 0) return `${this.locale.number(c.daysLeft)} روز مانده`;
+    return `${this.locale.number(-c.daysLeft)} روز گذشته`;
   }
 
   protected dateLabel(iso: string, year = false) {
-    return faDate(iso, {
+    return this.locale.date(iso, {
       day: 'numeric',
       month: 'long',
       ...(year ? { year: 'numeric' } : {}),
@@ -294,7 +318,7 @@ export class CountdownsPage {
   protected async save() {
     const { id, ...input } = this.draft();
     if (!input.title.trim() || !input.date) {
-      aioToast.error('عنوان و تاریخ را بنویس.');
+      this.notifications.error('عنوان و تاریخ را بنویس.');
       return;
     }
     this.saving.set(true);
@@ -309,7 +333,7 @@ export class CountdownsPage {
       this.res.reload();
       this.editing.set(false);
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.saving.set(false);
     }
@@ -329,7 +353,7 @@ export class CountdownsPage {
       await this.api.removeCountdown(id);
       this.items.update((list) => list.filter((c) => c.id !== id));
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 }

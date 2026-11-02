@@ -14,17 +14,18 @@ import {
   type PlannerTag,
 } from '@all-in-one/applets/planner/contracts';
 import {
+  AioTranslate,
   AioButton,
   AioConfirm,
   AioIcon,
   AioInput,
   AioInputGroupDirectives,
   AioSkeleton,
-  aioToast,
   provideIcons,
   AioFormField,
   AioSelectField,
   AioInputGroupSubmit,
+  AioNotifications,
 } from '@all-in-one/ui';
 import { apiErrorMessage, AuthStore } from '@all-in-one/web/shared';
 import {
@@ -49,6 +50,7 @@ import { PlannerApi } from './planner-api';
     AioFormField,
     AioSelectField,
     AioInputGroupSubmit,
+    AioTranslate,
   ],
   providers: [
     provideIcons({ lucidePlus, lucideTrash2, lucideUserPlus, lucideX }),
@@ -58,7 +60,7 @@ import { PlannerApi } from './planner-api';
       @let l = detail.value();
       <div class="flex flex-col gap-5 pb-2">
         @if (l.role === 'OWNER') {
-          <aio-form-field label="نام" controlId="list-name">
+          <aio-form-field [label]="'نام' | aioTranslate" controlId="list-name">
             <input
               aioInput
               id="list-name"
@@ -73,26 +75,26 @@ import { PlannerApi } from './planner-api';
           />
           @if (!l.isInbox) {
             <aio-select-field
-              label="پوشه"
+              [label]="'پوشه' | aioTranslate"
               controlId="list-folder"
               [value]="l.folderId ?? ''"
               [options]="folders()"
               valueKey="id"
               labelKey="name"
-              emptyLabel="بدون پوشه"
+              [emptyLabel]="'بدون پوشه' | aioTranslate"
               (valueChange)="update({ folderId: $event || null })"
             />
           }
         }
 
         <div class="flex flex-col gap-2">
-          <span class="text-sm font-medium">بخش‌ها</span>
+          <span class="text-sm font-medium">{{ 'بخش‌ها' | aioTranslate }}</span>
           @for (s of l.sections; track s.id) {
             <div class="flex items-center gap-2">
               <input
                 aioInput
                 class="flex-1"
-                [attr.aria-label]="'نام بخش ' + s.name"
+                [attr.aria-label]="'نام بخش ' + s.name | aioTranslate"
                 [value]="s.name"
                 (change)="renameSection(s.id, $any($event.target).value)"
               />
@@ -101,7 +103,7 @@ import { PlannerApi } from './planner-api';
                 variant="ghost"
                 size="icon"
                 type="button"
-                [attr.aria-label]="'حذف بخش ' + s.name"
+                [attr.aria-label]="'حذف بخش ' + s.name | aioTranslate"
                 (click)="removeSection(s.id, s.name)"
               >
                 <aio-icon name="lucideTrash2" size="sm" />
@@ -111,18 +113,21 @@ import { PlannerApi } from './planner-api';
           <form aioInputGroup (submit)="$event.preventDefault(); addSection()">
             <input
               aioInputGroupInput
-              placeholder="بخش تازه، مثلاً «این هفته»"
-              aria-label="بخش تازه"
+              [placeholder]="'بخش تازه، مثلاً «این هفته»' | aioTranslate"
+              [attr.aria-label]="'بخش تازه' | aioTranslate"
               [value]="newSection()"
               (input)="newSection.set($any($event.target).value)"
             />
-            <aio-input-group-submit label="افزودن بخش" icon="lucidePlus" />
+            <aio-input-group-submit
+              [label]="'افزودن بخش' | aioTranslate"
+              icon="lucidePlus"
+            />
           </form>
         </div>
 
         @if (!l.isInbox) {
           <div class="flex flex-col gap-2">
-            <span class="text-sm font-medium">اعضا</span>
+            <span class="text-sm font-medium">{{ 'اعضا' | aioTranslate }}</span>
             <ul class="flex flex-col">
               @for (m of l.members; track m.userId) {
                 <li class="flex min-h-11 items-center gap-2 text-sm">
@@ -135,9 +140,9 @@ import { PlannerApi } from './planner-api';
                     >
                   </span>
                   @if (m.role === 'OWNER') {
-                    <span class="text-muted-foreground text-xs"
-                      >صاحب فهرست</span
-                    >
+                    <span class="text-muted-foreground text-xs">{{
+                      'صاحب فهرست' | aioTranslate
+                    }}</span>
                   } @else if (l.role === 'OWNER' || m.userId === me()) {
                     <button
                       aioBtn
@@ -146,7 +151,9 @@ import { PlannerApi } from './planner-api';
                       type="button"
                       (click)="removeMember(m.userId, m.name || m.email)"
                     >
-                      {{ m.userId === me() ? 'خروج' : 'برداشتن' }}
+                      {{
+                        (m.userId === me() ? 'خروج' : 'برداشتن') | aioTranslate
+                      }}
                     </button>
                   }
                 </li>
@@ -158,21 +165,23 @@ import { PlannerApi } from './planner-api';
                   aioInputGroupInput
                   type="email"
                   dir="ltr"
-                  placeholder="email@example.com"
-                  aria-label="ایمیل عضو تازه"
+                  [placeholder]="'email@example.com' | aioTranslate"
+                  [attr.aria-label]="'ایمیل عضو تازه' | aioTranslate"
                   [value]="email()"
                   (input)="email.set($any($event.target).value)"
                 />
                 <aio-input-group-addon align="inline-end">
                   <button aioInputGroupButton type="submit" size="sm">
                     <aio-icon name="lucideUserPlus" size="sm" />
-                    دعوت
+                    {{ 'دعوت' | aioTranslate }}
                   </button>
                 </aio-input-group-addon>
               </form>
               <p class="text-muted-foreground text-xs">
-                اعضا همه کارهای این فهرست را می‌بینند و ویرایش می‌کنند و می‌شود
-                کار را به آن‌ها سپرد.
+                {{
+                  'اعضا همه کارهای این فهرست را می‌بینند و ویرایش می‌کنند و می‌شود کار را به آن‌ها سپرد.'
+                    | aioTranslate
+                }}
               </p>
             }
           </div>
@@ -185,7 +194,7 @@ import { PlannerApi } from './planner-api';
               (click)="remove(l)"
             >
               <aio-icon name="lucideTrash2" size="sm" />
-              حذف فهرست
+              {{ 'حذف فهرست' | aioTranslate }}
             </button>
           }
         }
@@ -196,6 +205,8 @@ import { PlannerApi } from './planner-api';
   `,
 })
 export class ListSettings {
+  private readonly notifications = inject(AioNotifications);
+
   private readonly api = inject(PlannerApi);
   private readonly confirm = inject(AioConfirm);
   private readonly auth = inject(AuthStore);
@@ -257,7 +268,7 @@ export class ListSettings {
     await this.run(async () => {
       await this.api.addMember(this.listId(), email);
       this.email.set('');
-      aioToast.success('عضو اضافه شد');
+      this.notifications.success('عضو اضافه شد');
     });
   }
 
@@ -276,7 +287,7 @@ export class ListSettings {
       else this.detail.reload();
       this.changed.emit();
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
@@ -293,7 +304,7 @@ export class ListSettings {
       this.removed.emit();
       this.changed.emit();
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
@@ -303,7 +314,7 @@ export class ListSettings {
       this.detail.reload();
       this.changed.emit();
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 }
@@ -311,11 +322,18 @@ export class ListSettings {
 /** Rename, recolour or delete a tag. */
 @Component({
   selector: 'planner-tag-settings',
-  imports: [AioButton, AioIcon, AioInput, ColorPicker, AioFormField],
+  imports: [
+    AioButton,
+    AioIcon,
+    AioInput,
+    ColorPicker,
+    AioFormField,
+    AioTranslate,
+  ],
   providers: [provideIcons({ lucideTrash2 })],
   template: `
     <div class="flex flex-col gap-5 pb-2">
-      <aio-form-field label="نام" controlId="tag-name">
+      <aio-form-field [label]="'نام' | aioTranslate" controlId="tag-name">
         <input
           aioInput
           id="tag-name"
@@ -335,12 +353,14 @@ export class ListSettings {
         (click)="remove()"
       >
         <aio-icon name="lucideTrash2" size="sm" />
-        حذف برچسب
+        {{ 'حذف برچسب' | aioTranslate }}
       </button>
     </div>
   `,
 })
 export class TagSettings {
+  private readonly notifications = inject(AioNotifications);
+
   private readonly api = inject(PlannerApi);
   private readonly confirm = inject(AioConfirm);
 
@@ -371,7 +391,7 @@ export class TagSettings {
       await this.api.removeTag(this.tag().id);
       this.changed.emit(null);
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
@@ -379,7 +399,7 @@ export class TagSettings {
     try {
       this.changed.emit(await call());
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 }

@@ -1,3 +1,4 @@
+import { AioTranslate } from '../locale';
 import { Component, input } from '@angular/core';
 import { FormField, type Field } from '@angular/forms/signals';
 import { AioInput } from '../spartan';
@@ -7,9 +8,9 @@ import { AioFormErrors } from './form-errors';
 @Component({
   selector: 'aio-number-field',
   host: { class: 'block min-w-0' },
-  imports: [AioInput, AioFormField, FormField, AioFormErrors],
+  imports: [AioInput, AioFormField, FormField, AioFormErrors, AioTranslate],
   template: `
-    <aio-form-field [label]="label()" [controlId]="controlId()">
+    <aio-form-field [label]="label() | aioTranslate" [controlId]="controlId()">
       <input
         aioInput
         type="number"

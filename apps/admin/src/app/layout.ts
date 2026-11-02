@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import {
+  AioTranslate,
   AioAppShell,
   AioButton,
   AioIcon,
@@ -20,7 +21,14 @@ import {
 
 @Component({
   selector: 'admin-layout',
-  imports: [RouterLink, AioAppShell, AioButton, AioIcon, RouterOutlet],
+  imports: [
+    RouterLink,
+    AioAppShell,
+    AioButton,
+    AioIcon,
+    RouterOutlet,
+    AioTranslate,
+  ],
   providers: [
     provideIcons({
       lucideLayoutDashboard,
@@ -41,7 +49,7 @@ import {
         size="icon"
         class="size-11"
         routerLink="/account"
-        aria-label="حساب کاربری"
+        [attr.aria-label]="'حساب کاربری' | aioTranslate"
       >
         <aio-icon name="lucideUserRound" size="sm" />
       </a>
@@ -53,7 +61,7 @@ import {
         (click)="logout()"
       >
         <aio-icon name="lucideLogOut" size="sm" />
-        خروج
+        {{ 'خروج' | aioTranslate }}
       </button>
       <router-outlet />
     </aio-app-shell>

@@ -200,6 +200,8 @@ When the owner gives a new instruction, add it to this list in the same change.
 
 ## Approved custom components
 
+- **LanguageSwitcher** (2026-11-02): shared Persian/English picker composed from the existing Spartan native-select wrapper for app headers, account settings and signed-out pages.
+
 - **Repeated template compositions** (2026-11-02): shared field/error rendering, card and section headings, empty states, async buttons, skeleton lines/rows, metrics, navigation/catalog cards, native select fields, numeric Signal Forms fields and input-group submit actions in `libs/shared/packages/ui`, composed from existing Spartan wrappers under directive 67.
 
 - **AppletHeader** (2026-11-02): shared title, subtitle and route navigation for all three applets, composed from Spartan button wrappers and icons in `libs/shared/packages/ui`.
@@ -303,3 +305,5 @@ When the owner gives a new instruction, add it to this list in the same change.
 66. **Stable loading layouts (2026-11-02):** Reduce visible layout shifts throughout the app and during main/sub-navigation. Use the shared Spartan skeletons, especially above the fold; reserve the geometry of headings, summaries and cards, avoid showing empty/default states before data resolves, and verify loading-to-content behavior with delayed responses on phones and desktop.
 
 67. **Reusable template compositions (2026-11-02):** Whenever similar template code is used in more than two places across the apps/applets, extract it to a reusable component in `libs/shared/packages` and consume it through inputs (and projection for controls/actions). Apply this to existing templates too, including the home navigation cards. The owner explicitly authorizes shared compositions of existing Spartan wrappers for these repeated patterns; preserve native semantics, forms, RTL/LTR and stable loading geometry.
+
+68. **Application language preference (2026-11-02):** Provide a persistent, explicit Persian/English choice for the whole application. Persian uses Persian interface copy and RTL; English uses English interface copy, Latin digits and LTR across all routes, navigation, forms, dialogs, errors and notifications. Never switch the application language based on the current applet/URL. This supersedes route-driven English-only UI in directive 61 and the global Persian-only UI default where a language has been selected. Keep user-authored data unchanged and retain English words/sentences where they are the actual subject of a language exercise. Shared locale services, translation catalogs and language controls live in `libs/shared/packages`.

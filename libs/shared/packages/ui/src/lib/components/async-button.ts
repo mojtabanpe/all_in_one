@@ -1,3 +1,4 @@
+import { AioTranslate } from '../locale';
 import { Component, input } from '@angular/core';
 import { AioButton } from '../spartan';
 import { AioSpinner } from './feedback';
@@ -7,15 +8,13 @@ import { AioIcon } from './icon';
 @Component({
   selector: 'button[aioAsyncButton]',
   host: { '[attr.aria-busy]': 'busy() || null' },
-  imports: [AioSpinner, AioIcon],
-  template: `
-    @if (busy()) {
-      <aio-spinner [aria-label]="busyLabel() || label()" />
+  imports: [AioSpinner, AioIcon, AioTranslate],
+  template: ` @if (busy()) {
+      <aio-spinner [aria-label]="busyLabel() || label() | aioTranslate" />
     } @else if (icon()) {
       <aio-icon [name]="icon()" [size]="iconSize()" />
     }
-    {{ busy() && busyLabel() ? busyLabel() : label() }}
-  `,
+    {{ (busy() && busyLabel() ? busyLabel() : label()) | aioTranslate }}`,
 })
 export class AioAsyncButton extends AioButton {
   readonly label = input.required<string>();

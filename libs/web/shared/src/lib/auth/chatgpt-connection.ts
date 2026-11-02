@@ -6,21 +6,23 @@ import {
   type McpKeyInfo,
 } from '@all-in-one/shared/schemas';
 import {
+  AioTranslate,
   AioButton,
   AioCardDirectives,
   AioConfirm,
   AioIcon,
   AioInput,
   AioTextarea,
-  aioToast,
   provideIcons,
   AioFormField,
   AioCardHeading,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
 import { lucideCopy, lucideKeyRound, lucideTrash2 } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../api/api-base-url';
-import { faDate } from '../format/fa';
+
 import { apiErrorMessage } from './auth.guards';
 
 interface KeysResponse {
@@ -42,21 +44,27 @@ interface KeysResponse {
     AioTextarea,
     AioFormField,
     AioCardHeading,
+    AioTranslate,
   ],
   providers: [provideIcons({ lucideCopy, lucideKeyRound, lucideTrash2 })],
   template: `
     <section aioCard>
       <div
         aioCardHeading
-        title="اتصال به ChatGPT"
+        [title]="'اتصال به ChatGPT' | aioTranslate"
         [level]="2"
-        description="از داخل ChatGPT کارت انگلیسی بساز، متن ذخیره کن و کارها، عادت‌ها و تمرکزت را مدیریت کن."
+        [description]="
+          'از داخل ChatGPT کارت انگلیسی بساز، متن ذخیره کن و کارها، عادت‌ها و تمرکزت را مدیریت کن.'
+            | aioTranslate
+        "
       ></div>
       <div aioCardContent class="flex flex-col gap-4">
         <ol class="text-muted-foreground list-decimal space-y-1 ps-5 text-sm">
           <li>
-            در ChatGPT یک «اتصال» (MCP سفارشی) با این نشانی بساز و احراز هویت را
-            OAuth بگذار:
+            {{
+              'در ChatGPT یک «اتصال» (MCP سفارشی) با این نشانی بساز و احراز هویت را OAuth بگذار:'
+                | aioTranslate
+            }}
           </li>
         </ol>
         <div class="flex items-center gap-2">
@@ -69,7 +77,7 @@ interface KeysResponse {
             aioBtn
             variant="outline"
             size="icon"
-            aria-label="کپی نشانی"
+            [attr.aria-label]="'کپی نشانی' | aioTranslate"
             (click)="copy(serverUrl())"
           >
             <aio-icon name="lucideCopy" size="sm" />
@@ -80,15 +88,17 @@ interface KeysResponse {
           class="text-muted-foreground list-decimal space-y-1 ps-5 text-sm"
         >
           <li>
-            اینجا یک کلید شخصی بساز و در صفحه تأییدی که ChatGPT باز می‌کند
-            بگذار.
+            {{
+              'اینجا یک کلید شخصی بساز و در صفحه تأییدی که ChatGPT باز می‌کند بگذار.'
+                | aioTranslate
+            }}
           </li>
         </ol>
 
         <form class="flex gap-2" (submit)="$event.preventDefault(); create()">
           <aio-form-field
             class="flex-1"
-            label="نام کلید"
+            [label]="'نام کلید' | aioTranslate"
             controlId="mcp-name"
             labelClass="sr-only"
           >
@@ -102,14 +112,17 @@ interface KeysResponse {
           </aio-form-field>
           <button aioBtn type="submit" [disabled]="busy()">
             <aio-icon name="lucideKeyRound" size="sm" />
-            ساخت کلید
+            {{ 'ساخت کلید' | aioTranslate }}
           </button>
         </form>
 
         @if (fresh(); as token) {
           <aio-form-field
             class="bg-accent rounded-2xl p-3"
-            label="کلید تازه؛ همین حالا کپی کن، دیگر نشان داده نمی‌شود"
+            [label]="
+              'کلید تازه؛ همین حالا کپی کن، دیگر نشان داده نمی‌شود'
+                | aioTranslate
+            "
             controlId="mcp-token"
           >
             <textarea
@@ -128,7 +141,8 @@ interface KeysResponse {
               class="self-start"
               (click)="copy(token)"
             >
-              <aio-icon name="lucideCopy" size="sm" /> کپی کلید
+              <aio-icon name="lucideCopy" size="sm" />
+              {{ 'کپی کلید' | aioTranslate }}
             </button>
           </aio-form-field>
         }
@@ -137,16 +151,19 @@ interface KeysResponse {
           @for (key of keys(); track key.id) {
             <li class="flex min-h-12 items-center gap-3 py-2 text-sm">
               <span class="flex-1">
-                {{ key.name }}
-                <span class="text-muted-foreground block text-xs">
-                  {{ scopeSummary(key) }}، تا {{ date(key.expiresAt) }}
-                </span>
+                {{ key.name | aioTranslate
+                }}<span class="text-muted-foreground block text-xs">
+                  {{
+                    '{0}، تا {1}'
+                      | aioTranslate: [scopeSummary(key), date(key.expiresAt)]
+                  }}</span
+                >
               </span>
               <button
                 aioBtn
                 variant="ghost"
                 size="icon"
-                [attr.aria-label]="'باطل کردن ' + key.name"
+                [attr.aria-label]="'باطل کردن ' + key.name | aioTranslate"
                 (click)="revoke(key)"
               >
                 <aio-icon name="lucideTrash2" size="sm" />
@@ -154,19 +171,25 @@ interface KeysResponse {
             </li>
           } @empty {
             <li class="text-muted-foreground py-2 text-sm">
-              هنوز کلیدی نساخته‌ای.
+              {{ 'هنوز کلیدی نساخته‌ای.' | aioTranslate }}
             </li>
           }
         </ul>
         <p class="text-muted-foreground text-xs">
-          کلیدها ۹۰ روز اعتبار دارند. باطل کردن کلید، اتصال‌های ساخته‌شده با آن
-          را هم قطع می‌کند.
+          {{
+            'کلیدها ۹۰ روز اعتبار دارند. باطل کردن کلید، اتصال‌های ساخته‌شده با آن را هم قطع می‌کند.'
+              | aioTranslate
+          }}
         </p>
       </div>
     </section>
   `,
 })
 export class ChatGptConnection {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   private readonly http = inject(HttpClient);
   private readonly confirm = inject(AioConfirm);
   private readonly base = `${inject(API_BASE_URL)}/mcp/keys`;
@@ -184,7 +207,11 @@ export class ChatGptConnection {
   );
 
   protected date(iso: string) {
-    return faDate(iso, { day: 'numeric', month: 'long', year: 'numeric' });
+    return this.locale.date(iso, {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
   }
 
   protected scopeSummary(key: McpKeyInfo) {
@@ -196,9 +223,9 @@ export class ChatGptConnection {
   protected async copy(text: string) {
     try {
       await navigator.clipboard.writeText(text);
-      aioToast.success('کپی شد');
+      this.notifications.success('کپی شد');
     } catch {
-      aioToast.error('کپی نشد؛ دستی انتخاب کن.');
+      this.notifications.error('کپی نشد؛ دستی انتخاب کن.');
     }
   }
 
@@ -213,7 +240,7 @@ export class ChatGptConnection {
       this.fresh.set(key.token);
       this.res.reload();
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.busy.set(false);
     }
@@ -232,7 +259,7 @@ export class ChatGptConnection {
       this.fresh.set(null);
       this.res.reload();
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 }

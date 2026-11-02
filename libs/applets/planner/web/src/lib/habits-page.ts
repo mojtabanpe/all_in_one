@@ -16,6 +16,7 @@ import {
   toIsoDate,
 } from '@all-in-one/applets/planner/contracts';
 import {
+  AioTranslate,
   AioButton,
   AioConfirm,
   AioDialog,
@@ -27,13 +28,14 @@ import {
   AioNativeSelect,
   AioNativeSelectDirectives,
   AioSkeleton,
-  aioToast,
   AioToggleGroupDirectives,
   provideIcons,
   AioFormField,
   AioSectionHeading,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
-import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
+import { apiErrorMessage } from '@all-in-one/web/shared';
 import {
   lucideApple,
   lucideBedDouble,
@@ -129,6 +131,7 @@ const emptyDraft = (): Draft => ({
     ColorPicker,
     AioFormField,
     AioSectionHeading,
+    AioTranslate,
   ],
   providers: [
     provideIcons({
@@ -145,8 +148,8 @@ const emptyDraft = (): Draft => ({
     <header
       class="flex items-center justify-between gap-3"
       aioSectionHeading
-      title="عادت‌ها"
-      [description]="summary()"
+      [title]="'عادت‌ها' | aioTranslate"
+      [description]="summary() | aioTranslate"
       [loading]="initialLoading()"
       [level]="1"
       titleClass="text-2xl font-bold"
@@ -155,14 +158,14 @@ const emptyDraft = (): Draft => ({
     >
       <button aioBtn (click)="openNew()">
         <aio-icon name="lucidePlus" size="sm" />
-        عادت تازه
+        {{ 'عادت تازه' | aioTranslate }}
       </button>
     </header>
 
     <div
       class="glass grid grid-cols-7 gap-1 rounded-2xl p-1"
       role="radiogroup"
-      aria-label="روز"
+      [attr.aria-label]="'روز' | aioTranslate"
     >
       @for (d of days; track d) {
         <button
@@ -175,11 +178,13 @@ const emptyDraft = (): Draft => ({
               : 'hover:bg-muted/60'
           "
           [attr.aria-checked]="d === day()"
-          [attr.aria-label]="dateLabel(d)"
+          [attr.aria-label]="dateLabel(d) | aioTranslate"
           (click)="day.set(d)"
         >
-          <span>{{ weekdayLetter(d) }}</span>
-          <span class="text-base font-semibold">{{ dayNumber(d) }}</span>
+          <span>{{ weekdayLetter(d) | aioTranslate }}</span>
+          <span class="text-base font-semibold">{{
+            dayNumber(d) | aioTranslate
+          }}</span>
         </button>
       }
     </div>
@@ -189,10 +194,13 @@ const emptyDraft = (): Draft => ({
       <div aioSkeleton class="h-20 rounded-2xl"></div>
     } @else {
       @for (group of groups(); track group.key) {
-        <section class="flex flex-col gap-2" [attr.aria-label]="group.label">
+        <section
+          class="flex flex-col gap-2"
+          [attr.aria-label]="group.label | aioTranslate"
+        >
           @if (group.label) {
             <h2 class="text-muted-foreground px-1 text-sm font-semibold">
-              {{ group.label }}
+              {{ group.label | aioTranslate }}
             </h2>
           }
           @for (h of group.habits; track h.id) {
@@ -228,16 +236,18 @@ const emptyDraft = (): Draft => ({
                     class="inline-flex min-w-0 flex-wrap items-baseline gap-x-1"
                   >
                     @if (!due) {
-                      امروز لازم نیست
+                      {{ 'امروز لازم نیست' | aioTranslate }}
                     } @else if (h.goal > 1) {
-                      <span class="whitespace-nowrap"
-                        >{{ fa(v) }} از {{ fa(h.goal) }}</span
-                      >
+                      <span class="whitespace-nowrap">{{
+                        '{0} از {1}' | aioTranslate: [fa(v), fa(h.goal)]
+                      }}</span>
                       @if (h.unit) {
-                        <bdi dir="auto" class="wrap-anywhere">{{ h.unit }}</bdi>
+                        <bdi dir="auto" class="wrap-anywhere">{{
+                          h.unit | aioTranslate
+                        }}</bdi>
                       }
                     } @else {
-                      {{ v >= 1 ? 'انجام شد' : 'هنوز نه' }}
+                      {{ (v >= 1 ? 'انجام شد' : 'هنوز نه') | aioTranslate }}
                     }
                   </span>
                   @if (h.streak) {
@@ -249,7 +259,9 @@ const emptyDraft = (): Draft => ({
                         size="xs"
                         class="text-[var(--streak)]"
                       />
-                      <span>{{ fa(h.streak) }} روز پیاپی</span>
+                      <span>{{
+                        '{0} روز پیاپی' | aioTranslate: [fa(h.streak)]
+                      }}</span>
                     </span>
                   }
                 </span>
@@ -292,13 +304,18 @@ const emptyDraft = (): Draft => ({
             <div aioEmptyMedia variant="icon" class="text-primary">
               <aio-icon name="lucideSparkles" />
             </div>
-            <h2 aioEmptyTitle>هنوز عادتی نساخته‌ای</h2>
+            <h2 aioEmptyTitle>{{ 'هنوز عادتی نساخته‌ای' | aioTranslate }}</h2>
             <p aioEmptyDescription>
-              آب خوردن، کتاب خواندن یا پیاده‌روی؛ هر روز یک تیک.
+              {{
+                'آب خوردن، کتاب خواندن یا پیاده‌روی؛ هر روز یک تیک.'
+                  | aioTranslate
+              }}
             </p>
           </div>
           <div aioEmptyContent>
-            <button aioBtn (click)="openNew()">اولین عادت</button>
+            <button aioBtn (click)="openNew()">
+              {{ 'اولین عادت' | aioTranslate }}
+            </button>
           </div>
         </div>
       }
@@ -316,21 +333,21 @@ const emptyDraft = (): Draft => ({
           class="flex flex-col gap-4 pb-2"
           (submit)="$event.preventDefault(); save()"
         >
-          <aio-form-field label="نام" controlId="habit-name">
+          <aio-form-field [label]="'نام' | aioTranslate" controlId="habit-name">
             <input
               aioInput
               id="habit-name"
-              placeholder="مثلاً: آب خوردن"
+              [placeholder]="'مثلاً: آب خوردن' | aioTranslate"
               [value]="d.name"
               (input)="patch({ name: $any($event.target).value })"
             />
           </aio-form-field>
           <div class="flex flex-col gap-2">
-            <span class="text-sm font-medium">نماد</span>
+            <span class="text-sm font-medium">{{ 'نماد' | aioTranslate }}</span>
             <div
               class="grid grid-cols-6 gap-1"
               role="radiogroup"
-              aria-label="نماد"
+              [attr.aria-label]="'نماد' | aioTranslate"
             >
               @for (icon of icons; track icon) {
                 <button
@@ -343,7 +360,7 @@ const emptyDraft = (): Draft => ({
                       : 'hover:bg-muted/60'
                   "
                   [attr.aria-checked]="d.icon === icon"
-                  [attr.aria-label]="icon.replace('lucide', '')"
+                  [attr.aria-label]="icon.replace('lucide', '') | aioTranslate"
                   (click)="patch({ icon })"
                 >
                   <aio-icon [name]="icon" size="sm" />
@@ -356,7 +373,10 @@ const emptyDraft = (): Draft => ({
             (valueChange)="patch({ color: $event })"
           />
           <div class="grid grid-cols-2 gap-3">
-            <aio-form-field label="هدف روزانه" controlId="habit-goal">
+            <aio-form-field
+              [label]="'هدف روزانه' | aioTranslate"
+              controlId="habit-goal"
+            >
               <input
                 aioInput
                 id="habit-goal"
@@ -368,18 +388,23 @@ const emptyDraft = (): Draft => ({
                 (input)="patch({ goal: +$any($event.target).value || 1 })"
               />
             </aio-form-field>
-            <aio-form-field label="واحد" controlId="habit-unit">
+            <aio-form-field
+              [label]="'واحد' | aioTranslate"
+              controlId="habit-unit"
+            >
               <input
                 aioInput
                 id="habit-unit"
-                placeholder="لیوان، صفحه…"
+                [placeholder]="'لیوان، صفحه…' | aioTranslate"
                 [value]="d.unit"
                 (input)="patch({ unit: $any($event.target).value })"
               />
             </aio-form-field>
           </div>
           <div class="flex flex-col gap-2">
-            <span class="text-sm font-medium">روزها</span>
+            <span class="text-sm font-medium">{{
+              'روزها' | aioTranslate
+            }}</span>
             <div
               aioToggleGroup
               type="multiple"
@@ -388,22 +413,26 @@ const emptyDraft = (): Draft => ({
               [value]="weekdayValues()"
               (valueChange)="setWeekdays($event)"
             >
-              @for (w of week; track w.day) {
+              @for (w of week(); track w.day) {
                 <button
                   aioToggleGroupItem
                   [value]="'' + w.day"
                   class="h-11 flex-1"
                 >
-                  {{ w.label }}
+                  {{ w.label | aioTranslate }}
                 </button>
               }
             </div>
           </div>
           <div class="flex min-w-0 flex-col gap-3">
-            <h3 class="text-sm font-medium">یادآوری‌ها</h3>
+            <h3 class="text-sm font-medium">
+              {{ 'یادآوری‌ها' | aioTranslate }}
+            </h3>
             <p class="text-muted-foreground text-xs" id="habit-reminder-help">
-              ساعت‌ها به وقت تهران و برای روزهای انتخاب‌شده‌اند. بعد از رسیدن به
-              هدف روزانه، یادآوری‌های همان روز متوقف می‌شوند.
+              {{
+                'ساعت‌ها به وقت تهران و برای روزهای انتخاب‌شده‌اند. بعد از رسیدن به هدف روزانه، یادآوری‌های همان روز متوقف می‌شوند.'
+                  | aioTranslate
+              }}
             </p>
             @for (time of d.reminders; track $index; let i = $index) {
               <div
@@ -411,7 +440,7 @@ const emptyDraft = (): Draft => ({
               >
                 <aio-form-field
                   class="min-w-0 gap-2"
-                  [label]="'ساعت یادآوری ' + fa(i + 1)"
+                  [label]="'ساعت یادآوری ' + fa(i + 1) | aioTranslate"
                   [controlId]="'habit-reminder-' + i"
                 >
                   <input
@@ -430,14 +459,16 @@ const emptyDraft = (): Draft => ({
                   type="button"
                   variant="outline"
                   class="h-11 min-w-16 shrink-0 px-3"
-                  [attr.aria-label]="'حذف یادآوری ' + fa(i + 1)"
+                  [attr.aria-label]="'حذف یادآوری ' + fa(i + 1) | aioTranslate"
                   (click)="removeReminder(i)"
                 >
-                  حذف
+                  {{ 'حذف' | aioTranslate }}
                 </button>
               </div>
             } @empty {
-              <p class="text-muted-foreground text-sm">یادآوری ندارد.</p>
+              <p class="text-muted-foreground text-sm">
+                {{ 'یادآوری ندارد.' | aioTranslate }}
+              </p>
             }
             <button
               aioBtn
@@ -447,31 +478,41 @@ const emptyDraft = (): Draft => ({
               [disabled]="d.reminders.length + d.reminderMetadata.length >= 30"
               (click)="addReminder()"
             >
-              افزودن ساعت یادآوری
+              {{ 'افزودن ساعت یادآوری' | aioTranslate }}
             </button>
             <p class="text-muted-foreground text-xs">
-              دریافت اعلان را از حساب کاربری، بخش اعلان‌ها فعال کن.
+              {{
+                'دریافت اعلان را از حساب کاربری، بخش اعلان‌ها فعال کن.'
+                  | aioTranslate
+              }}
             </p>
           </div>
-          <aio-form-field label="بخش" controlId="habit-section">
+          <aio-form-field
+            [label]="'بخش' | aioTranslate"
+            controlId="habit-section"
+          >
             <aio-native-select
               selectId="habit-section"
               [value]="d.sectionId"
               (valueChange)="patch({ sectionId: $event })"
             >
-              <option aioNativeSelectOption value="">بدون بخش</option>
+              <option aioNativeSelectOption value="">
+                {{ 'بدون بخش' | aioTranslate }}
+              </option>
               @for (s of sections(); track s.id) {
                 <option aioNativeSelectOption [value]="s.id">
-                  {{ s.name }}
+                  {{ s.name | aioTranslate }}
                 </option>
               }
-              <option aioNativeSelectOption value="new">+ بخش تازه…</option>
+              <option aioNativeSelectOption value="new">
+                {{ '+ بخش تازه…' | aioTranslate }}
+              </option>
             </aio-native-select>
             @if (d.sectionId === 'new') {
               <input
                 aioInput
-                placeholder="نام بخش، مثلاً «صبح»"
-                aria-label="نام بخش تازه"
+                [placeholder]="'نام بخش، مثلاً «صبح»' | aioTranslate"
+                [attr.aria-label]="'نام بخش تازه' | aioTranslate"
                 [value]="d.newSection"
                 (input)="patch({ newSection: $any($event.target).value })"
               />
@@ -486,7 +527,7 @@ const emptyDraft = (): Draft => ({
                 class="flex-1"
                 (click)="archive()"
               >
-                بایگانی
+                {{ 'بایگانی' | aioTranslate }}
               </button>
               <button
                 aioBtn
@@ -495,7 +536,7 @@ const emptyDraft = (): Draft => ({
                 class="text-destructive flex-1"
                 (click)="remove()"
               >
-                حذف
+                {{ 'حذف' | aioTranslate }}
               </button>
             </div>
           }
@@ -503,16 +544,20 @@ const emptyDraft = (): Draft => ({
       </ng-template>
       <ng-template aioDialogActions>
         <button aioBtn variant="outline" (click)="editing.set(false)">
-          انصراف
+          {{ 'انصراف' | aioTranslate }}
         </button>
         <button aioBtn type="submit" form="habit-form" [disabled]="saving()">
-          ذخیره
+          {{ 'ذخیره' | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>
   `,
 })
 export class HabitsPage {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   private readonly api = inject(PlannerApi);
   private readonly confirm = inject(AioConfirm);
 
@@ -525,7 +570,14 @@ export class HabitsPage {
     addDays(this.weekStart, i),
   );
   protected readonly day = signal(this.today);
-  protected readonly week = WEEK;
+  protected readonly week = computed(() =>
+    WEEK.map((w) => ({
+      ...w,
+      label: this.locale.english()
+        ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][w.day]
+        : w.label,
+    })),
+  );
   protected readonly icons = ICON_NAMES;
 
   protected readonly res = httpResource<PlannerHabit[]>(
@@ -568,14 +620,14 @@ export class HabitsPage {
     const due = this.habits().filter((h) => this.isDue(h));
     const done = due.filter((h) => this.value(h) >= h.goal).length;
     if (!due.length) return 'برای این روز عادتی نیست';
-    return `${faNumber(done)} از ${faNumber(due.length)} عادت انجام شده`;
+    return `${this.locale.number(done)} از ${this.locale.number(due.length)} عادت انجام شده`;
   });
 
   protected readonly weekdayValues = computed(() =>
     this.draft().weekdays.map(String),
   );
 
-  protected readonly fa = (n: number) => faNumber(n);
+  protected readonly fa = (n: number) => this.locale.number(n);
   protected readonly tone = (h: PlannerHabit) => TONE[h.color];
 
   protected isDue(h: PlannerHabit) {
@@ -587,16 +639,21 @@ export class HabitsPage {
   }
 
   protected dateLabel(iso: string) {
-    return faDate(iso, { weekday: 'long', day: 'numeric', month: 'long' });
+    return this.locale.date(iso, {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
   }
   protected weekdayLetter(iso: string) {
     return (
-      WEEK.find((w) => w.day === new Date(`${iso}T00:00:00Z`).getUTCDay())
-        ?.label ?? ''
+      this.week().find(
+        (w) => w.day === new Date(`${iso}T00:00:00Z`).getUTCDay(),
+      )?.label ?? ''
     );
   }
   protected dayNumber(iso: string) {
-    return faDate(iso, { day: 'numeric' });
+    return this.locale.date(iso, { day: 'numeric' });
   }
 
   protected async set(h: PlannerHabit, value: number) {
@@ -613,10 +670,12 @@ export class HabitsPage {
       const saved = await this.api.checkin(h.id, { date: day, value });
       this.replace(saved);
       if (value === h.goal && day === this.today && saved.streak > 1)
-        aioToast.success(`${faNumber(saved.streak)} روز پیاپی! 🔥`);
+        this.notifications.success(
+          `${this.locale.number(saved.streak)} روز پیاپی! 🔥`,
+        );
     } catch (error) {
       this.replace(h);
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
@@ -676,15 +735,15 @@ export class HabitsPage {
   protected async save() {
     const d = this.draft();
     if (!d.name.trim()) {
-      aioToast.error('نام عادت را بنویس.');
+      this.notifications.error('نام عادت را بنویس.');
       return;
     }
     if (d.reminders.some((time) => !/^([01]\d|2[0-3]):[0-5]\d$/.test(time))) {
-      aioToast.error('ساعت هر یادآوری را مشخص کن.');
+      this.notifications.error('ساعت هر یادآوری را مشخص کن.');
       return;
     }
     if (new Set(d.reminders).size !== d.reminders.length) {
-      aioToast.error('ساعت‌های یادآوری نباید تکراری باشند.');
+      this.notifications.error('ساعت‌های یادآوری نباید تکراری باشند.');
       return;
     }
     this.saving.set(true);
@@ -712,7 +771,7 @@ export class HabitsPage {
       }
       this.editing.set(false);
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.saving.set(false);
     }
@@ -731,9 +790,9 @@ export class HabitsPage {
       await this.api.updateHabit(id, { archived: true });
       this.habits.update((list) => list.filter((h) => h.id !== id));
       this.editing.set(false);
-      aioToast.success('بایگانی شد');
+      this.notifications.success('بایگانی شد');
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
@@ -752,7 +811,7 @@ export class HabitsPage {
       await this.api.removeHabit(id);
       this.habits.update((list) => list.filter((h) => h.id !== id));
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 }

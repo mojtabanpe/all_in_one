@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import {
+  AioTranslate,
   AioAppletHeader,
   type AioAppletTab,
   provideIcons,
@@ -24,13 +25,13 @@ import {
       lucideUserRound,
     }),
   ],
-  imports: [AioAppletHeader, RouterOutlet],
+  imports: [AioAppletHeader, RouterOutlet, AioTranslate],
   template: `
     <div class="applet-health health-calm lx-stage aio-applet-layout">
       <aio-applet-header
-        title="سلامت من"
-        subtitle="با یک قدم کوچک، حال بهتر"
-        navigationLabel="بخش‌های سلامت"
+        [title]="'سلامت من' | aioTranslate"
+        [subtitle]="'با یک قدم کوچک، حال بهتر' | aioTranslate"
+        [navigationLabel]="'بخش‌های سلامت' | aioTranslate"
         [tabs]="links"
       />
       <router-outlet />

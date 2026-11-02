@@ -9,13 +9,15 @@ import {
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
+  AioLanguageSwitcher,
+  AioTranslate,
   AioButton,
   AioCardDirectives,
   AioInput,
-  aioToast,
   AioFormField,
   AioFormErrors,
   AioCardHeading,
+  AioNotifications,
 } from '@all-in-one/ui';
 import { loginSchema } from '@all-in-one/shared/schemas';
 import { apiErrorMessage } from './auth.guards';
@@ -38,18 +40,22 @@ import { AuthStore } from './auth.store';
     AioFormField,
     AioFormErrors,
     AioCardHeading,
+    AioLanguageSwitcher,
+    AioTranslate,
   ],
   template: `
     <div class="mx-auto flex min-h-[70dvh] max-w-sm flex-col justify-center">
+      <div class="mb-4 flex justify-end"><aio-language-switcher /></div>
       <section aioCard>
         <div
           aioCardHeading
           [title]="mode() === 'login' ? 'ورود به ' + name() : 'ساخت حساب'"
           [level]="1"
           [description]="
-            mode() === 'login'
+            (mode() === 'login'
               ? 'با ایمیل و رمز عبورتان وارد شوید.'
               : 'چند ثانیه بیشتر طول نمی‌کشد.'
+            ) | aioTranslate
           "
           titleClass="text-xl"
         ></div>
@@ -60,7 +66,7 @@ import { AuthStore } from './auth.store';
           (submit)="$event.preventDefault(); send()"
         >
           @if (mode() === 'register') {
-            <aio-form-field label="نام" controlId="name">
+            <aio-form-field [label]="'نام' | aioTranslate" controlId="name">
               <input
                 aioInput
                 id="name"
@@ -69,7 +75,7 @@ import { AuthStore } from './auth.store';
               />
             </aio-form-field>
           }
-          <aio-form-field label="ایمیل" controlId="email">
+          <aio-form-field [label]="'ایمیل' | aioTranslate" controlId="email">
             <input
               aioInput
               id="email"
@@ -80,7 +86,10 @@ import { AuthStore } from './auth.store';
             />
             <aio-form-errors [errors]="authForm.email().errors()" />
           </aio-form-field>
-          <aio-form-field label="رمز عبور" controlId="password">
+          <aio-form-field
+            [label]="'رمز عبور' | aioTranslate"
+            controlId="password"
+          >
             <input
               aioInput
               id="password"
@@ -99,9 +108,12 @@ import { AuthStore } from './auth.store';
               role="status"
             >
               <p>
-                لینک تأیید به
-                <span dir="ltr">{{ pendingEmail() }}</span> فرستاده شد. ایمیلت
-                را باز کن و روی لینک بزن، بعد وارد شو.
+                {{ 'لینک تأیید به' | aioTranslate }}
+                <span dir="ltr">{{ pendingEmail() | aioTranslate }}</span>
+                {{
+                  'فرستاده شد. ایمیلت را باز کن و روی لینک بزن، بعد وارد شو.'
+                    | aioTranslate
+                }}
               </p>
               <button
                 aioBtn
@@ -112,24 +124,25 @@ import { AuthStore } from './auth.store';
                 [disabled]="busy()"
                 (click)="resend()"
               >
-                دوباره بفرست
+                {{ 'دوباره بفرست' | aioTranslate }}
               </button>
             </div>
           }
           <button aioBtn type="submit" size="lg" [disabled]="busy()">
-            {{ mode() === 'login' ? 'ورود' : 'ساخت حساب' }}
+            {{ (mode() === 'login' ? 'ورود' : 'ساخت حساب') | aioTranslate }}
           </button>
           @if (mode() === 'login') {
-            <a aioBtn variant="link" routerLink="/forgot-password"
-              >رمز را فراموش کرده‌ای؟</a
-            >
+            <a aioBtn variant="link" routerLink="/forgot-password">{{
+              'رمز را فراموش کرده‌ای؟' | aioTranslate
+            }}</a>
           }
           @if (canRegister()) {
             <button aioBtn type="button" variant="link" (click)="toggleMode()">
               {{
-                mode() === 'login'
+                (mode() === 'login'
                   ? 'حساب ندارید؟ ثبت‌نام کنید'
                   : 'حساب دارید؟ وارد شوید'
+                ) | aioTranslate
               }}
             </button>
           }
@@ -139,6 +152,8 @@ import { AuthStore } from './auth.store';
   `,
 })
 export class LoginPage {
+  private readonly notifications = inject(AioNotifications);
+
   // Route data binds these (withComponentInputBinding sets undefined when absent).
   readonly appName = input<string | undefined>();
   readonly allowRegister = input<boolean | undefined>();
@@ -161,7 +176,7 @@ export class LoginPage {
 
   constructor() {
     if (this.route.snapshot.queryParamMap.has('denied')) {
-      aioToast.error('این حساب به این بخش دسترسی ندارد.');
+      this.notifications.error('این حساب به این بخش دسترسی ندارد.');
     }
   }
 
@@ -196,7 +211,7 @@ export class LoginPage {
         // 403 on login: the account exists but its email is not confirmed yet.
         if (error instanceof HttpErrorResponse && error.status === 403)
           this.pendingEmail.set(this.model().email);
-        aioToast.error(apiErrorMessage(error));
+        this.notifications.error(apiErrorMessage(error));
       } finally {
         this.busy.set(false);
       }
@@ -207,11 +222,11 @@ export class LoginPage {
     this.busy.set(true);
     try {
       await this.auth.resendVerification(this.pendingEmail());
-      aioToast.success(
+      this.notifications.success(
         'اگر حسابی با این ایمیل منتظر تأیید باشد، لینک تازه فرستاده شد.',
       );
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.busy.set(false);
     }

@@ -1,3 +1,4 @@
+import { AioTranslate } from '../locale';
 import { booleanAttribute, Component, input, model } from '@angular/core';
 import type {
   FormCheckboxControl,
@@ -11,7 +12,7 @@ import { NATIVE_SELECT_MATERIAL } from '../material';
 /** Wraps spartan `hlm-checkbox`. Works with Signal Forms `[formField]` and `[(checked)]`. */
 @Component({
   selector: 'aio-checkbox',
-  imports: [HlmCheckbox],
+  imports: [HlmCheckbox, AioTranslate],
   template: `
     <hlm-checkbox
       [checked]="checked()"
@@ -21,7 +22,7 @@ import { NATIVE_SELECT_MATERIAL } from '../material';
       [name]="name() || null"
       [required]="required()"
       [forceInvalid]="invalid()"
-      [aria-label]="ariaLabel()"
+      [aria-label]="ariaLabel() | aioTranslate"
       [class]="checkboxClass()"
     />
   `,
@@ -41,7 +42,7 @@ export class AioCheckbox implements FormCheckboxControl {
 /** Wraps spartan `hlm-switch`. Works with Signal Forms `[formField]` and `[(checked)]`. */
 @Component({
   selector: 'aio-switch',
-  imports: [HlmSwitch],
+  imports: [HlmSwitch, AioTranslate],
   template: `
     <hlm-switch
       [checked]="checked()"
@@ -49,7 +50,7 @@ export class AioCheckbox implements FormCheckboxControl {
       [disabled]="disabled()"
       [inputId]="inputId()"
       [forceInvalid]="invalid()"
-      [aria-label]="ariaLabel()"
+      [aria-label]="ariaLabel() | aioTranslate"
     />
   `,
 })

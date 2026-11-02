@@ -1,3 +1,4 @@
+import { AioLocale } from '../locale';
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { form, FormField, min, required } from '@angular/forms/signals';
@@ -138,6 +139,7 @@ class ChoicesHost {
 
 describe('shared template compositions', () => {
   it('keeps labels connected to projected Signal Forms controls and updates their model', async () => {
+    TestBed.inject(AioLocale).setLanguage('en');
     const fixture = TestBed.createComponent(FormHost);
     await fixture.whenStable();
     const el: HTMLElement = fixture.nativeElement;
@@ -163,6 +165,7 @@ describe('shared template compositions', () => {
   });
 
   it('preserves native submit and disabled behavior while changing the busy label', async () => {
+    TestBed.inject(AioLocale).setLanguage('en');
     const fixture = TestBed.createComponent(FormHost);
     fixture.componentInstance.model.set({ name: 'Valid' });
     await fixture.whenStable();
@@ -186,6 +189,7 @@ describe('shared template compositions', () => {
   });
 
   it('keeps numeric Signal Forms values, validation, native selection and add-button submission working', async () => {
+    TestBed.inject(AioLocale).setLanguage('en');
     const fixture = TestBed.createComponent(ChoicesHost);
     await fixture.whenStable();
     const el: HTMLElement = fixture.nativeElement;
@@ -220,6 +224,7 @@ describe('shared template compositions', () => {
 
   it('retains heading hierarchy, projected actions, navigation and loading replacement', async () => {
     TestBed.configureTestingModule({ providers: [provideRouter([])] });
+    TestBed.inject(AioLocale).setLanguage('en');
     const fixture = TestBed.createComponent(ContentHost);
     await fixture.whenStable();
     const el: HTMLElement = fixture.nativeElement;
@@ -239,4 +244,9 @@ describe('shared template compositions', () => {
     expect(link?.textContent).toContain('Six tasks left');
     expect(link?.textContent).toContain('Continue');
   });
+});
+
+afterEach(() => {
+  localStorage.removeItem('poshtetgarm_language');
+  document.cookie = 'poshtetgarm_language=; Path=/; Max-Age=0';
 });

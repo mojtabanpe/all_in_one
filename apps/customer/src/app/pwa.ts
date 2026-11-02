@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
 import {
+  AioTranslate,
   AioAlertDirectives,
   AioButton,
   AioDialog,
@@ -149,6 +150,7 @@ export class Pwa {
     AioDialog,
     AioDialogBody,
     AioDialogActions,
+    AioTranslate,
   ],
   providers: [provideIcons({ lucideDownload, lucideRefreshCw, lucideWifiOff })],
   template: `
@@ -164,6 +166,7 @@ export class Pwa {
             <h2 aioAlertTitle>
               {{
                 copy('Poshtetgarm روی دستگاه شما', 'Poshtetgarm on your device')
+                  | aioTranslate
               }}
             </h2>
             <div aioAlertDescription>
@@ -172,15 +175,16 @@ export class Pwa {
                   copy(
                     'برنامه را نصب کنید و از صفحهٔ اصلی باز کنید.',
                     'Install the app and open it from your home screen.'
-                  )
+                  ) | aioTranslate
                 }}
               </p>
               <div class="mt-3 flex flex-wrap gap-2">
                 <button aioBtn class="min-h-11" (click)="pwa.install()">
                   {{
-                    pwa.canInstall()
+                    (pwa.canInstall()
                       ? copy('نصب برنامه', 'Install app')
                       : copy('راهنمای نصب', 'Installation guide')
+                    ) | aioTranslate
                   }}
                 </button>
                 <button
@@ -189,7 +193,7 @@ export class Pwa {
                   class="min-h-11"
                   (click)="installDismissed.set(true)"
                 >
-                  {{ copy('فعلاً نه', 'Not now') }}
+                  {{ copy('فعلاً نه', 'Not now') | aioTranslate }}
                 </button>
               </div>
             </div>
@@ -203,14 +207,14 @@ export class Pwa {
           >
             <aio-icon name="lucideWifiOff" size="sm" />
             <h2 aioAlertTitle>
-              {{ copy('اینترنت قطع است', 'You are offline') }}
+              {{ copy('اینترنت قطع است', 'You are offline') | aioTranslate }}
             </h2>
             <p aioAlertDescription>
               {{
                 copy(
                   'تغییرات به اینترنت نیاز دارند. پس از وصل شدن دوباره تلاش کنید.',
                   'Changes need an internet connection. Try again when you are online.'
-                )
+                ) | aioTranslate
               }}
             </p>
           </div>
@@ -224,17 +228,18 @@ export class Pwa {
             <aio-icon name="lucideRefreshCw" size="sm" />
             <h2 aioAlertTitle>
               {{
-                pwa.broken()
+                (pwa.broken()
                   ? copy(
                       'این نسخه باید دوباره بارگذاری شود',
                       'Please reload this version'
                     )
                   : copy('نسخه تازه آماده است', 'An update is ready')
+                ) | aioTranslate
               }}
             </h2>
             <div aioAlertDescription class="mt-2 flex gap-2">
               <button aioBtn size="sm" (click)="pwa.reload()">
-                {{ copy('بارگذاری دوباره', 'Reload') }}
+                {{ copy('بارگذاری دوباره', 'Reload') | aioTranslate }}
               </button>
               @if (!pwa.broken()) {
                 <button
@@ -243,7 +248,7 @@ export class Pwa {
                   variant="ghost"
                   (click)="pwa.dismissUpdate()"
                 >
-                  {{ copy('بعداً', 'Later') }}
+                  {{ copy('بعداً', 'Later') | aioTranslate }}
                 </button>
               }
             </div>
@@ -253,7 +258,7 @@ export class Pwa {
     }
     <aio-dialog
       [(open)]="pwa.installGuideOpen"
-      [title]="copy('نصب Poshtetgarm', 'Install Poshtetgarm')"
+      [title]="copy('نصب Poshtetgarm', 'Install Poshtetgarm') | aioTranslate"
       [language]="language()"
     >
       <ng-template aioDialogBody>
@@ -264,12 +269,13 @@ export class Pwa {
                 copy(
                   'این صفحه را در Safari باز کنید.',
                   'Open this page in Safari.'
-                )
+                ) | aioTranslate
               }}
             </li>
             <li>
               {{
                 copy('دکمهٔ اشتراک‌گذاری (Share) را بزنید.', 'Select Share.')
+                  | aioTranslate
               }}
             </li>
             <li>
@@ -277,7 +283,7 @@ export class Pwa {
                 copy(
                   '«افزودن به صفحهٔ اصلی» (Add to Home Screen) و سپس «افزودن» (Add) را انتخاب کنید.',
                   'Select Add to Home Screen, then Add.'
-                )
+                ) | aioTranslate
               }}
             </li>
           } @else if (pwa.manualInstall() === 'safari') {
@@ -286,7 +292,7 @@ export class Pwa {
                 copy(
                   'در Safari منوی File را باز کنید.',
                   'Open the File menu in Safari.'
-                )
+                ) | aioTranslate
               }}
             </li>
             <li>
@@ -294,7 +300,7 @@ export class Pwa {
                 copy(
                   'گزینهٔ Add to Dock را انتخاب کنید و Add را بزنید.',
                   'Select Add to Dock, then Add.'
-                )
+                ) | aioTranslate
               }}
             </li>
           } @else {
@@ -303,7 +309,7 @@ export class Pwa {
                 copy(
                   'این صفحه را در Chrome یا Edge باز کنید.',
                   'Open this page in Chrome or Edge.'
-                )
+                ) | aioTranslate
               }}
             </li>
             <li>
@@ -311,7 +317,7 @@ export class Pwa {
                 copy(
                   'از منوی مرورگر، گزینهٔ «نصب برنامه» یا «افزودن به صفحهٔ اصلی» را انتخاب کنید.',
                   'In the browser menu, choose Install app or Add to Home Screen.'
-                )
+                ) | aioTranslate
               }}
             </li>
           }
@@ -323,7 +329,7 @@ export class Pwa {
           class="min-h-11"
           (click)="pwa.installGuideOpen.set(false)"
         >
-          {{ copy('متوجه شدم', 'Got it') }}
+          {{ copy('متوجه شدم', 'Got it') | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>

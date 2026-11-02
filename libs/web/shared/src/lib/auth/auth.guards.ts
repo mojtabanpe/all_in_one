@@ -1,3 +1,4 @@
+import { AioLocale } from '@all-in-one/ui';
 import {
   HttpErrorResponse,
   type HttpInterceptorFn,
@@ -36,7 +37,17 @@ export const guestGuard: CanActivateFn = async () => {
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthStore);
   const router = inject(Router);
-  return next(req).pipe(
+  const language = inject(AioLocale).language();
+  const localized = req.clone({
+    setHeaders: { 'Accept-Language': language },
+    body:
+      /\/push\/(?:native\/)?subscription$/.test(req.url) &&
+      req.body &&
+      typeof req.body === 'object'
+        ? { ...req.body, language }
+        : req.body,
+  });
+  return next(localized).pipe(
     catchError((error: unknown) => {
       const isAuthCall = req.url.includes('/auth/');
       if (

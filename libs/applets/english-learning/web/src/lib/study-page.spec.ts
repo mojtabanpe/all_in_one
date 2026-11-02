@@ -1,3 +1,4 @@
+import { AioLocale } from '@all-in-one/ui';
 import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
@@ -51,6 +52,7 @@ describe('StudyPage (Recall study)', () => {
         },
       ],
     });
+    TestBed.inject(AioLocale).setLanguage('en');
     const fixture = TestBed.createComponent(StudyPage);
     // Let promise chains (firstValueFrom) resolve before checking the DOM.
     const settle = async () => {
@@ -126,4 +128,9 @@ describe('StudyPage (Recall study)', () => {
     const { el } = await setup([]);
     expect(el.textContent).toContain('No cards due right now');
   });
+});
+
+afterEach(() => {
+  localStorage.removeItem('poshtetgarm_language');
+  document.cookie = 'poshtetgarm_language=; Path=/; Max-Age=0';
 });

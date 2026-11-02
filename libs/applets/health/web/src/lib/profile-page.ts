@@ -19,6 +19,7 @@ import {
   type HealthProfile,
 } from '@all-in-one/applets/health/contracts';
 import {
+  AioTranslate,
   AioDialog,
   AioDialogBody,
   AioIcon,
@@ -28,14 +29,15 @@ import {
   AioCardDirectives,
   AioFieldDirectives,
   AioInput,
-  aioToast,
   AioToggleGroupDirectives,
   AioFormField,
   AioCardHeading,
   AioNumberField,
   AioSelectField,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
-import { apiErrorMessage, faNumber } from '@all-in-one/web/shared';
+import { apiErrorMessage } from '@all-in-one/web/shared';
 import { HealthApi } from './health-api';
 import {
   lucideUserRound,
@@ -65,6 +67,7 @@ import {
     AioCardHeading,
     AioNumberField,
     AioSelectField,
+    AioTranslate,
   ],
   providers: [
     provideIcons({
@@ -80,25 +83,29 @@ import {
   template: `
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-5">
       @if (profile.isLoading()) {
-        <p role="status" class="sr-only">در حال دریافت مشخصات…</p>
+        <p role="status" class="sr-only">
+          {{ 'در حال دریافت مشخصات…' | aioTranslate }}
+        </p>
       }
       @if (profile.error()) {
-        <p role="alert">مشخصات دریافت نشد.</p>
+        <p role="alert">{{ 'مشخصات دریافت نشد.' | aioTranslate }}</p>
         <button aioBtn variant="outline" (click)="profile.reload()">
-          تلاش دوباره
+          {{ 'تلاش دوباره' | aioTranslate }}
         </button>
       }
       <section aioCard>
         <div
           aioCardHeading
-          title="هر تغییر کوچک، از همین‌جا."
+          [title]="'هر تغییر کوچک، از همین‌جا.' | aioTranslate"
           [level]="2"
-          description="برنامه، بر اساس خودت"
+          [description]="'برنامه، بر اساس خودت' | aioTranslate"
         ></div>
         <div aioCardContent>
           <p class="health-metric-label">
-            مشخصات و هدفت را به‌روز نگه دار تا برآوردهای برنامه به تو نزدیک‌تر
-            باشند.
+            {{
+              'مشخصات و هدفت را به‌روز نگه دار تا برآوردهای برنامه به تو نزدیک‌تر باشند.'
+                | aioTranslate
+            }}
           </p>
         </div>
       </section>
@@ -106,7 +113,7 @@ import {
         <section aioCard>
           <div
             aioCardHeading
-            [title]="group.title"
+            [title]="group.title | aioTranslate"
             [level]="2"
             titleClass="health-section-heading"
           ></div>
@@ -121,7 +128,7 @@ import {
               >
                 <aio-icon [name]="row.icon" [style.color]="row.color" /><span
                   class="min-w-0 flex-1 text-start"
-                  >{{ row.label }}</span
+                  >{{ row.label | aioTranslate }}</span
                 ><span
                   class="health-metric-label max-w-[45%] whitespace-normal text-end"
                 >
@@ -132,7 +139,7 @@ import {
                       aria-hidden="true"
                     ></span>
                   } @else {
-                    {{ row.value }}
+                    {{ row.value | aioTranslate }}
                   }</span
                 ><aio-icon
                   name="lucideChevronLeft"
@@ -147,7 +154,7 @@ import {
     </div>
     <aio-dialog
       [(open)]="editing"
-      title="ویرایش مشخصات و هدف"
+      [title]="'ویرایش مشخصات و هدف' | aioTranslate"
       contentClass="applet-health health-calm"
     >
       <ng-template aioDialogBody>
@@ -156,7 +163,7 @@ import {
           [formRoot]="profileForm"
           (submit)="$event.preventDefault(); save()"
         >
-          <aio-form-field label="جنسیت">
+          <aio-form-field [label]="'جنسیت' | aioTranslate">
             <div
               aioToggleGroup
               type="single"
@@ -170,7 +177,7 @@ import {
                 value="FEMALE"
                 class="flex-1"
               >
-                زن
+                {{ 'زن' | aioTranslate }}
               </button>
               <button
                 aioToggleGroupItem
@@ -178,27 +185,27 @@ import {
                 value="MALE"
                 class="flex-1"
               >
-                مرد
+                {{ 'مرد' | aioTranslate }}
               </button>
             </div>
           </aio-form-field>
           <div class="grid grid-cols-3 gap-3">
             <aio-number-field
-              label="سال تولد (شمسی)"
+              [label]="'سال تولد (شمسی)' | aioTranslate"
               controlId="birthYear"
               [field]="profileForm.birthYear"
               inputMode="numeric"
               [showErrors]="true"
             />
             <aio-number-field
-              label="قد (سانتی‌متر)"
+              [label]="'قد (سانتی‌متر)' | aioTranslate"
               controlId="height"
               [field]="profileForm.heightCm"
               inputMode="numeric"
               [showErrors]="true"
             />
             <aio-number-field
-              label="وزن (کیلوگرم)"
+              [label]="'وزن (کیلوگرم)' | aioTranslate"
               controlId="weight"
               [field]="profileForm.weightKg"
               inputMode="decimal"
@@ -207,14 +214,14 @@ import {
             />
           </div>
           <aio-select-field
-            label="میزان تحرک"
+            [label]="'میزان تحرک' | aioTranslate"
             controlId="activity"
             [value]="model().activityLevel"
             [options]="activityLevels"
             [optionLabels]="activityLabels"
             (valueChange)="set('activityLevel', $event)"
           />
-          <aio-form-field label="هدف">
+          <aio-form-field [label]="'هدف' | aioTranslate">
             <div
               aioToggleGroup
               type="single"
@@ -229,35 +236,40 @@ import {
                   [value]="goal"
                   class="flex-1"
                 >
-                  {{ goalLabels[goal] }}
+                  {{ goalLabels[goal] | aioTranslate }}
                 </button>
               }
             </div>
           </aio-form-field>
           <aio-form-field
-            label="مواد غذایی که نمی‌خواهید در برنامه باشند"
+            [label]="'مواد غذایی که نمی‌خواهید در برنامه باشند' | aioTranslate"
             controlId="excluded-foods"
           >
             <input
               aioInput
               id="excluded-foods"
               [formField]="profileForm.excludedIngredients"
-              placeholder="مثلاً: گردو، شیر"
+              [placeholder]="'مثلاً: گردو، شیر' | aioTranslate"
             />
             <p aioFieldDescription>
-              با ویرگول جدا کنید. این فیلتر نام مواد است؛ ترکیبات جایگزین یا
-              آلودگی متقاطع را تشخیص نمی‌دهد.
+              {{
+                'با ویرگول جدا کنید. این فیلتر نام مواد است؛ ترکیبات جایگزین یا آلودگی متقاطع را تشخیص نمی‌دهد.'
+                  | aioTranslate
+              }}
             </p>
           </aio-form-field>
           <div class="flex items-center justify-between gap-3">
             @if (profile.value()?.calorieTarget; as target) {
               <p class="text-sm">
-                نیاز روزانه: <strong>{{ fa(target) }} کالری</strong>
+                {{ 'نیاز روزانه:' | aioTranslate }}
+                <strong>{{ '{0} کالری' | aioTranslate: [fa(target)] }}</strong>
               </p>
             } @else {
               <span></span>
             }
-            <button aioBtn type="submit" [disabled]="saving()">ذخیره</button>
+            <button aioBtn type="submit" [disabled]="saving()">
+              {{ 'ذخیره' | aioTranslate }}
+            </button>
           </div>
         </form>
       </ng-template>
@@ -265,18 +277,24 @@ import {
   `,
 })
 export class ProfilePage {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   private readonly api = inject(HealthApi);
   protected readonly activityLevels = ACTIVITY_LEVELS;
   protected readonly activityLabels = ACTIVITY_LEVEL_LABELS;
   protected readonly goals = HEALTH_GOALS;
   protected readonly goalLabels = HEALTH_GOAL_LABELS;
-  protected readonly fa = (n: number) => faNumber(n);
+  protected readonly fa = (n: number) => this.locale.number(n);
   protected readonly saving = signal(false);
   protected readonly editing = signal(false);
   protected readonly settingGroups = computed(() => {
     const p = this.profile.value();
     const value = (n: number | null | undefined, unit = '') =>
-      n == null ? 'تکمیل نشده' : `${faNumber(n)} ${unit}`;
+      n == null
+        ? 'تکمیل نشده'
+        : `${this.locale.number(n)} ${this.locale.text(unit)}`;
     return [
       {
         title: 'بدن من',
@@ -295,7 +313,7 @@ export class ProfilePage {
           {
             label: 'سال تولد',
             value: p?.birthYear
-              ? `${faNumber(persianBirthYear(p.birthYear), { useGrouping: false })} شمسی`
+              ? `${this.locale.number(persianBirthYear(p.birthYear), { useGrouping: false })} شمسی`
               : 'تکمیل نشده',
             icon: 'lucideUserRound',
             color: 'var(--health-orange)',
@@ -427,14 +445,14 @@ export class ProfilePage {
         });
         this.profile.set(saved);
         this.editing.set(false);
-        aioToast.success(
+        this.notifications.success(
           'ذخیره شد',
           saved.calorieTarget
-            ? `نیاز روزانه: ${faNumber(saved.calorieTarget)} کالری`
+            ? `نیاز روزانه: ${this.locale.number(saved.calorieTarget)} کالری`
             : undefined,
         );
       } catch (error) {
-        aioToast.error(apiErrorMessage(error));
+        this.notifications.error(apiErrorMessage(error));
       } finally {
         this.saving.set(false);
       }

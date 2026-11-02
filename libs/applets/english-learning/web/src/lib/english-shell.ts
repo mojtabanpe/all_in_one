@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import {
+  AioTranslate,
   AioAppletHeader,
   type AioAppletTab,
   provideIcons,
@@ -9,18 +10,16 @@ import { lucideBookOpenText, lucideLayers, lucideMic } from '@ng-icons/lucide';
 
 /** English applet frame: ambient glass stage and the three main tabs. */
 @Component({
-  host: { dir: 'ltr', lang: 'en' },
   selector: 'english-learning-shell',
-  imports: [AioAppletHeader, RouterOutlet],
+  imports: [AioAppletHeader, RouterOutlet, AioTranslate],
   providers: [provideIcons({ lucideBookOpenText, lucideLayers, lucideMic })],
   template: `
     <div class="applet-english lx-stage aio-applet-layout">
       <aio-applet-header
-        title="English, at your own pace."
-        subtitle="One step forward, every day"
-        navigationLabel="English sections"
+        [title]="'English, at your own pace.' | aioTranslate"
+        [subtitle]="'One step forward, every day' | aioTranslate"
+        [navigationLabel]="'English sections' | aioTranslate"
         [tabs]="links"
-        language="en"
       />
       <router-outlet />
     </div>

@@ -13,14 +13,15 @@ import type {
   UpdateAiSettingsInput,
 } from '@all-in-one/shared/schemas';
 import {
+  AioTranslate,
   AioButton,
   AioCardDirectives,
   AioIcon,
   AioInput,
-  aioToast,
   provideIcons,
   AioFormField,
   AioAsyncButton,
+  AioNotifications,
 } from '@all-in-one/ui';
 import {
   lucideCircleCheck,
@@ -78,6 +79,7 @@ const SERVICES: {
     AioInput,
     AioFormField,
     AioAsyncButton,
+    AioTranslate,
   ],
   providers: [
     provideIcons({ lucideCircleCheck, lucideCircleDashed, lucidePlugZap }),
@@ -85,11 +87,15 @@ const SERVICES: {
   template: `
     <section aioCard>
       <div aioCardHeader>
-        <h2 aioCardTitle>هوش مصنوعی</h2>
+        <h2 aioCardTitle>{{ 'هوش مصنوعی' | aioTranslate }}</h2>
         <p aioCardDescription>
-          نشانی سرویس‌های خودت را بگذار (سازگار با OpenAI، مثل
-          <span dir="ltr">https://api.openai.com/v1</span>). بدون آن‌ها امکانات
-          هوش مصنوعی خاموش‌اند.
+          {{
+            'نشانی سرویس‌های خودت را بگذار (سازگار با OpenAI، مثل'
+              | aioTranslate
+          }}
+          <span dir="ltr">
+            {{ 'https://api.openai.com/v1' | aioTranslate }} </span
+          >{{ '). بدون آن‌ها امکانات هوش مصنوعی خاموش‌اند.' | aioTranslate }}
         </p>
       </div>
       <div aioCardContent class="flex flex-col gap-6">
@@ -106,14 +112,16 @@ const SERVICES: {
                 size="sm"
                 [class]="ready ? 'text-success' : 'text-muted-foreground'"
               />
-              <h3 class="font-semibold">{{ s.title }}</h3>
+              <h3 class="font-semibold">{{ s.title | aioTranslate }}</h3>
               <span class="text-muted-foreground text-xs">{{
-                ready ? 'روشن' : 'خاموش'
+                (ready ? 'روشن' : 'خاموش') | aioTranslate
               }}</span>
             </div>
-            <p class="text-muted-foreground -mt-2 text-xs">{{ s.hint }}</p>
+            <p class="text-muted-foreground -mt-2 text-xs">
+              {{ s.hint | aioTranslate }}
+            </p>
             <aio-form-field
-              label="نشانی (URL)"
+              [label]="'نشانی (URL)' | aioTranslate"
               [controlId]="'ai-url-' + s.kind"
             >
               <input
@@ -129,13 +137,15 @@ const SERVICES: {
             </aio-form-field>
             <div class="grid gap-3" [class.sm:grid-cols-2]="s.kind === 'tts'">
               <aio-form-field
-                [label]="s.kind === 'tts' ? 'صدای اصلی (مدل)' : 'مدل'"
+                [label]="
+                  (s.kind === 'tts' ? 'صدای اصلی (مدل)' : 'مدل') | aioTranslate
+                "
                 [controlId]="'ai-model-' + s.kind"
               >
                 <input
                   aioInput
                   dir="ltr"
-                  [placeholder]="s.modelHint"
+                  [placeholder]="s.modelHint | aioTranslate"
                   [id]="'ai-model-' + s.kind"
                   [value]="d.model"
                   (input)="patch(s.kind, { model: $any($event.target).value })"
@@ -143,14 +153,14 @@ const SERVICES: {
               </aio-form-field>
               @if (s.kind === 'tts') {
                 <aio-form-field
-                  label="صدای دوم (دیالوگ‌ها)"
+                  [label]="'صدای دوم (دیالوگ‌ها)' | aioTranslate"
                   controlId="ai-model2-tts"
                 >
                   <input
                     aioInput
                     dir="ltr"
                     id="ai-model2-tts"
-                    placeholder="اختیاری"
+                    [placeholder]="'اختیاری' | aioTranslate"
                     [value]="d.model2"
                     (input)="
                       patch(s.kind, { model2: $any($event.target).value })
@@ -159,16 +169,20 @@ const SERVICES: {
                 </aio-form-field>
               }
             </div>
-            <aio-form-field label="کلید API" [controlId]="'ai-key-' + s.kind">
+            <aio-form-field
+              [label]="'کلید API' | aioTranslate"
+              [controlId]="'ai-key-' + s.kind"
+            >
               <input
                 aioInput
                 type="password"
                 dir="ltr"
                 autocomplete="off"
                 [placeholder]="
-                  hasKey(s.kind)
+                  (hasKey(s.kind)
                     ? '•••••• ذخیره شده؛ برای عوض کردن بنویس'
                     : 'اگر سرویس کلید می‌خواهد'
+                  ) | aioTranslate
                 "
                 [id]="'ai-key-' + s.kind"
                 [value]="d.key"
@@ -177,7 +191,7 @@ const SERVICES: {
             </aio-form-field>
             <div class="flex flex-wrap gap-2">
               <button aioBtn type="submit" [disabled]="busy() === s.kind">
-                ذخیره
+                {{ 'ذخیره' | aioTranslate }}
               </button>
               <button
                 type="button"
@@ -186,7 +200,7 @@ const SERVICES: {
                 (click)="test(s.kind)"
                 aioAsyncButton
                 [busy]="testing() === s.kind"
-                label="آزمایش اتصال"
+                [label]="'آزمایش اتصال' | aioTranslate"
                 icon="lucidePlugZap"
                 iconSize="sm"
               ></button>
@@ -197,21 +211,25 @@ const SERVICES: {
                   variant="ghost"
                   (click)="clearKey(s.kind)"
                 >
-                  پاک کردن کلید
+                  {{ 'پاک کردن کلید' | aioTranslate }}
                 </button>
               }
             </div>
           </form>
         }
         <p class="text-muted-foreground text-xs">
-          کلیدها رمزگذاری‌شده نگه داشته می‌شوند و دیگر نمایش داده نمی‌شوند.
-          هزینه استفاده با سرویس خودت است.
+          {{
+            'کلیدها رمزگذاری‌شده نگه داشته می‌شوند و دیگر نمایش داده نمی‌شوند. هزینه استفاده با سرویس خودت است.'
+              | aioTranslate
+          }}
         </p>
       </div>
     </section>
   `,
 })
 export class AiSettingsCard {
+  private readonly notifications = inject(AioNotifications);
+
   private readonly http = inject(HttpClient);
   private readonly base = `${inject(API_BASE_URL)}/ai/settings`;
 
@@ -262,9 +280,9 @@ export class AiSettingsCard {
       this.settings.set(
         await firstValueFrom(this.http.put<AiSettings>(this.base, input)),
       );
-      aioToast.success(done);
+      this.notifications.success(done);
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.busy.set(null);
     }
@@ -279,7 +297,7 @@ export class AiSettingsCard {
       ...(kind === 'tts' ? { model2: d.model2.trim() } : {}),
     };
     if (kind === 'chat' && service.url && !service.model) {
-      aioToast.error('نام مدل گفتگو را هم بنویس.');
+      this.notifications.error('نام مدل گفتگو را هم بنویس.');
       return;
     }
     void this.put({ [kind]: service }, kind, 'ذخیره شد');
@@ -295,10 +313,10 @@ export class AiSettingsCard {
       const result = await firstValueFrom(
         this.http.post<AiTestResult>(`${this.base}/test`, { kind }),
       );
-      if (result.ok) aioToast.success(result.message);
-      else aioToast.error(result.message);
+      if (result.ok) this.notifications.success(result.message);
+      else this.notifications.error(result.message);
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.testing.set(null);
     }

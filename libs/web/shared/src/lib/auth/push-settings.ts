@@ -1,7 +1,8 @@
+import { AioLocale } from '@all-in-one/ui';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { ReviewReminderSettings } from '@all-in-one/shared/schemas';
 import { HttpClient } from '@angular/common/http';
-import { effect, inject, Injectable, signal } from '@angular/core';
+import { effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { SwPush } from '@angular/service-worker';
 import { firstValueFrom, take, timeout } from 'rxjs';
 import { API_BASE_URL } from '../api/api-base-url';
@@ -9,6 +10,7 @@ import { NativePush } from './native-push';
 
 @Injectable({ providedIn: 'root' })
 export class PushSettings {
+  private readonly locale = inject(AioLocale);
   private readonly native = inject(NativePush);
   private readonly sw = inject(SwPush, { optional: true });
   private readonly http = inject(HttpClient);
@@ -78,6 +80,25 @@ export class PushSettings {
     return this.native.available() || !!this.sw?.isEnabled;
   }
   constructor() {
+    effect(() => {
+      this.locale.language();
+      if (!this.enabled()) return;
+      untracked(() => {
+        if (this.native.available()) return;
+        void this.subscription()
+          .then((sub) =>
+            sub
+              ? firstValueFrom(
+                  this.http.put(`${this.api}/push/subscription`, {
+                    ...sub.toJSON(),
+                    language: this.locale.language(),
+                  }),
+                )
+              : undefined,
+          )
+          .catch(() => undefined);
+      });
+    });
     effect(() => {
       if (this.native.available()) this.enabled.set(this.native.enabled());
     });

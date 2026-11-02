@@ -1,3 +1,4 @@
+import { AioTranslate } from '../locale';
 import { Component, input } from '@angular/core';
 import { AioField, AioFieldLabel } from '../spartan';
 
@@ -5,14 +6,16 @@ import { AioField, AioFieldLabel } from '../spartan';
 @Component({
   selector: 'aio-form-field',
   hostDirectives: [AioField],
-  imports: [AioFieldLabel],
+  imports: [AioFieldLabel, AioTranslate],
   template: `
     @if (controlId()) {
       <label aioFieldLabel [for]="controlId()" [class]="labelClass()">{{
-        label()
+        label() | aioTranslate
       }}</label>
     } @else {
-      <span aioFieldLabel [class]="labelClass()">{{ label() }}</span>
+      <span aioFieldLabel [class]="labelClass()">{{
+        label() | aioTranslate
+      }}</span>
     }
     <ng-content />
   `,

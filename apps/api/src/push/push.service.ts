@@ -1,3 +1,4 @@
+import { translateMessage } from '@all-in-one/localization';
 import {
   Injectable,
   Logger,
@@ -107,6 +108,7 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
       endpoint: input.endpoint,
       ...input.keys,
       sessionVersion: user.sessionVersion,
+      language: input.language ?? 'fa',
     };
     await this.db.pushSubscription.upsert({
       where: { endpoint: input.endpoint },
@@ -139,6 +141,7 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
       p256dh: '',
       auth: '',
       sessionVersion: user.sessionVersion,
+      language: input.language ?? 'fa',
     };
     await this.db.pushSubscription.upsert({
       where: { endpoint },
@@ -159,11 +162,14 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
       auth: string;
       platform?: string;
       fcmToken?: string | null;
+      language?: string;
     },
     title: string,
     url: string,
     tag: string,
   ) {
+    const language = subscription.language === 'en' ? 'en' : 'fa';
+    title = translateMessage(title, language);
     try {
       if (subscription.platform && subscription.platform !== 'WEB') {
         if (!subscription.fcmToken) return false;
@@ -181,8 +187,8 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
             body: 'Poshtetgarm',
             icon: '/app/icons/icon-192.png',
             tag,
-            dir: 'rtl',
-            lang: 'fa',
+            dir: language === 'en' ? 'ltr' : 'rtl',
+            lang: language,
             data: {
               // Focus at once (navigating first loses the click's focus permission);
               // the open app routes to `url` itself, a closed one opens at it.

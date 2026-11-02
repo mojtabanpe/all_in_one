@@ -21,6 +21,7 @@ import {
   type UpdateTaskInput,
 } from '@all-in-one/applets/planner/contracts';
 import {
+  AioTranslate,
   AioButton,
   AioDateInput,
   AioCheckbox,
@@ -32,15 +33,16 @@ import {
   AioNativeSelectDirectives,
   AioSwitch,
   AioTextarea,
-  aioToast,
   AioToggleGroupDirectives,
   provideIcons,
   AioFormField,
   AioAsyncButton,
   AioSelectField,
   AioInputGroupSubmit,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
-import { apiErrorMessage, faDate } from '@all-in-one/web/shared';
+import { apiErrorMessage } from '@all-in-one/web/shared';
 import {
   lucideCircleSlash,
   lucideFlag,
@@ -86,6 +88,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
     AioAsyncButton,
     AioSelectField,
     AioInputGroupSubmit,
+    AioTranslate,
   ],
   providers: [
     provideIcons({
@@ -106,7 +109,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
     <div
       class="flex min-w-0 flex-col gap-5 pb-2 [overflow-wrap:anywhere] [&_[data-slot=field]]:min-w-0 [&_[data-slot=field]]:gap-2"
     >
-      <aio-form-field label="عنوان" controlId="task-title">
+      <aio-form-field [label]="'عنوان' | aioTranslate" controlId="task-title">
         <input
           aioInput
           id="task-title"
@@ -116,21 +119,23 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
         />
       </aio-form-field>
 
-      <aio-form-field label="توضیح" controlId="task-content">
+      <aio-form-field [label]="'توضیح' | aioTranslate" controlId="task-content">
         <textarea
           aioTextarea
           id="task-content"
           rows="3"
           dir="auto"
           class="min-w-0 resize-y leading-7"
-          placeholder="جزئیات، لینک، یادداشت…"
+          [placeholder]="'جزئیات، لینک، یادداشت…' | aioTranslate"
           [value]="t.content"
           (change)="save({ content: $any($event.target).value })"
         ></textarea>
       </aio-form-field>
 
       <fieldset aioFieldSet class="min-w-0 gap-3 border-t border-border pt-5">
-        <legend aioFieldLegend class="text-sm">زمان‌بندی</legend>
+        <legend aioFieldLegend class="text-sm">
+          {{ 'زمان‌بندی' | aioTranslate }}
+        </legend>
         <div class="grid min-w-0 grid-cols-4 gap-2">
           @for (d of quickDates; track d.label) {
             <button
@@ -142,22 +147,25 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
               [variant]="t.date === d.date() ? 'default' : 'outline'"
               (click)="save({ date: d.date() })"
             >
-              {{ d.label }}
+              {{ d.label | aioTranslate }}
             </button>
           }
         </div>
         <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
-          <aio-form-field label="تاریخ" controlId="task-date">
+          <aio-form-field
+            [label]="'تاریخ' | aioTranslate"
+            controlId="task-date"
+          >
             <aio-date-input
               contentClass="applet-planner"
               class="min-w-0 max-w-full"
-              aria-label="تاریخ دلخواه"
+              [aria-label]="'تاریخ دلخواه' | aioTranslate"
               inputId="task-date"
               [value]="t.date ?? ''"
               (valueChange)="save({ date: $event || null })"
             />
           </aio-form-field>
-          <aio-form-field label="ساعت" controlId="task-time">
+          <aio-form-field [label]="'ساعت' | aioTranslate" controlId="task-time">
             <input
               aioInput
               class="w-full min-w-0 max-w-full appearance-none"
@@ -165,7 +173,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
               dir="ltr"
               lang="fa-IR"
               type="time"
-              aria-label="ساعت"
+              [attr.aria-label]="'ساعت' | aioTranslate"
               [disabled]="!t.date"
               [value]="t.time ?? ''"
               (change)="save({ time: $any($event.target).value || null })"
@@ -173,49 +181,64 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
           </aio-form-field>
         </div>
         @if (t.date) {
-          <p class="text-muted-foreground text-xs">{{ dateLabel(t.date) }}</p>
+          <p class="text-muted-foreground text-xs">
+            {{ dateLabel(t.date) | aioTranslate }}
+          </p>
         }
       </fieldset>
 
-      <aio-form-field label="یادآوری" controlId="task-reminder">
+      <aio-form-field
+        [label]="'یادآوری' | aioTranslate"
+        controlId="task-reminder"
+      >
         <aio-native-select
           selectId="task-reminder"
           [disabled]="!t.date || !t.time"
           [value]="t.reminders[0] ?? ''"
           (valueChange)="save({ reminders: $event ? [$event] : [] })"
         >
-          <option aioNativeSelectOption value="">بدون یادآوری</option>
-          <option aioNativeSelectOption value="TRIGGER:PT0M">سر ساعت</option>
+          <option aioNativeSelectOption value="">
+            {{ 'بدون یادآوری' | aioTranslate }}
+          </option>
+          <option aioNativeSelectOption value="TRIGGER:PT0M">
+            {{ 'سر ساعت' | aioTranslate }}
+          </option>
           <option aioNativeSelectOption value="TRIGGER:-PT5M">
-            ۵ دقیقه قبل
+            {{ '۵ دقیقه قبل' | aioTranslate }}
           </option>
           <option aioNativeSelectOption value="TRIGGER:-PT15M">
-            ۱۵ دقیقه قبل
+            {{ '۱۵ دقیقه قبل' | aioTranslate }}
           </option>
           <option aioNativeSelectOption value="TRIGGER:-PT60M">
-            ۱ ساعت قبل
+            {{ '۱ ساعت قبل' | aioTranslate }}
           </option>
         </aio-native-select>
         <p class="text-muted-foreground text-xs">
-          تاریخ و ساعت را تعیین کن و اعلان‌ها را در حساب کاربری فعال کن.
+          {{
+            'تاریخ و ساعت را تعیین کن و اعلان‌ها را در حساب کاربری فعال کن.'
+              | aioTranslate
+          }}
         </p>
       </aio-form-field>
 
       @if (t.repeatRule || t.seriesId || t.isSeries) {
-        <aio-form-field label="این تغییر برای" controlId="task-edit-scope">
+        <aio-form-field
+          [label]="'این تغییر برای' | aioTranslate"
+          controlId="task-edit-scope"
+        >
           <aio-native-select
             selectId="task-edit-scope"
             [value]="editScope()"
             (valueChange)="setEditScope($event)"
           >
             <option aioNativeSelectOption value="OCCURRENCE">
-              فقط این نوبت
+              {{ 'فقط این نوبت' | aioTranslate }}
             </option>
             <option aioNativeSelectOption value="FUTURE">
-              این نوبت و نوبت‌های بعد
+              {{ 'این نوبت و نوبت‌های بعد' | aioTranslate }}
             </option>
             <option aioNativeSelectOption value="SERIES">
-              کل سری (تاریخچه حفظ می‌شود)
+              {{ 'کل سری (تاریخچه حفظ می‌شود)' | aioTranslate }}
             </option>
           </aio-native-select>
         </aio-form-field>
@@ -226,7 +249,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
       />
 
       <div class="flex flex-col gap-2">
-        <span class="text-sm font-medium">اولویت</span>
+        <span class="text-sm font-medium">{{ 'اولویت' | aioTranslate }}</span>
         <div
           aioToggleGroup
           type="single"
@@ -238,7 +261,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
           @for (p of priorities; track p) {
             <button aioToggleGroupItem [value]="p" class="h-11 flex-1 gap-1">
               <aio-icon name="lucideFlag" size="xs" [class]="flag[p]" />
-              {{ priorityLabels[p] }}
+              {{ priorityLabels[p] | aioTranslate }}
             </button>
           }
         </div>
@@ -246,7 +269,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
 
       <div class="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
         <aio-select-field
-          label="فهرست"
+          [label]="'فهرست' | aioTranslate"
           controlId="task-list"
           [value]="t.listId"
           [options]="lists()"
@@ -255,34 +278,34 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
           (valueChange)="save({ listId: $event })"
         />
         <aio-select-field
-          label="بخش"
+          [label]="'بخش' | aioTranslate"
           controlId="task-section"
           [value]="t.sectionId ?? ''"
           [disabled]="!sections().length"
           [options]="sections()"
           valueKey="id"
           labelKey="name"
-          emptyLabel="بدون بخش"
+          [emptyLabel]="'بدون بخش' | aioTranslate"
           (valueChange)="save({ sectionId: $event || null })"
         />
       </div>
 
       @if (members().length > 1) {
         <aio-select-field
-          label="مسئول"
+          [label]="'مسئول' | aioTranslate"
           controlId="task-assignee"
           [value]="t.assigneeId ?? ''"
           [options]="members()"
           valueKey="userId"
           labelKey="name"
           fallbackLabelKey="email"
-          emptyLabel="بدون مسئول"
+          [emptyLabel]="'بدون مسئول' | aioTranslate"
           (valueChange)="save({ assigneeId: $event || null })"
         />
       }
 
       <div class="flex flex-col gap-2">
-        <span class="text-sm font-medium">برچسب‌ها</span>
+        <span class="text-sm font-medium">{{ 'برچسب‌ها' | aioTranslate }}</span>
         <div class="flex flex-wrap items-center gap-2">
           @for (tag of t.tags; track tag) {
             <span
@@ -292,7 +315,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
               <button
                 type="button"
                 class="hover:bg-background/60 grid size-8 place-items-center rounded-full"
-                [attr.aria-label]="'برداشتن برچسب ' + tag"
+                [attr.aria-label]="'برداشتن برچسب ' + tag | aioTranslate"
                 (click)="removeTag(tag)"
               >
                 <aio-icon name="lucideX" size="xs" />
@@ -306,8 +329,8 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
             <input
               aioInput
               class="h-9"
-              placeholder="+ برچسب"
-              aria-label="برچسب تازه"
+              [placeholder]="'+ برچسب' | aioTranslate"
+              [attr.aria-label]="'برچسب تازه' | aioTranslate"
               enterkeyhint="done"
               [value]="newTag()"
               (input)="newTag.set($any($event.target).value)"
@@ -318,11 +341,14 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
 
       <div class="flex flex-col gap-2">
         <span class="text-sm font-medium">
-          زیرکارها
+          {{ 'زیرکارها' | aioTranslate }}
           @if (t.checklist.length) {
             <span class="text-muted-foreground font-normal">
-              ({{ fa(doneItems()) }} از {{ fa(t.checklist.length) }})
-            </span>
+              {{
+                '({0} از {1})'
+                  | aioTranslate: [fa(doneItems()), fa(t.checklist.length)]
+              }}</span
+            >
           }
         </span>
         <ul class="flex flex-col">
@@ -332,21 +358,21 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
                 [checked]="item.done"
                 (checkedChange)="toggleItem(item.id, $event)"
                 checkboxClass="relative size-5 rounded-full after:absolute after:-inset-3 after:content-['']"
-                [aria-label]="'انجام شد: ' + item.title"
+                [aria-label]="'انجام شد: ' + item.title | aioTranslate"
               />
               <span
                 class="flex-1"
                 [class.line-through]="item.done"
                 [class.text-muted-foreground]="item.done"
               >
-                {{ item.title }}
-              </span>
+                {{ item.title | aioTranslate }}</span
+              >
               <button
                 aioBtn
                 variant="ghost"
                 size="icon"
                 type="button"
-                [attr.aria-label]="'حذف ' + item.title"
+                [attr.aria-label]="'حذف ' + item.title | aioTranslate"
                 (click)="removeItem(item.id)"
               >
                 <aio-icon name="lucideX" size="sm" />
@@ -357,13 +383,16 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
         <form aioInputGroup (submit)="$event.preventDefault(); addItem()">
           <input
             aioInputGroupInput
-            placeholder="زیرکار تازه"
-            aria-label="زیرکار تازه"
+            [placeholder]="'زیرکار تازه' | aioTranslate"
+            [attr.aria-label]="'زیرکار تازه' | aioTranslate"
             enterkeyhint="done"
             [value]="newItem()"
             (input)="newItem.set($any($event.target).value)"
           />
-          <aio-input-group-submit label="افزودن زیرکار" icon="lucidePlus" />
+          <aio-input-group-submit
+            [label]="'افزودن زیرکار' | aioTranslate"
+            icon="lucidePlus"
+          />
         </form>
         <button
           type="button"
@@ -374,7 +403,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
           (click)="split()"
           aioAsyncButton
           [busy]="splitting()"
-          label="شکستن به زیرکار با هوش مصنوعی"
+          [label]="'شکستن به زیرکار با هوش مصنوعی' | aioTranslate"
           icon="lucideSparkles"
           iconSize="xs"
         ></button>
@@ -382,10 +411,10 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
 
       <div class="flex min-h-11 items-center justify-between gap-3 text-sm">
         <label for="task-note">
-          یادداشت است، نه کار
-          <span class="text-muted-foreground block text-xs"
-            >یادداشت‌ها تیک نمی‌خورند</span
-          >
+          {{ 'یادداشت است، نه کار' | aioTranslate }}
+          <span class="text-muted-foreground block text-xs">{{
+            'یادداشت‌ها تیک نمی‌خورند' | aioTranslate
+          }}</span>
         </label>
         <aio-switch
           inputId="task-note"
@@ -395,7 +424,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
       </div>
 
       <div class="flex flex-col gap-2">
-        <span class="text-sm font-medium">گفتگو</span>
+        <span class="text-sm font-medium">{{ 'گفتگو' | aioTranslate }}</span>
         @for (c of comments(); track c.id) {
           <div
             class="bg-muted/60 flex items-start gap-2 rounded-2xl p-3 text-sm"
@@ -412,7 +441,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
                 variant="ghost"
                 size="icon"
                 type="button"
-                aria-label="حذف پیام"
+                [attr.aria-label]="'حذف پیام' | aioTranslate"
                 (click)="removeComment(c)"
               >
                 <aio-icon name="lucideX" size="sm" />
@@ -423,12 +452,15 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
         <form aioInputGroup (submit)="$event.preventDefault(); addComment()">
           <input
             aioInputGroupInput
-            placeholder="پیام برای این کار"
-            aria-label="پیام تازه"
+            [placeholder]="'پیام برای این کار' | aioTranslate"
+            [attr.aria-label]="'پیام تازه' | aioTranslate"
             [value]="newComment()"
             (input)="newComment.set($any($event.target).value)"
           />
-          <aio-input-group-submit label="فرستادن" icon="lucideSend" />
+          <aio-input-group-submit
+            [label]="'فرستادن' | aioTranslate"
+            icon="lucideSend"
+          />
         </form>
       </div>
 
@@ -441,7 +473,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
           (click)="focusRequested.emit(t)"
         >
           <aio-icon name="lucideTimer" size="sm" />
-          شروع تمرکز
+          {{ 'شروع تمرکز' | aioTranslate }}
         </button>
         @if (t.wontDo) {
           <button
@@ -451,7 +483,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
             (click)="setWontDo(false)"
           >
             <aio-icon name="lucideRotateCcw" size="sm" />
-            بازکردن
+            {{ 'بازکردن' | aioTranslate }}
           </button>
         } @else if (!t.done && t.kind === 'TASK') {
           <button
@@ -461,7 +493,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
             (click)="setWontDo(true)"
           >
             <aio-icon name="lucideCircleSlash" size="sm" />
-            انجامش نمی‌دهم
+            {{ 'انجامش نمی‌دهم' | aioTranslate }}
           </button>
         }
         <button
@@ -472,13 +504,17 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
           (click)="trashed.emit(t)"
         >
           <aio-icon name="lucideTrash2" size="sm" />
-          به سطل زباله
+          {{ 'به سطل زباله' | aioTranslate }}
         </button>
       </div>
     </div>
   `,
 })
 export class TaskDetail {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   private readonly api = inject(PlannerApi);
 
   readonly task = input.required<PlannerTask>();
@@ -545,10 +581,10 @@ export class TaskDetail {
     () => this.task().checklist.filter((i) => i.done).length,
   );
 
-  protected readonly fa = (n: number) => n.toLocaleString('fa-IR');
+  protected readonly fa = (n: number) => this.locale.number(n);
 
   protected dateLabel(iso: string) {
-    return faDate(iso, {
+    return this.locale.date(iso, {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
@@ -557,7 +593,7 @@ export class TaskDetail {
   }
 
   protected when(iso: string) {
-    return faDate(iso, {
+    return this.locale.date(iso, {
       day: 'numeric',
       month: 'short',
       hour: '2-digit',
@@ -625,7 +661,7 @@ export class TaskDetail {
       this.commentsRes.set(comments);
       this.changed.emit({ ...this.task(), commentCount: comments.length });
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
@@ -636,7 +672,7 @@ export class TaskDetail {
       this.commentsRes.set(rest);
       this.changed.emit({ ...this.task(), commentCount: rest.length });
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
@@ -649,7 +685,7 @@ export class TaskDetail {
     try {
       this.changed.emit(await call());
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 }

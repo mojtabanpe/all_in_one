@@ -2,15 +2,17 @@ import { PushSettings } from './push-settings';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
+  AioLanguageSwitcher,
+  AioTranslate,
   AioButton,
   AioCardDirectives,
   AioFieldDirectives,
   AioInput,
   AioSpinner,
   AioSwitch,
-  aioToast,
   AioFormField,
   AioCardHeading,
+  AioNotifications,
 } from '@all-in-one/ui';
 import { apiErrorMessage } from './auth.guards';
 import { AiSettingsCard } from './ai-settings';
@@ -30,15 +32,20 @@ const PAGE =
     RouterLink,
     AioFormField,
     AioCardHeading,
+    AioLanguageSwitcher,
+    AioTranslate,
   ],
   template: `
     <div [class]="page">
+      <div class="mb-4 flex justify-end"><aio-language-switcher /></div>
       <section aioCard>
         <div
           aioCardHeading
-          title="بازیابی رمز"
+          [title]="'بازیابی رمز' | aioTranslate"
           [level]="1"
-          description="ایمیلت را بنویس تا لینک انتخاب رمز تازه را بفرستیم."
+          [description]="
+            'ایمیلت را بنویس تا لینک انتخاب رمز تازه را بفرستیم.' | aioTranslate
+          "
           titleClass="text-xl"
         ></div>
         <form
@@ -51,11 +58,16 @@ const PAGE =
               class="bg-accent text-accent-foreground rounded-2xl p-3 text-sm"
               role="status"
             >
-              اگر حسابی با این ایمیل باشد، لینک بازیابی فرستاده شد. لینک یک ساعت
-              اعتبار دارد.
+              {{
+                'اگر حسابی با این ایمیل باشد، لینک بازیابی فرستاده شد. لینک یک ساعت اعتبار دارد.'
+                  | aioTranslate
+              }}
             </p>
           }
-          <aio-form-field label="ایمیل" controlId="forgot-email">
+          <aio-form-field
+            [label]="'ایمیل' | aioTranslate"
+            controlId="forgot-email"
+          >
             <input
               aioInput
               id="forgot-email"
@@ -67,15 +79,19 @@ const PAGE =
             />
           </aio-form-field>
           <button aioBtn type="submit" size="lg" [disabled]="busy()">
-            فرستادن لینک
+            {{ 'فرستادن لینک' | aioTranslate }}
           </button>
-          <a aioBtn variant="link" routerLink="/login">بازگشت به ورود</a>
+          <a aioBtn variant="link" routerLink="/login">{{
+            'بازگشت به ورود' | aioTranslate
+          }}</a>
         </form>
       </section>
     </div>
   `,
 })
 export class ForgotPasswordPage {
+  private readonly notifications = inject(AioNotifications);
+
   private readonly auth = inject(AuthStore);
   protected readonly page = PAGE;
   protected readonly email = signal('');
@@ -84,7 +100,7 @@ export class ForgotPasswordPage {
 
   protected async send() {
     if (!/^\S+@\S+\.\S+$/.test(this.email().trim())) {
-      aioToast.error('یک ایمیل درست بنویس.');
+      this.notifications.error('یک ایمیل درست بنویس.');
       return;
     }
     this.busy.set(true);
@@ -92,7 +108,7 @@ export class ForgotPasswordPage {
       await this.auth.forgotPassword(this.email().trim());
       this.sent.set(true);
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.busy.set(false);
     }
@@ -109,15 +125,18 @@ export class ForgotPasswordPage {
     RouterLink,
     AioFormField,
     AioCardHeading,
+    AioLanguageSwitcher,
+    AioTranslate,
   ],
   template: `
     <div [class]="page">
+      <div class="mb-4 flex justify-end"><aio-language-switcher /></div>
       <section aioCard>
         <div
           aioCardHeading
-          title="رمز تازه"
+          [title]="'رمز تازه' | aioTranslate"
           [level]="1"
-          description="رمزی با دست‌کم ۸ نویسه انتخاب کن."
+          [description]="'رمزی با دست‌کم ۸ نویسه انتخاب کن.' | aioTranslate"
           titleClass="text-xl"
         ></div>
         <form
@@ -127,10 +146,15 @@ export class ForgotPasswordPage {
         >
           @if (!token()) {
             <p class="text-destructive text-sm" role="alert">
-              این لینک ناقص است. دوباره درخواست بازیابی بده.
+              {{
+                'این لینک ناقص است. دوباره درخواست بازیابی بده.' | aioTranslate
+              }}
             </p>
           }
-          <aio-form-field label="رمز تازه" controlId="reset-password">
+          <aio-form-field
+            [label]="'رمز تازه' | aioTranslate"
+            controlId="reset-password"
+          >
             <input
               aioInput
               id="reset-password"
@@ -141,7 +165,10 @@ export class ForgotPasswordPage {
               (input)="password.set($any($event.target).value)"
             />
           </aio-form-field>
-          <aio-form-field label="تکرار رمز" controlId="reset-repeat">
+          <aio-form-field
+            [label]="'تکرار رمز' | aioTranslate"
+            controlId="reset-repeat"
+          >
             <input
               aioInput
               id="reset-repeat"
@@ -158,17 +185,19 @@ export class ForgotPasswordPage {
             size="lg"
             [disabled]="busy() || !token()"
           >
-            ذخیره رمز
+            {{ 'ذخیره رمز' | aioTranslate }}
           </button>
-          <a aioBtn variant="link" routerLink="/forgot-password"
-            >لینک تازه می‌خواهم</a
-          >
+          <a aioBtn variant="link" routerLink="/forgot-password">{{
+            'لینک تازه می‌خواهم' | aioTranslate
+          }}</a>
         </form>
       </section>
     </div>
   `,
 })
 export class ResetPasswordPage {
+  private readonly notifications = inject(AioNotifications);
+
   private readonly auth = inject(AuthStore);
   private readonly router = inject(Router);
   protected readonly page = PAGE;
@@ -181,21 +210,21 @@ export class ResetPasswordPage {
 
   protected async save() {
     if (this.password().length < 8) {
-      aioToast.error('رمز باید دست‌کم ۸ نویسه باشد.');
+      this.notifications.error('رمز باید دست‌کم ۸ نویسه باشد.');
       return;
     }
     if (this.password() !== this.repeat()) {
-      aioToast.error('دو رمز یکی نیستند.');
+      this.notifications.error('دو رمز یکی نیستند.');
       return;
     }
     this.busy.set(true);
     try {
       await this.auth.resetPassword(this.token(), this.password());
       this.auth.expire();
-      aioToast.success('رمز عوض شد. با رمز تازه وارد شو.');
+      this.notifications.success('رمز عوض شد. با رمز تازه وارد شو.');
       await this.router.navigateByUrl('/login');
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.busy.set(false);
     }
@@ -211,13 +240,16 @@ export class ResetPasswordPage {
     AioSpinner,
     RouterLink,
     AioCardHeading,
+    AioLanguageSwitcher,
+    AioTranslate,
   ],
   template: `
     <div [class]="page">
+      <div class="mb-4 flex justify-end"><aio-language-switcher /></div>
       <section aioCard>
         <div
           aioCardHeading
-          title="تأیید ایمیل"
+          [title]="'تأیید ایمیل' | aioTranslate"
           [level]="1"
           titleClass="text-xl"
         ></div>
@@ -225,18 +257,20 @@ export class ResetPasswordPage {
           @switch (state()) {
             @case ('working') {
               <p class="flex items-center gap-2">
-                <aio-spinner /> در حال تأیید…
+                <aio-spinner /> {{ 'در حال تأیید…' | aioTranslate }}
               </p>
             }
             @case ('done') {
-              <p>ایمیلت تأیید شد. حالا وارد شو.</p>
-              <a aioBtn size="lg" routerLink="/login">ورود</a>
+              <p>{{ 'ایمیلت تأیید شد. حالا وارد شو.' | aioTranslate }}</p>
+              <a aioBtn size="lg" routerLink="/login">
+                {{ 'ورود' | aioTranslate }}
+              </a>
             }
             @case ('failed') {
               <p class="text-destructive">{{ error() }}</p>
-              <a aioBtn variant="outline" routerLink="/login"
-                >بازگشت به ورود و فرستادن لینک تازه</a
-              >
+              <a aioBtn variant="outline" routerLink="/login">
+                {{ 'بازگشت به ورود و فرستادن لینک تازه' | aioTranslate }}
+              </a>
             }
           }
         </div>
@@ -279,28 +313,45 @@ export class VerifyEmailPage implements OnInit {
     ChatGptConnection,
     AioFormField,
     AioCardHeading,
+    AioLanguageSwitcher,
+    AioTranslate,
   ],
   template: `
     <div class="mx-auto flex w-full max-w-lg flex-col gap-6">
       <header class="flex flex-col gap-1">
-        <h1 class="text-2xl font-bold">حساب کاربری</h1>
+        <h1 class="text-2xl font-bold">{{ 'حساب کاربری' | aioTranslate }}</h1>
         <p class="text-muted-foreground text-sm" dir="ltr">
-          {{ auth.user()?.email }}
+          {{ auth.user()?.email | aioTranslate }}
         </p>
       </header>
       <section aioCard>
         <div
           aioCardHeading
-          title="تغییر رمز"
+          [title]="'زبان برنامه' | aioTranslate"
+          [description]="
+            'زبان تمام بخش‌های برنامه را انتخاب کن.' | aioTranslate
+          "
+        ></div>
+        <div aioCardContent><aio-language-switcher /></div>
+      </section>
+      <section aioCard>
+        <div
+          aioCardHeading
+          [title]="'تغییر رمز' | aioTranslate"
           [level]="2"
-          description="بعد از تغییر، دستگاه‌های دیگر از حساب خارج می‌شوند."
+          [description]="
+            'بعد از تغییر، دستگاه‌های دیگر از حساب خارج می‌شوند.' | aioTranslate
+          "
         ></div>
         <form
           aioCardContent
           class="flex flex-col gap-4"
           (submit)="$event.preventDefault(); change()"
         >
-          <aio-form-field label="رمز فعلی" controlId="current-password">
+          <aio-form-field
+            [label]="'رمز فعلی' | aioTranslate"
+            controlId="current-password"
+          >
             <input
               aioInput
               id="current-password"
@@ -311,7 +362,10 @@ export class VerifyEmailPage implements OnInit {
               (input)="current.set($any($event.target).value)"
             />
           </aio-form-field>
-          <aio-form-field label="رمز تازه" controlId="new-password">
+          <aio-form-field
+            [label]="'رمز تازه' | aioTranslate"
+            controlId="new-password"
+          >
             <input
               aioInput
               id="new-password"
@@ -323,25 +377,30 @@ export class VerifyEmailPage implements OnInit {
             />
           </aio-form-field>
           <button aioBtn type="submit" class="self-start" [disabled]="busy()">
-            ذخیره رمز تازه
+            {{ 'ذخیره رمز تازه' | aioTranslate }}
           </button>
         </form>
       </section>
       <section aioCard>
         <div
           aioCardHeading
-          title="اعلان‌ها"
+          [title]="'اعلان‌ها' | aioTranslate"
           [level]="2"
-          description="یادآوری کارهای زمان‌دار، حتی وقتی برنامه باز نیست."
+          [description]="
+            'یادآوری کارهای زمان‌دار، حتی وقتی برنامه باز نیست.' | aioTranslate
+          "
         ></div>
         <div aioCardContent class="flex flex-col gap-3">
           <p class="text-muted-foreground text-sm" role="status">
-            {{ push.message() }}
+            {{ push.message() | aioTranslate }}
           </p>
           @if (push.supported) {
             <div class="flex flex-wrap gap-2">
               <button aioBtn [disabled]="push.busy()" (click)="push.enable()">
-                {{ push.enabled() ? 'تازه‌سازی اتصال' : 'فعال‌کردن اعلان‌ها' }}
+                {{
+                  (push.enabled() ? 'تازه‌سازی اتصال' : 'فعال‌کردن اعلان‌ها')
+                    | aioTranslate
+                }}
               </button>
               @if (push.enabled()) {
                 <button
@@ -350,7 +409,7 @@ export class VerifyEmailPage implements OnInit {
                   [disabled]="push.busy()"
                   (click)="push.test()"
                 >
-                  ارسال آزمایشی
+                  {{ 'ارسال آزمایشی' | aioTranslate }}
                 </button>
                 <button
                   aioBtn
@@ -358,14 +417,16 @@ export class VerifyEmailPage implements OnInit {
                   [disabled]="push.busy()"
                   (click)="push.disable()"
                 >
-                  غیرفعال‌کردن
+                  {{ 'غیرفعال‌کردن' | aioTranslate }}
                 </button>
               }
             </div>
           } @else {
             <p class="text-muted-foreground text-sm">
-              اعلان در این نسخه در دسترس نیست؛ برنامه را با HTTPS و مرورگر
-              پشتیبانی‌شده باز کن.
+              {{
+                'اعلان در این نسخه در دسترس نیست؛ برنامه را با HTTPS و مرورگر پشتیبانی‌شده باز کن.'
+                  | aioTranslate
+              }}
             </p>
           }
           <form
@@ -373,9 +434,9 @@ export class VerifyEmailPage implements OnInit {
             (submit)="$event.preventDefault(); push.saveReview()"
           >
             <div class="flex min-h-11 items-center justify-between gap-3">
-              <label aioFieldLabel for="review-reminder-enabled"
-                >یادآوری مرور زبان</label
-              >
+              <label aioFieldLabel for="review-reminder-enabled">{{
+                'یادآوری مرور زبان' | aioTranslate
+              }}</label>
               <aio-switch
                 inputId="review-reminder-enabled"
                 [checked]="push.reviewEnabled()"
@@ -384,7 +445,7 @@ export class VerifyEmailPage implements OnInit {
               />
             </div>
             <aio-form-field
-              label="ساعت یادآوری روزانه"
+              [label]="'ساعت یادآوری روزانه' | aioTranslate"
               controlId="review-reminder-time"
             >
               <input
@@ -402,12 +463,14 @@ export class VerifyEmailPage implements OnInit {
                 id="review-reminder-description"
                 class="text-muted-foreground text-xs"
               >
-                به وقت تهران؛ برای دریافت یادآوری، اعلان‌های دستگاه را هم فعال
-                کن.
+                {{
+                  'به وقت تهران؛ برای دریافت یادآوری، اعلان‌های دستگاه را هم فعال کن.'
+                    | aioTranslate
+                }}
               </p>
             </aio-form-field>
             <p class="text-muted-foreground text-sm" role="status">
-              {{ push.reviewMessage() }}
+              {{ push.reviewMessage() | aioTranslate }}
             </p>
             @if (push.reviewLoaded()) {
               <button
@@ -416,7 +479,7 @@ export class VerifyEmailPage implements OnInit {
                 class="min-h-11 self-start"
                 [disabled]="push.reviewSaving()"
               >
-                ذخیره یادآوری
+                {{ 'ذخیره یادآوری' | aioTranslate }}
               </button>
             } @else {
               <button
@@ -427,7 +490,7 @@ export class VerifyEmailPage implements OnInit {
                 [disabled]="push.reviewSaving()"
                 (click)="push.loadReview()"
               >
-                دریافت دوباره تنظیمات
+                {{ 'دریافت دوباره تنظیمات' | aioTranslate }}
               </button>
             }
           </form>
@@ -440,6 +503,8 @@ export class VerifyEmailPage implements OnInit {
   `,
 })
 export class AccountPage implements OnInit {
+  private readonly notifications = inject(AioNotifications);
+
   ngOnInit() {
     void this.push.loadReview();
   }
@@ -451,7 +516,7 @@ export class AccountPage implements OnInit {
 
   protected async change() {
     if (this.next().length < 8) {
-      aioToast.error('رمز تازه باید دست‌کم ۸ نویسه باشد.');
+      this.notifications.error('رمز تازه باید دست‌کم ۸ نویسه باشد.');
       return;
     }
     this.busy.set(true);
@@ -462,9 +527,9 @@ export class AccountPage implements OnInit {
       });
       this.current.set('');
       this.next.set('');
-      aioToast.success('رمز عوض شد و دستگاه‌های دیگر خارج شدند.');
+      this.notifications.success('رمز عوض شد و دستگاه‌های دیگر خارج شدند.');
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.busy.set(false);
     }

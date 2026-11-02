@@ -1,4 +1,6 @@
-import { Component, input } from '@angular/core';
+import { AioTranslate } from '../locale';
+import { AioLocale } from '../locale';
+import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AioButton } from '../spartan';
 import { AioIcon } from './icon';
@@ -15,16 +17,19 @@ export interface AioAppletTab {
 @Component({
   selector: 'aio-applet-header',
   host: {
-    '[attr.lang]': 'language()',
-    '[attr.dir]': 'language() === "en" ? "ltr" : "rtl"',
+    '[attr.lang]': 'activeLanguage()',
+    '[attr.dir]': 'activeLanguage() === "en" ? "ltr" : "rtl"',
   },
-  imports: [AioButton, AioIcon, RouterLink, RouterLinkActive],
+  imports: [AioButton, AioIcon, RouterLink, RouterLinkActive, AioTranslate],
   template: `
     <header class="applet-heading">
-      <h1 class="applet-title">{{ title() }}</h1>
-      <p class="applet-subtitle">{{ subtitle() }}</p>
+      <h1 class="applet-title">{{ title() | aioTranslate }}</h1>
+      <p class="applet-subtitle">{{ subtitle() | aioTranslate }}</p>
     </header>
-    <nav class="applet-tabs" [attr.aria-label]="navigationLabel()">
+    <nav
+      class="applet-tabs"
+      [attr.aria-label]="navigationLabel() | aioTranslate"
+    >
       @for (tab of tabs(); track tab.path) {
         <a
           aioBtn
@@ -37,7 +42,7 @@ export interface AioAppletTab {
           [attr.aria-current]="rla.isActive ? 'page' : null"
         >
           <aio-icon [name]="tab.icon" size="sm" />
-          <span>{{ tab.label }}</span>
+          <span>{{ tab.label | aioTranslate }}</span>
         </a>
       }
     </nav>
@@ -134,5 +139,9 @@ export class AioAppletHeader {
   readonly subtitle = input.required<string>();
   readonly navigationLabel = input.required<string>();
   readonly tabs = input.required<readonly AioAppletTab[]>();
-  readonly language = input<'fa' | 'en'>('fa');
+  private readonly locale = inject(AioLocale);
+  readonly language = input<'fa' | 'en'>();
+  readonly activeLanguage = computed(
+    () => this.language() ?? this.locale.language(),
+  );
 }

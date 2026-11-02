@@ -16,21 +16,20 @@ import {
   RATING_LABELS,
 } from '@all-in-one/applets/english-learning/contracts';
 import {
+  AioTranslate,
   AioButton,
   AioConfirm,
   AioIcon,
   AioProgressDirectives,
   AioSkeleton,
-  aioToast,
   provideIcons,
   AioEmptyState,
   AioSectionHeading,
   AioSkeletonLines,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
-import {
-  englishErrorMessage as apiErrorMessage,
-  englishNumber as faNumber,
-} from './english-locale';
+import { englishErrorMessage as apiErrorMessage } from './english-locale';
 import {
   lucideBookOpen,
   lucideListChecks,
@@ -73,7 +72,6 @@ const POINTS: Record<Rating, number> = {
 
 /** Study a deck's due cards (Recall study page) as a Duolingo-style session. */
 @Component({
-  host: { dir: 'ltr', lang: 'en' },
   selector: 'english-learning-study',
   imports: [
     AioButton,
@@ -84,6 +82,7 @@ const POINTS: Record<Rating, number> = {
     AioEmptyState,
     AioSectionHeading,
     AioSkeletonLines,
+    AioTranslate,
   ],
   providers: [
     provideIcons({
@@ -107,7 +106,7 @@ const POINTS: Record<Rating, number> = {
           variant="ghost"
           size="icon"
           routerLink=".."
-          aria-label="End review"
+          [attr.aria-label]="'End review' | aioTranslate"
         >
           <aio-icon name="lucideX" />
         </a>
@@ -115,13 +114,13 @@ const POINTS: Record<Rating, number> = {
           aioProgress
           class="bg-muted h-4 flex-1 rounded-full"
           [value]="progress()"
-          aria-label="Review progress"
+          [attr.aria-label]="'Review progress' | aioTranslate"
         >
           <div aioProgressIndicator class="rounded-full"></div>
         </div>
         @if (queue().length) {
           <span class="text-muted-foreground text-sm">{{
-            fa(queue().length)
+            fa(queue().length) | aioTranslate
           }}</span>
         }
       </header>
@@ -131,7 +130,7 @@ const POINTS: Record<Rating, number> = {
         <div
           aioSkeleton
           class="min-h-64 rounded-3xl"
-          aria-label="Loading review"
+          [attr.aria-label]="'Loading review' | aioTranslate"
           role="status"
         ></div>
         <div
@@ -145,21 +144,23 @@ const POINTS: Record<Rating, number> = {
         <div
           class="lx-glass rounded-3xl"
           aioEmptyState
-          title="Unable to load review"
-          [description]="loadError()"
+          [title]="'Unable to load review' | aioTranslate"
+          [description]="loadError() | aioTranslate"
           [level]="1"
         >
-          <button aioBtn (click)="load()">Again</button>
+          <button aioBtn (click)="load()">{{ 'Again' | aioTranslate }}</button>
         </div>
       } @else if (current(); as card) {
         <h1 class="text-muted-foreground text-sm font-bold">
-          {{ deck()?.name }}
+          {{ deck()?.name | aioTranslate }}
         </h1>
         <button
           type="button"
           class="lx-glass flex min-h-64 flex-col items-center justify-center gap-4 rounded-3xl p-6 text-center"
           (click)="toggle()"
-          [attr.aria-label]="flipped() ? 'Show front' : 'Show answer'"
+          [attr.aria-label]="
+            (flipped() ? 'Show front' : 'Show answer') | aioTranslate
+          "
           aria-live="polite"
         >
           @if (flipped()) {
@@ -167,11 +168,11 @@ const POINTS: Record<Rating, number> = {
               <span
                 class="bg-accent text-accent-foreground rounded-full px-2 text-xs"
                 dir="ltr"
-                >{{ u }}</span
+                >{{ u | aioTranslate }}</span
               >
             }
             <span dir="ltr" class="text-xl font-semibold">{{
-              parts(card).body
+              parts(card).body | aioTranslate
             }}</span>
           } @else {
             <span dir="ltr" lang="en" class="text-4xl font-bold">{{
@@ -186,7 +187,7 @@ const POINTS: Record<Rating, number> = {
             size="icon-lg"
             class="size-12 rounded-2xl [--primary:var(--gem)]"
             (click)="speak()"
-            aria-label="Pronunciation"
+            [attr.aria-label]="'Pronunciation' | aioTranslate"
           >
             <aio-icon name="lucideVolume2" />
           </button>
@@ -198,7 +199,9 @@ const POINTS: Record<Rating, number> = {
               [attr.aria-expanded]="examplesOpen()"
             >
               <aio-icon name="lucideListChecks" size="sm" />
-              {{ examplesOpen() ? 'Hide examples' : 'Examples' }}
+              {{
+                (examplesOpen() ? 'Hide examples' : 'Examples') | aioTranslate
+              }}
             </button>
           }
           <button
@@ -207,7 +210,7 @@ const POINTS: Record<Rating, number> = {
             size="icon"
             class="text-destructive"
             (click)="deleteCurrent()"
-            aria-label="Delete this card"
+            [attr.aria-label]="'Delete this card' | aioTranslate"
           >
             <aio-icon name="lucideTrash2" size="sm" />
           </button>
@@ -219,18 +222,20 @@ const POINTS: Record<Rating, number> = {
             class="lx-glass text-muted-foreground flex list-disc flex-col gap-1 rounded-2xl py-3 ps-8 pe-4 text-sm"
           >
             @for (line of examples(); track $index) {
-              <li>{{ line }}</li>
+              <li>{{ line | aioTranslate }}</li>
             }
           </ul>
         }
 
         <div class="mt-auto flex flex-col gap-3">
           @if (flipped()) {
-            <p class="text-sm font-bold">How well did you remember?</p>
+            <p class="text-sm font-bold">
+              {{ 'How well did you remember?' | aioTranslate }}
+            </p>
             <div
               class="grid grid-cols-2 gap-3"
               role="group"
-              aria-label="How well did you remember?"
+              [attr.aria-label]="'How well did you remember?' | aioTranslate"
             >
               @for (r of ratings; track r) {
                 <button
@@ -243,9 +248,9 @@ const POINTS: Record<Rating, number> = {
                   [attr.aria-keyshortcuts]="style[r].key"
                   (click)="rate(r)"
                 >
-                  <span>{{ labels[r] }}</span>
+                  <span>{{ labels[r] | aioTranslate }}</span>
                   <span class="text-xs font-normal opacity-80">{{
-                    previewFor(r)
+                    previewFor(r) | aioTranslate
                   }}</span>
                 </button>
               }
@@ -257,7 +262,7 @@ const POINTS: Record<Rating, number> = {
               class="h-14 w-full rounded-2xl"
               (click)="toggle()"
             >
-              Show answer
+              {{ 'Show answer' | aioTranslate }}
             </button>
           }
         </div>
@@ -274,8 +279,11 @@ const POINTS: Record<Rating, number> = {
           <div
             class="flex flex-col gap-2"
             aioSectionHeading
-            title="Well done! You did it"
-            description="You finished reviewing this deck. Come back tomorrow to keep your streak going."
+            [title]="'Well done! You did it' | aioTranslate"
+            [description]="
+              'You finished reviewing this deck. Come back tomorrow to keep your streak going.'
+                | aioTranslate
+            "
             [level]="1"
             titleClass="text-primary text-3xl font-bold"
             descriptionClass="text-muted-foreground"
@@ -290,14 +298,16 @@ const POINTS: Record<Rating, number> = {
                 <span
                   class="py-1 text-sm font-bold text-white"
                   [style.background-color]="tile.color"
-                  >{{ tile.label }}</span
+                  >{{ tile.label | aioTranslate }}</span
                 >
                 <span
                   class="flex items-center justify-center gap-1 py-3 text-lg font-bold"
                   [style.color]="tile.color"
                 >
-                  <aio-icon [name]="tile.icon" size="sm" />{{ tile.value }}
-                </span>
+                  <aio-icon [name]="tile.icon" size="sm" />{{
+                    tile.value | aioTranslate
+                  }}</span
+                >
               </div>
             }
           </div>
@@ -306,26 +316,30 @@ const POINTS: Record<Rating, number> = {
             size="lg"
             class="mt-auto h-14 w-full rounded-2xl"
             routerLink=".."
-            >Continue</a
+            >{{ 'Continue' | aioTranslate }}</a
           >
         </section>
       } @else {
         <div
           class="lx-glass rounded-3xl"
           aioEmptyState
-          title="No cards due right now"
-          description="Add new cards or come back later."
+          [title]="'No cards due right now' | aioTranslate"
+          [description]="'Add new cards or come back later.' | aioTranslate"
           [level]="1"
           icon="lucideBookOpen"
           iconClass="text-primary"
         >
-          <a aioBtn routerLink="..">Back to deck</a>
+          <a aioBtn routerLink="..">{{ 'Back to deck' | aioTranslate }}</a>
         </div>
       }
     </div>
   `,
 })
 export class StudyPage {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   /** Route param, bound by withComponentInputBinding(). */
   readonly id = input<string>();
   private readonly api = inject(EnglishApi);
@@ -348,7 +362,7 @@ export class StudyPage {
   private readonly remembered = signal(0);
   private readonly points = signal(0);
 
-  protected readonly fa = (n: number) => faNumber(n);
+  protected readonly fa = (n: number) => this.locale.number(n);
   protected readonly parts = cardParts;
   protected readonly current = computed(() => this.queue()[0] ?? null);
   protected readonly examples = computed(() =>
@@ -363,19 +377,19 @@ export class StudyPage {
   protected readonly summary = computed(() => [
     {
       label: 'Points',
-      value: faNumber(this.points()),
+      value: this.locale.number(this.points()),
       icon: 'lucideZap',
       color: 'var(--streak)',
     },
     {
       label: 'Review',
-      value: faNumber(this.reviewed()),
+      value: this.locale.number(this.reviewed()),
       icon: 'lucideBookOpen',
       color: 'var(--gem)',
     },
     {
       label: 'Recall',
-      value: `${faNumber(Math.round((this.remembered() / Math.max(this.reviewed(), 1)) * 100))}%`,
+      value: `${this.locale.number(Math.round((this.remembered() / Math.max(this.reviewed(), 1)) * 100))}%`,
       icon: 'lucideTarget',
       color: 'var(--primary)',
     },
@@ -438,7 +452,7 @@ export class StudyPage {
       this.flipped.set(false);
       // A fresh leech leaves the queue instead of cycling back.
       if (updated.suspended) {
-        aioToast.info(
+        this.notifications.info(
           'This card was repeatedly forgotten and has been paused.',
         );
         this.queue.update((q) => q.slice(1));
@@ -449,7 +463,9 @@ export class StudyPage {
         rating === 'again' ? [...q.slice(1), updated] : q.slice(1),
       );
     } catch (error) {
-      aioToast.error(apiErrorMessage(error, 'Unable to save your review.'));
+      this.notifications.error(
+        apiErrorMessage(error, 'Unable to save your review.'),
+      );
     } finally {
       this.busy.set(false);
     }
@@ -459,7 +475,6 @@ export class StudyPage {
     const card = this.current();
     if (!card || this.busy()) return;
     const ok = await this.confirm.ask({
-      language: 'en',
       title: 'Delete this card?',
       description: `“${card.front}” will be permanently deleted.`,
       confirmText: 'Delete',
@@ -472,9 +487,9 @@ export class StudyPage {
       this.queue.update((q) => q.filter((c) => c.id !== card.id));
       this.startCount.update((n) => Math.max(0, n - 1));
       this.flipped.set(false);
-      aioToast.success('Card deleted');
+      this.notifications.success('Card deleted');
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     } finally {
       this.busy.set(false);
     }

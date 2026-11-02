@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import {
+  AioTranslate,
   AioAppletHeader,
   type AioAppletTab,
   provideIcons,
@@ -17,7 +18,7 @@ import {
 /** Planner frame: TickTick's tabs for tasks, calendar, habits, focus and countdowns. */
 @Component({
   selector: 'planner-shell',
-  imports: [AioAppletHeader, ReminderSheet, RouterOutlet],
+  imports: [AioAppletHeader, ReminderSheet, RouterOutlet, AioTranslate],
   providers: [
     provideIcons({
       lucideCalendarDays,
@@ -30,9 +31,9 @@ import {
   template: `
     <div class="applet-planner aio-applet-layout">
       <aio-applet-header
-        title="جا برای کارهای مهم."
-        subtitle="ذهن خلوت، مسیر روشن"
-        navigationLabel="بخش‌های برنامه‌ریز"
+        [title]="'جا برای کارهای مهم.' | aioTranslate"
+        [subtitle]="'ذهن خلوت، مسیر روشن' | aioTranslate"
+        [navigationLabel]="'بخش‌های برنامه‌ریز' | aioTranslate"
         [tabs]="links"
       />
       <router-outlet />

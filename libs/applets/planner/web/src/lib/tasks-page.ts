@@ -24,6 +24,7 @@ import {
   toIsoDate,
 } from '@all-in-one/applets/planner/contracts';
 import {
+  AioTranslate,
   AioButton,
   AioCheckbox,
   AioCollapsibleDirectives,
@@ -34,17 +35,13 @@ import {
   AioIcon,
   AioInputGroupDirectives,
   AioSkeleton,
-  aioToast,
   provideIcons,
   AioEmptyState,
   AioSkeletonLines,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
-import {
-  apiErrorMessage,
-  AuthStore,
-  faDate,
-  faNumber,
-} from '@all-in-one/web/shared';
+import { apiErrorMessage, AuthStore } from '@all-in-one/web/shared';
 import {
   lucideChevronDown,
   lucideCircleCheckBig,
@@ -108,6 +105,7 @@ const DONE_DAYS = 30;
     TaskDetail,
     AioEmptyState,
     AioSkeletonLines,
+    AioTranslate,
   ],
   providers: [
     provideIcons({
@@ -132,7 +130,7 @@ const DONE_DAYS = 30;
         variant="ghost"
         class="h-auto min-h-11 flex-1 justify-start gap-3 px-2 text-start"
         (click)="listsOpen.set(true)"
-        aria-label="انتخاب فهرست"
+        [attr.aria-label]="'انتخاب فهرست' | aioTranslate"
       >
         <aio-icon name="lucideMenu" class="text-primary" />
         <span class="flex min-w-0 flex-1 flex-col">
@@ -144,7 +142,7 @@ const DONE_DAYS = 30;
                 aria-hidden="true"
               ></span>
             } @else {
-              {{ title() }}
+              {{ title() | aioTranslate }}
             }
           </span>
           <span class="text-muted-foreground min-h-6 text-sm font-normal">
@@ -155,7 +153,7 @@ const DONE_DAYS = 30;
                 aria-hidden="true"
               ></span>
             } @else {
-              {{ subtitle() }}
+              {{ subtitle() | aioTranslate }}
             }
           </span>
         </span>
@@ -188,10 +186,12 @@ const DONE_DAYS = 30;
           class="h-11"
           autocomplete="off"
           enterkeyhint="done"
-          [placeholder]="'افزودن به «' + title() + '»؛ #برچسب !۱ فردا'"
+          [placeholder]="
+            'افزودن به «' + title() + '»؛ #برچسب !۱ فردا' | aioTranslate
+          "
           [value]="quickTitle()"
           (input)="quickTitle.set($any($event.target).value)"
-          aria-label="عنوان کار جدید"
+          [attr.aria-label]="'عنوان کار جدید' | aioTranslate"
         />
       </form>
       <button
@@ -202,7 +202,7 @@ const DONE_DAYS = 30;
         [attr.aria-expanded]="recurrenceOpen()"
         (click)="recurrenceOpen.set(!recurrenceOpen())"
       >
-        ↻ تنظیم تکرار کار جدید
+        {{ '↻ تنظیم تکرار کار جدید' | aioTranslate }}
       </button>
       @if (recurrenceOpen()) {
         <planner-recurrence-editor
@@ -255,7 +255,7 @@ const DONE_DAYS = 30;
           class="text-destructive self-start"
           (click)="emptyTrash()"
         >
-          خالی کردن سطل زباله
+          {{ 'خالی کردن سطل زباله' | aioTranslate }}
         </button>
       } @else {
         <ng-container
@@ -270,14 +270,19 @@ const DONE_DAYS = 30;
       }
     } @else {
       @for (group of groups(); track group.key) {
-        <section class="flex flex-col gap-2" [attr.aria-label]="group.label">
+        <section
+          class="flex flex-col gap-2"
+          [attr.aria-label]="group.label | aioTranslate"
+        >
           <h2
             class="flex items-center justify-between px-1 text-sm font-semibold"
             [class.text-destructive]="group.overdue"
             [class.text-muted-foreground]="!group.overdue"
           >
-            <span>{{ group.label }}</span>
-            <span class="font-normal">{{ fa(group.tasks.length) }}</span>
+            <span>{{ group.label | aioTranslate }}</span>
+            <span class="font-normal">{{
+              fa(group.tasks.length) | aioTranslate
+            }}</span>
           </h2>
           <ul class="glass divide-border/60 flex flex-col divide-y rounded-2xl">
             @for (task of group.tasks; track task.id) {
@@ -313,7 +318,7 @@ const DONE_DAYS = 30;
             class="glass text-muted-foreground flex items-center gap-3 rounded-2xl p-4 text-sm"
           >
             <aio-icon name="lucideCircleCheckBig" class="text-primary" />
-            همه کارهای این فهرست انجام شده. آفرین!
+            {{ 'همه کارهای این فهرست انجام شده. آفرین!' | aioTranslate }}
           </div>
         }
       }
@@ -324,7 +329,9 @@ const DONE_DAYS = 30;
             aioCollapsibleTrigger
             class="text-muted-foreground flex min-h-11 w-full items-center justify-between px-1 text-sm font-semibold"
           >
-            <span>انجام‌شده، {{ fa(completed().length) }}</span>
+            <span>{{
+              'انجام‌شده، {0}' | aioTranslate: [fa(completed().length)]
+            }}</span>
             <aio-icon
               name="lucideChevronDown"
               size="sm"
@@ -351,8 +358,8 @@ const DONE_DAYS = 30;
       <div
         class="glass rounded-2xl"
         aioEmptyState
-        [title]="title"
-        [description]="text"
+        [title]="title | aioTranslate"
+        [description]="text | aioTranslate"
         [level]="2"
         icon="lucideCircleCheckBig"
         iconClass="text-primary"
@@ -371,8 +378,8 @@ const DONE_DAYS = 30;
           <span
             role="img"
             class="text-muted-foreground flex size-5 items-center justify-center"
-            aria-label="انجامش نمی‌دهم"
-            title="انجامش نمی‌دهم"
+            [attr.aria-label]="'انجامش نمی‌دهم' | aioTranslate"
+            [title]="'انجامش نمی‌دهم' | aioTranslate"
             ><aio-icon name="lucideCircleSlash" size="sm"
           /></span>
         } @else {
@@ -402,20 +409,20 @@ const DONE_DAYS = 30;
                 @if (m.list) {
                   <span class="flex items-center gap-1">
                     <span [class]="'size-2 rounded-full ' + m.dot"></span
-                    >{{ m.list }}
-                  </span>
+                    >{{ m.list | aioTranslate }}</span
+                  >
                 }
                 @if (m.items) {
                   <span class="flex items-center gap-0.5"
                     ><aio-icon name="lucideListChecks" size="xs" />{{
-                      m.items
+                      m.items | aioTranslate
                     }}</span
                   >
                 }
                 @if (task.commentCount) {
                   <span class="flex items-center gap-0.5"
                     ><aio-icon name="lucideMessageSquare" size="xs" />{{
-                      fa(task.commentCount)
+                      fa(task.commentCount) | aioTranslate
                     }}</span
                   >
                 }
@@ -429,9 +436,12 @@ const DONE_DAYS = 30;
             class="text-muted-foreground flex shrink-0 items-center gap-1 text-xs"
             [class.text-destructive]="isOverdue(task)"
           >
-            {{ when(task) }}
+            {{ when(task) | aioTranslate }}
             @if (task.repeatRule && !task.recurrenceNeedsReview) {
-              <span role="img" aria-label="کار تکراری" title="کار تکراری"
+              <span
+                role="img"
+                [attr.aria-label]="'کار تکراری' | aioTranslate"
+                [title]="'کار تکراری' | aioTranslate"
                 ><aio-icon name="lucideRepeat2" size="xs"
               /></span>
             }
@@ -442,7 +452,7 @@ const DONE_DAYS = 30;
 
     <aio-dialog
       [(open)]="listsOpen"
-      title="فهرست‌ها"
+      [title]="'فهرست‌ها' | aioTranslate"
       contentClass="applet-planner sm:max-w-md"
     >
       <ng-template aioDialogBody>
@@ -463,8 +473,10 @@ const DONE_DAYS = 30;
     <aio-dialog
       [open]="!!selected()"
       (openChange)="$event || selectedId.set(null)"
-      title="جزئیات کار"
-      [description]="selected() ? listName(selected()!.listId) : ''"
+      [title]="'جزئیات کار' | aioTranslate"
+      [description]="
+        (selected() ? listName(selected()!.listId) : '') | aioTranslate
+      "
       contentClass="applet-planner sm:max-w-lg"
     >
       <ng-template aioDialogBody>
@@ -486,7 +498,7 @@ const DONE_DAYS = 30;
           class="w-full rounded-[12px]"
           (click)="selectedId.set(null)"
         >
-          بستن جزئیات
+          {{ 'بستن جزئیات' | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>
@@ -494,7 +506,7 @@ const DONE_DAYS = 30;
     <aio-dialog
       [open]="!!settingsListId()"
       (openChange)="$event || settingsListId.set(null)"
-      title="تنظیم فهرست"
+      [title]="'تنظیم فهرست' | aioTranslate"
       contentClass="applet-planner sm:max-w-md"
     >
       <ng-template aioDialogBody>
@@ -512,7 +524,7 @@ const DONE_DAYS = 30;
     <aio-dialog
       [open]="!!editingTag()"
       (openChange)="$event || editingTag.set(null)"
-      [title]="'برچسب #' + (editingTag()?.name ?? '')"
+      [title]="'برچسب #' + (editingTag()?.name ?? '') | aioTranslate"
       contentClass="applet-planner sm:max-w-md"
     >
       <ng-template aioDialogBody>
@@ -528,6 +540,10 @@ const DONE_DAYS = 30;
   host: { class: 'flex flex-col gap-5' },
 })
 export class TasksPage {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   private readonly api = inject(PlannerApi);
   private readonly confirm = inject(AioConfirm);
   private readonly auth = inject(AuthStore);
@@ -815,14 +831,16 @@ export class TasksPage {
 
   protected readonly subtitle = computed(() => {
     const v = this.view();
-    if (v === 'trash') return `${faNumber(this.trash().length)} کار`;
+    if (v === 'trash') return `${this.locale.number(this.trash().length)} کار`;
     if (v === 'completed') return '۳۰ روز گذشته';
     const open = this.groups().reduce((n, g) => n + g.tasks.length, 0);
     const date =
       v === 'today' || v === 'tomorrow'
         ? `${this.dateLabel(v === 'today' ? this.today : this.tomorrow)}، `
         : '';
-    return open ? `${date}${faNumber(open)} کار مانده` : `${date}کاری نمانده`;
+    return open
+      ? `${date}${this.locale.number(open)} کار مانده`
+      : `${date}کاری نمانده`;
   });
 
   protected readonly emptyTitle = computed(() =>
@@ -831,7 +849,7 @@ export class TasksPage {
       : 'فهرست خالی است',
   );
 
-  protected readonly fa = (n: number) => faNumber(n);
+  protected readonly fa = (n: number) => this.locale.number(n);
 
   protected isOverdue(task: PlannerTask) {
     return (
@@ -857,7 +875,7 @@ export class TasksPage {
       ? this.lists().find((l) => l.id === task.listId)
       : undefined;
     const items = task.checklist.length
-      ? `${faNumber(task.checklist.filter((i) => i.done).length)}/${faNumber(task.checklist.length)}`
+      ? `${this.locale.number(task.checklist.filter((i) => i.done).length)}/${this.locale.number(task.checklist.length)}`
       : '';
     if (!list && !items && !task.commentCount && !task.tags.length) return null;
     return {
@@ -868,7 +886,11 @@ export class TasksPage {
   }
 
   protected dateLabel(iso: string) {
-    return faDate(iso, { weekday: 'long', day: 'numeric', month: 'long' });
+    return this.locale.date(iso, {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
   }
 
   protected dayName(iso: string) {
@@ -879,7 +901,7 @@ export class TasksPage {
   }
 
   private faTime(time: string) {
-    return time.replace(/\d/g, (d) => faNumber(Number(d)));
+    return time.replace(/\d/g, (d) => this.locale.number(Number(d)));
   }
 
   /** Trailing meta of a row: date (unless it is the list's own day) and time. */
@@ -894,12 +916,12 @@ export class TasksPage {
           ? 'امروز'
           : task.date === this.tomorrow
             ? 'فردا'
-            : faDate(task.date, { day: 'numeric', month: 'short' }),
+            : this.locale.date(task.date, { day: 'numeric', month: 'short' }),
       );
     if (task.time) parts.push(this.faTime(task.time));
     if (task.recurrenceNeedsReview) parts.push('نیازمند تأیید برنامه تکرار');
     if (task.durationMin)
-      parts.push(task.durationMin.toLocaleString('fa-IR') + ' دقیقه');
+      parts.push(this.locale.number(task.durationMin) + ' دقیقه');
     return parts.join('، ');
   }
 
@@ -957,14 +979,14 @@ export class TasksPage {
         this.datedRes.reload();
       }
       if (!this.matches(task, this.view()))
-        aioToast.success(
+        this.notifications.success(
           task.date
             ? `به «${this.dayName(task.date)}» اضافه شد`
             : `به «${this.listName(task.listId)}» اضافه شد`,
         );
       this.reloadMeta();
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
@@ -977,7 +999,7 @@ export class TasksPage {
     });
     try {
       this.replace(await this.api.updateTask(task.id, { done }));
-      if (done) aioToast.success('کار انجام شد', task.title);
+      if (done) this.notifications.success('کار انجام شد', task.title);
       this.listsRes.reload();
       if (task.repeatRule) {
         this.openRes.reload();
@@ -986,7 +1008,7 @@ export class TasksPage {
       }
     } catch (error) {
       this.replace(task);
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
@@ -1009,13 +1031,13 @@ export class TasksPage {
       await this.api.trashTask(task.id);
       this.tasks.update((list) => list.filter((t) => t.id !== task.id));
       this.listsRes.reload();
-      aioToast.action(
+      this.notifications.action(
         'به سطل زباله رفت',
         'بازگرداندن',
         () => void this.restore(task),
       );
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
@@ -1029,7 +1051,7 @@ export class TasksPage {
       ]);
       this.listsRes.reload();
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
@@ -1045,7 +1067,7 @@ export class TasksPage {
       await this.api.purgeTask(task.id);
       this.trash.update((list) => list.filter((t) => t.id !== task.id));
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
@@ -1061,7 +1083,7 @@ export class TasksPage {
       await this.api.emptyTrash();
       this.trash.set([]);
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 

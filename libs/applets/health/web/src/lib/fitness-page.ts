@@ -38,6 +38,7 @@ import {
 } from '@all-in-one/applets/health/contracts';
 import { addDays, toIsoDate } from '@all-in-one/shared/schemas';
 import {
+  AioTranslate,
   AioAccordionContent,
   AioAccordionDirectives,
   AioAccordionTrigger,
@@ -55,7 +56,6 @@ import {
   AioNativeSelect,
   AioNativeSelectOption,
   AioTextarea,
-  aioToast,
   AioToggleGroupDirectives,
   provideIcons,
   AioFormField,
@@ -64,8 +64,10 @@ import {
   AioSkeletonLines,
   AioSelectField,
   AioNumberField,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
-import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
+import { apiErrorMessage, faDate } from '@all-in-one/web/shared';
 import {
   lucideActivity,
   lucideBike,
@@ -115,6 +117,7 @@ type CategoryFilter = ActivityCategory | 'all';
     AioSkeletonLines,
     AioSelectField,
     AioNumberField,
+    AioTranslate,
   ],
   providers: [
     provideIcons({
@@ -138,12 +141,14 @@ type CategoryFilter = ActivityCategory | 'all';
     <div class="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-2">
       <section class="health-workout-banner min-h-72 lg:col-span-2">
         <div class="flex min-h-60 min-w-0 flex-1 flex-col items-start gap-3">
-          <p class="health-metric-label">با ریتم خودت حرکت کن</p>
+          <p class="health-metric-label">
+            {{ 'با ریتم خودت حرکت کن' | aioTranslate }}
+          </p>
           @if (routines.isLoading() && !routines.hasValue()) {
             <div
               class="flex w-full flex-col gap-3"
               role="status"
-              aria-label="در حال دریافت برنامه تمرین"
+              [attr.aria-label]="'در حال دریافت برنامه تمرین' | aioTranslate"
               aioSkeletonLines
               [lines]="[
                 'h-14 w-full max-w-sm rounded-xl',
@@ -153,32 +158,48 @@ type CategoryFilter = ActivityCategory | 'all';
               ]"
             ></div>
           } @else if (routines.value()?.[0]; as routine) {
-            <h2 class="min-h-14 text-2xl font-bold">{{ routine.title }}</h2>
+            <h2 class="min-h-14 text-2xl font-bold">
+              {{ routine.title | aioTranslate }}
+            </h2>
             <p class="health-metric-label">
-              {{ fa(routine.minutes) }} دقیقه،
-              {{ fa(routine.days[0]?.exercises?.length ?? 0) }} حرکت در جلسه اول
+              {{
+                '{0} دقیقه، {1} حرکت در جلسه اول'
+                  | aioTranslate
+                    : [
+                        fa(routine.minutes),
+                        fa(routine.days[0]?.exercises?.length ?? 0),
+                      ]
+              }}
             </p>
             <button
               aioBtn
               class="health-primary-action"
               (click)="startSession(routine, 0)"
             >
-              باز کردن جلسه اول
+              {{ 'باز کردن جلسه اول' | aioTranslate }}
             </button>
             <p class="text-muted-foreground text-xs">
-              هر ست را طبق برنامه انجام بده و با «انجام دادم» جلو برو.
+              {{
+                'هر ست را طبق برنامه انجام بده و با «انجام دادم» جلو برو.'
+                  | aioTranslate
+              }}
             </p>
           } @else {
-            <h2 class="min-h-14 text-2xl font-bold">یک برنامه، مخصوص خودت.</h2>
+            <h2 class="min-h-14 text-2xl font-bold">
+              {{ 'یک برنامه، مخصوص خودت.' | aioTranslate }}
+            </h2>
             <p class="health-metric-label">
-              خانه، TRX یا باشگاه؛ متناسب با سطح و زمانی که داری.
+              {{
+                'خانه، TRX یا باشگاه؛ متناسب با سطح و زمانی که داری.'
+                  | aioTranslate
+              }}
             </p>
             <button
               aioBtn
               class="health-primary-action"
               (click)="trainingError.set(''); creatorOpen.set(true)"
             >
-              ساخت برنامه شخصی
+              {{ 'ساخت برنامه شخصی' | aioTranslate }}
             </button>
           }
         </div>
@@ -190,29 +211,34 @@ type CategoryFilter = ActivityCategory | 'all';
       <section aioCard class="lg:col-span-2">
         <div aioCardContent class="health-topline flex-wrap pt-6">
           <div>
-            <p class="health-metric-label">فعالیت این هفته</p>
+            <p class="health-metric-label">
+              {{ 'فعالیت این هفته' | aioTranslate }}
+            </p>
             <p class="health-small-number">
               {{
-                week.isLoading()
+                (week.isLoading()
                   ? '…'
                   : week.error()
                     ? '—'
                     : fa(week.value()?.minutes ?? 0)
-              }}
-              <span class="text-sm font-normal text-muted-foreground"
-                >دقیقه از ۱۵۰</span
-              >
+                ) | aioTranslate
+              }}<span class="text-sm font-normal text-muted-foreground">{{
+                'دقیقه از ۱۵۰' | aioTranslate
+              }}</span>
             </p>
           </div>
           <div>
-            <p class="health-metric-label">جلسه ثبت‌شده</p>
+            <p class="health-metric-label">
+              {{ 'جلسه ثبت‌شده' | aioTranslate }}
+            </p>
             <p class="health-small-number">
               {{
-                week.isLoading()
+                (week.isLoading()
                   ? '…'
                   : week.error()
                     ? '—'
                     : fa(week.value()?.sessions ?? 0)
+                ) | aioTranslate
               }}
             </p>
           </div>
@@ -221,7 +247,7 @@ type CategoryFilter = ActivityCategory | 'all';
             class="health-soft-action"
             (click)="openLog('walking')"
           >
-            ثبت فعالیت
+            {{ 'ثبت فعالیت' | aioTranslate }}
           </button>
         </div>
       </section>
@@ -236,32 +262,34 @@ type CategoryFilter = ActivityCategory | 'all';
       } @else {
         <section
           class="flex flex-col gap-3 lg:col-span-2"
-          aria-label="برنامه‌های شخصی"
+          [attr.aria-label]="'برنامه‌های شخصی' | aioTranslate"
         >
           @if (routines.error()) {
-            <p role="alert">دریافت برنامه‌ها ممکن نشد.</p>
+            <p role="alert">
+              {{ 'دریافت برنامه‌ها ممکن نشد.' | aioTranslate }}
+            </p>
             <button aioBtn variant="outline" (click)="routines.reload()">
-              تلاش دوباره
+              {{ 'تلاش دوباره' | aioTranslate }}
             </button>
           }
           @for (routine of routines.value() ?? []; track routine.id) {
             <section aioCard>
               <div
                 aioCardHeading
-                [title]="routine.title"
+                [title]="routine.title | aioTranslate"
                 [level]="3"
                 [description]="
                   fa(routine.weeks) +
-                  ' هفته، ' +
-                  fa(routine.daysPerWeek) +
-                  ' جلسه در هفته، ' +
-                  trainingGoalLabels[routine.goal]
+                    ' هفته، ' +
+                    fa(routine.daysPerWeek) +
+                    ' جلسه در هفته، ' +
+                    trainingGoalLabels[routine.goal] | aioTranslate
                 "
               ></div>
               <div aioCardContent class="flex flex-col gap-3">
-                <h4 class="font-semibold">گرم کردن</h4>
+                <h4 class="font-semibold">{{ 'گرم کردن' | aioTranslate }}</h4>
                 @for (line of routine.warmup; track line) {
-                  <p class="text-sm">{{ line }}</p>
+                  <p class="text-sm">{{ line | aioTranslate }}</p>
                 }
                 <div aioAccordion type="single">
                   @for (
@@ -271,7 +299,7 @@ type CategoryFilter = ActivityCategory | 'all';
                   ) {
                     <div aioAccordionItem>
                       <aio-accordion-trigger>{{
-                        session.title
+                        session.title | aioTranslate
                       }}</aio-accordion-trigger
                       ><aio-accordion-content>
                         <div class="flex flex-col gap-3">
@@ -284,17 +312,21 @@ type CategoryFilter = ActivityCategory | 'all';
                                 variant="link"
                                 (click)="showExercise(item.exerciseSlug)"
                               >
-                                {{ exerciseName(item.exerciseSlug) }}
-                              </button>
-                              <span class="text-sm"
-                                >{{ fa(item.sets) }} ست،
                                 {{
-                                  item.seconds
-                                    ? fa(item.seconds) + ' ثانیه'
-                                    : fa(item.reps) + ' تکرار'
-                                }}، {{ fa(item.restSeconds) }} ثانیه
-                                استراحت</span
-                              >
+                                  exerciseName(item.exerciseSlug) | aioTranslate
+                                }}
+                              </button>
+                              <span class="text-sm">{{
+                                '{0} ست، {1}، {2} ثانیه استراحت'
+                                  | aioTranslate
+                                    : [
+                                        fa(item.sets),
+                                        item.seconds
+                                          ? fa(item.seconds) + ' ثانیه'
+                                          : fa(item.reps) + ' تکرار',
+                                        fa(item.restSeconds),
+                                      ]
+                              }}</span>
                             </div>
                           }
                           <button
@@ -302,31 +334,35 @@ type CategoryFilter = ActivityCategory | 'all';
                             variant="outline"
                             (click)="startSession(routine, dayIndex)"
                           >
-                            شروع این جلسه
+                            {{ 'شروع این جلسه' | aioTranslate }}
                           </button>
                         </div>
                       </aio-accordion-content>
                     </div>
                   }
                 </div>
-                <h4 class="font-semibold">سرد کردن و پیشرفت</h4>
+                <h4 class="font-semibold">
+                  {{ 'سرد کردن و پیشرفت' | aioTranslate }}
+                </h4>
                 @for (line of routine.cooldown; track line) {
-                  <p class="text-sm">{{ line }}</p>
+                  <p class="text-sm">{{ line | aioTranslate }}</p>
                 }
                 @for (line of routine.progression; track line) {
-                  <p class="text-muted-foreground text-sm">{{ line }}</p>
+                  <p class="text-muted-foreground text-sm">
+                    {{ line | aioTranslate }}
+                  </p>
                 }
               </div>
               <div aioCardFooter class="gap-2">
                 <button aioBtn variant="outline" (click)="editRoutine(routine)">
-                  ویرایش حرکات و ست‌ها</button
+                  {{ 'ویرایش حرکات و ست‌ها' | aioTranslate }}</button
                 ><button
                   aioBtn
                   variant="ghost"
                   (click)="removeRoutine(routine)"
                   [disabled]="trainingBusy()"
                 >
-                  حذف برنامه
+                  {{ 'حذف برنامه' | aioTranslate }}
                 </button>
               </div>
             </section>
@@ -336,38 +372,51 @@ type CategoryFilter = ActivityCategory | 'all';
         <section aioCard>
           <div
             aioCardHeading
-            title="پیشرفت تمرین در ۴ هفته اخیر"
+            [title]="'پیشرفت تمرین در ۴ هفته اخیر' | aioTranslate"
             [level]="2"
-            description="فقط ست‌های واقعاً ثبت‌شده؛ حجم بار، وزن بدن را حساب نمی‌کند."
+            [description]="
+              'فقط ست‌های واقعاً ثبت‌شده؛ حجم بار، وزن بدن را حساب نمی‌کند.'
+                | aioTranslate
+            "
           ></div>
           <div aioCardContent class="flex flex-col gap-3">
             @if (progress.isLoading()) {
-              <p role="status">در حال دریافت…</p>
+              <p role="status">{{ 'در حال دریافت…' | aioTranslate }}</p>
             }
             @if (progress.error()) {
-              <p role="alert">گزارش دریافت نشد.</p>
+              <p role="alert">{{ 'گزارش دریافت نشد.' | aioTranslate }}</p>
               <button aioBtn variant="outline" (click)="progress.reload()">
-                تلاش دوباره
+                {{ 'تلاش دوباره' | aioTranslate }}
               </button>
             }
             @if (progress.value(); as p) {
               <p>
-                {{ fa(p.sessions) }} جلسه، {{ fa(p.totalSets) }} ست،
-                {{ fa(p.volumeKg) }} کیلوگرم مجموع وزنه × تکرار
+                {{
+                  '{0} جلسه، {1} ست، {2} کیلوگرم مجموع وزنه × تکرار'
+                    | aioTranslate
+                      : [fa(p.sessions), fa(p.totalSets), fa(p.volumeKg)]
+                }}
               </p>
               <div class="flex flex-wrap gap-2">
                 @for (m of p.muscles; track m.muscle) {
-                  <span aioBadge variant="secondary"
-                    >{{ muscleLabels[m.muscle] }}: {{ fa(m.sets) }} ست</span
-                  >
+                  <span aioBadge variant="secondary">{{
+                    '{0}: {1} ست'
+                      | aioTranslate: [muscleLabels[m.muscle], fa(m.sets)]
+                  }}</span>
                 }
               </div>
               @for (entry of p.exercises; track entry.exerciseSlug) {
                 <p class="text-sm">
-                  {{ exerciseName(entry.exerciseSlug) }}:
-                  {{ fa(entry.sets) }} ست
+                  {{
+                    '{0}: {1} ست'
+                      | aioTranslate
+                        : [exerciseName(entry.exerciseSlug), fa(entry.sets)]
+                  }}
                   @if (entry.bestWeightKg > 0) {
-                    ، بیشترین وزنه {{ fa(entry.bestWeightKg) }} کیلوگرم
+                    {{
+                      '، بیشترین وزنه {0} کیلوگرم'
+                        | aioTranslate: [fa(entry.bestWeightKg)]
+                    }}
                   }
                 </p>
               }
@@ -378,12 +427,18 @@ type CategoryFilter = ActivityCategory | 'all';
         <section aioCard>
           <div
             aioCardHeading
-            title="بانک حرکت‌ها"
+            [title]="'بانک حرکت‌ها' | aioTranslate"
             [level]="2"
-            description="اجرای مرحله‌به‌مرحله، اشتباهات رایج و حرکت جایگزین؛ ویدئوها به‌مرور اضافه می‌شوند."
+            [description]="
+              'اجرای مرحله‌به‌مرحله، اشتباهات رایج و حرکت جایگزین؛ ویدئوها به‌مرور اضافه می‌شوند.'
+                | aioTranslate
+            "
           ></div>
           <div aioCardContent class="flex flex-col gap-3">
-            <aio-form-field label="جست‌وجوی حرکت" controlId="exercise-search">
+            <aio-form-field
+              [label]="'جست‌وجوی حرکت' | aioTranslate"
+              controlId="exercise-search"
+            >
               <input
                 aioInput
                 id="exercise-search"
@@ -391,25 +446,27 @@ type CategoryFilter = ActivityCategory | 'all';
               />
             </aio-form-field>
             <aio-select-field
-              label="تجهیزات"
+              [label]="'تجهیزات' | aioTranslate"
               controlId="exercise-equipment"
               [value]="exerciseSearch().equipment"
               [options]="equipment"
               [optionLabels]="equipmentLabels"
-              emptyLabel="همه"
+              [emptyLabel]="'همه' | aioTranslate"
               (valueChange)="setExerciseEquipment($event)"
             />
             @if (exerciseCatalog.isLoading()) {
-              <p role="status">در حال دریافت حرکت‌ها…</p>
+              <p role="status">{{ 'در حال دریافت حرکت‌ها…' | aioTranslate }}</p>
             }
             @if (exerciseCatalog.error()) {
-              <p role="alert">بانک حرکت‌ها دریافت نشد.</p>
+              <p role="alert">
+                {{ 'بانک حرکت‌ها دریافت نشد.' | aioTranslate }}
+              </p>
               <button
                 aioBtn
                 variant="outline"
                 (click)="exerciseCatalog.reload()"
               >
-                تلاش دوباره
+                {{ 'تلاش دوباره' | aioTranslate }}
               </button>
             }
             @for (exercise of displayedExercises(); track exercise.slug) {
@@ -419,7 +476,7 @@ type CategoryFilter = ActivityCategory | 'all';
                 class="min-h-11 justify-between"
                 (click)="selectedExercise.set(exercise)"
               >
-                <span>{{ exercise.name }}</span
+                <span>{{ exercise.name | aioTranslate }}</span
                 ><span class="text-muted-foreground text-xs"
                   >{{ equipmentLabels[exercise.equipment] }}،
                   {{ muscleLabels[exercise.muscle] }}</span
@@ -432,9 +489,16 @@ type CategoryFilter = ActivityCategory | 'all';
                 variant="outline"
                 (click)="exerciseLimit.update(moreExercises)"
               >
-                نمایش حرکت‌های بیشتر ({{
-                  fa(filteredExercises().length - displayedExercises().length)
-                }})
+                {{
+                  'نمایش حرکت‌های بیشتر ({0})'
+                    | aioTranslate
+                      : [
+                          fa(
+                            filteredExercises().length -
+                              displayedExercises().length
+                          ),
+                        ]
+                }}
               </button>
             }
             @if (
@@ -443,14 +507,16 @@ type CategoryFilter = ActivityCategory | 'all';
               !filteredExercises().length
             ) {
               <p class="text-muted-foreground">
-                حرکتی با این مشخصات موجود نیست.
+                {{ 'حرکتی با این مشخصات موجود نیست.' | aioTranslate }}
               </p>
             }
           </div>
         </section>
 
         <section class="flex flex-col gap-3">
-          <h2 class="text-lg font-semibold">چه ورزشی کردید؟</h2>
+          <h2 class="text-lg font-semibold">
+            {{ 'چه ورزشی کردید؟' | aioTranslate }}
+          </h2>
           <div
             aioToggleGroup
             type="single"
@@ -464,7 +530,7 @@ type CategoryFilter = ActivityCategory | 'all';
               value="all"
               class="glass data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-11 rounded-full px-4"
             >
-              همه
+              {{ 'همه' | aioTranslate }}
             </button>
             @for (c of categories; track c) {
               <button
@@ -472,7 +538,7 @@ type CategoryFilter = ActivityCategory | 'all';
                 [value]="c"
                 class="glass data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-11 rounded-full px-4"
               >
-                {{ categoryLabels[c] }}
+                {{ categoryLabels[c] | aioTranslate }}
               </button>
             }
           </div>
@@ -485,17 +551,19 @@ type CategoryFilter = ActivityCategory | 'all';
                 (click)="openLog(a.slug)"
               >
                 <aio-icon [name]="a.icon" class="text-primary" />
-                <span class="text-xs">{{ a.name }}</span>
+                <span class="text-xs">{{ a.name | aioTranslate }}</span>
               </button>
             }
           </div>
         </section>
 
         <section class="flex flex-col gap-3">
-          <h2 class="text-lg font-semibold">ورزش‌های اخیر</h2>
+          <h2 class="text-lg font-semibold">
+            {{ 'ورزش‌های اخیر' | aioTranslate }}
+          </h2>
           @if ((workouts.value() ?? []).length === 0) {
             <p class="text-muted-foreground text-sm">
-              در دو هفته اخیر ورزشی ثبت نشده است.
+              {{ 'در دو هفته اخیر ورزشی ثبت نشده است.' | aioTranslate }}
             </p>
           } @else {
             <div aioItemGroup class="flex flex-col gap-2">
@@ -503,7 +571,10 @@ type CategoryFilter = ActivityCategory | 'all';
                 <div aioItem variant="outline" class="glass rounded-2xl">
                   <div aioItemContent>
                     <div aioItemTitle>
-                      {{ w.activityName }}، {{ fa(w.durationMin) }} دقیقه
+                      {{
+                        '{0}، {1} دقیقه'
+                          | aioTranslate: [w.activityName, fa(w.durationMin)]
+                      }}
                     </div>
                     <div aioItemDescription class="flex flex-wrap gap-1.5">
                       <span>{{
@@ -511,20 +582,20 @@ type CategoryFilter = ActivityCategory | 'all';
                           weekday: 'long',
                           day: 'numeric',
                           month: 'long',
-                        })
+                        }) | aioTranslate
                       }}</span>
                       <span aioBadge variant="secondary">{{
-                        intensityLabels[w.intensity]
+                        intensityLabels[w.intensity] | aioTranslate
                       }}</span>
                       @if (w.calories) {
-                        <span aioBadge variant="outline"
-                          >{{ fa(w.calories) }} کالری</span
-                        >
+                        <span aioBadge variant="outline">{{
+                          '{0} کالری' | aioTranslate: [fa(w.calories)]
+                        }}</span>
                       }
                       @if (w.distanceKm) {
-                        <span aioBadge variant="outline"
-                          >{{ fa(w.distanceKm) }} کیلومتر</span
-                        >
+                        <span aioBadge variant="outline">{{
+                          '{0} کیلومتر' | aioTranslate: [fa(w.distanceKm)]
+                        }}</span>
                       }
                     </div>
                   </div>
@@ -534,7 +605,7 @@ type CategoryFilter = ActivityCategory | 'all';
                       variant="ghost"
                       size="icon"
                       (click)="removeWorkout(w)"
-                      aria-label="حذف"
+                      [attr.aria-label]="'حذف' | aioTranslate"
                     >
                       <aio-icon name="lucideTrash2" size="sm" />
                     </button>
@@ -548,8 +619,11 @@ type CategoryFilter = ActivityCategory | 'all';
         <section class="flex flex-col gap-4 lg:col-span-2">
           <div
             aioSectionHeading
-            title="تمرین‌های آماده"
-            description="از یک جلسه ساده شروع کن؛ لازم نیست از روز اول سخت بگیری."
+            [title]="'تمرین‌های آماده' | aioTranslate"
+            [description]="
+              'از یک جلسه ساده شروع کن؛ لازم نیست از روز اول سخت بگیری.'
+                | aioTranslate
+            "
             [level]="2"
             titleClass="health-section-heading"
             descriptionClass="health-metric-label mt-1"
@@ -563,11 +637,14 @@ type CategoryFilter = ActivityCategory | 'all';
                     ><aio-icon name="lucideDumbbell"
                   /></span>
                   <h3 aioCardTitle class="text-base leading-7">
-                    {{ program.title }}
+                    {{ program.title | aioTranslate }}
                   </h3>
                   <p aioCardDescription>
-                    {{ fa(program.minutes) }} دقیقه،
-                    {{ fa(program.exercises.length) }} حرکت
+                    {{
+                      '{0} دقیقه، {1} حرکت'
+                        | aioTranslate
+                          : [fa(program.minutes), fa(program.exercises.length)]
+                    }}
                   </p>
                 </div>
                 <div aioCardFooter>
@@ -576,7 +653,7 @@ type CategoryFilter = ActivityCategory | 'all';
                     class="health-soft-action w-full"
                     (click)="selectedProgram.set(program)"
                   >
-                    دیدن برنامه
+                    {{ 'دیدن برنامه' | aioTranslate }}
                   </button>
                 </div>
               </section>
@@ -589,23 +666,25 @@ type CategoryFilter = ActivityCategory | 'all';
     <aio-dialog
       [open]="selectedProgram() !== null"
       (openChange)="!$event && selectedProgram.set(null)"
-      [title]="selectedProgram()?.title ?? 'برنامه تمرین'"
+      [title]="selectedProgram()?.title ?? 'برنامه تمرین' | aioTranslate"
       contentClass="applet-health health-calm"
     >
       <ng-template aioDialogBody>
         @if (selectedProgram(); as program) {
           <div class="flex flex-col gap-5">
-            <p class="health-metric-label">{{ program.description }}</p>
+            <p class="health-metric-label">
+              {{ program.description | aioTranslate }}
+            </p>
             <ol class="flex flex-col gap-3">
               @for (exercise of program.exercises; track $index) {
                 <li class="flex gap-3 border-b border-border py-3">
                   <span class="health-icon-disc text-[var(--health-purple)]">{{
-                    fa($index + 1)
+                    fa($index + 1) | aioTranslate
                   }}</span>
                   <div
                     aioSectionHeading
-                    [title]="exercise.name"
-                    [description]="exerciseDetail(exercise)"
+                    [title]="exercise.name | aioTranslate"
+                    [description]="exerciseDetail(exercise) | aioTranslate"
                     [level]="3"
                     titleClass="font-semibold"
                     descriptionClass="health-metric-label"
@@ -615,7 +694,10 @@ type CategoryFilter = ActivityCategory | 'all';
               }
             </ol>
             <p class="text-muted-foreground text-xs">
-              این برنامه پیشنهادی است؛ فقط تمرینی را که انجام داده‌ای ثبت کن.
+              {{
+                'این برنامه پیشنهادی است؛ فقط تمرینی را که انجام داده‌ای ثبت کن.'
+                  | aioTranslate
+              }}
             </p>
           </div>
         }
@@ -626,15 +708,15 @@ type CategoryFilter = ActivityCategory | 'all';
           class="health-primary-action"
           (click)="logSelectedProgram()"
         >
-          این جلسه را انجام دادم؛ ثبت
+          {{ 'این جلسه را انجام دادم؛ ثبت' | aioTranslate }}
         </button></ng-template
       >
     </aio-dialog>
     <aio-dialog
       contentClass="applet-health health-calm"
       [(open)]="creatorOpen"
-      title="ساخت برنامه شخصی"
-      description="تجهیزات، هدف و زمان تمرین را انتخاب کنید."
+      [title]="'ساخت برنامه شخصی' | aioTranslate"
+      [description]="'تجهیزات، هدف و زمان تمرین را انتخاب کنید.' | aioTranslate"
     >
       <ng-template aioDialogBody>
         <form
@@ -643,7 +725,10 @@ type CategoryFilter = ActivityCategory | 'all';
           [formRoot]="routineForm"
           (submit)="$event.preventDefault(); generateRoutine()"
         >
-          <aio-form-field label="نام برنامه" controlId="routine-title">
+          <aio-form-field
+            [label]="'نام برنامه' | aioTranslate"
+            controlId="routine-title"
+          >
             <input
               aioInput
               id="routine-title"
@@ -652,7 +737,7 @@ type CategoryFilter = ActivityCategory | 'all';
           </aio-form-field>
           <div class="grid gap-3 sm:grid-cols-2">
             <aio-select-field
-              label="هدف تمرین"
+              [label]="'هدف تمرین' | aioTranslate"
               controlId="routine-goal"
               [value]="routineModel().goal"
               [options]="trainingGoals"
@@ -660,7 +745,7 @@ type CategoryFilter = ActivityCategory | 'all';
               (valueChange)="setRoutineGoal($event)"
             />
             <aio-select-field
-              label="سطح"
+              [label]="'سطح' | aioTranslate"
               controlId="routine-level"
               [value]="routineModel().level"
               [options]="trainingLevels"
@@ -668,7 +753,7 @@ type CategoryFilter = ActivityCategory | 'all';
               (valueChange)="setRoutineLevel($event)"
             />
           </div>
-          <aio-form-field label="تجهیزات در دسترس">
+          <aio-form-field [label]="'تجهیزات در دسترس' | aioTranslate">
             <div
               aioToggleGroup
               type="multiple"
@@ -684,39 +769,44 @@ type CategoryFilter = ActivityCategory | 'all';
                   [value]="eq"
                   class="min-h-11"
                 >
-                  {{ equipmentLabels[eq] }}
+                  {{ equipmentLabels[eq] | aioTranslate }}
                 </button>
               }
             </div>
           </aio-form-field>
           <div class="grid grid-cols-3 gap-3">
             <aio-number-field
-              label="جلسه در هفته"
+              [label]="'جلسه در هفته' | aioTranslate"
               controlId="routine-days"
               [field]="routineForm.daysPerWeek"
             />
             <aio-number-field
-              label="تعداد هفته"
+              [label]="'تعداد هفته' | aioTranslate"
               controlId="routine-weeks"
               [field]="routineForm.weeks"
             />
             <aio-number-field
-              label="دقیقه هر جلسه"
+              [label]="'دقیقه هر جلسه' | aioTranslate"
               controlId="routine-minutes"
               [field]="routineForm.minutes"
             />
           </div>
           @if (trainingError()) {
             <p role="alert" class="text-destructive text-sm">
-              {{ trainingError() }}
+              {{ trainingError() | aioTranslate }}
             </p>
           }
           <button aioBtn type="submit" [disabled]="trainingBusy()">
-            {{ trainingBusy() ? 'در حال ذخیره…' : 'ساخت و ذخیره برنامه' }}
+            {{
+              (trainingBusy() ? 'در حال ذخیره…' : 'ساخت و ذخیره برنامه')
+                | aioTranslate
+            }}
           </button>
           <p class="text-muted-foreground text-sm">
-            جلسات عضلات مشترک را با فاصله حداقل ۴۸ ساعت بچینید. تعداد جلسه،
-            زمان‌بندی تقویمی نیست.
+            {{
+              'جلسات عضلات مشترک را با فاصله حداقل ۴۸ ساعت بچینید. تعداد جلسه، زمان‌بندی تقویمی نیست.'
+                | aioTranslate
+            }}
           </p>
         </form>
       </ng-template>
@@ -725,7 +815,7 @@ type CategoryFilter = ActivityCategory | 'all';
       contentClass="applet-health health-calm"
       [open]="selectedExercise() !== null"
       (openChange)="!$event && selectedExercise.set(null)"
-      [title]="selectedExercise()?.name ?? 'آموزش حرکت'"
+      [title]="selectedExercise()?.name ?? 'آموزش حرکت' | aioTranslate"
     >
       <ng-template aioDialogBody>
         @if (selectedExercise(); as e) {
@@ -736,9 +826,9 @@ type CategoryFilter = ActivityCategory | 'all';
             </p>
             @if (e.secondaryMuscles.length) {
               <p class="text-muted-foreground text-sm">
-                عضلات کمکی:
+                {{ 'عضلات کمکی:' | aioTranslate }}
                 @for (m of e.secondaryMuscles; track m) {
-                  <span>{{ muscleLabels[m] }} </span>
+                  <span>{{ muscleLabels[m] | aioTranslate }}</span>
                 }
               </p>
             }
@@ -746,39 +836,46 @@ type CategoryFilter = ActivityCategory | 'all';
               <figure class="flex flex-col gap-2">
                 <img
                   [src]="guide.imageUrl"
-                  [alt]="'مراحل اجرای ' + e.name"
+                  [alt]="'مراحل اجرای ' + e.name | aioTranslate"
                   width="1400"
                   height="700"
                   loading="lazy"
                   class="h-auto max-h-80 w-full rounded-lg bg-white object-contain"
                 />
                 <figcaption class="text-muted-foreground text-sm">
-                  تصویر از راهنمای TRX، صفحه {{ fa(guide.page) }}
+                  {{
+                    'تصویر از راهنمای TRX، صفحه {0}'
+                      | aioTranslate: [fa(guide.page)]
+                  }}
                 </figcaption>
               </figure>
               <p class="text-sm">
-                در برنامهٔ مرجع: {{ fa(guide.sets) }} ست،
+                {{
+                  'در برنامهٔ مرجع: {0} ست،' | aioTranslate: [fa(guide.sets)]
+                }}
                 @if (guide.seconds) {
-                  {{ fa(guide.seconds) }} ثانیه
+                  {{ '{0} ثانیه' | aioTranslate: [fa(guide.seconds)] }}
                 } @else {
-                  {{ fa(guide.reps) }} تکرار
+                  {{ '{0} تکرار' | aioTranslate: [fa(guide.reps)] }}
                 }
                 @if (guide.eachSide) {
-                  برای هر سمت
+                  {{ 'برای هر سمت' | aioTranslate }}
                 }
-                ؛ {{ fa(guide.restSeconds) }} ثانیه استراحت. حجم تمرین را با سطح
-                و توان خود تنظیم کنید.
+                {{
+                  '؛ {0} ثانیه استراحت. حجم تمرین را با سطح و توان خود تنظیم کنید.'
+                    | aioTranslate: [fa(guide.restSeconds)]
+                }}
               </p>
             }
-            <h3 class="font-semibold">روش اجرا</h3>
+            <h3 class="font-semibold">{{ 'روش اجرا' | aioTranslate }}</h3>
             <ol class="list-inside list-decimal">
               @for (step of e.instructions; track step) {
-                <li class="mb-2">{{ step }}</li>
+                <li class="mb-2">{{ step | aioTranslate }}</li>
               }
             </ol>
-            <h3 class="font-semibold">اشتباهات رایج</h3>
+            <h3 class="font-semibold">{{ 'اشتباهات رایج' | aioTranslate }}</h3>
             @for (mistake of e.mistakes; track mistake) {
-              <p class="text-sm">{{ mistake }}</p>
+              <p class="text-sm">{{ mistake | aioTranslate }}</p>
             }
             @if (e.videoUrl) {
               @let site = videoSite(e.videoUrl);
@@ -787,23 +884,33 @@ type CategoryFilter = ActivityCategory | 'all';
                 [href]="e.videoUrl"
                 target="_blank"
                 rel="noopener noreferrer"
-                >دیدن ویدئوی آموزش{{ site ? ' در ' + site : '' }}</a
+                >{{
+                  'دیدن ویدئوی آموزش{0}'
+                    | aioTranslate: [site ? ' در ' + site : '']
+                }}</a
               >
               @if (site === 'یوتیوب') {
                 <p class="text-muted-foreground text-sm">
-                  یوتیوب در ایران فقط با فیلترشکن باز می‌شود.
+                  {{
+                    'یوتیوب در ایران فقط با فیلترشکن باز می‌شود.' | aioTranslate
+                  }}
                 </p>
               }
             } @else {
               <p class="text-muted-foreground text-sm">
-                ویدئو هنوز اضافه نشده؛ می‌توانید با مراحل بالا حرکت را بشناسید.
+                {{
+                  'ویدئو هنوز اضافه نشده؛ می‌توانید با مراحل بالا حرکت را بشناسید.'
+                    | aioTranslate
+                }}
               </p>
             }
-            <h3 class="font-semibold">حرکت‌های جایگزین</h3>
+            <h3 class="font-semibold">
+              {{ 'حرکت‌های جایگزین' | aioTranslate }}
+            </h3>
             <div class="flex flex-wrap gap-2">
               @for (slug of e.alternatives; track slug) {
                 <button aioBtn variant="outline" (click)="showExercise(slug)">
-                  {{ exerciseName(slug) }}
+                  {{ exerciseName(slug) | aioTranslate }}
                 </button>
               }
             </div>
@@ -814,7 +921,7 @@ type CategoryFilter = ActivityCategory | 'all';
     <aio-dialog
       contentClass="applet-health health-calm"
       [(open)]="editorOpen"
-      title="ویرایش برنامه"
+      [title]="'ویرایش برنامه' | aioTranslate"
     >
       <ng-template aioDialogBody>
         <form
@@ -823,7 +930,10 @@ type CategoryFilter = ActivityCategory | 'all';
           (submit)="$event.preventDefault(); saveRoutine()"
           class="flex flex-col gap-4"
         >
-          <aio-form-field label="نام برنامه" controlId="edit-routine-title">
+          <aio-form-field
+            [label]="'نام برنامه' | aioTranslate"
+            controlId="edit-routine-title"
+          >
             <input
               aioInput
               id="edit-routine-title"
@@ -831,11 +941,11 @@ type CategoryFilter = ActivityCategory | 'all';
             />
           </aio-form-field>
           @for (day of editorModel().days; track $index; let di = $index) {
-            <h3 class="font-semibold">{{ day.title }}</h3>
+            <h3 class="font-semibold">{{ day.title | aioTranslate }}</h3>
             @for (item of day.exercises; track $index; let ei = $index) {
               <div class="flex flex-col gap-2">
                 <aio-form-field
-                  label="حرکت"
+                  [label]="'حرکت' | aioTranslate"
                   [controlId]="'edit-ex-' + di + '-' + ei"
                 >
                   <aio-native-select
@@ -845,29 +955,29 @@ type CategoryFilter = ActivityCategory | 'all';
                   >
                     @for (exercise of editorExercises(); track exercise.slug) {
                       <option aioNativeSelectOption [value]="exercise.slug">
-                        {{ exercise.name }}
+                        {{ exercise.name | aioTranslate }}
                       </option>
                     }
                   </aio-native-select>
                 </aio-form-field>
                 <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   <aio-number-field
-                    label="ست"
+                    [label]="'ست' | aioTranslate"
                     [controlId]="'edit-sets-' + di + '-' + ei"
                     [field]="editorForm.days[di].exercises[ei].sets"
                   />
                   <aio-number-field
-                    label="تکرار"
+                    [label]="'تکرار' | aioTranslate"
                     [controlId]="'edit-reps-' + di + '-' + ei"
                     [field]="editorForm.days[di].exercises[ei].reps"
                   />
                   <aio-number-field
-                    label="ثانیه"
+                    [label]="'ثانیه' | aioTranslate"
                     [controlId]="'edit-time-' + di + '-' + ei"
                     [field]="editorForm.days[di].exercises[ei].seconds"
                   />
                   <aio-number-field
-                    label="استراحت"
+                    [label]="'استراحت' | aioTranslate"
                     [controlId]="'edit-rest-' + di + '-' + ei"
                     [field]="editorForm.days[di].exercises[ei].restSeconds"
                   />
@@ -876,19 +986,21 @@ type CategoryFilter = ActivityCategory | 'all';
             }
           }
           @if (trainingError()) {
-            <p role="alert" class="text-destructive">{{ trainingError() }}</p>
+            <p role="alert" class="text-destructive">
+              {{ trainingError() | aioTranslate }}
+            </p>
           }
         </form> </ng-template
       ><ng-template aioDialogActions
         ><button aioBtn variant="outline" (click)="editorOpen.set(false)">
-          انصراف</button
+          {{ 'انصراف' | aioTranslate }}</button
         ><button
           aioBtn
           type="submit"
           form="routine-editor-form"
           [disabled]="trainingBusy()"
         >
-          ذخیره تغییرات
+          {{ 'ذخیره تغییرات' | aioTranslate }}
         </button></ng-template
       >
     </aio-dialog>
@@ -896,8 +1008,8 @@ type CategoryFilter = ActivityCategory | 'all';
     <aio-dialog
       contentClass="applet-health health-calm"
       [(open)]="logging"
-      title="ثبت ورزش"
-      description="کالری با وزن شما در مشخصات برآورد می‌شود."
+      [title]="'ثبت ورزش' | aioTranslate"
+      [description]="'کالری با وزن شما در مشخصات برآورد می‌شود.' | aioTranslate"
     >
       <ng-template aioDialogBody>
         <form
@@ -907,7 +1019,7 @@ type CategoryFilter = ActivityCategory | 'all';
           (submit)="$event.preventDefault(); save()"
         >
           <aio-select-field
-            label="نوع ورزش"
+            [label]="'نوع ورزش' | aioTranslate"
             controlId="w-activity"
             [value]="model().activitySlug"
             [options]="activities.value() ?? []"
@@ -916,7 +1028,7 @@ type CategoryFilter = ActivityCategory | 'all';
             (valueChange)="patch({ activitySlug: $event })"
           />
           <div class="grid grid-cols-2 gap-3">
-            <aio-form-field label="تاریخ" controlId="w-date">
+            <aio-form-field [label]="'تاریخ' | aioTranslate" controlId="w-date">
               <aio-date-input
                 contentClass="applet-health"
                 inputId="w-date"
@@ -924,14 +1036,14 @@ type CategoryFilter = ActivityCategory | 'all';
               />
             </aio-form-field>
             <aio-number-field
-              label="مدت (دقیقه)"
+              [label]="'مدت (دقیقه)' | aioTranslate"
               controlId="w-min"
               [field]="logForm.durationMin"
               inputMode="numeric"
               [showErrors]="true"
             />
           </div>
-          <aio-form-field label="شدت">
+          <aio-form-field [label]="'شدت' | aioTranslate">
             <div
               aioToggleGroup
               type="single"
@@ -946,7 +1058,7 @@ type CategoryFilter = ActivityCategory | 'all';
                   [value]="i"
                   class="flex-1"
                 >
-                  {{ intensityLabels[i] }}
+                  {{ intensityLabels[i] | aioTranslate }}
                 </button>
               }
             </div>
@@ -954,21 +1066,24 @@ type CategoryFilter = ActivityCategory | 'all';
           @if (isCardio()) {
             <div class="grid grid-cols-2 gap-3">
               <aio-number-field
-                label="مسافت (کیلومتر)"
+                [label]="'مسافت (کیلومتر)' | aioTranslate"
                 controlId="w-km"
                 [field]="logForm.distanceKm"
                 inputMode="decimal"
                 step="0.1"
               />
               <aio-number-field
-                label="تعداد قدم"
+                [label]="'تعداد قدم' | aioTranslate"
                 controlId="w-steps"
                 [field]="logForm.steps"
                 inputMode="numeric"
               />
             </div>
           }
-          <aio-form-field label="یادداشت (اختیاری)" controlId="w-notes">
+          <aio-form-field
+            [label]="'یادداشت (اختیاری)' | aioTranslate"
+            controlId="w-notes"
+          >
             <textarea
               aioTextarea
               id="w-notes"
@@ -980,24 +1095,31 @@ type CategoryFilter = ActivityCategory | 'all';
       </ng-template>
       <ng-template aioDialogActions>
         <button aioBtn variant="outline" (click)="logging.set(false)">
-          انصراف
+          {{ 'انصراف' | aioTranslate }}
         </button>
         <button aioBtn type="submit" form="workout-form" [disabled]="saving()">
-          ثبت
+          {{ 'ثبت' | aioTranslate }}
         </button>
       </ng-template>
     </aio-dialog>
   `,
 })
 export class FitnessPage {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   private readonly api = inject(HealthApi);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly confirm = inject(AioConfirm);
   private readonly today = toIsoDate(new Date());
   protected readonly Math = Math;
-  protected readonly faDate = faDate;
-  protected readonly fa = (n: number) => faNumber(n);
+  protected readonly faDate = (
+    iso: string,
+    options?: Intl.DateTimeFormatOptions,
+  ) => this.locale.date(iso, options);
+  protected readonly fa = (n: number) => this.locale.number(n);
   protected readonly categories = ACTIVITY_CATEGORIES;
   protected readonly categoryLabels = ACTIVITY_CATEGORY_LABELS;
   protected readonly intensities = INTENSITIES;
@@ -1153,7 +1275,7 @@ export class FitnessPage {
       await this.api.generateRoutine(parsed.data);
       this.routines.reload();
       this.creatorOpen.set(false);
-      aioToast.success('برنامه ذخیره شد');
+      this.notifications.success('برنامه ذخیره شد');
     } catch (error) {
       this.trainingError.set(apiErrorMessage(error));
     } finally {
@@ -1215,7 +1337,7 @@ export class FitnessPage {
       await this.api.saveRoutine(this.editingRoutineId, parsed.data);
       this.editorOpen.set(false);
       this.routines.reload();
-      aioToast.success('برنامه ویرایش شد');
+      this.notifications.success('برنامه ویرایش شد');
     } catch (error) {
       this.trainingError.set(apiErrorMessage(error));
     } finally {
@@ -1236,7 +1358,7 @@ export class FitnessPage {
       await this.api.removeRoutine(routine.id);
       this.routines.reload();
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
@@ -1294,13 +1416,14 @@ export class FitnessPage {
 
   protected exerciseDetail(e: WorkoutProgram['exercises'][number]): string {
     const parts: string[] = [];
-    if (e.sets && e.reps) parts.push(`${faNumber(e.sets)}×${faNumber(e.reps)}`);
-    else if (e.reps) parts.push(`${faNumber(e.reps)} تکرار`);
+    if (e.sets && e.reps)
+      parts.push(`${this.locale.number(e.sets)}×${this.locale.number(e.reps)}`);
+    else if (e.reps) parts.push(`${this.locale.number(e.reps)} تکرار`);
     if (e.seconds)
       parts.push(
         e.seconds >= 120
-          ? `${faNumber(Math.round(e.seconds / 60))} دقیقه`
-          : `${faNumber(e.seconds)} ثانیه`,
+          ? `${this.locale.number(Math.round(e.seconds / 60))} دقیقه`
+          : `${this.locale.number(e.seconds)} ثانیه`,
       );
     if (e.note) parts.push(e.note);
     return parts.length ? `(${parts.join('، ')})` : '';
@@ -1322,12 +1445,12 @@ export class FitnessPage {
           notes: m.notes.trim() || undefined,
         });
         this.logging.set(false);
-        aioToast.success('ورزش ثبت شد');
+        this.notifications.success('ورزش ثبت شد');
         this.workouts.reload();
         this.week.reload();
         this.progress.reload();
       } catch (error) {
-        aioToast.error(apiErrorMessage(error));
+        this.notifications.error(apiErrorMessage(error));
       } finally {
         this.saving.set(false);
       }
@@ -1350,7 +1473,7 @@ export class FitnessPage {
       this.week.reload();
       this.progress.reload();
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 }

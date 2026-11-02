@@ -54,6 +54,7 @@ describe('Native push', () => {
     const result = await service.subscribeNative('u1', {
       token,
       platform: 'ANDROID',
+      language: 'en',
     });
     expect(result.endpoint).toMatch(/^native:[a-f0-9]{64}$/);
     expect(result.endpoint).not.toContain(token);
@@ -64,6 +65,7 @@ describe('Native push', () => {
           platform: 'ANDROID',
           fcmToken: token,
           sessionVersion: 7,
+          language: 'en',
         }),
       }),
     );
@@ -107,6 +109,18 @@ describe('Native push', () => {
         'یادآوری',
         '/app/english',
         'review:today',
+      );
+      await service.send(
+        { ...subscription, language: 'en' },
+        'یادآوری',
+        '/app/english',
+        'review:english',
+      );
+      expect(send).toHaveBeenLastCalledWith(
+        token,
+        'Reminder',
+        '/app/english',
+        'review:english',
       );
       send.mockRejectedValue({
         code: 'messaging/registration-token-not-registered',

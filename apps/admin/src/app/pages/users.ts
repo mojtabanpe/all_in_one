@@ -1,28 +1,34 @@
 import { httpResource } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import type { AdminUserList } from '@all-in-one/shared/schemas';
-import { AioBadge, AioButton, AioTableDirectives } from '@all-in-one/ui';
-import { API_BASE_URL, faDate, faNumber } from '@all-in-one/web/shared';
+import {
+  AioTranslate,
+  AioBadge,
+  AioButton,
+  AioTableDirectives,
+  AioLocale,
+} from '@all-in-one/ui';
+import { API_BASE_URL, faDate } from '@all-in-one/web/shared';
 
 @Component({
   selector: 'admin-users',
-  imports: [AioBadge, AioButton, AioTableDirectives],
+  imports: [AioBadge, AioButton, AioTableDirectives, AioTranslate],
   template: `
     <div class="flex flex-col gap-4">
       <header class="flex items-end justify-between">
-        <h1 class="text-2xl font-bold">کاربران</h1>
-        <span class="text-muted-foreground text-sm"
-          >{{ fa(list.value()?.total ?? 0) }} نفر</span
-        >
+        <h1 class="text-2xl font-bold">{{ 'کاربران' | aioTranslate }}</h1>
+        <span class="text-muted-foreground text-sm">{{
+          '{0} نفر' | aioTranslate: [fa(list.value()?.total ?? 0)]
+        }}</span>
       </header>
       <div aioTableContainer class="glass rounded-3xl p-2">
         <table aioTable>
           <thead aioTHead>
             <tr aioTr>
-              <th aioTh>نام</th>
-              <th aioTh>ایمیل</th>
-              <th aioTh>نقش</th>
-              <th aioTh>عضویت</th>
+              <th aioTh>{{ 'نام' | aioTranslate }}</th>
+              <th aioTh>{{ 'ایمیل' | aioTranslate }}</th>
+              <th aioTh>{{ 'نقش' | aioTranslate }}</th>
+              <th aioTh>{{ 'عضویت' | aioTranslate }}</th>
             </tr>
           </thead>
           <tbody aioTBody>
@@ -34,7 +40,9 @@ import { API_BASE_URL, faDate, faNumber } from '@all-in-one/web/shared';
                   <span
                     aioBadge
                     [variant]="u.role === 'ADMIN' ? 'default' : 'secondary'"
-                    >{{ u.role === 'ADMIN' ? 'مدیر' : 'مشتری' }}</span
+                    >{{
+                      (u.role === 'ADMIN' ? 'مدیر' : 'مشتری') | aioTranslate
+                    }}</span
                   >
                 </td>
                 <td aioTd>
@@ -43,7 +51,7 @@ import { API_BASE_URL, faDate, faNumber } from '@all-in-one/web/shared';
                       day: 'numeric',
                       month: 'long',
                       year: 'numeric',
-                    })
+                    }) | aioTranslate
                   }}
                 </td>
               </tr>
@@ -59,7 +67,7 @@ import { API_BASE_URL, faDate, faNumber } from '@all-in-one/web/shared';
           [disabled]="page() === 1"
           (click)="page.update((p) => p - 1)"
         >
-          قبلی
+          {{ 'قبلی' | aioTranslate }}
         </button>
         <button
           aioBtn
@@ -68,18 +76,23 @@ import { API_BASE_URL, faDate, faNumber } from '@all-in-one/web/shared';
           [disabled]="page() * 50 >= (list.value()?.total ?? 0)"
           (click)="page.update((p) => p + 1)"
         >
-          بعدی
+          {{ 'بعدی' | aioTranslate }}
         </button>
       </div>
     </div>
   `,
 })
 export class Users {
+  protected readonly locale = inject(AioLocale);
+
   private readonly api = inject(API_BASE_URL);
   protected readonly page = signal(1);
   protected readonly list = httpResource<AdminUserList>(
     () => `${this.api}/admin/users?page=${this.page()}`,
   );
-  protected readonly faDate = faDate;
-  protected readonly fa = (n: number) => faNumber(n);
+  protected readonly faDate = (
+    iso: string,
+    options?: Intl.DateTimeFormatOptions,
+  ) => this.locale.date(iso, options);
+  protected readonly fa = (n: number) => this.locale.number(n);
 }

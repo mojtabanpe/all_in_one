@@ -1,3 +1,4 @@
+import { requestLanguage } from './request-language';
 import {
   BadGatewayException,
   BadRequestException,
@@ -143,7 +144,15 @@ export class AiGateway {
         model: target.model,
         stream: false,
         temperature: options.temperature ?? 0.7,
-        messages,
+        messages: requestLanguage.getStore()
+          ? [
+              ...messages,
+              {
+                role: 'system',
+                content: `The user selected ${requestLanguage.getStore() === 'en' ? 'English (Latin digits)' : 'Persian (Persian digits)'} as their app language. Use this language for interface feedback, explanations, health plans, recipes and instructions, even if the app's older prompt uses another language. Preserve JSON keys, enum values, identifiers, user-provided names and any English words or sentences that are explicitly the subject of a language-learning exercise. Do not add fields to the requested JSON schema.`,
+              },
+            ]
+          : messages,
         ...(options.tools?.length
           ? { tools: options.tools, tool_choice: 'auto' }
           : {}),

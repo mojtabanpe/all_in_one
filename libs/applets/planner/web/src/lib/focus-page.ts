@@ -19,6 +19,7 @@ import {
   toIsoDate,
 } from '@all-in-one/applets/planner/contracts';
 import {
+  AioTranslate,
   AioButton,
   AioSkeleton,
   AioConfirm,
@@ -27,14 +28,15 @@ import {
   AioDialogBody,
   AioIcon,
   AioTextarea,
-  aioToast,
   AioToggleGroupDirectives,
   provideIcons,
   AioFormField,
   AioSectionHeading,
   AioSelectField,
+  AioLocale,
+  AioNotifications,
 } from '@all-in-one/ui';
-import { apiErrorMessage, faDate, faNumber } from '@all-in-one/web/shared';
+import { apiErrorMessage } from '@all-in-one/web/shared';
 import {
   lucidePause,
   lucidePlay,
@@ -120,6 +122,7 @@ export class FocusTimer {
     AioFormField,
     AioSectionHeading,
     AioSelectField,
+    AioTranslate,
   ],
   providers: [
     provideIcons({
@@ -134,13 +137,13 @@ export class FocusTimer {
   template: `
     <header
       aioSectionHeading
-      title="تمرکز"
+      [title]="'تمرکز' | aioTranslate"
       [description]="
         'امروز ' +
-        fa(todayMin()) +
-        ' دقیقه، این هفته ' +
-        fa(weekMin()) +
-        ' دقیقه'
+          fa(todayMin()) +
+          ' دقیقه، این هفته ' +
+          fa(weekMin()) +
+          ' دقیقه' | aioTranslate
       "
       [loading]="res.isLoading() && !res.hasValue()"
       [level]="1"
@@ -165,7 +168,7 @@ export class FocusTimer {
             class="h-11 flex-1"
             [disabled]="timer.started()"
           >
-            {{ kindLabels[k] }}
+            {{ kindLabels[k] | aioTranslate }}
           </button>
         }
       </div>
@@ -198,14 +201,20 @@ export class FocusTimer {
         </svg>
         <div class="flex flex-col items-center" role="timer" aria-live="off">
           <span class="text-5xl font-bold tabular-nums" dir="ltr">{{
-            clock()
+            clock() | aioTranslate
           }}</span>
-          <span class="text-muted-foreground text-sm">{{ status() }}</span>
+          <span class="text-muted-foreground text-sm">{{
+            status() | aioTranslate
+          }}</span>
         </div>
       </div>
 
       @if (timer.kind() === 'POMODORO' && !timer.started()) {
-        <div class="flex gap-2" role="radiogroup" aria-label="مدت">
+        <div
+          class="flex flex-wrap justify-center gap-2"
+          role="radiogroup"
+          [attr.aria-label]="'مدت' | aioTranslate"
+        >
           @for (m of lengths; track m) {
             <button
               aioBtn
@@ -215,21 +224,21 @@ export class FocusTimer {
               [variant]="timer.minutes() === m ? 'default' : 'outline'"
               (click)="timer.minutes.set(m)"
             >
-              {{ fa(m) }} دقیقه
+              {{ '{0} دقیقه' | aioTranslate: [fa(m)] }}
             </button>
           }
         </div>
       }
 
       <aio-select-field
-        label="روی چه کاری؟"
+        [label]="'روی چه کاری؟' | aioTranslate"
         controlId="focus-task"
         class="w-full"
         [value]="timer.taskId()"
         [options]="tasks()"
         valueKey="id"
         labelKey="title"
-        emptyLabel="بدون کار مشخص"
+        [emptyLabel]="'بدون کار مشخص' | aioTranslate"
         (valueChange)="timer.taskId.set($event)"
       />
 
@@ -241,7 +250,7 @@ export class FocusTimer {
             class="btn-3d flex-1"
             (click)="timer.pause()"
           >
-            <aio-icon name="lucidePause" size="sm" /> مکث
+            <aio-icon name="lucidePause" size="sm" /> {{ 'مکث' | aioTranslate }}
           </button>
         } @else {
           <button
@@ -251,18 +260,19 @@ export class FocusTimer {
             (click)="timer.start()"
           >
             <aio-icon name="lucidePlay" size="sm" />
-            {{ timer.started() ? 'ادامه' : 'شروع' }}
+            {{ (timer.started() ? 'ادامه' : 'شروع') | aioTranslate }}
           </button>
         }
         @if (timer.started()) {
           <button aioBtn size="lg" variant="outline" (click)="finish()">
-            <aio-icon name="lucideSquare" size="sm" /> پایان
+            <aio-icon name="lucideSquare" size="sm" />
+            {{ 'پایان' | aioTranslate }}
           </button>
           <button
             aioBtn
             variant="ghost"
             size="icon-lg"
-            aria-label="از نو"
+            [attr.aria-label]="'از نو' | aioTranslate"
             (click)="timer.reset()"
           >
             <aio-icon name="lucideRotateCcw" size="sm" />
@@ -271,9 +281,12 @@ export class FocusTimer {
       </div>
     </section>
 
-    <section class="flex flex-col gap-2" aria-label="سابقه تمرکز">
+    <section
+      class="flex flex-col gap-2"
+      [attr.aria-label]="'سابقه تمرکز' | aioTranslate"
+    >
       <h2 class="text-muted-foreground px-1 text-sm font-semibold">
-        ۷ روز گذشته
+        {{ '۷ روز گذشته' | aioTranslate }}
       </h2>
       <ul class="glass divide-border/60 flex flex-col divide-y rounded-2xl">
         @if (res.isLoading() && !res.hasValue()) {
@@ -292,24 +305,27 @@ export class FocusTimer {
             >
               <span class="flex min-w-0 flex-1 flex-col">
                 <span class="truncate">{{
-                  r.taskTitle ?? kindLabels[r.kind]
+                  r.taskTitle ?? kindLabels[r.kind] | aioTranslate
                 }}</span>
                 <span class="text-muted-foreground truncate text-xs">
-                  {{ when(r) }}
+                  {{ when(r) | aioTranslate }}
                   @if (r.note) {
                     ، {{ r.note }}
                   }
                 </span>
               </span>
-              <span class="text-primary shrink-0 font-semibold"
-                >{{ fa(r.durationMin) }} دقیقه</span
-              >
+              <span class="text-primary shrink-0 font-semibold">{{
+                '{0} دقیقه' | aioTranslate: [fa(r.durationMin)]
+              }}</span>
             </button>
           </li>
         } @empty {
           @if (!res.isLoading()) {
             <li class="text-muted-foreground p-4 text-sm">
-              هنوز جلسه تمرکزی ثبت نشده. یک پومودوروی ۲۵ دقیقه‌ای شروع کن!
+              {{
+                'هنوز جلسه تمرکزی ثبت نشده. یک پومودوروی ۲۵ دقیقه‌ای شروع کن!'
+                  | aioTranslate
+              }}
             </li>
           }
         }
@@ -319,20 +335,24 @@ export class FocusTimer {
     <aio-dialog
       [open]="!!editingRecord()"
       (openChange)="$event || editingRecord.set(null)"
-      title="جلسه تمرکز"
+      [title]="'جلسه تمرکز' | aioTranslate"
       [description]="
-        editingRecord()
+        (editingRecord()
           ? when(editingRecord()!) +
             '، ' +
             fa(editingRecord()!.durationMin) +
             ' دقیقه'
           : ''
+        ) | aioTranslate
       "
       contentClass="applet-planner sm:max-w-md"
     >
       <ng-template aioDialogBody>
         <div class="flex flex-col gap-4 pb-2">
-          <aio-form-field label="یادداشت" controlId="focus-note">
+          <aio-form-field
+            [label]="'یادداشت' | aioTranslate"
+            controlId="focus-note"
+          >
             <textarea
               aioTextarea
               id="focus-note"
@@ -342,7 +362,7 @@ export class FocusTimer {
             ></textarea>
           </aio-form-field>
           <p class="text-muted-foreground text-xs">
-            مدت جلسه بعد از ثبت عوض نمی‌شود.
+            {{ 'مدت جلسه بعد از ثبت عوض نمی‌شود.' | aioTranslate }}
           </p>
         </div>
       </ng-template>
@@ -353,14 +373,20 @@ export class FocusTimer {
           class="text-destructive"
           (click)="remove()"
         >
-          <aio-icon name="lucideTrash2" size="sm" /> حذف
+          <aio-icon name="lucideTrash2" size="sm" /> {{ 'حذف' | aioTranslate }}
         </button>
-        <button aioBtn (click)="saveNote()">ذخیره</button>
+        <button aioBtn (click)="saveNote()">
+          {{ 'ذخیره' | aioTranslate }}
+        </button>
       </ng-template>
     </aio-dialog>
   `,
 })
 export class FocusPage {
+  protected readonly locale = inject(AioLocale);
+
+  private readonly notifications = inject(AioNotifications);
+
   private readonly api = inject(PlannerApi);
   private readonly confirm = inject(AioConfirm);
   protected readonly timer = inject(FocusTimer);
@@ -429,7 +455,7 @@ export class FocusPage {
         : 'آماده',
   );
 
-  protected readonly fa = (n: number) => faNumber(n);
+  protected readonly fa = (n: number) => this.locale.number(n);
 
   constructor() {
     const task = inject(ActivatedRoute).snapshot.queryParamMap.get('task');
@@ -461,7 +487,7 @@ export class FocusPage {
     const kind = this.timer.kind();
     this.timer.reset();
     if (minutes < 1) {
-      aioToast.info('کمتر از یک دقیقه بود؛ ثبت نشد.');
+      this.notifications.info('کمتر از یک دقیقه بود؛ ثبت نشد.');
       return;
     }
     const endAt = new Date();
@@ -475,14 +501,16 @@ export class FocusPage {
       });
       this.records.update((list) => [record, ...list]);
       if (completed) navigator.vibrate?.(300);
-      aioToast.success(`${faNumber(minutes)} دقیقه تمرکز ثبت شد`);
+      this.notifications.success(
+        `${this.locale.number(minutes)} دقیقه تمرکز ثبت شد`,
+      );
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
   protected when(r: PlannerFocus) {
-    return faDate(r.startAt, {
+    return this.locale.date(r.startAt, {
       weekday: 'short',
       hour: '2-digit',
       minute: '2-digit',
@@ -507,7 +535,7 @@ export class FocusPage {
       );
       this.editingRecord.set(null);
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 
@@ -525,7 +553,7 @@ export class FocusPage {
       await this.api.removeFocus(r.id);
       this.records.update((list) => list.filter((x) => x.id !== r.id));
     } catch (error) {
-      aioToast.error(apiErrorMessage(error));
+      this.notifications.error(apiErrorMessage(error));
     }
   }
 }

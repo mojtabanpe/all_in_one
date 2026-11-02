@@ -1,3 +1,6 @@
+import { AioTranslate } from '../locale';
+import { AioLanguageSwitcher } from './language-switcher';
+import { AioLocale } from '../locale';
 import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { HlmSidebarImports, HlmSidebarService } from '@spartan-ng/helm/sidebar';
@@ -14,23 +17,25 @@ import { AioIcon } from './icon';
  */
 @Component({
   host: {
-    '[attr.dir]': 'language() === "en" ? "ltr" : "rtl"',
-    '[attr.lang]': 'language()',
+    '[attr.dir]': 'activeLanguage() === "en" ? "ltr" : "rtl"',
+    '[attr.lang]': 'activeLanguage()',
   },
   selector: 'aio-app-shell',
   imports: [
+    AioLanguageSwitcher,
     AioBottomNav,
     AioConfirmHost,
     AioIcon,
     HlmSidebarImports,
     RouterLink,
     RouterLinkActive,
+    AioTranslate,
   ],
   template: `
-    <div hlmSidebarWrapper dir="rtl">
+    <div hlmSidebarWrapper [attr.dir]="locale.direction()">
       <hlm-sidebar
-        side="right"
-        [attr.dir]="language() === 'en' ? 'ltr' : 'rtl'"
+        [side]="locale.english() ? 'left' : 'right'"
+        [attr.dir]="activeLanguage() === 'en' ? 'ltr' : 'rtl'"
         variant="floating"
         collapsible="offcanvas"
       >
@@ -43,18 +48,24 @@ import { AioIcon } from './icon';
               alt=""
               class="size-9 shrink-0 rounded-xl"
             />
-            <bdi dir="ltr">{{ appName() }}</bdi>
+            <bdi dir="ltr">{{ appName() | aioTranslate }}</bdi>
           </a>
           <!-- eslint-disable-next-line @angular-eslint/template/elements-content -->
           <button
             hlmSidebarTrigger
-            [srOnlyText]="language() === 'en' ? 'Close menu' : 'بستن منو'"
+            [srOnlyText]="
+              (activeLanguage() === 'en' ? 'Close menu' : 'بستن منو')
+                | aioTranslate
+            "
             class="text-muted-foreground size-11"
           ></button>
         </div>
         <div hlmSidebarContent class="aio-workspace-nav px-2">
           <p class="aio-sidebar-caption px-4 pb-3">
-            {{ language() === 'en' ? 'Your workspace' : 'فضای شخصی شما' }}
+            {{
+              (activeLanguage() === 'en' ? 'Your workspace' : 'فضای شخصی شما')
+                | aioTranslate
+            }}
           </p>
           <div hlmSidebarGroup>
             <ul hlmSidebarMenu class="gap-2">
@@ -70,7 +81,7 @@ import { AioIcon } from './icon';
                     [attr.aria-current]="rla.isActive ? 'page' : null"
                   >
                     <aio-icon [name]="item.icon" size="sm" />
-                    <span>{{ item.label }}</span>
+                    <span>{{ item.label | aioTranslate }}</span>
                   </a>
                 </li>
               }
@@ -82,7 +93,7 @@ import { AioIcon } from './icon';
       <main
         hlmSidebarInset
         class="min-w-0 bg-transparent"
-        [attr.dir]="language() === 'en' ? 'ltr' : 'rtl'"
+        [attr.dir]="activeLanguage() === 'en' ? 'ltr' : 'rtl'"
       >
         <header class="aio-app-header flex items-center gap-2 px-5 md:px-8">
           <!-- spartan's trigger component renders its own icon and sr-only label -->
@@ -90,14 +101,17 @@ import { AioIcon } from './icon';
             <!-- eslint-disable-next-line @angular-eslint/template/elements-content -->
             <button
               hlmSidebarTrigger
-              [srOnlyText]="language() === 'en' ? 'Open menu' : 'باز کردن منو'"
+              [srOnlyText]="
+                (activeLanguage() === 'en' ? 'Open menu' : 'باز کردن منو')
+                  | aioTranslate
+              "
               class="hidden size-11 md:inline-flex"
             ></button>
           }
           <a
             routerLink="/"
             class="flex min-h-11 min-w-0 shrink-0 items-center gap-2 text-base font-bold"
-            [attr.aria-label]="appName()"
+            [attr.aria-label]="appName() | aioTranslate"
           >
             <img
               [src]="logoSrc()"
@@ -106,12 +120,12 @@ import { AioIcon } from './icon';
               alt=""
               class="size-8 shrink-0 rounded-lg"
             />
-            <bdi dir="ltr" class="hidden min-[390px]:inline">{{
-              appName()
+            <bdi dir="ltr" class="hidden min-[540px]:inline">{{
+              appName() | aioTranslate
             }}</bdi>
           </a>
           <div class="ms-auto flex min-w-0 items-center gap-1 sm:gap-2">
-            <ng-content select="[aioShellActions]" />
+            <aio-language-switcher /><ng-content select="[aioShellActions]" />
           </div>
         </header>
         <div
@@ -124,7 +138,10 @@ import { AioIcon } from './icon';
 
     <aio-bottom-nav
       [items]="navItems()"
-      [label]="language() === 'en' ? 'Main navigation' : 'ناوبری اصلی'"
+      [label]="
+        (activeLanguage() === 'en' ? 'Main navigation' : 'ناوبری اصلی')
+          | aioTranslate
+      "
     />
     <aio-confirm-host />
   `,
@@ -136,7 +153,11 @@ export class AioAppShell {
     () => this.sidebar.state() === 'collapsed',
   );
   readonly appName = input.required<string>();
-  readonly language = input<'fa' | 'en'>('fa');
+  protected readonly locale = inject(AioLocale);
+  readonly language = input<'fa' | 'en'>();
+  readonly activeLanguage = computed(
+    () => this.language() ?? this.locale.language(),
+  );
   readonly logoSrc = input('brand-logo.png');
   readonly navItems = input.required<readonly AioNavItem[]>();
 }

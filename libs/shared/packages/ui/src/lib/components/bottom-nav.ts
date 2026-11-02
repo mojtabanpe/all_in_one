@@ -1,3 +1,4 @@
+import { AioTranslate } from '../locale';
 import { Component, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { HlmButton } from '@spartan-ng/helm/button';
@@ -20,10 +21,10 @@ export interface AioNavItem {
  */
 @Component({
   selector: 'aio-bottom-nav',
-  imports: [AioIcon, HlmButton, RouterLink, RouterLinkActive],
+  imports: [AioIcon, HlmButton, RouterLink, RouterLinkActive, AioTranslate],
   template: `
     <nav
-      [attr.aria-label]="label()"
+      [attr.aria-label]="label() | aioTranslate"
       class="aio-bottom-navigation glass fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md items-stretch gap-1 rounded-[1.375rem] p-1.5 md:hidden"
     >
       @for (item of items(); track item.link) {
@@ -39,7 +40,7 @@ export interface AioNavItem {
           class="text-muted-foreground data-[active=true]:bg-accent data-[active=true]:text-accent-foreground h-auto min-h-12 flex-1 flex-col gap-0.5 rounded-xl px-1 py-1.5 text-[0.6875rem] font-medium"
         >
           <aio-icon [name]="item.icon" />
-          <span>{{ item.label }}</span>
+          <span>{{ item.label | aioTranslate }}</span>
         </a>
       }
     </nav>

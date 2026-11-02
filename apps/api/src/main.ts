@@ -1,3 +1,5 @@
+import { requestLanguage } from '@all-in-one/api/ai';
+import type { Request, Response, NextFunction } from 'express';
 /**
  * This is not a production server yet!
  * This is only a minimal backend to get started.
@@ -16,6 +18,12 @@ zodConfig(locales.fa());
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.use((request: Request, _response: Response, next: NextFunction) =>
+    requestLanguage.run(
+      request.headers['accept-language']?.startsWith('en') ? 'en' : 'fa',
+      next,
+    ),
+  );
   // Behind nginx on the same host: client IPs (rate limits) come from X-Forwarded-For.
   app.set('trust proxy', 'loopback');
   // English practice uploads a raw recording (audio/webm, …) for transcription.
