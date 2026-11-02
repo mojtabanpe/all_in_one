@@ -1,6 +1,3 @@
-import { REVIEWED_MESSAGES } from './reviewed-messages';
-import { MESSAGES } from './messages';
-
 export type AppLanguage = 'fa' | 'en';
 export const LANGUAGE_COOKIE = 'poshtetgarm_language';
 export const isAppLanguage = (value: unknown): value is AppLanguage =>
@@ -16,6 +13,7 @@ const digits = (value: string, language: AppLanguage) =>
     ? asciiDigits(value)
     : value.replace(/\d/g, (n) => '۰۱۲۳۴۵۶۷۸۹'[Number(n)]);
 const exact = new Map<string, readonly [string, string]>();
+const cache = new Map<string, string>();
 const patterns: {
   match: RegExp;
   pair: readonly [string, string];
@@ -42,9 +40,6 @@ const escapeRegex = (value: string) =>
   [...value]
     .map((char) => (special.has(char) ? String.fromCharCode(92) + char : char))
     .join('');
-for (const pair of [...MESSAGES, ...REVIEWED_MESSAGES]) {
-  for (const source of pair) exact.set(normalizeMessage(source), pair);
-}
 const numericUnits = new Set([
   'دقیقه',
   'ساعت',
@@ -60,30 +55,52 @@ const numericUnits = new Set([
   'calories',
   'kg',
 ]);
-for (const [key, pair] of exact) {
-  if (!/\{\d+\}/.test(key)) continue;
-  const slots: number[] = [];
-  let last = 0,
-    pattern = '^';
-  for (const part of key.matchAll(/\{(\d+)\}/g)) {
-    pattern += escapeRegex(key.slice(last, part.index)) + '(.+?)';
-    slots.push(Number(part[1]));
-    last = part.index! + part[0].length;
-  }
-  pattern += escapeRegex(key.slice(last)) + '$';
-  if (!key.replace(/\{\d+\}/g, '').trim()) continue;
-  patterns.push({
-    match: new RegExp(pattern),
-    pair,
-    slots,
-    numericOnly:
-      slots.length === 1 &&
-      key.startsWith('{0}') &&
-      numericUnits.has(key.slice(3).trim()),
-  });
+type MessagePair = readonly [string, string];
+let loaded = false;
+let loading: Promise<void> | undefined;
+
+/** The message table is a separate chunk (it is a quarter of the web app's
+ * initial bundle). Persian copy renders without it; English waits for it. */
+export const messagesLoaded = () => loaded;
+export function loadMessages(): Promise<void> {
+  return (loading ??= Promise.all([
+    import('./messages'),
+    import('./reviewed-messages'),
+  ]).then(([m, r]) =>
+    registerMessages([...m.MESSAGES, ...r.REVIEWED_MESSAGES]),
+  ));
 }
-patterns.sort((a, b) => b.match.source.length - a.match.source.length);
-const cache = new Map<string, string>();
+
+function registerMessages(pairs: readonly MessagePair[]) {
+  for (const pair of pairs) {
+    for (const source of pair) exact.set(normalizeMessage(source), pair);
+  }
+  for (const [key, pair] of exact) {
+    if (!/\{\d+\}/.test(key)) continue;
+    const slots: number[] = [];
+    let last = 0,
+      pattern = '^';
+    for (const part of key.matchAll(/\{(\d+)\}/g)) {
+      pattern += escapeRegex(key.slice(last, part.index)) + '(.+?)';
+      slots.push(Number(part[1]));
+      last = part.index! + part[0].length;
+    }
+    pattern += escapeRegex(key.slice(last)) + '$';
+    if (!key.replace(/\{\d+\}/g, '').trim()) continue;
+    patterns.push({
+      match: new RegExp(pattern),
+      pair,
+      slots,
+      numericOnly:
+        slots.length === 1 &&
+        key.startsWith('{0}') &&
+        numericUnits.has(key.slice(3).trim()),
+    });
+  }
+  patterns.sort((a, b) => b.match.source.length - a.match.source.length);
+  cache.clear();
+  loaded = true;
+}
 
 /** Translate interface copy; callers leave user-entered and learning content outside this function. */
 export function translateMessage(
@@ -162,13 +179,23 @@ export function translateMessage(
               );
         },
       )
-    : digits(source, language);
+    : digits(
+        source.replace(/\{(\d+)\}/g, (placeholder, index) => {
+          const value = args[Number(index)];
+          if (value === undefined) return placeholder;
+          if (value === null) return '';
+          return typeof value === 'number'
+            ? value.toLocaleString(language === 'en' ? 'en-US' : 'fa-IR')
+            : String(value);
+        }),
+        language,
+      );
   if (language === 'en')
     result = asciiDigits(result)
       .replace(/،/g, ',')
       .replace(/؛/g, ';')
       .replace(/؟/g, '?');
-  if (!values.length) {
+  if (!values.length && loaded) {
     if (cache.size > 4000) cache.clear();
     cache.set(cachedKey, result);
   }

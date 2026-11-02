@@ -3,11 +3,13 @@ import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   computed,
   DestroyRef,
+  EnvironmentProviders,
   effect,
   inject,
   Injectable,
   Pipe,
   PLATFORM_ID,
+  provideAppInitializer,
   REQUEST,
   signal,
   untracked,
@@ -16,6 +18,8 @@ import {
 import {
   LANGUAGE_COOKIE,
   isAppLanguage,
+  loadMessages,
+  messagesLoaded,
   translateMessage,
   type AppLanguage,
 } from '@all-in-one/localization';
@@ -32,6 +36,10 @@ export class AioLocale {
     this.language() === 'en' ? 'ltr' : 'rtl',
   );
   readonly english = computed(() => this.language() === 'en');
+  /** Bumps when the lazily loaded message table arrives, so copy re-renders. */
+  private readonly messages = signal(messagesLoaded());
+  /** Resolves once the message table is in (English waits for it at startup). */
+  readonly ready = loadMessages().then(() => this.messages.set(true));
 
   constructor() {
     const applyLanguage = () => {
@@ -102,6 +110,7 @@ export class AioLocale {
     value: string | number | null | undefined,
     values: readonly unknown[] = [],
   ): string {
+    this.messages();
     return translateMessage(value, this.language(), values);
   }
   number(value: number, options?: Intl.NumberFormatOptions): string {
@@ -143,4 +152,17 @@ export class AioTranslate implements PipeTransform {
       values,
     );
   }
+}
+
+/**
+ * Startup gate for the message table: English (and server rendering) wait for
+ * it, Persian renders at once and picks up English-source copy when it lands.
+ */
+export function provideAioLocale(): EnvironmentProviders {
+  return provideAppInitializer(() => {
+    const locale = inject(AioLocale);
+    if (locale.english() || !isPlatformBrowser(inject(PLATFORM_ID)))
+      return locale.ready;
+    return undefined;
+  });
 }

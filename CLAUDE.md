@@ -68,6 +68,11 @@
   etc.). Dialogs/sheets are portalled to `<body>`, so pass the same class as `aio-dialog contentClass`. Duolingo-style
   chunky buttons: `aioBtn class="btn-3d"` (`btn-3d-quiet` for outline). Recolour one button by overriding `--primary`
   on it (`[--primary:var(--gem)]`); keep such class strings literal in source so Tailwind finds them.
+- Translations (`@all-in-one/localization`): the message table is a lazy chunk (`loadMessages()`), kept out of the
+  customer app's 1.2 MB initial budget. `provideAioLocale()` in each app config makes English and SSR wait for it;
+  Persian renders at once. Server code calls `await loadMessages()` before `translateMessage`.
+- Directional icons (arrows/chevrons) flip with the page: drawn for LTR → `class="rtl:-scale-x-100"`, drawn for
+  RTL → `class="ltr:-scale-x-100"`.
 - spartan `aioProgress`: `[value]` is a percentage (0–100); `max` is ignored by the indicator.
 - Don't use `·` as a separator next to Persian digits (it reads as ۰); use the Persian comma `،`.
 - Touch targets ≥ 44px; small round checkboxes get an invisible hit area (`after:absolute after:-inset-3`).

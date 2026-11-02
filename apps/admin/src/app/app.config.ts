@@ -1,3 +1,4 @@
+import { provideAioLocale } from '@all-in-one/ui';
 import {
   provideHttpClient,
   withFetch,
@@ -13,6 +14,7 @@ import { appRoutes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideAioLocale(),
     provideBrowserGlobalErrorListeners(),
     provideRouter(appRoutes, withComponentInputBinding()),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),

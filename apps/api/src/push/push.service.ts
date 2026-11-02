@@ -1,4 +1,4 @@
-import { translateMessage } from '@all-in-one/localization';
+import { loadMessages, translateMessage } from '@all-in-one/localization';
 import {
   Injectable,
   Logger,
@@ -169,6 +169,7 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
     tag: string,
   ) {
     const language = subscription.language === 'en' ? 'en' : 'fa';
+    await loadMessages();
     title = translateMessage(title, language);
     try {
       if (subscription.platform && subscription.platform !== 'WEB') {

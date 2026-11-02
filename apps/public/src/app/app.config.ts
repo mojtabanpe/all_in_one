@@ -1,3 +1,4 @@
+import { provideAioLocale } from '@all-in-one/ui';
 import {
   ApplicationConfig,
   provideBrowserGlobalErrorListeners,
@@ -11,6 +12,7 @@ import {
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideAioLocale(),
     provideClientHydration(withEventReplay()),
     provideBrowserGlobalErrorListeners(),
     provideRouter(appRoutes),

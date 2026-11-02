@@ -1,8 +1,15 @@
-import { asciiDigits, translateMessage } from './localization';
+import { asciiDigits, loadMessages, translateMessage } from './localization';
 import { MESSAGES } from './messages';
 import { REVIEWED_MESSAGES } from './reviewed-messages';
 
+describe('before the message table loads', () => {
+  it('still fills Persian templates with their values', () => {
+    expect(translateMessage('{0} از {1}', 'fa', [2, 5])).toBe('۲ از ۵');
+  });
+});
+
 describe('application messages', () => {
+  beforeAll(() => loadMessages());
   it('uses the chosen language regardless of the source language', () => {
     expect(translateMessage('خانه', 'en')).toBe('Home');
     expect(translateMessage('Home', 'fa')).toBe('خانه');
