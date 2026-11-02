@@ -7,12 +7,13 @@ import {
   AioButton,
   AioTableDirectives,
   AioLocale,
+  AioDatePipe,
 } from '@all-in-one/ui';
-import { API_BASE_URL, faDate } from '@all-in-one/web/shared';
+import { API_BASE_URL } from '@all-in-one/web/shared';
 
 @Component({
   selector: 'admin-users',
-  imports: [AioBadge, AioButton, AioTableDirectives, AioTranslate],
+  imports: [AioDatePipe, AioBadge, AioButton, AioTableDirectives, AioTranslate],
   template: `
     <div class="flex flex-col gap-4">
       <header class="flex items-end justify-between">
@@ -47,11 +48,14 @@ import { API_BASE_URL, faDate } from '@all-in-one/web/shared';
                 </td>
                 <td aioTd>
                   {{
-                    faDate(u.createdAt, {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    }) | aioTranslate
+                    u.createdAt
+                      | aioDate
+                        : {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          }
+                      | aioTranslate
                   }}
                 </td>
               </tr>
@@ -90,9 +94,5 @@ export class Users {
   protected readonly list = httpResource<AdminUserList>(
     () => `${this.api}/admin/users?page=${this.page()}`,
   );
-  protected readonly faDate = (
-    iso: string,
-    options?: Intl.DateTimeFormatOptions,
-  ) => this.locale.date(iso, options);
   protected readonly fa = (n: number) => this.locale.number(n);
 }

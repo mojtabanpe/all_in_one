@@ -6,10 +6,10 @@ import {
 } from './english-locale';
 
 describe('English applet locale', () => {
-  it('uses Latin digits and English month names while retaining Solar Hijri dates', () => {
+  it('uses Latin digits and Gregorian dates in English', () => {
     expect(englishNumber(1234)).toBe('1,234');
     const date = englishDate('2026-11-01T12:00:00Z');
-    expect(date).toContain('1405');
+    expect(date).toBe('Nov 1, 2026');
     expect(date).not.toMatch(/\p{Script=Arabic}/u);
   });
   it('does not display Persian infrastructure errors', () => {

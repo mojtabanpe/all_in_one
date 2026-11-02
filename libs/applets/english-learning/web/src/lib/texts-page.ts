@@ -28,11 +28,9 @@ import {
   AioSelectField,
   AioLocale,
   AioNotifications,
+  AioDatePipe,
 } from '@all-in-one/ui';
-import {
-  englishErrorMessage as apiErrorMessage,
-  englishDate as faDate,
-} from './english-locale';
+import { englishErrorMessage as apiErrorMessage } from './english-locale';
 import {
   lucideFileText,
   lucidePlus,
@@ -46,6 +44,7 @@ import { EnglishApi } from './english-api';
 @Component({
   selector: 'english-learning-texts',
   imports: [
+    AioDatePipe,
     AioButton,
     AioDialog,
     AioDialogActions,
@@ -158,7 +157,8 @@ import { EnglishApi } from './english-api';
                 >
                   {{
                     '{0} words, {1}'
-                      | aioTranslate: [fa(words(text)), faDate(text.createdAt)]
+                      | aioTranslate
+                        : [fa(words(text)), text.createdAt | aioDate]
                   }}
                   @if (text.ai) {
                     <span
@@ -333,7 +333,6 @@ export class TextsPage {
   private generation = 0;
 
   protected readonly fa = (n: number) => this.locale.number(n);
-  protected readonly faDate = (iso: string) => this.locale.date(iso);
   protected readonly words = (t: ReadingText) =>
     t.body.split(/\s+/).filter(Boolean).length;
 

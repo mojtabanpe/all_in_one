@@ -116,24 +116,29 @@ export class AioLocale {
   number(value: number, options?: Intl.NumberFormatOptions): string {
     return value.toLocaleString(this.english() ? 'en-US' : 'fa-IR', options);
   }
+  /**
+   * A date for display: Solar Hijri with Persian digits in Persian, Gregorian
+   * in English. Takes an ISO day (`2026-11-02`, a calendar day) or an ISO
+   * instant (shown in Tehran time). Prefer the `aioDate` pipe in templates.
+   */
   date(
-    iso: string,
+    iso: string | null | undefined,
     options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' },
   ): string {
     if (!iso) return '';
     const date = new Date(iso.length === 10 ? iso + 'T00:00:00Z' : iso);
+    if (!Number.isFinite(+date)) return '';
+    const english = this.english();
     const result = new Intl.DateTimeFormat(
-      this.english() ? 'en-US-u-ca-persian' : 'fa-IR-u-ca-persian',
+      english ? 'en-US' : 'fa-IR-u-ca-persian',
       {
         timeZone: iso.length === 10 ? 'UTC' : 'Asia/Tehran',
         ...options,
-        calendar: 'persian',
-        numberingSystem: this.english() ? 'latn' : 'arabext',
+        calendar: english ? 'gregory' : 'persian',
+        numberingSystem: english ? 'latn' : 'arabext',
       },
     ).format(date);
-    return this.english()
-      ? result.replace(/\s+AP\b/g, '').trim()
-      : result.replace(/,/g, '،');
+    return english ? result : result.replace(/,/g, '،');
   }
 }
 
@@ -165,4 +170,20 @@ export function provideAioLocale(): EnvironmentProviders {
       return locale.ready;
     return undefined;
   });
+}
+
+/**
+ * `{{ iso | aioDate }}` / `{{ iso | aioDate: { weekday: 'long', day: 'numeric' } }}`:
+ * every displayed date goes through this, so it follows the language (Solar
+ * Hijri in Persian, Gregorian in English). Impure: it re-renders on a switch.
+ */
+@Pipe({ name: 'aioDate', pure: false })
+export class AioDatePipe implements PipeTransform {
+  private readonly locale = inject(AioLocale);
+  transform(
+    iso: string | null | undefined,
+    options?: Intl.DateTimeFormatOptions,
+  ): string {
+    return this.locale.date(iso, options);
+  }
 }

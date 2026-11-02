@@ -42,8 +42,9 @@ import {
   AioSkeletonRows,
   AioLocale,
   AioNotifications,
+  AioDatePipe,
 } from '@all-in-one/ui';
-import { apiErrorMessage, faDate } from '@all-in-one/web/shared';
+import { apiErrorMessage } from '@all-in-one/web/shared';
 import {
   lucideCalendarDays,
   lucideChefHat,
@@ -58,6 +59,7 @@ import { MealForm } from './meal-form';
 @Component({
   selector: 'health-nutrition-page',
   imports: [
+    AioDatePipe,
     AioAccordionContent,
     AioAccordionDirectives,
     AioAccordionTrigger,
@@ -316,7 +318,7 @@ import { MealForm } from './meal-form';
                 | aioTranslate
                   : [
                       fa(p.days.length),
-                      faDate(p.startDate),
+                      p.startDate | aioDate,
                       fa(p.calorieTarget),
                     ]
             }}
@@ -343,11 +345,13 @@ import { MealForm } from './meal-form';
               <div aioAccordionItem>
                 <aio-accordion-trigger>
                   <span class="min-w-0 flex-1">{{
-                    faDate(day.date, {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'long',
-                    })
+                    day.date
+                      | aioDate
+                        : {
+                            weekday: 'long',
+                            day: 'numeric',
+                            month: 'long',
+                          }
                   }}</span>
                   <bdi
                     class="text-muted-foreground text-xs font-normal"
@@ -709,10 +713,6 @@ export class NutritionPage {
   protected readonly balanced = BALANCED_RULES;
   protected readonly mealTypeLabels = MEAL_TYPE_LABELS;
   protected readonly scoreClass = scoreClass;
-  protected readonly faDate = (
-    iso: string,
-    options?: Intl.DateTimeFormatOptions,
-  ) => this.locale.date(iso, options);
   protected readonly fa = (n: number) => this.locale.number(n);
 
   protected readonly profile = httpResource<HealthProfile>(

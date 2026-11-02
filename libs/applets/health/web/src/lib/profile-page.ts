@@ -191,7 +191,11 @@ import {
           </aio-form-field>
           <div class="grid grid-cols-3 gap-3">
             <aio-number-field
-              [label]="'سال تولد (شمسی)' | aioTranslate"
+              [label]="
+                locale.english()
+                  ? 'Birth year'
+                  : ('سال تولد (شمسی)' | aioTranslate)
+              "
               controlId="birthYear"
               [field]="profileForm.birthYear"
               inputMode="numeric"
@@ -313,7 +317,9 @@ export class ProfilePage {
           {
             label: 'سال تولد',
             value: p?.birthYear
-              ? `${this.locale.number(persianBirthYear(p.birthYear), { useGrouping: false })} شمسی`
+              ? this.locale.english()
+                ? String(p.birthYear)
+                : `${this.locale.number(persianBirthYear(p.birthYear), { useGrouping: false })} شمسی`
               : 'تکمیل نشده',
             icon: 'lucideUserRound',
             color: 'var(--health-orange)',
@@ -386,12 +392,22 @@ export class ProfilePage {
     goal: 'MAINTAIN' as HealthGoal,
   });
   protected readonly profileForm = form(this.model, (path) => {
+    // Persian: Solar Hijri year; English: Gregorian year (stored Gregorian).
     min(path.birthYear, 1299, {
       message: 'سال را شمسی وارد کنید (مثلاً ۱۳۷۳).',
-      when: ({ value }) => value() !== 0,
+      when: ({ value }) => value() !== 0 && !this.locale.english(),
     });
     max(path.birthYear, 1399, {
       message: 'سال تولد باید بین ۱۲۹۹ و ۱۳۹۹ باشد.',
+      when: () => !this.locale.english(),
+    });
+    min(path.birthYear, 1920, {
+      message: 'Enter the year, e.g. 1994.',
+      when: ({ value }) => value() !== 0 && this.locale.english(),
+    });
+    max(path.birthYear, 2020, {
+      message: 'Birth year must be between 1920 and 2020.',
+      when: () => this.locale.english(),
     });
     min(path.heightCm, 100, {
       message: 'بین ۱۰۰ تا ۲۵۰',
@@ -412,7 +428,9 @@ export class ProfilePage {
       this.model.set({
         excludedIngredients: (p.excludedIngredients ?? []).join('، '),
         sex: p.sex ?? '',
-        birthYear: persianBirthYear(p.birthYear),
+        birthYear: this.locale.english()
+          ? (p.birthYear ?? 0)
+          : persianBirthYear(p.birthYear),
         heightCm: p.heightCm ?? 0,
         weightKg: p.weightKg ?? 0,
         activityLevel: p.activityLevel,
@@ -437,7 +455,9 @@ export class ProfilePage {
             .map((s) => s.trim())
             .filter(Boolean),
           sex: m.sex || null,
-          birthYear: gregorianBirthYear(m.birthYear),
+          birthYear: this.locale.english()
+            ? m.birthYear || null
+            : gregorianBirthYear(m.birthYear),
           heightCm: m.heightCm || null,
           weightKg: m.weightKg || null,
           activityLevel: m.activityLevel,

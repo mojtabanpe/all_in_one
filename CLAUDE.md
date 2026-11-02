@@ -242,6 +242,12 @@ When the owner gives a new instruction, add it to this list in the same change.
     `aio-dialog` shows `title`/`description` as given (callers pipe fixed copy); items the app itself creates (the
     inbox) do follow the language.
 
+41. **Dates follow the language** (2026-11-02, owner). Persian: Solar Hijri with Persian digits; English: Gregorian,
+    English month names. Every displayed date goes through the `aioDate` pipe (`{{ iso | aioDate: { month: 'long' } }}`)
+    or `AioLocale.date()` in code; never format a date with `Intl` or `faDate` directly in UI. `aio-date-input` shows a
+    Solar Hijri picker in Persian and a Gregorian one in English; form/API values stay Gregorian ISO days. The health
+    birth year is entered in the calendar of the active language (stored Gregorian).
+
 ## Approved custom components
 
 - **BottomNav** (2026-10-29): floating bottom navigation for phone sizes, in `libs/shared/packages`,

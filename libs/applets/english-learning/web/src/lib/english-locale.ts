@@ -2,9 +2,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 export const englishNumber = (value: number) => value.toLocaleString('en-US');
 
-/** Keep Solar Hijri calendar dates, with English month names and Latin digits. */
+/** Gregorian date in English (Persian screens use `aioDate`). */
 export const englishDate = (iso: string) =>
-  new Intl.DateTimeFormat('en-US-u-ca-persian', {
+  new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

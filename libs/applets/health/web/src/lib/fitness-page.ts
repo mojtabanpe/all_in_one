@@ -66,8 +66,9 @@ import {
   AioNumberField,
   AioLocale,
   AioNotifications,
+  AioDatePipe,
 } from '@all-in-one/ui';
-import { apiErrorMessage, faDate } from '@all-in-one/web/shared';
+import { apiErrorMessage } from '@all-in-one/web/shared';
 import {
   lucideActivity,
   lucideBike,
@@ -92,6 +93,7 @@ type CategoryFilter = ActivityCategory | 'all';
 @Component({
   selector: 'health-fitness-page',
   imports: [
+    AioDatePipe,
     AioAccordionContent,
     AioAccordionDirectives,
     AioAccordionTrigger,
@@ -593,11 +595,14 @@ type CategoryFilter = ActivityCategory | 'all';
                     </div>
                     <div aioItemDescription class="flex flex-wrap gap-1.5">
                       <span>{{
-                        faDate(w.date, {
-                          weekday: 'long',
-                          day: 'numeric',
-                          month: 'long',
-                        }) | aioTranslate
+                        w.date
+                          | aioDate
+                            : {
+                                weekday: 'long',
+                                day: 'numeric',
+                                month: 'long',
+                              }
+                          | aioTranslate
                       }}</span>
                       <span aioBadge variant="secondary">{{
                         intensityLabels[w.intensity] | aioTranslate
@@ -1131,10 +1136,6 @@ export class FitnessPage {
   private readonly confirm = inject(AioConfirm);
   private readonly today = toIsoDate(new Date());
   protected readonly Math = Math;
-  protected readonly faDate = (
-    iso: string,
-    options?: Intl.DateTimeFormatOptions,
-  ) => this.locale.date(iso, options);
   protected readonly fa = (n: number) => this.locale.number(n);
   protected readonly categories = ACTIVITY_CATEGORIES;
   protected readonly categoryLabels = ACTIVITY_CATEGORY_LABELS;
