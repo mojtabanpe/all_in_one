@@ -472,14 +472,43 @@ describe('language review reminders', () => {
       where: { userId: { in: ['u1'] }, enabled: true },
     });
   });
-  it('retries failed sends within the grace period without sending stale reminders', async () => {
+  it('retries failed sends later the same day and keeps the daily limit', async () => {
     const { service, send } = fixture();
     send.mockResolvedValueOnce(false).mockResolvedValue(true);
     await service.tick(new Date('2026-10-31T16:30:05Z'));
     await service.tick(new Date('2026-10-31T16:30:35Z'));
     expect(send).toHaveBeenCalledTimes(2);
     await service.tick(new Date('2026-11-01T16:36:00Z'));
-    expect(send).toHaveBeenCalledTimes(2);
+    await service.tick(new Date('2026-11-01T18:00:00Z'));
+    expect(send).toHaveBeenCalledTimes(3);
+  });
+  it('catches up a missed 09:30 reminder after a restart without replaying it twice', async () => {
+    const { service, send, db } = fixture();
+    db.reviewReminderSetting.findMany.mockResolvedValue([
+      { userId: 'u1', enabled: true, time: '09:30' },
+    ]);
+    await service.tick(new Date('2026-11-02T05:59:59Z'));
+    expect(send).not.toHaveBeenCalled();
+    await service.tick(new Date('2026-11-02T10:30:00Z'));
+    await service.tick(new Date('2026-11-02T10:30:30Z'));
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][3]).toBe('review:2026-11-02');
+  });
+  it('does not replay yesterday’s missed reminder after the midnight grace period', async () => {
+    const { service, send, db } = fixture();
+    db.reviewReminderSetting.findMany.mockResolvedValue([
+      { userId: 'u1', enabled: true, time: '23:59' },
+    ]);
+    await service.tick(new Date('2026-11-01T20:35:01Z'));
+    expect(send).not.toHaveBeenCalled();
+  });
+  it('sends later the same day if cards become due after the scheduled time', async () => {
+    const { service, send, db } = fixture(0);
+    await service.tick(new Date('2026-11-02T16:30:00Z'));
+    expect(send).not.toHaveBeenCalled();
+    db.englishCard.count.mockResolvedValue(56);
+    await service.tick(new Date('2026-11-02T17:30:00Z'));
+    expect(send).toHaveBeenCalledTimes(1);
   });
   it('checks the previous Tehran day when the retry window crosses midnight', async () => {
     const { service, send, db } = fixture();

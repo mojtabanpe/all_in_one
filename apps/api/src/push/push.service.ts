@@ -285,7 +285,10 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
             if (
               due === undefined ||
               due > now.getTime() ||
-              due < now.getTime() - 300000
+              // A daily review remains useful later the same Tehran day. A
+              // restart or failed sweep must not silently cancel today's review.
+              // Only yesterday's reminder retains the short midnight grace.
+              (date !== today && due < now.getTime() - 300000)
             )
               continue;
             // Match the study queue: include new/due cards, but never suspended cards.
