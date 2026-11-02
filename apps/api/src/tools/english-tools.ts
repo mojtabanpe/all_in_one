@@ -2,7 +2,7 @@ import type {
   CardsService,
   DecksService,
   EnglishAiService,
-  ShadowingService,
+  PracticeScoresService,
   TextsService,
 } from '@all-in-one/applets/english-learning/api';
 import {
@@ -30,7 +30,7 @@ export function englishTools(
     decks: DecksService;
     cards: CardsService;
     texts: TextsService;
-    shadowing: ShadowingService;
+    practiceScores: PracticeScoresService;
     ai: EnglishAiService;
   },
 ) {
@@ -55,15 +55,20 @@ export function englishTools(
   );
 
   kit.tool(
-    'list_shadowing_scores',
+    'list_practice_scores',
     {
       description:
-        "List the user's shadowing session scores (0–100, strict: every missed or wrong word costs 1.5 words, every extra word 0.75; unrecorded sentences count 0), oldest first, with their dates. Use it to describe their speaking progress.",
+        "List the user's English practice scores, oldest first, with dates: SHADOWING (word-by-word check of each recorded sentence; unrecorded sentences count 0), WRITING and SPEAKING (from the mistakes in the AI feedback, each costing 1.5 words of the answer), LISTENING (share of comprehension questions right on the first pick). All 0–100 and strict. Use it to describe their progress.",
       scope: 'readings:read',
       kind: 'read',
-      input: { limit: z.number().int().min(1).max(500).optional() },
+      input: {
+        kind: z
+          .enum(['SHADOWING', 'WRITING', 'SPEAKING', 'LISTENING'])
+          .optional(),
+        limit: z.number().int().min(1).max(500).optional(),
+      },
     },
-    (a) => s.shadowing.list(user, a.limit),
+    (a) => s.practiceScores.list(user, a.kind, a.limit),
   );
   kit.tool(
     'list_decks',

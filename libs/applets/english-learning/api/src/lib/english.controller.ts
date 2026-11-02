@@ -21,7 +21,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { type AuthUser, CurrentUser } from '@all-in-one/api/auth';
-import { ShadowingService } from './shadowing.service';
+import { PracticeScoresService } from './practice-scores.service';
 import {
   type Card,
   type CardAnswer,
@@ -31,11 +31,13 @@ import {
   createCardSchema,
   type CreateDeckInput,
   createDeckSchema,
-  type CreateShadowingSessionInput,
-  createShadowingSessionSchema,
+  type CreatePracticeScoreInput,
+  createPracticeScoreSchema,
+  PRACTICE_KINDS,
+  type PracticeKind,
+  type PracticeScore,
   type CreateTextInput,
   createTextSchema,
-  type ShadowingSession,
   type Deck,
   type DeckWithStats,
   type Dialogue,
@@ -406,21 +408,27 @@ export class EnglishAiController {
   }
 }
 
-@Controller('english/shadowing')
-export class EnglishShadowingController {
-  constructor(private readonly shadowing: ShadowingService) {}
+@Controller('english/practice/scores')
+export class EnglishPracticeScoresController {
+  constructor(private readonly scores: PracticeScoresService) {}
 
-  @Get('sessions')
-  list(@CurrentUser() user: AuthUser): Promise<ShadowingSession[]> {
-    return this.shadowing.list(user.id);
+  @Get()
+  list(
+    @CurrentUser() user: AuthUser,
+    @Query('kind') kind?: string,
+  ): Promise<PracticeScore[]> {
+    const k = PRACTICE_KINDS.includes(kind as PracticeKind)
+      ? (kind as PracticeKind)
+      : undefined;
+    return this.scores.list(user.id, k);
   }
 
-  @Post('sessions')
+  @Post()
   save(
     @CurrentUser() user: AuthUser,
-    @Body({ schema: createShadowingSessionSchema })
-    input: CreateShadowingSessionInput,
-  ): Promise<ShadowingSession> {
-    return this.shadowing.save(user.id, input);
+    @Body({ schema: createPracticeScoreSchema })
+    input: CreatePracticeScoreInput,
+  ): Promise<PracticeScore> {
+    return this.scores.save(user.id, input);
   }
 }

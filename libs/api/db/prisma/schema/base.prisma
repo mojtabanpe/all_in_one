@@ -52,7 +52,7 @@ model User {
   englishCards    EnglishCard[]
   englishTexts    EnglishText[]
   englishDays     EnglishReviewDay[]
-  englishShadowing EnglishShadowingSession[]
+  englishPracticeScores EnglishPracticeScore[]
   healthProfile   HealthProfile?
   workoutLogs     WorkoutLog[]
   healthRoutines  HealthRoutine[]

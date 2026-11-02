@@ -4,5 +4,5 @@ export * from './lib/decks.service';
 export * from './lib/texts.service';
 export { AiService as EnglishAiService } from './lib/ai.service';
 export * from './lib/starter-decks.service';
-export * from './lib/shadowing.service';
+export * from './lib/practice-scores.service';
 export { MAX_RECORDING_BYTES, RECORDING_TYPES } from '@all-in-one/api/ai';

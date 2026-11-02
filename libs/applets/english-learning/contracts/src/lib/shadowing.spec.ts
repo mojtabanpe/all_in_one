@@ -1,5 +1,7 @@
 import {
   checkShadowing,
+  listeningScore,
+  writingScore,
   shadowScore,
   shadowSessionScore,
   shadowTokens,
@@ -50,5 +52,16 @@ describe('shadowing check', () => {
   it('counts sentences that were never recorded as zero', () => {
     expect(shadowSessionScore(4, [100, 80])).toBe(45);
     expect(shadowSessionScore(2, [90, 70])).toBe(80);
+  });
+
+  it('scores writing by mistakes per word and listening by first picks', () => {
+    const thirty = Array.from({ length: 30 }, () => 'word').join(' ');
+    expect(writingScore(thirty, 3)).toBe(85);
+    expect(
+      writingScore('one two three four five six seven eight nine ten', 3),
+    ).toBe(55);
+    expect(writingScore(thirty, 0)).toBe(100);
+    expect(listeningScore(2, 3)).toBe(67);
+    expect(listeningScore(0, 0)).toBe(0);
   });
 });

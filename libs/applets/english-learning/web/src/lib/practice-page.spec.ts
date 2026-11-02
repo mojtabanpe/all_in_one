@@ -43,18 +43,42 @@ describe('Shadowing practice', () => {
           { speaker: 'A', text: 'Could I have a coffee?' },
           { speaker: 'B', text: 'Of course. Anything else?' },
         ],
-        questions: [],
+        questions: [
+          {
+            question: 'What does A want?',
+            options: ['Tea', 'Coffee'],
+            answer: 1,
+          },
+          { question: 'Is there more?', options: ['Yes', 'No'], answer: 0 },
+        ],
         phrases: [],
       }),
       transcribe: vi.fn().mockResolvedValue({ text: 'could I have coffee' }),
-      saveShadowingSession: vi.fn((input) =>
+      savePracticeScore: vi.fn((input) =>
         Promise.resolve({
           ...input,
           id: 's1',
           createdAt: '2026-11-02T10:00:00Z',
         }),
       ),
-      shadowingSessions: vi.fn().mockResolvedValue([]),
+      practiceScores: vi.fn().mockResolvedValue([]),
+      writingTask: vi.fn().mockResolvedValue({
+        scenario: 'Order a coffee',
+        message: 'What can I get you?',
+      }),
+      writingFeedback: vi.fn().mockResolvedValue({
+        corrected: 'I would like a coffee.',
+        natural: 'Could I get a coffee?',
+        mistakes: [
+          {
+            original: 'I like coffee',
+            fix: 'I would like a coffee',
+            why: 'polite request',
+          },
+        ],
+        phrases: [],
+        comment: 'Nearly there.',
+      }),
     };
     const tts = {
       rate: 1,
@@ -152,10 +176,11 @@ describe('Shadowing practice', () => {
     expect(revoke).toHaveBeenCalledWith('blob:voice');
     await click('Finish practice');
     // Sentence 2 was not recorded: it counts as zero.
-    expect(api.saveShadowingSession).toHaveBeenCalledWith({
+    expect(api.savePracticeScore).toHaveBeenCalledWith({
+      kind: 'SHADOWING',
       title: 'Coffee',
       score: 35,
-      sentences: 2,
+      items: 2,
       attempted: 1,
     });
     await fixture.whenStable();
@@ -195,6 +220,41 @@ describe('Shadowing practice', () => {
     expect(fixture.componentInstance['playing']()).toBe(true);
     fixture.destroy();
     expect(tts.stop).toHaveBeenCalled();
+  });
+
+  it('scores listening by first picks and saves it once', async () => {
+    const { api, fixture, el } = await setup();
+    fixture.componentInstance['setMode']('listening');
+    await fixture.whenStable();
+    fixture.componentInstance['choose'](0, 1); // right
+    fixture.componentInstance['choose'](1, 1); // wrong
+    fixture.componentInstance['choose'](1, 0); // ignored: first pick counts
+    await fixture.whenStable();
+    expect(api.savePracticeScore).toHaveBeenCalledTimes(1);
+    expect(api.savePracticeScore).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: 'LISTENING',
+        score: 50,
+        items: 2,
+        mistakes: 1,
+      }),
+    );
+    expect(el.textContent).toContain('1 of 2 answers right on the first try.');
+  });
+
+  it('scores written answers strictly from the feedback mistakes', async () => {
+    const { api, fixture, el } = await setup();
+    const page = fixture.componentInstance;
+    page['setMode']('writing');
+    await page['newTask']();
+    page['patch']({ answer: 'I like coffee please thanks' }, 'writing');
+    await page['check']();
+    await fixture.whenStable();
+    // 1 mistake in 5 words: 100 * (1 - 1.5 / 5) = 70.
+    expect(api.savePracticeScore).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'WRITING', score: 70, mistakes: 1 }),
+    );
+    expect(el.textContent).toContain('Saved to your progress.');
   });
 });
 

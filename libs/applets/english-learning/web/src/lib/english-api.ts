@@ -20,8 +20,9 @@ import type {
   UpdateDeckInput,
   WritingFeedback,
   WritingTask,
-  CreateShadowingSessionInput,
-  ShadowingSession,
+  CreatePracticeScoreInput,
+  PracticeKind,
+  PracticeScore,
 } from '@all-in-one/applets/english-learning/contracts';
 import { API_BASE_URL } from '@all-in-one/web/shared';
 import { firstValueFrom } from 'rxjs';
@@ -145,15 +146,15 @@ export class EnglishApi {
   ): Promise<Dialogue> {
     return this.post('/ai/practice/dialogue', { situation, level });
   }
-  shadowingSessions(): Promise<ShadowingSession[]> {
+  practiceScores(kind: PracticeKind): Promise<PracticeScore[]> {
     return firstValueFrom(
-      this.http.get<ShadowingSession[]>(this.base + '/shadowing/sessions'),
+      this.http.get<PracticeScore[]>(this.base + '/practice/scores', {
+        params: { kind },
+      }),
     );
   }
-  saveShadowingSession(
-    input: CreateShadowingSessionInput,
-  ): Promise<ShadowingSession> {
-    return this.post('/shadowing/sessions', input);
+  savePracticeScore(input: CreatePracticeScoreInput): Promise<PracticeScore> {
+    return this.post('/practice/scores', input);
   }
   /** Sends the raw recording; the api forwards it to speech-to-text. */
   transcribe(audio: Blob): Promise<Transcript> {

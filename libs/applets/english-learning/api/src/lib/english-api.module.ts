@@ -9,9 +9,9 @@ import {
   EnglishLibraryController,
   EnglishTextsController,
   EnglishPresentationInterceptor,
-  EnglishShadowingController,
+  EnglishPracticeScoresController,
 } from './english.controller';
-import { ShadowingService } from './shadowing.service';
+import { PracticeScoresService } from './practice-scores.service';
 import { SpeechService } from './speech.service';
 import { StarterDecksService } from './starter-decks.service';
 import { TextsService } from './texts.service';
@@ -28,7 +28,7 @@ import { TextsService } from './texts.service';
     EnglishCardsController,
     EnglishTextsController,
     EnglishAiController,
-    EnglishShadowingController,
+    EnglishPracticeScoresController,
   ],
   providers: [
     EnglishPresentationInterceptor,
@@ -36,7 +36,7 @@ import { TextsService } from './texts.service';
     AudioCacheService,
     CardsService,
     DecksService,
-    ShadowingService,
+    PracticeScoresService,
     SpeechService,
     StarterDecksService,
     TextsService,
@@ -47,7 +47,7 @@ import { TextsService } from './texts.service';
     DecksService,
     TextsService,
     StarterDecksService,
-    ShadowingService,
+    PracticeScoresService,
   ],
 })
 export class EnglishApiModule {}

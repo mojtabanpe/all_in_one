@@ -226,21 +226,55 @@ export function shadowSessionScore(
   return Math.round(sum / sentenceCount);
 }
 
-export const createShadowingSessionSchema = z.object({
+/* ---------------- Practice scores (all four modes) ---------------- */
+
+export const PRACTICE_KINDS = [
+  'SHADOWING',
+  'WRITING',
+  'SPEAKING',
+  'LISTENING',
+] as const;
+export type PracticeKind = (typeof PRACTICE_KINDS)[number];
+
+const wordCount = (text: string) => shadowTokens(text).length;
+
+/**
+ * Writing/speaking: same strictness as shadowing, from the mistakes the AI
+ * feedback lists, relative to the length of the answer (each mistake costs 1.5
+ * words). 3 mistakes in 30 words give 85; in 10 words, 55.
+ */
+export function writingScore(answer: string, mistakes: number): number {
+  return shadowScore(Math.max(wordCount(answer), 1), mistakes, 0);
+}
+
+/** Listening: share of comprehension questions answered right on the first pick. */
+export function listeningScore(correct: number, total: number): number {
+  return total ? Math.round((100 * correct) / total) : 0;
+}
+
+export const createPracticeScoreSchema = z.object({
+  kind: z.enum(PRACTICE_KINDS),
   title: z.string().check(z.trim(), z.minLength(1), z.maxLength(200)),
   score: z.number().check(z.int(), z.minimum(0), z.maximum(100)),
-  sentences: z.number().check(z.int(), z.minimum(1), z.maximum(200)),
-  attempted: z.number().check(z.int(), z.minimum(0), z.maximum(200)),
+  /** What was graded: sentences (shadowing), words (writing/speaking), questions (listening). */
+  items: z.number().check(z.int(), z.minimum(1), z.maximum(5000)),
+  /** How many of them were attempted (sentences recorded, questions answered). */
+  attempted: z.number().check(z.int(), z.minimum(0), z.maximum(5000)),
+  mistakes: z.optional(
+    z.number().check(z.int(), z.minimum(0), z.maximum(5000)),
+  ),
 });
-export type CreateShadowingSessionInput = z.infer<
-  typeof createShadowingSessionSchema
+export type CreatePracticeScoreInput = z.infer<
+  typeof createPracticeScoreSchema
 >;
 
-export interface ShadowingSession {
+export interface PracticeScore {
   id: string;
+  kind: PracticeKind;
   title: string;
   score: number;
-  sentences: number;
+  items: number;
   attempted: number;
+  mistakes: number | null;
   createdAt: string;
 }

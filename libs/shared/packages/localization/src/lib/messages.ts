@@ -3990,6 +3990,20 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['حذف {0}', 'Delete {0}'],
   ['مرور {0} کارت', 'Review {0} cards'],
   ['نمایش پیشرفتم', 'Show my progress'],
+  ['پیشرفت من', 'My progress'],
+  ['نمره\u200cهای تمرین در طول زمان', 'Practice scores over time'],
+  [
+    'هنوز نمره\u200cای نداری. یک تمرین را تمام کن تا اولین نمره\u200cات ثبت شود.',
+    'No scores yet. Finish an exercise to get your first one.',
+  ],
+  [
+    'نمرهٔ سختگیرانه: هر اشتباه به اندازهٔ ۱٫۵ کلمه از جوابت کم می\u200cکند ({0} اشتباه).',
+    'Strict score: each mistake costs 1.5 words of your answer ({0} mistakes).',
+  ],
+  [
+    '{0} جواب از {1} در اولین انتخاب درست بود.',
+    '{0} of {1} answers right on the first try.',
+  ],
   ['بستن نمودار پیشرفت', 'Hide my progress'],
   ['نمره\u200cهای شدوینگ در طول زمان', 'Shadowing scores over time'],
   [

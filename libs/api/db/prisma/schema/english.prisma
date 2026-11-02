@@ -75,17 +75,29 @@ model EnglishReviewDay {
   @@map("english_review_days")
 }
 
-/// One shadowing session (a dialogue repeated sentence by sentence) and its strict 0–100 score.
-model EnglishShadowingSession {
-  id        String   @id @default(uuid(7)) @db.Uuid
-  userId    String   @db.Uuid
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+enum EnglishPracticeKind {
+  SHADOWING
+  WRITING
+  SPEAKING
+  LISTENING
+}
+
+/// One scored practice session (shadowing, writing, speaking or listening), strict 0–100.
+/// The table keeps its first name: it started with shadowing only.
+model EnglishPracticeScore {
+  id        String              @id @default(uuid(7)) @db.Uuid
+  userId    String              @db.Uuid
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      EnglishPracticeKind @default(SHADOWING)
   title     String
   score     Int
-  sentences Int
+  /// Graded units: sentences, words or questions.
+  items     Int                 @map("sentences")
   attempted Int
-  createdAt DateTime @default(now())
+  mistakes  Int?
+  createdAt DateTime            @default(now())
 
   @@index([userId, createdAt])
+  @@index([userId, kind, createdAt])
   @@map("english_shadowing_sessions")
 }

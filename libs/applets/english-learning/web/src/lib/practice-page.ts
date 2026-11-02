@@ -16,9 +16,12 @@ import {
   type Dialogue,
   READING_LEVELS,
   type ReadingLevel,
+  listeningScore,
+  type PracticeKind,
+  type PracticeScore,
   type ShadowCheck,
-  type ShadowingSession,
   shadowSessionScore,
+  writingScore,
   type SpeechVoice,
   type UsefulPhrase,
   type WritingFeedback,
@@ -76,6 +79,12 @@ interface ProgressPoint {
 }
 
 type Mode = 'writing' | 'speaking' | 'listening' | 'shadowing';
+const MODE_KIND: Record<Mode, PracticeKind> = {
+  writing: 'WRITING',
+  speaking: 'SPEAKING',
+  listening: 'LISTENING',
+  shadowing: 'SHADOWING',
+};
 const MODES: Mode[] = ['writing', 'speaking', 'listening', 'shadowing'];
 const DECK_KEY = 'aio.english.practice.deck';
 const MAX_RECORDING = 1500 * 1024;
@@ -84,6 +93,9 @@ interface TaskState {
   task: WritingTask | null;
   answer: string;
   feedback: WritingFeedback | null;
+  /** Strict score of `feedback`, and whether it reached the progress history. */
+  score?: number | null;
+  saved?: boolean;
   situation: ConversationSituation;
   level: ReadingLevel;
 }
@@ -168,6 +180,61 @@ const freshTask = (): TaskState => ({
         }
       </div>
 
+      <section
+        class="flex flex-col gap-3"
+        [attr.aria-label]="'My progress' | aioTranslate"
+      >
+        <button
+          aioBtn
+          variant="outline"
+          class="self-start"
+          [attr.aria-expanded]="showProgress()"
+          (click)="toggleProgress()"
+        >
+          <aio-icon name="lucideChartLine" size="sm" />
+          {{
+            (showProgress() ? 'Hide my progress' : 'Show my progress')
+              | aioTranslate
+          }}
+        </button>
+        @if (showProgress()) {
+          @if (modeHistory(); as history) {
+            @if (history.length) {
+              <tanstack-chart aioChart [options]="progressChart()" />
+              <ul class="flex flex-col gap-1 text-sm">
+                @for (h of history.slice(-5).reverse(); track h.id) {
+                  <li class="flex items-center justify-between gap-3">
+                    <span class="text-muted-foreground">{{
+                      h.createdAt
+                        | aioDate
+                          : {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            }
+                    }}</span>
+                    <strong>{{ number(h.score) }}/{{ number(100) }}</strong>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="text-muted-foreground text-sm">
+                {{
+                  'No scores yet. Finish an exercise to get your first one.'
+                    | aioTranslate
+                }}
+              </p>
+            }
+          } @else {
+            <p class="text-muted-foreground text-sm">
+              {{ 'Loading' | aioTranslate }}…
+            </p>
+          }
+        }
+      </section>
+
       <div class="grid grid-cols-2 gap-3">
         <aio-select-field
           [label]="'Situation' | aioTranslate"
@@ -225,55 +292,6 @@ const freshTask = (): TaskState => ({
                 | aioTranslate
             }}
           </p>
-          <button
-            aioBtn
-            variant="outline"
-            class="self-start"
-            [attr.aria-expanded]="showProgress()"
-            (click)="toggleProgress()"
-          >
-            <aio-icon name="lucideChartLine" size="sm" />
-            {{
-              (showProgress() ? 'Hide my progress' : 'Show my progress')
-                | aioTranslate
-            }}
-          </button>
-          @if (showProgress()) {
-            @if (shadowHistory(); as history) {
-              @if (history.length) {
-                <tanstack-chart aioChart [options]="progressChart()" />
-                <ul class="flex flex-col gap-1 text-sm">
-                  @for (h of history.slice(-5).reverse(); track h.id) {
-                    <li class="flex items-center justify-between gap-3">
-                      <span class="text-muted-foreground">{{
-                        h.createdAt
-                          | aioDate
-                            : {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              }
-                      }}</span>
-                      <strong>{{ number(h.score) }}/{{ number(100) }}</strong>
-                    </li>
-                  }
-                </ul>
-              } @else {
-                <p class="text-muted-foreground text-sm">
-                  {{
-                    'No sessions yet. Finish a dialogue to get your first score.'
-                      | aioTranslate
-                  }}
-                </p>
-              }
-            } @else {
-              <p class="text-muted-foreground text-sm">
-                {{ 'Loading' | aioTranslate }}…
-              </p>
-            }
-          }
         </section>
         @if (shadowLine(); as sentence) {
           <section
@@ -674,6 +692,26 @@ const freshTask = (): TaskState => ({
                   }
                 </div>
               }
+              @if (listeningResult(); as r) {
+                <div class="flex flex-col gap-1" role="status">
+                  <p class="text-3xl font-bold">
+                    {{ number(r.score)
+                    }}<span class="text-muted-foreground text-base font-medium"
+                      >/{{ number(100) }}</span
+                    >
+                  </p>
+                  <p class="text-muted-foreground text-sm">
+                    {{
+                      '{0} of {1} answers right on the first try.'
+                        | aioTranslate
+                          : [number(r.correct), number(d.questions.length)]
+                    }}
+                    @if (listeningSaved()) {
+                      {{ 'Saved to your progress.' | aioTranslate }}
+                    }
+                  </p>
+                </div>
+              }
             </section>
           }
           <ng-container
@@ -808,6 +846,25 @@ const freshTask = (): TaskState => ({
               <h2 id="feedback-title" class="text-lg font-bold">
                 {{ 'Feedback' | aioTranslate }}
               </h2>
+              @if (current().score !== null && current().score !== undefined) {
+                <div class="flex flex-col gap-1" role="status">
+                  <p class="text-3xl font-bold">
+                    {{ number(current().score!)
+                    }}<span class="text-muted-foreground text-base font-medium"
+                      >/{{ number(100) }}</span
+                    >
+                  </p>
+                  <p class="text-muted-foreground text-sm">
+                    {{
+                      'Strict score: each mistake costs 1.5 words of your answer. Mistakes: {0}.'
+                        | aioTranslate: [number(f.mistakes.length)]
+                    }}
+                    @if (current().saved) {
+                      {{ 'Saved to your progress.' | aioTranslate }}
+                    }
+                  </p>
+                </div>
+              }
               @if (f.comment) {
                 <p
                   dir="ltr"
@@ -1036,13 +1093,31 @@ export class PracticePage {
       Array.from({ length: lines }, (_, i) => checks[i]?.score),
     );
   });
-  protected readonly shadowSaved = signal<ShadowingSession | null>(null);
-  protected readonly shadowHistory = signal<ShadowingSession[] | null>(null);
+  protected readonly shadowSaved = signal<PracticeScore | null>(null);
+  protected readonly listeningSaved = signal<PracticeScore | null>(null);
+  /** Score history per mode, loaded when the chart is first opened. */
+  protected readonly history = signal<
+    Partial<Record<PracticeKind, PracticeScore[]>>
+  >({});
+  protected readonly modeHistory = computed(
+    () => this.history()[MODE_KIND[this.mode()]] ?? null,
+  );
+  /** Listening: the score once every question has a first pick. */
+  protected readonly listeningResult = computed(() => {
+    const d = this.dialogue();
+    const choices = this.choices();
+    if (!d?.questions.length) return null;
+    if (d.questions.some((_, i) => !(i in choices))) return null;
+    const correct = d.questions.filter(
+      (q, i) => choices[i] === q.answer,
+    ).length;
+    return { correct, score: listeningScore(correct, d.questions.length) };
+  });
   protected readonly showProgress = signal(false);
   protected readonly progressChart: Signal<
     AioChartOptions<ProgressPoint, string, number>
   > = computed(() => {
-    const rows: ProgressPoint[] = (this.shadowHistory() ?? []).map((r, i) => ({
+    const rows: ProgressPoint[] = (this.modeHistory() ?? []).map((r, i) => ({
       id: r.id,
       // Point scale needs unique labels: number them, show the date beside.
       label: `${i + 1}. ${this.locale.date(r.createdAt, { day: 'numeric', month: 'short' })}`,
@@ -1065,7 +1140,7 @@ export class PracticePage {
         tooltip: aioChartTooltip<ProgressPoint, string, number>(),
       }),
       height: 220,
-      ariaLabel: this.locale.text('Shadowing scores over time'),
+      ariaLabel: this.locale.text('Practice scores over time'),
     };
   });
   protected readonly number = (value: number) => this.locale.number(value);
@@ -1177,7 +1252,18 @@ export class PracticePage {
           state.task!,
           answer,
         ),
-      (feedback) => this.patch({ feedback }, mode),
+      (feedback) => {
+        const score = writingScore(answer, feedback.mistakes.length);
+        this.patch({ feedback, score, saved: false }, mode);
+        void this.saveScore({
+          kind: MODE_KIND[mode],
+          title: (state.task!.scenario || 'Practice').slice(0, 200),
+          score,
+          items: Math.max(answer.split(/\s+/).filter(Boolean).length, 1),
+          attempted: Math.max(answer.split(/\s+/).filter(Boolean).length, 1),
+          mistakes: feedback.mistakes.length,
+        }).then((saved) => saved && this.patch({ saved: true }, mode));
+      },
     );
   }
 
@@ -1193,6 +1279,7 @@ export class PracticePage {
         this.shadowFinished.set(false);
         this.shadowChecks.set({});
         this.shadowSaved.set(null);
+        this.listeningSaved.set(null);
       },
     );
   }
@@ -1284,6 +1371,17 @@ export class PracticePage {
   protected choose(question: number, option: number) {
     if (question in this.choices()) return;
     this.choices.update((c) => ({ ...c, [question]: option }));
+    const result = this.listeningResult();
+    const d = this.dialogue();
+    if (result && d && this.mode() === 'listening' && !this.listeningSaved())
+      void this.saveScore({
+        kind: 'LISTENING',
+        title: d.title.slice(0, 200) || 'Listening',
+        score: result.score,
+        items: d.questions.length,
+        attempted: d.questions.length,
+        mistakes: d.questions.length - result.correct,
+      }).then((saved) => saved && this.listeningSaved.set(saved));
   }
 
   /** Correct answers turn green after a choice; a wrong pick turns red. */
@@ -1446,30 +1544,43 @@ export class PracticePage {
       });
   }
 
-  /** Saves the session score once, when the last sentence is passed. */
+  /** Saves the shadowing session score once, when the last sentence is passed. */
   private async saveShadowSession() {
     const d = this.dialogue();
     if (!d || !this.shadowAttempted() || this.shadowSaved()) return;
+    const saved = await this.saveScore({
+      kind: 'SHADOWING',
+      title: d.title.slice(0, 200) || 'Shadowing',
+      score: this.shadowSessionScore(),
+      items: d.lines.length,
+      attempted: this.shadowAttempted(),
+    });
+    if (saved) this.shadowSaved.set(saved);
+  }
+
+  /** Stores a score and adds it to the loaded history of its mode. */
+  private async saveScore(
+    input: Parameters<EnglishApi['savePracticeScore']>[0],
+  ): Promise<PracticeScore | null> {
     try {
-      const saved = await this.api.saveShadowingSession({
-        title: d.title.slice(0, 200) || 'Shadowing',
-        score: this.shadowSessionScore(),
-        sentences: d.lines.length,
-        attempted: this.shadowAttempted(),
-      });
-      this.shadowSaved.set(saved);
-      if (this.shadowHistory())
-        this.shadowHistory.update((h) => [...(h ?? []), saved]);
+      const saved = await this.api.savePracticeScore(input);
+      this.history.update((h) =>
+        h[saved.kind] ? { ...h, [saved.kind]: [...h[saved.kind]!, saved] } : h,
+      );
+      return saved;
     } catch (error) {
       this.error.set(apiErrorMessage(error));
+      return null;
     }
   }
 
   protected async toggleProgress() {
     this.showProgress.update((v) => !v);
-    if (!this.showProgress() || this.shadowHistory()) return;
+    const kind = MODE_KIND[this.mode()];
+    if (!this.showProgress() || this.history()[kind]) return;
     try {
-      this.shadowHistory.set(await this.api.shadowingSessions());
+      const rows = await this.api.practiceScores(kind);
+      this.history.update((h) => ({ ...h, [kind]: rows }));
     } catch (error) {
       this.error.set(apiErrorMessage(error));
     }
