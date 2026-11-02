@@ -1056,16 +1056,28 @@ export class TasksPage {
     this.hold(task);
   }
 
-  /** Keep `task` on top of the lists until every list reload in flight has landed. */
+  private listValues() {
+    return [this.openRes, this.datedRes, this.doneRes].map((r) =>
+      r.hasValue() ? r.value() : undefined,
+    );
+  }
+
+  /**
+   * Keep `task` on top of the lists until they have been refreshed from the
+   * server (some list changed and none is still loading). Without a reload the
+   * local edit simply stays.
+   */
   private hold(task: PlannerTask) {
     this.pending.update((m) => new Map(m).set(task.id, task));
+    const before = untracked(() => this.listValues());
     const ref = effect(
       () => {
         const loading =
           this.openRes.isLoading() ||
           this.datedRes.isLoading() ||
           this.doneRes.isLoading();
-        if (loading) return;
+        const now = this.listValues();
+        if (loading || now.every((v, i) => v === before[i])) return;
         untracked(() => {
           this.pending.update((m) => {
             if (m.get(task.id) !== task) return m;
