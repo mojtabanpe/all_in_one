@@ -131,7 +131,8 @@
       ],
       "@all-in-one/localization": [
         "./libs/shared/packages/localization/src/index.ts"
-      ]
+      ],
+      "@spartan-ng/helm/chart": ["./libs/shared/spartan/chart/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

@@ -22,6 +22,7 @@ import {
   provideIcons,
   AioNotifications,
   AioLocale,
+  verbatim,
 } from '@all-in-one/ui';
 import { apiErrorMessage } from '@all-in-one/web/shared';
 import {
@@ -279,7 +280,9 @@ type Adding = 'list' | 'folder' | 'tag' | null;
                 variant="ghost"
                 size="icon"
                 type="button"
-                [attr.aria-label]="'تنظیم برچسب {0}' | aioTranslate: [t.name]"
+                [attr.aria-label]="
+                  'تنظیم برچسب {0}' | aioTranslate: [verbatim(t.name)]
+                "
                 (click)="editTag.emit(t)"
               >
                 <aio-icon name="lucideEllipsis" size="sm" />
@@ -383,6 +386,7 @@ type Adding = 'list' | 'folder' | 'tag' | null;
   `,
 })
 export class ListsSheet {
+  protected readonly verbatim = verbatim;
   protected readonly locale = inject(AioLocale);
 
   private readonly notifications = inject(AioNotifications);

@@ -21,6 +21,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { type AuthUser, CurrentUser } from '@all-in-one/api/auth';
+import { ShadowingService } from './shadowing.service';
 import {
   type Card,
   type CardAnswer,
@@ -30,8 +31,11 @@ import {
   createCardSchema,
   type CreateDeckInput,
   createDeckSchema,
+  type CreateShadowingSessionInput,
+  createShadowingSessionSchema,
   type CreateTextInput,
   createTextSchema,
+  type ShadowingSession,
   type Deck,
   type DeckWithStats,
   type Dialogue,
@@ -399,5 +403,24 @@ export class EnglishAiController {
     response.setHeader('Cache-Control', 'no-store');
     response.setHeader('X-TTS-Cache', result.cacheStatus);
     return new StreamableFile(result.audio, { type: result.contentType });
+  }
+}
+
+@Controller('english/shadowing')
+export class EnglishShadowingController {
+  constructor(private readonly shadowing: ShadowingService) {}
+
+  @Get('sessions')
+  list(@CurrentUser() user: AuthUser): Promise<ShadowingSession[]> {
+    return this.shadowing.list(user.id);
+  }
+
+  @Post('sessions')
+  save(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: createShadowingSessionSchema })
+    input: CreateShadowingSessionInput,
+  ): Promise<ShadowingSession> {
+    return this.shadowing.save(user.id, input);
   }
 }

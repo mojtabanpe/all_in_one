@@ -41,6 +41,7 @@ import {
   AioInputGroupSubmit,
   AioLocale,
   AioNotifications,
+  verbatim,
 } from '@all-in-one/ui';
 import { apiErrorMessage } from '@all-in-one/web/shared';
 import {
@@ -358,7 +359,9 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
                 [checked]="item.done"
                 (checkedChange)="toggleItem(item.id, $event)"
                 checkboxClass="relative size-5 rounded-full after:absolute after:-inset-3 after:content-['']"
-                [aria-label]="'انجام شد: {0}' | aioTranslate: [item.title]"
+                [aria-label]="
+                  'انجام شد: {0}' | aioTranslate: [verbatim(item.title)]
+                "
               />
               <span
                 class="flex-1"
@@ -372,7 +375,9 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
                 variant="ghost"
                 size="icon"
                 type="button"
-                [attr.aria-label]="'حذف {0}' | aioTranslate: [item.title]"
+                [attr.aria-label]="
+                  'حذف {0}' | aioTranslate: [verbatim(item.title)]
+                "
                 (click)="removeItem(item.id)"
               >
                 <aio-icon name="lucideX" size="sm" />
@@ -511,6 +516,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
   `,
 })
 export class TaskDetail {
+  protected readonly verbatim = verbatim;
   protected readonly locale = inject(AioLocale);
 
   private readonly notifications = inject(AioNotifications);

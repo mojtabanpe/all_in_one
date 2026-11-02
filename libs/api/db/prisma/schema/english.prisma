@@ -74,3 +74,18 @@ model EnglishReviewDay {
   @@id([userId, date])
   @@map("english_review_days")
 }
+
+/// One shadowing session (a dialogue repeated sentence by sentence) and its strict 0–100 score.
+model EnglishShadowingSession {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  score     Int
+  sentences Int
+  attempted Int
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("english_shadowing_sessions")
+}

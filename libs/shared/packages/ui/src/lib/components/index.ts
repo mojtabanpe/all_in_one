@@ -23,3 +23,4 @@ export * from './select-field';
 export * from './number-field';
 export * from './input-group-submit';
 export * from './language-switcher';
+export * from './chart';

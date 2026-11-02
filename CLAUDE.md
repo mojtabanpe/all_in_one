@@ -248,6 +248,14 @@ When the owner gives a new instruction, add it to this list in the same change.
     Solar Hijri picker in Persian and a Gregorian one in English; form/API values stay Gregorian ISO days. The health
     birth year is entered in the calendar of the active language (stored Gregorian).
 
+42. **Shadowing is checked and scored** (2026-11-02, owner). Every shadowing recording is transcribed by the user's
+    speech-to-text and compared word by word with the sentence (`checkShadowing` in the English contracts): skipped,
+    wrong and extra words are shown and listed. A finished dialogue gets a strict 0–100 session score (a missed/wrong
+    word costs 1.5 words, an extra word 0.75; unrecorded sentences count 0), saved with its date in
+    `english_shadowing_sessions` and shown on demand as a chart (spartan `chart` → `AioChartImports`). The check reads a
+    transcript, so it judges words, not accent or intonation; say so in the UI. Tool: `list_shadowing_scores`.
+    Pass user/learning content into translated templates as `verbatim(...)` so it is never translated.
+
 ## Approved custom components
 
 - **BottomNav** (2026-10-29): floating bottom navigation for phone sizes, in `libs/shared/packages`,

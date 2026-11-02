@@ -1,13 +1,24 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  type Signal,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
+  checkShadowing,
   CONVERSATION_SITUATIONS,
   type ConversationSituation,
   type DeckWithStats,
   type Dialogue,
   READING_LEVELS,
   type ReadingLevel,
+  type ShadowCheck,
+  type ShadowingSession,
+  shadowSessionScore,
   type SpeechVoice,
   type UsefulPhrase,
   type WritingFeedback,
@@ -29,9 +40,18 @@ import {
   AioSelectField,
   AioNotifications,
   AioLocale,
+  AioChartImports,
+  type AioChartOptions,
+  AioDatePipe,
+  aioChartTooltip,
+  verbatim,
 } from '@all-in-one/ui';
+import { defineChart, dot, lineY } from '@tanstack/charts';
+import { scaleLinear } from '@tanstack/charts/scales/linear';
+import { scalePoint } from '@tanstack/charts/scales/point';
 import { englishErrorMessage as apiErrorMessage } from './english-locale';
 import {
+  lucideChartLine,
   lucideCheck,
   lucideEye,
   lucideEyeOff,
@@ -48,6 +68,12 @@ import {
 } from '@ng-icons/lucide';
 import { EnglishApi, remember } from './english-api';
 import { Tts } from './tts';
+
+interface ProgressPoint {
+  id: string;
+  label: string;
+  score: number;
+}
 
 type Mode = 'writing' | 'speaking' | 'listening' | 'shadowing';
 const MODES: Mode[] = ['writing', 'speaking', 'listening', 'shadowing'];
@@ -86,9 +112,12 @@ const freshTask = (): TaskState => ({
     AioAsyncButton,
     AioSelectField,
     AioTranslate,
+    AioChartImports,
+    AioDatePipe,
   ],
   providers: [
     provideIcons({
+      lucideChartLine,
       lucideCheck,
       lucideEye,
       lucideEyeOff,
@@ -196,6 +225,55 @@ const freshTask = (): TaskState => ({
                 | aioTranslate
             }}
           </p>
+          <button
+            aioBtn
+            variant="outline"
+            class="self-start"
+            [attr.aria-expanded]="showProgress()"
+            (click)="toggleProgress()"
+          >
+            <aio-icon name="lucideChartLine" size="sm" />
+            {{
+              (showProgress() ? 'Hide my progress' : 'Show my progress')
+                | aioTranslate
+            }}
+          </button>
+          @if (showProgress()) {
+            @if (shadowHistory(); as history) {
+              @if (history.length) {
+                <tanstack-chart aioChart [options]="progressChart()" />
+                <ul class="flex flex-col gap-1 text-sm">
+                  @for (h of history.slice(-5).reverse(); track h.id) {
+                    <li class="flex items-center justify-between gap-3">
+                      <span class="text-muted-foreground">{{
+                        h.createdAt
+                          | aioDate
+                            : {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              }
+                      }}</span>
+                      <strong>{{ number(h.score) }}/{{ number(100) }}</strong>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="text-muted-foreground text-sm">
+                  {{
+                    'No sessions yet. Finish a dialogue to get your first score.'
+                      | aioTranslate
+                  }}
+                </p>
+              }
+            } @else {
+              <p class="text-muted-foreground text-sm">
+                {{ 'Loading' | aioTranslate }}…
+              </p>
+            }
+          }
         </section>
         @if (shadowLine(); as sentence) {
           <section
@@ -217,12 +295,45 @@ const freshTask = (): TaskState => ({
               }}
             </h2>
             @if (shadowFinished()) {
-              <p class="text-success font-semibold" role="status">
-                {{
-                  'Well done! You practised every sentence. Try another round to build fluency.'
-                    | aioTranslate
-                }}
-              </p>
+              <div class="flex flex-col gap-1" role="status">
+                <p class="text-success font-semibold">
+                  {{
+                    'Well done! You practised every sentence. Try another round to build fluency.'
+                      | aioTranslate
+                  }}
+                </p>
+                @if (shadowAttempted()) {
+                  <p class="text-3xl font-bold">
+                    {{ number(shadowSessionScore())
+                    }}<span class="text-muted-foreground text-base font-medium"
+                      >/{{ number(100) }}</span
+                    >
+                  </p>
+                  <p class="text-muted-foreground text-sm">
+                    {{
+                      'Session score: {0} of {1} sentences recorded. Sentences you did not record count as zero.'
+                        | aioTranslate
+                          : [
+                              number(shadowAttempted()),
+                              number(dialogue()!.lines.length),
+                            ]
+                    }}
+                  </p>
+                  <p class="text-muted-foreground text-sm">
+                    {{
+                      (shadowSaved() ? 'Saved to your progress.' : 'Saving…')
+                        | aioTranslate
+                    }}
+                  </p>
+                } @else {
+                  <p class="font-semibold">
+                    {{
+                      'Record yourself on each sentence to get a score.'
+                        | aioTranslate
+                    }}
+                  </p>
+                }
+              </div>
             }
             <div class="flex flex-wrap gap-2">
               <div
@@ -305,7 +416,7 @@ const freshTask = (): TaskState => ({
               {{
                 (recording()
                   ? 'Recording. Play the sentence and repeat along. Recording stops after one minute.'
-                  : 'Your recording stays on this device and is cleared when you change sentences.'
+                  : 'Each recording is sent to your speech-to-text service and checked word by word; the audio is not stored.'
                 ) | aioTranslate
               }}
             </p>
@@ -321,6 +432,80 @@ const freshTask = (): TaskState => ({
                   aria-labelledby="shadow-recording-label"
                   (play)="stop()"
                 ></audio>
+              </div>
+            }
+            @if (shadowChecking()) {
+              <p class="text-muted-foreground text-sm" role="status">
+                {{ 'Checking your words…' | aioTranslate }}
+              </p>
+            } @else if (shadowCheck(); as c) {
+              <div
+                class="flex min-w-0 flex-col gap-3"
+                role="status"
+                aria-live="polite"
+              >
+                <p class="font-semibold">
+                  {{
+                    'Score for this sentence: {0}/100'
+                      | aioTranslate: [number(c.score)]
+                  }}
+                </p>
+                <p dir="ltr" lang="en" class="text-lg leading-9">
+                  @for (w of c.words; track $index) {
+                    <span
+                      [class]="
+                        w.status === 'ok'
+                          ? ''
+                          : w.status === 'missed'
+                            ? 'text-destructive decoration-destructive line-through decoration-2'
+                            : 'text-destructive decoration-destructive underline decoration-wavy decoration-2'
+                      "
+                      >{{ w.word }}</span
+                    >{{ ' ' }}
+                  }
+                </p>
+                <ul class="flex flex-col gap-1 text-sm">
+                  @for (w of c.words; track $index) {
+                    @if (w.status === 'wrong') {
+                      <li>
+                        {{
+                          'You said “{0}” instead of “{1}”.'
+                            | aioTranslate
+                              : [verbatim(w.heard), verbatim(w.word)]
+                        }}
+                      </li>
+                    } @else if (w.status === 'missed') {
+                      <li>
+                        {{
+                          'You skipped “{0}”.'
+                            | aioTranslate: [verbatim(w.word)]
+                        }}
+                      </li>
+                    }
+                  }
+                  @if (c.extra.length) {
+                    <li>
+                      {{
+                        'Extra words: {0}'
+                          | aioTranslate: [verbatim(c.extra.join(', '))]
+                      }}
+                    </li>
+                  }
+                  @if (c.score === 100) {
+                    <li class="text-success">
+                      {{ 'Every word was right.' | aioTranslate }}
+                    </li>
+                  }
+                </ul>
+                <p class="text-muted-foreground text-xs">
+                  {{ 'We heard: “{0}”' | aioTranslate: [verbatim(c.heard)] }}
+                </p>
+                <p class="text-muted-foreground text-xs">
+                  {{
+                    'This checks your words from a transcript of your voice: skipped or wrong words, not accent or intonation.'
+                      | aioTranslate
+                  }}
+                </p>
               </div>
             }
             <div class="flex flex-wrap gap-3">
@@ -783,6 +968,7 @@ const freshTask = (): TaskState => ({
   `,
 })
 export class PracticePage {
+  protected readonly verbatim = verbatim;
   protected readonly locale = inject(AioLocale);
 
   private readonly notifications = inject(AioNotifications);
@@ -832,6 +1018,56 @@ export class PracticePage {
   protected readonly shadowLine = computed(
     () => this.dialogue()?.lines[this.shadowIndex()],
   );
+  /** Latest check of each sentence of the current dialogue (by index). */
+  protected readonly shadowChecks = signal<Record<number, ShadowCheck>>({});
+  protected readonly shadowChecking = signal(false);
+  protected readonly shadowCheck = computed(
+    () => this.shadowChecks()[this.shadowIndex()],
+  );
+  protected readonly shadowAttempted = computed(
+    () => Object.keys(this.shadowChecks()).length,
+  );
+  /** Strict session score: unrecorded sentences count as 0. */
+  protected readonly shadowSessionScore = computed(() => {
+    const lines = this.dialogue()?.lines.length ?? 0;
+    const checks = this.shadowChecks();
+    return shadowSessionScore(
+      lines,
+      Array.from({ length: lines }, (_, i) => checks[i]?.score),
+    );
+  });
+  protected readonly shadowSaved = signal<ShadowingSession | null>(null);
+  protected readonly shadowHistory = signal<ShadowingSession[] | null>(null);
+  protected readonly showProgress = signal(false);
+  protected readonly progressChart: Signal<
+    AioChartOptions<ProgressPoint, string, number>
+  > = computed(() => {
+    const rows: ProgressPoint[] = (this.shadowHistory() ?? []).map((r, i) => ({
+      id: r.id,
+      // Point scale needs unique labels: number them, show the date beside.
+      label: `${i + 1}. ${this.locale.date(r.createdAt, { day: 'numeric', month: 'short' })}`,
+      score: r.score,
+    }));
+    return {
+      definition: defineChart({
+        marks: [
+          lineY(rows, { x: 'label', y: 'score' }),
+          dot(rows, { x: 'label', y: 'score' }),
+        ],
+        scales: {
+          x: { scale: () => scalePoint<string>().padding(0.4) },
+          y: {
+            // A fixed 0–100 axis: small changes must not look dramatic.
+            scale: scaleLinear().domain([0, 100]),
+            grid: true,
+          },
+        },
+        tooltip: aioChartTooltip<ProgressPoint, string, number>(),
+      }),
+      height: 220,
+      ariaLabel: this.locale.text('Shadowing scores over time'),
+    };
+  });
   protected readonly number = (value: number) => this.locale.number(value);
   private playbackRun = 0;
   protected readonly playing = signal(false);
@@ -955,6 +1191,8 @@ export class PracticePage {
         this.choices.set({});
         this.shadowIndex.set(0);
         this.shadowFinished.set(false);
+        this.shadowChecks.set({});
+        this.shadowSaved.set(null);
       },
     );
   }
@@ -986,8 +1224,11 @@ export class PracticePage {
     if (this.shadowFinished() && direction === 1) {
       this.shadowIndex.set(0);
       this.shadowFinished.set(false);
+      this.shadowChecks.set({});
+      this.shadowSaved.set(null);
     } else if (this.shadowIndex() + direction >= lines.length) {
       this.shadowFinished.set(true);
+      void this.saveShadowSession();
     } else {
       this.shadowIndex.set(Math.max(0, this.shadowIndex() + direction));
       this.shadowFinished.set(false);
@@ -1092,6 +1333,8 @@ export class PracticePage {
       return;
     }
     const shadowing = this.mode() === 'shadowing';
+    const shadowIndex = this.shadowIndex();
+    const shadowText = this.shadowLine()?.text ?? '';
     if (!shadowing) this.stop();
     this.error.set('');
     const run = ++this.recordingRun;
@@ -1141,7 +1384,10 @@ export class PracticePage {
         }
         this.clearRecordingUrl();
         this.recordingUrl.set(URL.createObjectURL(audio));
-        if (shadowing) return;
+        if (shadowing) {
+          this.checkShadow(run, audio, shadowIndex, shadowText);
+          return;
+        }
         this.transcribing.set(true);
         this.api
           .transcribe(audio)
@@ -1171,6 +1417,61 @@ export class PracticePage {
           : ((error as Error)?.message ?? 'The microphone is unavailable.'),
       );
       this.cancelRecording();
+    }
+  }
+
+  /** Transcribe a shadowing recording and compare it with its sentence. */
+  private checkShadow(
+    run: number,
+    audio: Blob,
+    index: number,
+    sentence: string,
+  ) {
+    if (!sentence) return;
+    this.shadowChecking.set(true);
+    this.api
+      .transcribe(audio)
+      .then((result) => {
+        if (run !== this.recordingRun) return;
+        this.shadowChecks.update((c) => ({
+          ...c,
+          [index]: checkShadowing(sentence, result.text),
+        }));
+      })
+      .catch((error) => {
+        if (run === this.recordingRun) this.error.set(apiErrorMessage(error));
+      })
+      .finally(() => {
+        if (run === this.recordingRun) this.shadowChecking.set(false);
+      });
+  }
+
+  /** Saves the session score once, when the last sentence is passed. */
+  private async saveShadowSession() {
+    const d = this.dialogue();
+    if (!d || !this.shadowAttempted() || this.shadowSaved()) return;
+    try {
+      const saved = await this.api.saveShadowingSession({
+        title: d.title.slice(0, 200) || 'Shadowing',
+        score: this.shadowSessionScore(),
+        sentences: d.lines.length,
+        attempted: this.shadowAttempted(),
+      });
+      this.shadowSaved.set(saved);
+      if (this.shadowHistory())
+        this.shadowHistory.update((h) => [...(h ?? []), saved]);
+    } catch (error) {
+      this.error.set(apiErrorMessage(error));
+    }
+  }
+
+  protected async toggleProgress() {
+    this.showProgress.update((v) => !v);
+    if (!this.showProgress() || this.shadowHistory()) return;
+    try {
+      this.shadowHistory.set(await this.api.shadowingSessions());
+    } catch (error) {
+      this.error.set(apiErrorMessage(error));
     }
   }
 

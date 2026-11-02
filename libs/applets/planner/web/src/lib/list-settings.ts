@@ -26,6 +26,7 @@ import {
   AioSelectField,
   AioInputGroupSubmit,
   AioNotifications,
+  verbatim,
 } from '@all-in-one/ui';
 import { apiErrorMessage, AuthStore } from '@all-in-one/web/shared';
 import {
@@ -94,7 +95,9 @@ import { PlannerApi } from './planner-api';
               <input
                 aioInput
                 class="flex-1"
-                [attr.aria-label]="'نام بخش {0}' | aioTranslate: [s.name]"
+                [attr.aria-label]="
+                  'نام بخش {0}' | aioTranslate: [verbatim(s.name)]
+                "
                 [value]="s.name"
                 (change)="renameSection(s.id, $any($event.target).value)"
               />
@@ -103,7 +106,9 @@ import { PlannerApi } from './planner-api';
                 variant="ghost"
                 size="icon"
                 type="button"
-                [attr.aria-label]="'حذف بخش {0}' | aioTranslate: [s.name]"
+                [attr.aria-label]="
+                  'حذف بخش {0}' | aioTranslate: [verbatim(s.name)]
+                "
                 (click)="removeSection(s.id, s.name)"
               >
                 <aio-icon name="lucideTrash2" size="sm" />
@@ -205,6 +210,7 @@ import { PlannerApi } from './planner-api';
   `,
 })
 export class ListSettings {
+  protected readonly verbatim = verbatim;
   private readonly notifications = inject(AioNotifications);
 
   private readonly api = inject(PlannerApi);

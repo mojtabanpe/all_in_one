@@ -1,4 +1,15 @@
 export type AppLanguage = 'fa' | 'en';
+
+/** A template value shown exactly as given: user content, learning content. */
+export interface Verbatim {
+  readonly verbatim: string;
+}
+/** Mark a `{0}` value so the translator never touches it. */
+export const verbatim = (text: string | null | undefined): Verbatim => ({
+  verbatim: text ?? '',
+});
+const isVerbatim = (value: unknown): value is Verbatim =>
+  typeof value === 'object' && value !== null && 'verbatim' in value;
 export const LANGUAGE_COOKIE = 'poshtetgarm_language';
 export const isAppLanguage = (value: unknown): value is AppLanguage =>
   value === 'fa' || value === 'en';
@@ -151,6 +162,7 @@ export function translateMessage(
           const value = args[Number(index)];
           if (value === undefined || value === null)
             return value === undefined ? placeholder : '';
+          if (isVerbatim(value)) return value.verbatim;
           if (typeof value === 'number')
             return value.toLocaleString(language === 'en' ? 'en-US' : 'fa-IR');
           const text = String(value);
@@ -184,6 +196,7 @@ export function translateMessage(
           const value = args[Number(index)];
           if (value === undefined) return placeholder;
           if (value === null) return '';
+          if (isVerbatim(value)) return value.verbatim;
           return typeof value === 'number'
             ? value.toLocaleString(language === 'en' ? 'en-US' : 'fa-IR')
             : String(value);

@@ -187,3 +187,6 @@ export class AioDatePipe implements PipeTransform {
     return this.locale.date(iso, options);
   }
 }
+
+/** Mark a `{0}` value for `aioTranslate` as user/learning content: never translated. */
+export { verbatim } from '@all-in-one/localization';

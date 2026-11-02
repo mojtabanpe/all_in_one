@@ -20,6 +20,8 @@ import type {
   UpdateDeckInput,
   WritingFeedback,
   WritingTask,
+  CreateShadowingSessionInput,
+  ShadowingSession,
 } from '@all-in-one/applets/english-learning/contracts';
 import { API_BASE_URL } from '@all-in-one/web/shared';
 import { firstValueFrom } from 'rxjs';
@@ -142,6 +144,16 @@ export class EnglishApi {
     level: ReadingLevel,
   ): Promise<Dialogue> {
     return this.post('/ai/practice/dialogue', { situation, level });
+  }
+  shadowingSessions(): Promise<ShadowingSession[]> {
+    return firstValueFrom(
+      this.http.get<ShadowingSession[]>(this.base + '/shadowing/sessions'),
+    );
+  }
+  saveShadowingSession(
+    input: CreateShadowingSessionInput,
+  ): Promise<ShadowingSession> {
+    return this.post('/shadowing/sessions', input);
   }
   /** Sends the raw recording; the api forwards it to speech-to-text. */
   transcribe(audio: Blob): Promise<Transcript> {

@@ -46,7 +46,15 @@ describe('Shadowing practice', () => {
         questions: [],
         phrases: [],
       }),
-      transcribe: vi.fn(),
+      transcribe: vi.fn().mockResolvedValue({ text: 'could I have coffee' }),
+      saveShadowingSession: vi.fn((input) =>
+        Promise.resolve({
+          ...input,
+          id: 's1',
+          createdAt: '2026-11-02T10:00:00Z',
+        }),
+      ),
+      shadowingSessions: vi.fn().mockResolvedValue([]),
     };
     const tts = {
       rate: 1,
@@ -125,19 +133,33 @@ describe('Shadowing practice', () => {
     expect(el.textContent).not.toContain('You practised every sentence');
   });
 
-  it('records alongside playback without STT and releases the recording on sentence change', async () => {
-    const { api, tts, el, click, revoke } = await setup();
+  it('checks every recording word by word and saves a strict session score', async () => {
+    const { api, tts, fixture, el, click, revoke } = await setup();
     await click('Record along with the speaker');
     expect(el.textContent).toContain('Recording.');
     await click('Play sentence');
     expect(tts.speak).toHaveBeenCalled();
     await click('Stop recording');
     expect(el.querySelector('audio')?.getAttribute('src')).toBe('blob:voice');
-    expect(api.transcribe).not.toHaveBeenCalled();
+    expect(api.transcribe).toHaveBeenCalled();
     expect(stopTrack).toHaveBeenCalled();
+    await fixture.whenStable();
+    // "Could I have a coffee?" heard as "could I have coffee": one skipped word.
+    expect(el.textContent).toContain('You skipped “a”.');
+    expect(el.textContent).toContain('Score for this sentence: 70/100');
     await click('next sentence');
     expect(el.querySelector('audio')).toBeNull();
     expect(revoke).toHaveBeenCalledWith('blob:voice');
+    await click('Finish practice');
+    // Sentence 2 was not recorded: it counts as zero.
+    expect(api.saveShadowingSession).toHaveBeenCalledWith({
+      title: 'Coffee',
+      score: 35,
+      sentences: 2,
+      attempted: 1,
+    });
+    await fixture.whenStable();
+    expect(el.textContent).toContain('Saved to your progress.');
   });
 
   it('releases a microphone granted after leaving and ignores stale playback completion', async () => {

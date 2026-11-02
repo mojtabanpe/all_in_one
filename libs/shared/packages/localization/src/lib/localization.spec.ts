@@ -1,4 +1,9 @@
-import { asciiDigits, loadMessages, translateMessage } from './localization';
+import {
+  asciiDigits,
+  loadMessages,
+  translateMessage,
+  verbatim,
+} from './localization';
 import { MESSAGES } from './messages';
 import { REVIEWED_MESSAGES } from './reviewed-messages';
 
@@ -49,5 +54,11 @@ describe('application messages', () => {
         '22:30',
       ]),
     ).toBe('13 hours 31 minutes elapsed · Started at 22:30');
+  });
+  it('never translates verbatim values', () => {
+    expect(translateMessage('{0} از {1}', 'fa', [verbatim('home'), 3])).toBe(
+      'home از ۳',
+    );
+    expect(translateMessage('خانه', 'en')).toBe('Home');
   });
 });

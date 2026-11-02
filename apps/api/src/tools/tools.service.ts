@@ -6,6 +6,7 @@ import {
   CardsService,
   DecksService,
   EnglishAiService,
+  ShadowingService,
   TextsService,
 } from '@all-in-one/applets/english-learning/api';
 import {
@@ -42,6 +43,7 @@ export class ToolsService {
     private readonly decks: DecksService,
     private readonly cards: CardsService,
     private readonly texts: TextsService,
+    private readonly shadowing: ShadowingService,
     private readonly englishAi: EnglishAiService,
     private readonly lists: ListsService,
     private readonly tasks: TasksService,
@@ -115,6 +117,7 @@ export class ToolsService {
       decks: this.decks,
       cards: this.cards,
       texts: this.texts,
+      shadowing: this.shadowing,
       ai: this.englishAi,
     });
     plannerTools(sink, {
