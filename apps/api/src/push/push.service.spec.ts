@@ -397,13 +397,14 @@ describe('language review reminders', () => {
         }),
       },
     };
+    const tasks = { filter: vi.fn().mockResolvedValue([]) };
     const service = new PushService(
       db as unknown as PrismaService,
       new ConfigService(),
-      { filter: vi.fn().mockResolvedValue([]) } as unknown as TasksService,
+      tasks as unknown as TasksService,
     );
     const send = vi.spyOn(service, 'send').mockResolvedValue(true);
-    return { service, send, db };
+    return { service, send, db, tasks };
   }
   it('validates 24-hour times and defaults to off without writing settings', async () => {
     const { service, db } = fixture();
@@ -448,6 +449,15 @@ describe('language review reminders', () => {
     expect(send).toHaveBeenCalledTimes(1);
     await service.tick(new Date('2026-11-01T17:30:05Z'));
     expect(send).toHaveBeenCalledTimes(2);
+  });
+  it('delivers language reminders even when planner queries fail', async () => {
+    const { service, send, tasks } = fixture();
+    tasks.filter.mockRejectedValue(new Error('Planner unavailable'));
+    await service.tick(new Date('2026-10-31T16:30:05Z'));
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send.mock.calls[0][2]).toBe('/app/english');
+    await service.tick(new Date('2026-10-31T16:30:35Z'));
+    expect(send).toHaveBeenCalledTimes(1);
   });
   it('does not notify when there are no due cards or the reminder is disabled', async () => {
     const { service, send, db } = fixture(0);

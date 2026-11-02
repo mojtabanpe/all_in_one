@@ -52,7 +52,11 @@ export class AuthStore {
   readonly loggedIn = computed(() => !!this.user());
 
   constructor() {
-    effect(() => this.nativePush.setUser(this.user()?.id ?? null));
+    effect(() => {
+      const userId = this.user()?.id ?? null;
+      this.nativePush.setUser(userId);
+      this.push.setUser(userId);
+    });
   }
 
   /** Loads the current user once (deduplicated). */

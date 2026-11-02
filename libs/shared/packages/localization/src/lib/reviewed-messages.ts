@@ -1,5 +1,9 @@
 /** Reviewed product terminology and complete dynamic sentences. These override legacy copy. */
 export const REVIEWED_MESSAGES: readonly (readonly [string, string])[] = [
+  [
+    'یادآوری ذخیره شد؛ برای دریافت روی این دستگاه، اعلان‌ها را هم فعال کن.',
+    'Reminder saved. Enable notifications on this device to receive it.',
+  ],
   ['عقب‌افتاده', 'Overdue'],
   ['نسخهٔ برنامه', 'App version'],
   ['همه', 'All'],

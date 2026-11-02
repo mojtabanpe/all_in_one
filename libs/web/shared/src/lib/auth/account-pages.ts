@@ -303,7 +303,6 @@ export class VerifyEmailPage implements OnInit {
 /** Signed-in account settings: change password (other devices are signed out). */
 @Component({
   selector: 'web-account-page',
-  providers: [PushSettings],
   imports: [
     AioButton,
     AioSwitch,

@@ -1,8 +1,16 @@
+import { DOCUMENT } from '@angular/common';
 import { AioLocale } from '@all-in-one/ui';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import type { ReviewReminderSettings } from '@all-in-one/shared/schemas';
 import { HttpClient } from '@angular/common/http';
-import { effect, inject, Injectable, signal, untracked } from '@angular/core';
+import {
+  DestroyRef,
+  effect,
+  inject,
+  Injectable,
+  signal,
+  untracked,
+} from '@angular/core';
 import { SwPush } from '@angular/service-worker';
 import { firstValueFrom, take, timeout } from 'rxjs';
 import { API_BASE_URL } from '../api/api-base-url';
@@ -15,6 +23,10 @@ export class PushSettings {
   private readonly sw = inject(SwPush, { optional: true });
   private readonly http = inject(HttpClient);
   private readonly api = inject(API_BASE_URL);
+  private readonly userId = signal<string | null>(null);
+  private readonly browserSubscription = signal<PushSubscription | null>(null);
+  private readonly retry = signal(0);
+  private pendingRegistration?: { key: string; promise: Promise<void> };
   readonly enabled = signal(false);
   readonly busy = signal(false);
   readonly message = signal(
@@ -67,7 +79,9 @@ export class PushSettings {
       this.reviewTime.set(settings.time);
       this.reviewMessage.set(
         settings.enabled
-          ? 'یادآوری مرور زبان ذخیره شد.'
+          ? this.enabled()
+            ? 'یادآوری مرور زبان ذخیره شد.'
+            : 'یادآوری ذخیره شد؛ برای دریافت روی این دستگاه، اعلان‌ها را هم فعال کن.'
           : 'یادآوری مرور زبان خاموش شد.',
       );
     } catch {
@@ -81,30 +95,77 @@ export class PushSettings {
   }
   constructor() {
     effect(() => {
-      this.locale.language();
-      if (!this.enabled()) return;
+      const userId = this.userId();
+      const sub = this.browserSubscription();
+      const language = this.locale.language();
+      this.retry();
+      if (this.native.available()) return;
+      if (!userId || !sub) {
+        this.enabled.set(false);
+        return;
+      }
       untracked(() => {
-        if (this.native.available()) return;
-        void this.subscription()
-          .then((sub) =>
-            sub
-              ? firstValueFrom(
-                  this.http.put(`${this.api}/push/subscription`, {
-                    ...sub.toJSON(),
-                    language: this.locale.language(),
-                  }),
-                )
-              : undefined,
+        void this.register(sub, userId, language).catch(() => {
+          if (
+            this.userId() !== userId ||
+            this.browserSubscription() !== sub ||
+            this.locale.language() !== language
           )
-          .catch(() => undefined);
+            return;
+          this.enabled.set(false);
+          this.message.set('ارتباط برقرار نشد؛ دوباره تلاش کن.');
+        });
       });
     });
     effect(() => {
       if (this.native.available()) this.enabled.set(this.native.enabled());
     });
     this.sw?.subscription.pipe(takeUntilDestroyed()).subscribe((sub) => {
-      if (!this.native.available()) this.enabled.set(!!sub);
+      this.browserSubscription.set(sub);
     });
+    const win = inject(DOCUMENT).defaultView;
+    const reconnect = () => this.retry.update((value) => value + 1);
+    win?.addEventListener('online', reconnect);
+    inject(DestroyRef).onDestroy(() =>
+      win?.removeEventListener('online', reconnect),
+    );
+  }
+  setUser(userId: string | null) {
+    if (userId !== this.userId()) this.enabled.set(false);
+    this.userId.set(userId);
+  }
+  private register(
+    sub: PushSubscription,
+    userId: string,
+    language: 'fa' | 'en',
+  ): Promise<void> {
+    const key = JSON.stringify([userId, sub.endpoint, language]);
+    if (this.pendingRegistration?.key === key)
+      return this.pendingRegistration.promise;
+    const promise = firstValueFrom(
+      this.http.put(`${this.api}/push/subscription`, {
+        ...sub.toJSON(),
+        language,
+      }),
+    )
+      .then(() => {
+        if (
+          this.userId() === userId &&
+          this.locale.language() === language &&
+          this.browserSubscription() === sub
+        ) {
+          this.enabled.set(true);
+          this.message.set(
+            'اعلان‌های این دستگاه فعال شد. برای اطمینان یک اعلان آزمایشی بفرست.',
+          );
+        }
+      })
+      .finally(() => {
+        if (this.pendingRegistration?.promise === promise)
+          this.pendingRegistration = undefined;
+      });
+    this.pendingRegistration = { key, promise };
+    return promise;
   }
   private subscription() {
     if (!this.sw?.isEnabled)
@@ -139,18 +200,16 @@ export class PushSettings {
       );
       if (!status.enabled || !status.publicKey)
         throw new Error('اعلان‌های سرور هنوز تنظیم نشده‌اند.');
-      const sub =
-        (await this.subscription()) ??
-        (await this.sw.requestSubscription({
-          serverPublicKey: status.publicKey,
-        }));
-      await firstValueFrom(
-        this.http.put(`${this.api}/push/subscription`, sub.toJSON()),
-      );
-      this.enabled.set(true);
-      this.message.set(
-        'اعلان‌های این دستگاه فعال شد. برای اطمینان یک اعلان آزمایشی بفرست.',
-      );
+      // Explicit reconnect must replace expired endpoints and subscriptions made
+      // with an old VAPID key, rather than registering the same broken endpoint.
+      if (await this.subscription()) await this.disconnect();
+      const sub = await this.sw.requestSubscription({
+        serverPublicKey: status.publicKey,
+      });
+      const userId = this.userId();
+      if (!userId) throw new Error('ابتدا وارد حساب کاربری شو.');
+      this.browserSubscription.set(sub);
+      await this.register(sub, userId, this.locale.language());
     });
   }
   async disable() {
