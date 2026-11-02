@@ -22,11 +22,13 @@ import {
   AioFormField,
   AioAsyncButton,
   AioNotifications,
+  verbatim,
 } from '@all-in-one/ui';
 import {
   lucideCircleCheck,
   lucideCircleDashed,
   lucidePlugZap,
+  lucideX,
 } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../api/api-base-url';
@@ -82,7 +84,12 @@ const SERVICES: {
     AioTranslate,
   ],
   providers: [
-    provideIcons({ lucideCircleCheck, lucideCircleDashed, lucidePlugZap }),
+    provideIcons({
+      lucideCircleCheck,
+      lucideCircleDashed,
+      lucidePlugZap,
+      lucideX,
+    }),
   ],
   template: `
     <section aioCard>
@@ -128,6 +135,7 @@ const SERVICES: {
                 aioInput
                 type="url"
                 dir="ltr"
+                lang="en"
                 inputmode="url"
                 placeholder="https://…/v1"
                 [id]="'ai-url-' + s.kind"
@@ -145,11 +153,51 @@ const SERVICES: {
                 <input
                   aioInput
                   dir="ltr"
+                  lang="en"
                   [placeholder]="s.modelHint | aioTranslate"
                   [id]="'ai-model-' + s.kind"
                   [value]="d.model"
                   (input)="patch(s.kind, { model: $any($event.target).value })"
                 />
+                @if (saved(s.kind).length) {
+                  <div
+                    class="flex flex-wrap gap-1.5 pt-1"
+                    lang="en"
+                    role="group"
+                    [attr.aria-label]="'مدل‌های قبلی' | aioTranslate"
+                  >
+                    @for (m of saved(s.kind); track m) {
+                      <span class="inline-flex items-center">
+                        <button
+                          aioBtn
+                          type="button"
+                          size="sm"
+                          dir="ltr"
+                          [variant]="d.model === m ? 'default' : 'outline'"
+                          class="min-h-9 rounded-full rounded-e-none pe-2"
+                          [attr.aria-pressed]="d.model === m"
+                          (click)="patch(s.kind, { model: m })"
+                        >
+                          {{ m }}
+                        </button>
+                        <button
+                          aioBtn
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          class="text-muted-foreground min-h-9 rounded-full rounded-s-none border-s-0 px-2"
+                          [attr.aria-label]="
+                            'فراموش کردن {0}' | aioTranslate: [verbatim(m)]
+                          "
+                          [disabled]="busy() === s.kind"
+                          (click)="forget(s.kind, m)"
+                        >
+                          <aio-icon name="lucideX" size="xs" />
+                        </button>
+                      </span>
+                    }
+                  </div>
+                }
               </aio-form-field>
               @if (s.kind === 'tts') {
                 <aio-form-field
@@ -159,6 +207,7 @@ const SERVICES: {
                   <input
                     aioInput
                     dir="ltr"
+                    lang="en"
                     id="ai-model2-tts"
                     [placeholder]="'اختیاری' | aioTranslate"
                     [value]="d.model2"
@@ -166,6 +215,45 @@ const SERVICES: {
                       patch(s.kind, { model2: $any($event.target).value })
                     "
                   />
+                  @if (saved(s.kind).length) {
+                    <div
+                      class="flex flex-wrap gap-1.5 pt-1"
+                      lang="en"
+                      role="group"
+                      [attr.aria-label]="'مدل‌های قبلی' | aioTranslate"
+                    >
+                      @for (m of saved(s.kind); track m) {
+                        <span class="inline-flex items-center">
+                          <button
+                            aioBtn
+                            type="button"
+                            size="sm"
+                            dir="ltr"
+                            [variant]="d.model2 === m ? 'default' : 'outline'"
+                            class="min-h-9 rounded-full rounded-e-none pe-2"
+                            [attr.aria-pressed]="d.model2 === m"
+                            (click)="patch(s.kind, { model2: m })"
+                          >
+                            {{ m }}
+                          </button>
+                          <button
+                            aioBtn
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            class="text-muted-foreground min-h-9 rounded-full rounded-s-none border-s-0 px-2"
+                            [attr.aria-label]="
+                              'فراموش کردن {0}' | aioTranslate: [verbatim(m)]
+                            "
+                            [disabled]="busy() === s.kind"
+                            (click)="forget(s.kind, m)"
+                          >
+                            <aio-icon name="lucideX" size="xs" />
+                          </button>
+                        </span>
+                      }
+                    </div>
+                  }
                 </aio-form-field>
               }
             </div>
@@ -177,6 +265,7 @@ const SERVICES: {
                 aioInput
                 type="password"
                 dir="ltr"
+                lang="en"
                 autocomplete="off"
                 [placeholder]="
                   (hasKey(s.kind)
@@ -228,6 +317,7 @@ const SERVICES: {
   `,
 })
 export class AiSettingsCard {
+  protected readonly verbatim = verbatim;
   private readonly notifications = inject(AioNotifications);
 
   private readonly http = inject(HttpClient);
@@ -301,6 +391,17 @@ export class AiSettingsCard {
       return;
     }
     void this.put({ [kind]: service }, kind, 'ذخیره شد');
+  }
+
+  /** Model names used before; the current one is included. Tap to use, × to forget. */
+  protected saved(kind: AiKind): string[] {
+    return this.settings.hasValue()
+      ? (this.settings.value().savedModels?.[kind] ?? [])
+      : [];
+  }
+
+  protected forget(kind: AiKind, model: string) {
+    void this.put({ forgetModel: { kind, model } }, kind, 'از فهرست حذف شد');
   }
 
   protected clearKey(kind: AiKind) {

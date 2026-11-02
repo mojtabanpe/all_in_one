@@ -15,6 +15,8 @@ export interface AiSettings {
   /** Speech-to-text (transcriptions). */
   stt: AiServiceView;
   ready: AiStatus;
+  /** Model names used before, per service, most recent first (current one included). */
+  savedModels: Record<AiKind, string[]>;
 }
 
 export interface AiStatus {
@@ -48,8 +50,16 @@ export const updateAiSettingsSchema = z.partial(
     chat: service,
     tts: z.extend(service, { model2: z.optional(model) }),
     stt: service,
+    /** Remove a model name from the remembered list of a service. */
+    forgetModel: z.object({
+      kind: z.enum(['chat', 'tts', 'stt']),
+      model: z.string().check(z.maxLength(100)),
+    }),
   }),
 );
+
+/** How many model names each service remembers. */
+export const SAVED_MODELS_LIMIT = 15;
 export type UpdateAiSettingsInput = z.infer<typeof updateAiSettingsSchema>;
 
 export const testAiSchema = z.object({ kind: z.enum(AI_KINDS) });

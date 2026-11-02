@@ -3991,6 +3991,9 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['مرور {0} کارت', 'Review {0} cards'],
   ['نمایش پیشرفتم', 'Show my progress'],
   ['پیشرفت من', 'My progress'],
+  ['مدل‌های قبلی', 'Previous models'],
+  ['فراموش کردن {0}', 'Forget {0}'],
+  ['از فهرست حذف شد', 'Removed from the list'],
   ['نمره\u200cهای تمرین در طول زمان', 'Practice scores over time'],
   [
     'هنوز نمره\u200cای نداری. یک تمرین را تمام کن تا اولین نمره\u200cات ثبت شود.',

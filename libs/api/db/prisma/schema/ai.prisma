@@ -16,6 +16,10 @@ model UserAiSettings {
   sttUrl    String?  @db.VarChar(500)
   sttModel  String?  @db.VarChar(100)
   sttKey    String?  @db.VarChar(1000)
+  /// Model names used before, most recent first (owner: pick an old one back).
+  chatModels String[] @default([])
+  ttsModels  String[] @default([])
+  sttModels  String[] @default([])
   updatedAt DateTime @updatedAt
 
   @@map("user_ai_settings")

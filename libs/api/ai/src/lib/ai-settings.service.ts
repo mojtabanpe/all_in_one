@@ -6,6 +6,7 @@ import type {
   AiStatus,
   UpdateAiSettingsInput,
 } from '@all-in-one/shared/schemas';
+import { SAVED_MODELS_LIMIT } from '@all-in-one/shared/schemas';
 import { SecretBox } from './secret-box';
 
 /** One service's resolved config for a request (key decrypted, server side only). */
@@ -78,6 +79,11 @@ export class AiSettingsService {
         hasKey: !!r?.sttKey,
       },
       ready: status(r),
+      savedModels: {
+        chat: remember(r?.chatModels ?? [], [r?.chatModel]),
+        tts: remember(r?.ttsModels ?? [], [r?.ttsModel, r?.ttsModel2]),
+        stt: remember(r?.sttModels ?? [], [r?.sttModel]),
+      },
     };
   }
 
@@ -105,6 +111,20 @@ export class AiSettingsService {
     put('stt', input.stt);
     if (input.tts?.model2 !== undefined)
       data.ttsModel2 = input.tts.model2 || null;
+    // Remember the old and new model names, so a change is never a loss.
+    const old = await this.row(userId);
+    for (const kind of ['chat', 'tts', 'stt'] as const) {
+      const used = [
+        old?.[`${kind}Model`],
+        ...(kind === 'tts' ? [old?.ttsModel2] : []),
+        input[kind]?.model,
+        ...(kind === 'tts' ? [input.tts?.model2] : []),
+      ];
+      let list = remember(old?.[`${kind}Models`] ?? [], used.reverse());
+      if (input.forgetModel?.kind === kind)
+        list = list.filter((m) => m !== input.forgetModel?.model);
+      data[`${kind}Models`] = list;
+    }
     await this.prisma.userAiSettings.upsert({
       where: { userId },
       create: { userId, ...data },
@@ -150,4 +170,17 @@ function status(r: UserAiSettings | null): AiStatus {
     tts: !!r?.ttsUrl,
     stt: !!r?.sttUrl,
   };
+}
+
+/** Most recent first, unique, non-empty, at most SAVED_MODELS_LIMIT. */
+function remember(
+  list: readonly string[],
+  recent: readonly (string | null | undefined)[],
+): string[] {
+  const out: string[] = [];
+  for (const m of [...recent, ...list]) {
+    const v = m?.trim();
+    if (v && !out.includes(v)) out.push(v);
+  }
+  return out.slice(0, SAVED_MODELS_LIMIT);
 }

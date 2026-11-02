@@ -261,6 +261,12 @@ When the owner gives a new instruction, add it to this list in the same change.
     Tool: `list_practice_scores` (optional `kind`).
     Pass user/learning content into translated templates as `verbatim(...)` so it is never translated.
 
+43. **AI model names are remembered** (2026-11-02, owner: "I'm afraid to change a model and forget the old one").
+    Every model name saved for chat, text-to-speech (both voices) and speech-to-text is kept per service
+    (`chatModels`/`ttsModels`/`sttModels`, most recent first, at most 15) and shown as chips under the field: tap to
+    use it again, × to forget it (`forgetModel`). Technical fields (urls, model names, keys) carry `lang="en"` so they
+    show Latin digits.
+
 ## Approved custom components
 
 - **BottomNav** (2026-10-29): floating bottom navigation for phone sizes, in `libs/shared/packages`,
