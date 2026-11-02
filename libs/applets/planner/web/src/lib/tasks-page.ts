@@ -4,9 +4,12 @@ import { httpResource } from '@angular/common/http';
 import {
   Component,
   computed,
+  effect,
   inject,
+  Injector,
   linkedSignal,
   signal,
+  untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -639,6 +642,15 @@ export class TasksPage {
   );
 
   /** Open tasks plus the last 30 days' completed ones; edited in place. */
+  /**
+   * Local edits that win over the three lists until their reloads have all
+   * landed: the lists finish at different times, and a stale one would
+   * otherwise flash a just-ticked (recurring) task back into Today.
+   */
+  private readonly pending = signal<ReadonlyMap<string, PlannerTask>>(
+    new Map(),
+  );
+  private readonly injector = inject(Injector);
   private readonly tasks = linkedSignal<PlannerTask[]>(() => {
     const allOpen = [
       ...(this.openRes.hasValue() ? this.openRes.value() : []),
@@ -647,7 +659,14 @@ export class TasksPage {
     const open = [...new Map(allOpen.map((t) => [t.id, t])).values()];
     const done = this.doneRes.hasValue() ? this.doneRes.value() : [];
     const seen = new Set(open.map((t) => t.id));
-    return [...open, ...done.filter((t) => !seen.has(t.id))];
+    const merged = [...open, ...done.filter((t) => !seen.has(t.id))];
+    const pending = this.pending();
+    if (!pending.size) return merged;
+    const ids = new Set(merged.map((t) => t.id));
+    return [
+      ...merged.map((t) => pending.get(t.id) ?? t),
+      ...[...pending.values()].filter((t) => !ids.has(t.id)),
+    ];
   });
 
   protected readonly loading = computed(() => {
@@ -1034,6 +1053,31 @@ export class TasksPage {
     if (this.selectedRes.hasValue() && this.selectedRes.value().id === task.id)
       this.selectedRes.value.set(task);
     this.tasks.update((list) => list.map((t) => (t.id === task.id ? task : t)));
+    this.hold(task);
+  }
+
+  /** Keep `task` on top of the lists until every list reload in flight has landed. */
+  private hold(task: PlannerTask) {
+    this.pending.update((m) => new Map(m).set(task.id, task));
+    const ref = effect(
+      () => {
+        const loading =
+          this.openRes.isLoading() ||
+          this.datedRes.isLoading() ||
+          this.doneRes.isLoading();
+        if (loading) return;
+        untracked(() => {
+          this.pending.update((m) => {
+            if (m.get(task.id) !== task) return m;
+            const next = new Map(m);
+            next.delete(task.id);
+            return next;
+          });
+          ref.destroy();
+        });
+      },
+      { injector: this.injector },
+    );
   }
 
   protected async trashTask(task: PlannerTask) {
