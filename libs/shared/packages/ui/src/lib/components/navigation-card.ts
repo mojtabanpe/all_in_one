@@ -14,7 +14,7 @@ import { AioSkeletonLines } from './skeleton-lines';
       <aio-icon
         name="lucideChevronLeft"
         size="sm"
-        class="text-muted-foreground"
+        class="text-muted-foreground ltr:-scale-x-100"
       />
     </div>
     <div class="flex flex-col gap-2">

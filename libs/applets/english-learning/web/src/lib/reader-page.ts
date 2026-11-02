@@ -93,7 +93,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
             routerLink="../../texts"
             [attr.aria-label]="'Back to texts' | aioTranslate"
           >
-            <aio-icon name="lucideArrowLeft" />
+            <aio-icon name="lucideArrowLeft" class="rtl:-scale-x-100" />
           </a>
           <h1
             dir="ltr"

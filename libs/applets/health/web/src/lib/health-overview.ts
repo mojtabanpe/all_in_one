@@ -338,7 +338,7 @@ const MEAL_ICONS: Record<MealType, string> = {
                   ><aio-icon
                     name="lucideChevronLeft"
                     size="sm"
-                    class="text-muted-foreground"
+                    class="text-muted-foreground ltr:-scale-x-100"
                   />
                 </button>
               }

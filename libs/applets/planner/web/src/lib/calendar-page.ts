@@ -94,7 +94,7 @@ interface AgendaItem {
         [attr.aria-label]="'دو هفته قبل' | aioTranslate"
         (click)="shift(-1)"
       >
-        <aio-icon name="lucideChevronRight" />
+        <aio-icon name="lucideChevronLeft" class="rtl:-scale-x-100" />
       </button>
       <button
         aioBtn
@@ -103,7 +103,7 @@ interface AgendaItem {
         [attr.aria-label]="'دو هفته بعد' | aioTranslate"
         (click)="shift(1)"
       >
-        <aio-icon name="lucideChevronLeft" />
+        <aio-icon name="lucideChevronRight" class="rtl:-scale-x-100" />
       </button>
       <button
         aioBtn

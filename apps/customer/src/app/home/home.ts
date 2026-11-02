@@ -93,7 +93,10 @@ import {
           <a aioBtn class="aio-hero-action mt-2" routerLink="/planner"
             ><aio-icon name="lucideCalendarCheck" size="sm" />{{
               'برو به برنامه امروز' | aioTranslate
-            }}<aio-icon name="lucideChevronLeft" size="sm"
+            }}<aio-icon
+              name="lucideChevronLeft"
+              class="ltr:-scale-x-100"
+              size="sm"
           /></a>
         </div>
         <div
@@ -167,7 +170,10 @@ import {
           </div>
           <a aioBtn variant="ghost" routerLink="/planner"
             >{{ 'همه کارها' | aioTranslate
-            }}<aio-icon name="lucideChevronLeft" size="sm"
+            }}<aio-icon
+              name="lucideChevronLeft"
+              class="ltr:-scale-x-100"
+              size="sm"
           /></a>
         </div>
         <div aioCardContent>
@@ -223,7 +229,7 @@ import {
                 ><aio-icon
                   name="lucideChevronLeft"
                   size="sm"
-                  class="text-muted-foreground"
+                  class="text-muted-foreground ltr:-scale-x-100"
               /></a>
             }
           }

@@ -108,7 +108,7 @@ const UNIT = /^(?:u\d+)?$/i;
             routerLink="../.."
             [attr.aria-label]="'Back to library' | aioTranslate"
           >
-            <aio-icon name="lucideArrowLeft" />
+            <aio-icon name="lucideArrowLeft" class="rtl:-scale-x-100" />
           </a>
           <div class="flex min-w-0 flex-1 flex-col gap-1">
             <h1 class="flex items-center gap-2 text-2xl font-bold">

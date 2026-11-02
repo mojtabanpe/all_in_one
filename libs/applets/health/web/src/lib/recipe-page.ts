@@ -41,7 +41,7 @@ import { HealthApi } from './health-api';
         class="self-start"
         (click)="back()"
       >
-        <aio-icon name="lucideArrowRight" size="sm" />
+        <aio-icon name="lucideArrowRight" size="sm" class="ltr:-scale-x-100" />
         {{ 'بازگشت' | aioTranslate }}
       </button>
       @if (recipe.value(); as r) {
