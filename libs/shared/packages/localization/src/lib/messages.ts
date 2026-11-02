@@ -3997,8 +3997,8 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'No scores yet. Finish an exercise to get your first one.',
   ],
   [
-    'نمرهٔ سختگیرانه: هر اشتباه به اندازهٔ ۱٫۵ کلمه از جوابت کم می\u200cکند ({0} اشتباه).',
-    'Strict score: each mistake costs 1.5 words of your answer ({0} mistakes).',
+    'نمرهٔ سختگیرانه: هر اشتباه به اندازهٔ ۱٫۵ کلمه از جوابت کم می‌کند. تعداد اشتباه: {0}.',
+    'Strict score: each mistake costs 1.5 words of your answer. Mistakes: {0}.',
   ],
   [
     '{0} جواب از {1} در اولین انتخاب درست بود.',

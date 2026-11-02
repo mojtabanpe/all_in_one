@@ -253,7 +253,12 @@ When the owner gives a new instruction, add it to this list in the same change.
     wrong and extra words are shown and listed. A finished dialogue gets a strict 0–100 session score (a missed/wrong
     word costs 1.5 words, an extra word 0.75; unrecorded sentences count 0), saved with its date in
     `english_shadowing_sessions` and shown on demand as a chart (spartan `chart` → `AioChartImports`). The check reads a
-    transcript, so it judges words, not accent or intonation; say so in the UI. Tool: `list_shadowing_scores`.
+    transcript, so it judges words, not accent or intonation; say so in the UI.
+    **Writing, speaking and listening are scored too** (2026-11-02, owner): writing/speaking from the mistakes in the
+    AI feedback (`writingScore`: each mistake costs 1.5 words of the answer), listening by first picks on the
+    comprehension questions (`listeningScore`). All four live in one table (`EnglishPracticeScore`, `kind`, mapped to
+    `english_shadowing_sessions`), at `/english/practice/scores`; each mode's chart shows only its own scores.
+    Tool: `list_practice_scores` (optional `kind`).
     Pass user/learning content into translated templates as `verbatim(...)` so it is never translated.
 
 ## Approved custom components
