@@ -23,6 +23,9 @@ export interface AioNavItem {
   selector: 'aio-bottom-nav',
   imports: [AioIcon, HlmButton, RouterLink, RouterLinkActive, AioTranslate],
   template: `
+    <!-- Fade under the floating nav: content scrolling below it (and behind
+         iOS Safari's translucent toolbar) is hidden instead of showing through. -->
+    <div class="aio-bottom-scrim md:hidden" aria-hidden="true"></div>
     <nav
       [attr.aria-label]="label() | aioTranslate"
       class="aio-bottom-navigation glass fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md items-stretch gap-1 rounded-[1.375rem] p-1.5 md:hidden"

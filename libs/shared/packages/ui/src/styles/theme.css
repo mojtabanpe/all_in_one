@@ -414,6 +414,21 @@ html[lang='en'] *,
   .aio-bottom-navigation {
     box-shadow: 0 8px 36px rgb(18 48 44 / 0.12);
   }
+  /* Phones: page content must not show below the floating nav (owner, 2026-11-02). */
+  .aio-bottom-scrim {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 39;
+    height: calc(var(--bottom-nav-space) + 1.75rem);
+    pointer-events: none;
+    background: linear-gradient(
+      to top,
+      var(--background) 0%,
+      var(--background) 55%,
+      color-mix(in oklch, var(--background) 0%, transparent) 100%
+    );
+  }
   .aio-eyebrow {
     font-size: 12px;
     font-weight: 600;
