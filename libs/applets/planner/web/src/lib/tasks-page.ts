@@ -187,7 +187,8 @@ const DONE_DAYS = 30;
           autocomplete="off"
           enterkeyhint="done"
           [placeholder]="
-            'افزودن به «' + title() + '»؛ #برچسب !۱ فردا' | aioTranslate
+            'افزودن به «{0}»؛ #برچسب !۱ فردا'
+              | aioTranslate: [locale.text(title())]
           "
           [value]="quickTitle()"
           (input)="quickTitle.set($any($event.target).value)"
@@ -275,14 +276,15 @@ const DONE_DAYS = 30;
           [attr.aria-label]="group.label | aioTranslate"
         >
           <h2
-            class="flex items-center justify-between px-1 text-sm font-semibold"
+            class="flex items-center gap-2 px-1 text-sm font-semibold"
             [class.text-destructive]="group.overdue"
             [class.text-muted-foreground]="!group.overdue"
           >
             <span>{{ group.label | aioTranslate }}</span>
-            <span class="font-normal">{{
-              fa(group.tasks.length) | aioTranslate
-            }}</span>
+            <span
+              class="rounded-md bg-muted/70 px-1.5 py-0.5 text-xs font-normal"
+              >{{ fa(group.tasks.length) }}</span
+            >
           </h2>
           <ul class="glass divide-border/60 flex flex-col divide-y rounded-2xl">
             @for (task of group.tasks; track task.id) {
@@ -398,6 +400,7 @@ const DONE_DAYS = 30;
           <span class="flex min-w-0 flex-1 flex-col gap-0.5">
             <span
               class="truncate"
+              dir="auto"
               [class.text-muted-foreground]="task.done"
               [class.line-through]="task.done"
               >{{ task.title }}</span
@@ -436,7 +439,7 @@ const DONE_DAYS = 30;
             class="text-muted-foreground flex shrink-0 items-center gap-1 text-xs"
             [class.text-destructive]="isOverdue(task)"
           >
-            {{ when(task) | aioTranslate }}
+            <bdi [dir]="locale.direction()">{{ when(task) }}</bdi>
             @if (task.repeatRule && !task.recurrenceNeedsReview) {
               <span
                 role="img"
@@ -913,16 +916,17 @@ export class TasksPage {
     if (task.date && !own)
       parts.push(
         task.date === this.today
-          ? 'امروز'
+          ? this.locale.text('امروز')
           : task.date === this.tomorrow
-            ? 'فردا'
+            ? this.locale.text('فردا')
             : this.locale.date(task.date, { day: 'numeric', month: 'short' }),
       );
     if (task.time) parts.push(this.faTime(task.time));
-    if (task.recurrenceNeedsReview) parts.push('نیازمند تأیید برنامه تکرار');
+    if (task.recurrenceNeedsReview)
+      parts.push(this.locale.text('نیازمند تأیید برنامه تکرار'));
     if (task.durationMin)
-      parts.push(this.locale.number(task.durationMin) + ' دقیقه');
-    return parts.join('، ');
+      parts.push(this.locale.text('{0} دقیقه', [task.durationMin]));
+    return parts.join(this.locale.english() ? ', ' : '، ');
   }
 
   protected go(view: string) {

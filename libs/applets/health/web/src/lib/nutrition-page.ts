@@ -342,15 +342,26 @@ import { MealForm } from './meal-form';
             @for (day of p.days; track day.date) {
               <div aioAccordionItem>
                 <aio-accordion-trigger>
-                  {{
+                  <span class="min-w-0 flex-1">{{
                     faDate(day.date, {
                       weekday: 'long',
                       day: 'numeric',
                       month: 'long',
-                    }) | aioTranslate
-                  }}<span class="text-muted-foreground ms-2 text-xs">{{
-                    '{0} کالری' | aioTranslate: [fa(dayCalories(p, day.meals))]
+                    })
                   }}</span>
+                  <bdi
+                    class="text-muted-foreground text-xs font-normal"
+                    [dir]="locale.direction()"
+                    >{{
+                      '{0} کالری'
+                        | aioTranslate
+                          : [
+                              locale.number(dayCalories(p, day.meals), {
+                                maximumFractionDigits: 0,
+                              }),
+                            ]
+                    }}</bdi
+                  >
                 </aio-accordion-trigger>
                 <aio-accordion-content>
                   <ul class="divide-border flex min-w-0 flex-col divide-y">

@@ -10,7 +10,14 @@ import {
   // Layout-neutral: spartan's elements must stay direct flex children of the item.
   host: { class: 'contents' },
   imports: [HlmAccordionTrigger],
-  template: `<hlm-accordion-trigger><ng-content /></hlm-accordion-trigger>`,
+  template: `<hlm-accordion-trigger
+    triggerClass="min-w-0 gap-3 hover:no-underline"
+  >
+    <span
+      class="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 text-start [overflow-wrap:anywhere]"
+      ><ng-content
+    /></span>
+  </hlm-accordion-trigger>`,
 })
 export class AioAccordionTrigger {}
 

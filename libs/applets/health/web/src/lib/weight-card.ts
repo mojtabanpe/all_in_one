@@ -120,7 +120,7 @@ function addMonths(iso: string, months: number): string {
           </button>
         } @else {
           <div class="flex flex-col gap-1">
-            <p class="health-number">
+            <p class="health-number flex flex-wrap items-baseline gap-x-1.5">
               {{ kg(w.currentKg) | aioTranslate
               }}<span class="text-base font-normal">{{
                 'کیلوگرم' | aioTranslate
@@ -158,13 +158,21 @@ function addMonths(iso: string, months: number): string {
                   {{ 'حالا می‌توانی هدف تازه‌ای بگذاری.' | aioTranslate }}
                 }
                 @case ('overdue') {
-                  {{ kg(Math.abs(plan.remainingKg)) }} کیلوگرم مانده و تاریخ هدف
-                  گذشته؛ تاریخ تازه‌ای بگذار.
+                  {{
+                    '{0} کیلوگرم مانده و تاریخ هدف گذشته؛ تاریخ تازه‌ای بگذار.'
+                      | aioTranslate: [kg(Math.abs(plan.remainingKg))]
+                  }}
                 }
                 @default {
-                  {{ kg(Math.abs(plan.remainingKg)) }} کیلوگرم در
-                  {{ fa(plan.daysLeft) }} روز؛ هفته‌ای
-                  {{ kg(Math.abs(plan.weeklyKg)) }} کیلوگرم.
+                  {{
+                    '{0} کیلوگرم در {1} روز؛ هفته‌ای {2} کیلوگرم.'
+                      | aioTranslate
+                        : [
+                            kg(Math.abs(plan.remainingKg)),
+                            fa(plan.daysLeft),
+                            kg(Math.abs(plan.weeklyKg)),
+                          ]
+                  }}
                 }
               }
             </p>

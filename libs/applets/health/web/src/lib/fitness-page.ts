@@ -138,7 +138,7 @@ type CategoryFilter = ActivityCategory | 'all';
     }),
   ],
   template: `
-    <div class="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-2">
+    <div class="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-2">
       <section class="health-workout-banner min-h-72 lg:col-span-2">
         <div class="flex min-h-60 min-w-0 flex-1 flex-col items-start gap-3">
           <p class="health-metric-label">
@@ -214,7 +214,9 @@ type CategoryFilter = ActivityCategory | 'all';
             <p class="health-metric-label">
               {{ 'فعالیت این هفته' | aioTranslate }}
             </p>
-            <p class="health-small-number">
+            <p
+              class="health-small-number flex flex-wrap items-baseline gap-x-1.5"
+            >
               {{
                 (week.isLoading()
                   ? '…'
@@ -322,8 +324,12 @@ type CategoryFilter = ActivityCategory | 'all';
                                     : [
                                         fa(item.sets),
                                         item.seconds
-                                          ? fa(item.seconds) + ' ثانیه'
-                                          : fa(item.reps) + ' تکرار',
+                                          ? locale.text('{0} ثانیه', [
+                                              fa(item.seconds),
+                                            ])
+                                          : locale.text('{0} تکرار', [
+                                              fa(item.reps),
+                                            ]),
                                         fa(item.restSeconds),
                                       ]
                               }}</span>
@@ -353,7 +359,7 @@ type CategoryFilter = ActivityCategory | 'all';
                   </p>
                 }
               </div>
-              <div aioCardFooter class="gap-2">
+              <div aioCardFooter class="flex-wrap gap-2">
                 <button aioBtn variant="outline" (click)="editRoutine(routine)">
                   {{ 'ویرایش حرکات و ست‌ها' | aioTranslate }}</button
                 ><button
@@ -473,13 +479,19 @@ type CategoryFilter = ActivityCategory | 'all';
               <button
                 aioBtn
                 variant="outline"
-                class="min-h-11 justify-between"
+                class="min-h-14 min-w-0 gap-3 justify-between whitespace-normal text-start"
                 (click)="selectedExercise.set(exercise)"
               >
-                <span>{{ exercise.name | aioTranslate }}</span
-                ><span class="text-muted-foreground text-xs"
-                  >{{ equipmentLabels[exercise.equipment] }}،
-                  {{ muscleLabels[exercise.muscle] }}</span
+                <span class="min-w-0 flex-1 [overflow-wrap:anywhere]">{{
+                  exercise.name | aioTranslate
+                }}</span
+                ><span class="text-muted-foreground shrink-0 text-xs text-end">
+                  <span class="block">{{
+                    equipmentLabels[exercise.equipment] | aioTranslate
+                  }}</span>
+                  <span class="block">{{
+                    muscleLabels[exercise.muscle] | aioTranslate
+                  }}</span></span
                 >
               </button>
             }
@@ -528,7 +540,7 @@ type CategoryFilter = ActivityCategory | 'all';
             <button
               aioToggleGroupItem
               value="all"
-              class="glass data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-11 rounded-full px-4"
+              class="text-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-11 rounded-full px-4"
             >
               {{ 'همه' | aioTranslate }}
             </button>
@@ -536,7 +548,7 @@ type CategoryFilter = ActivityCategory | 'all';
               <button
                 aioToggleGroupItem
                 [value]="c"
-                class="glass data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-11 rounded-full px-4"
+                class="text-foreground data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-11 rounded-full px-4"
               >
                 {{ categoryLabels[c] | aioTranslate }}
               </button>
@@ -547,11 +559,14 @@ type CategoryFilter = ActivityCategory | 'all';
               <button
                 aioBtn
                 variant="outline"
-                class="glass h-auto flex-col gap-1.5 rounded-2xl py-3"
+                class="glass h-auto min-h-24 min-w-0 flex-col gap-2 rounded-2xl px-2 py-3 whitespace-normal text-center"
                 (click)="openLog(a.slug)"
               >
                 <aio-icon [name]="a.icon" class="text-primary" />
-                <span class="text-xs">{{ a.name | aioTranslate }}</span>
+                <span
+                  class="min-h-8 w-full text-xs leading-4 [overflow-wrap:anywhere]"
+                  >{{ a.name | aioTranslate }}</span
+                >
               </button>
             }
           </div>
@@ -821,8 +836,9 @@ type CategoryFilter = ActivityCategory | 'all';
         @if (selectedExercise(); as e) {
           <div class="flex flex-col gap-4">
             <p>
-              {{ equipmentLabels[e.equipment] }}، {{ muscleLabels[e.muscle] }}،
-              {{ levelLabels[e.level] }}
+              {{ equipmentLabels[e.equipment] | aioTranslate }}،
+              {{ muscleLabels[e.muscle] | aioTranslate }}،
+              {{ levelLabels[e.level] | aioTranslate }}
             </p>
             @if (e.secondaryMuscles.length) {
               <p class="text-muted-foreground text-sm">
@@ -1418,12 +1434,12 @@ export class FitnessPage {
     const parts: string[] = [];
     if (e.sets && e.reps)
       parts.push(`${this.locale.number(e.sets)}×${this.locale.number(e.reps)}`);
-    else if (e.reps) parts.push(`${this.locale.number(e.reps)} تکرار`);
+    else if (e.reps) parts.push(this.locale.text('{0} تکرار', [e.reps]));
     if (e.seconds)
       parts.push(
         e.seconds >= 120
-          ? `${this.locale.number(Math.round(e.seconds / 60))} دقیقه`
-          : `${this.locale.number(e.seconds)} ثانیه`,
+          ? this.locale.text('{0} دقیقه', [Math.round(e.seconds / 60)])
+          : this.locale.text('{0} ثانیه', [e.seconds]),
       );
     if (e.note) parts.push(e.note);
     return parts.length ? `(${parts.join('، ')})` : '';

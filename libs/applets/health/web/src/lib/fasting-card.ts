@@ -77,7 +77,9 @@ const HOUR = 3_600_000;
         <h2 id="fast-title" class="health-metric-label">
           {{
             (active()
-              ? 'در فستینگ، ' + protocolLabel(active()!.targetHours)
+              ? locale.text('در فستینگ، {0}', [
+                  protocolLabel(active()!.targetHours),
+                ])
               : 'فستینگ'
             ) | aioTranslate
           }}
@@ -102,7 +104,7 @@ const HOUR = 3_600_000;
       } @else if (active(); as fast) {
         <div class="flex flex-col gap-1">
           <p class="health-number" aria-live="off">
-            {{ timerLabel() | aioTranslate }}
+            <bdi dir="ltr">{{ timerLabel() }}</bdi>
           </p>
           <p class="health-metric-label">
             {{
@@ -157,7 +159,7 @@ const HOUR = 3_600_000;
         <div class="flex flex-col gap-1">
           @if (last(); as fast) {
             <p class="health-small-number">
-              {{ duration(hours(fast)) | aioTranslate }}
+              {{ duration(hours(fast)) }}
             </p>
             <p class="health-metric-label">
               {{
@@ -397,9 +399,12 @@ export class FastingCard {
   protected readonly Math = Math;
   protected readonly protocols = FASTING_PROTOCOLS;
   protected readonly maxHours = MAX_FAST_HOURS;
-  protected readonly protocolLabel = fastingProtocolLabel;
-  protected readonly duration = duration;
-  protected readonly clock = clockTime;
+  protected readonly protocolLabel = (hours: number) =>
+    this.locale.text(fastingProtocolLabel(hours));
+  protected readonly duration = (hours: number) =>
+    duration(hours, this.locale.language());
+  protected readonly clock = (iso: string) =>
+    clockTime(iso, this.locale.language());
   protected readonly fa = (n: number) => this.locale.number(n);
   protected readonly dayLabel = (iso: string) =>
     this.locale.date(toIsoDate(new Date(iso)), {
@@ -431,11 +436,13 @@ export class FastingCard {
     const fast = this.active();
     return fast ? fastHoursElapsed(fast, new Date(this.now())) : 0;
   });
-  protected readonly timerLabel = computed(() => timer(this.elapsed()));
+  protected readonly timerLabel = computed(() =>
+    timer(this.elapsed(), this.locale.language()),
+  );
   protected readonly endClock = computed(() => {
     const fast = this.active();
     return fast
-      ? clockTime(
+      ? this.clock(
           new Date(
             Date.parse(fast.startedAt) + fast.targetHours * HOUR,
           ).toISOString(),
@@ -533,7 +540,7 @@ export class FastingCard {
       const state = await this.api.endFast({});
       this.state.set(state);
       const done = state.recent.find((f) => f.id === fast.id);
-      const lasted = done ? duration(this.hours(done)) : '';
+      const lasted = done ? this.duration(this.hours(done)) : '';
       this.notifications.action(`فستینگ تمام شد: ${lasted}`, 'برگرداندن', () =>
         this.reopen(fast.id),
       );

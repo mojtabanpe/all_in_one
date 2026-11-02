@@ -1,3 +1,4 @@
+import { Directionality } from '@angular/cdk/bidi';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   computed,
@@ -9,6 +10,7 @@ import {
   PLATFORM_ID,
   REQUEST,
   signal,
+  untracked,
   type PipeTransform,
 } from '@angular/core';
 import {
@@ -21,6 +23,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class AioLocale {
   private readonly document = inject(DOCUMENT);
+  private readonly bidi = inject(Directionality);
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly request = inject(REQUEST, { optional: true });
   private readonly selected = signal<AppLanguage>(this.readLanguage());
@@ -31,11 +34,20 @@ export class AioLocale {
   readonly english = computed(() => this.language() === 'en');
 
   constructor() {
-    effect(() => {
+    const applyLanguage = () => {
       this.document.documentElement.lang = this.language();
       this.document.documentElement.dir = this.direction();
       this.document.title = 'Poshtetgarm';
-    });
+      const direction = this.direction();
+      untracked(() => {
+        if (this.bidi.value !== direction) {
+          this.bidi.valueSignal.set(direction);
+          this.bidi.change.emit(direction);
+        }
+      });
+    };
+    applyLanguage();
+    effect(applyLanguage);
     if (this.browser) {
       const sync = (event: StorageEvent) => {
         if (event.key === LANGUAGE_COOKIE && isAppLanguage(event.newValue))
@@ -110,7 +122,9 @@ export class AioLocale {
         numberingSystem: this.english() ? 'latn' : 'arabext',
       },
     ).format(date);
-    return this.english() ? result : result.replace(/,/g, '،');
+    return this.english()
+      ? result.replace(/\s+AP\b/g, '').trim()
+      : result.replace(/,/g, '،');
   }
 }
 

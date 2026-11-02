@@ -311,7 +311,9 @@ export class Assistant implements OnDestroy {
   protected readonly status = httpResource<AiStatus>(() =>
     this.open() ? `${this.api}/ai/status` : undefined,
   );
-  protected readonly suggestions = computed(() => SUGGESTIONS[this.context()]);
+  protected readonly suggestions = computed(() =>
+    SUGGESTIONS[this.context()].map((s) => this.locale.text(s)),
+  );
   protected readonly accent = computed(
     () =>
       ({

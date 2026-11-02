@@ -1,3 +1,4 @@
+import { REVIEWED_MESSAGES } from './reviewed-messages';
 import { MESSAGES } from './messages';
 
 export type AppLanguage = 'fa' | 'en';
@@ -19,28 +20,67 @@ const patterns: {
   match: RegExp;
   pair: readonly [string, string];
   slots: number[];
+  numericOnly: boolean;
 }[] = [];
+const special = new Set([
+  '.',
+  '*',
+  '+',
+  '?',
+  '^',
+  '$',
+  '{',
+  '}',
+  '(',
+  ')',
+  '|',
+  '[',
+  ']',
+  String.fromCharCode(92),
+]);
 const escapeRegex = (value: string) =>
-  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-for (const pair of MESSAGES) {
-  for (const source of pair) {
-    const key = normalizeMessage(source);
-    exact.set(key, pair);
-    if (/\{\d+\}/.test(key)) {
-      const slots: number[] = [];
-      let last = 0,
-        pattern = '^';
-      for (const part of key.matchAll(/\{(\d+)\}/g)) {
-        pattern += escapeRegex(key.slice(last, part.index)) + '(.+?)';
-        slots.push(Number(part[1]));
-        last = part.index! + part[0].length;
-      }
-      pattern += escapeRegex(key.slice(last)) + '$';
-      // A bare placeholder matches everything and cannot represent interface copy.
-      if (key.replace(/\{\d+\}/g, '').trim())
-        patterns.push({ match: new RegExp(pattern), pair, slots });
-    }
+  [...value]
+    .map((char) => (special.has(char) ? String.fromCharCode(92) + char : char))
+    .join('');
+for (const pair of [...MESSAGES, ...REVIEWED_MESSAGES]) {
+  for (const source of pair) exact.set(normalizeMessage(source), pair);
+}
+const numericUnits = new Set([
+  'دقیقه',
+  'ساعت',
+  'کیلوگرم',
+  'کالری',
+  'روز',
+  'minute',
+  'minutes',
+  'hour',
+  'hours',
+  'day',
+  'days',
+  'calories',
+  'kg',
+]);
+for (const [key, pair] of exact) {
+  if (!/\{\d+\}/.test(key)) continue;
+  const slots: number[] = [];
+  let last = 0,
+    pattern = '^';
+  for (const part of key.matchAll(/\{(\d+)\}/g)) {
+    pattern += escapeRegex(key.slice(last, part.index)) + '(.+?)';
+    slots.push(Number(part[1]));
+    last = part.index! + part[0].length;
   }
+  pattern += escapeRegex(key.slice(last)) + '$';
+  if (!key.replace(/\{\d+\}/g, '').trim()) continue;
+  patterns.push({
+    match: new RegExp(pattern),
+    pair,
+    slots,
+    numericOnly:
+      slots.length === 1 &&
+      key.startsWith('{0}') &&
+      numericUnits.has(key.slice(3).trim()),
+  });
 }
 patterns.sort((a, b) => b.match.source.length - a.match.source.length);
 const cache = new Map<string, string>();
@@ -71,6 +111,13 @@ export function translateMessage(
     for (const candidate of patterns) {
       const match = candidate.match.exec(key);
       if (!match) continue;
+      if (
+        candidate.numericOnly &&
+        !Number.isFinite(
+          Number(asciiDigits(match[1]).replace(/[٬,]/g, '').replace('٫', '.')),
+        )
+      )
+        continue;
       pair = candidate.pair;
       const captured: unknown[] = [];
       candidate.slots.forEach(
