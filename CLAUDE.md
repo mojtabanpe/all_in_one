@@ -221,7 +221,7 @@ When the owner gives a new instruction, add it to this list in the same change.
 
 37. **The language applet is glass and matches the rest of the app** (owner: "very different from the rest; make it
     glass, and very cool"). No Duolingo chunky `btn-3d` / `border-b-4` there any more: English pages sit on the
-    `lx-stage` ambient light with `lx-glass` panels (`theme.css`), keeping the green accent.
+    `lx-stage` ambient light with `lx-glass` panels (`theme.css`); its accent is violet (see 39).
 38. **The desktop/tablet sidebar can be closed completely** (`collapsible="offcanvas"`, header button or Ctrl/⌘+B,
     remembered in a cookie). The shell's `main` is `min-w-0` so wide content never slides under the sidebar.
 
