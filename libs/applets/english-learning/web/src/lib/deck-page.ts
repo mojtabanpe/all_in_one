@@ -116,11 +116,11 @@ const UNIT = /^(?:u\d+)?$/i;
                 class="size-3 shrink-0 rounded-full"
                 [class]="tone(d.color).bar"
               ></span>
-              <span class="truncate">{{ d.name | aioTranslate }}</span>
+              <span class="truncate">{{ d.name }}</span>
             </h1>
             @if (d.description) {
               <p class="text-muted-foreground text-sm">
-                {{ d.description | aioTranslate }}
+                {{ d.description }}
               </p>
             }
             <p class="text-muted-foreground text-sm">
@@ -155,10 +155,9 @@ const UNIT = /^(?:u\d+)?$/i;
         >
           <aio-icon name="lucideBookOpen" />
           {{
-            (dueCount()
-              ? 'Review ' + fa(dueCount()) + ' cards'
-              : 'No cards due right now'
-            ) | aioTranslate
+            dueCount()
+              ? ('مرور {0} کارت' | aioTranslate: [dueCount()])
+              : ('No cards due right now' | aioTranslate)
           }}</a
         >
 

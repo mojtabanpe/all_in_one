@@ -241,9 +241,7 @@ const emptyDraft = (): Draft => ({
                         '{0} از {1}' | aioTranslate: [fa(v), fa(h.goal)]
                       }}</span>
                       @if (h.unit) {
-                        <bdi dir="auto" class="wrap-anywhere">{{
-                          h.unit | aioTranslate
-                        }}</bdi>
+                        <bdi dir="auto" class="wrap-anywhere">{{ h.unit }}</bdi>
                       }
                     } @else {
                       {{ (v >= 1 ? 'انجام شد' : 'هنوز نه') | aioTranslate }}
@@ -500,7 +498,7 @@ const emptyDraft = (): Draft => ({
               </option>
               @for (s of sections(); track s.id) {
                 <option aioNativeSelectOption [value]="s.id">
-                  {{ s.name | aioTranslate }}
+                  {{ s.name }}
                 </option>
               }
               <option aioNativeSelectOption value="new">

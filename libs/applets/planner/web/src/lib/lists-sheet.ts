@@ -269,7 +269,7 @@ type Adding = 'list' | 'folder' | 'tag' | null;
                   size="sm"
                   [class]="tone[t.color].text"
                 />
-                <span class="flex-1">{{ t.name | aioTranslate }}</span>
+                <span class="flex-1">{{ t.name }}</span>
                 <span class="text-muted-foreground text-xs">{{
                   fa(t.openCount) | aioTranslate
                 }}</span>
@@ -279,7 +279,7 @@ type Adding = 'list' | 'folder' | 'tag' | null;
                 variant="ghost"
                 size="icon"
                 type="button"
-                [attr.aria-label]="'تنظیم برچسب ' + t.name | aioTranslate"
+                [attr.aria-label]="'تنظیم برچسب {0}' | aioTranslate: [t.name]"
                 (click)="editTag.emit(t)"
               >
                 <aio-icon name="lucideEllipsis" size="sm" />

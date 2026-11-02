@@ -375,7 +375,7 @@ const freshTask = (): TaskState => ({
               lang="en"
               class="text-start text-lg font-bold"
             >
-              {{ d.title | aioTranslate }}
+              {{ d.title }}
             </h2>
             <div class="flex flex-wrap items-center gap-2">
               <button aioBtn (click)="playAll()">
@@ -725,7 +725,7 @@ const freshTask = (): TaskState => ({
               >
                 @for (d of decks(); track d.id) {
                   <option aioNativeSelectOption [value]="d.id">
-                    {{ d.name | aioTranslate }}
+                    {{ d.name }}
                   </option>
                 }
               </aio-native-select>

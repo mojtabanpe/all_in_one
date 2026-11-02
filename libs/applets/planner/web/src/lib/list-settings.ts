@@ -94,7 +94,7 @@ import { PlannerApi } from './planner-api';
               <input
                 aioInput
                 class="flex-1"
-                [attr.aria-label]="'نام بخش ' + s.name | aioTranslate"
+                [attr.aria-label]="'نام بخش {0}' | aioTranslate: [s.name]"
                 [value]="s.name"
                 (change)="renameSection(s.id, $any($event.target).value)"
               />
@@ -103,7 +103,7 @@ import { PlannerApi } from './planner-api';
                 variant="ghost"
                 size="icon"
                 type="button"
-                [attr.aria-label]="'حذف بخش ' + s.name | aioTranslate"
+                [attr.aria-label]="'حذف بخش {0}' | aioTranslate: [s.name]"
                 (click)="removeSection(s.id, s.name)"
               >
                 <aio-icon name="lucideTrash2" size="sm" />

@@ -100,7 +100,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
             lang="en"
             class="min-w-0 flex-1 text-start text-2xl font-bold"
           >
-            {{ t.title | aioTranslate }}
+            {{ t.title }}
           </h1>
         </header>
 

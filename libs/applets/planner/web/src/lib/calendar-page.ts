@@ -153,7 +153,7 @@ interface AgendaItem {
                   [class]="'size-2.5 shrink-0 rounded-full ' + item.dot"
                 ></span>
                 <span class="flex min-w-0 flex-1 flex-col">
-                  <span class="truncate">{{ item.title | aioTranslate }}</span>
+                  <span class="truncate">{{ item.title }}</span>
                   @if (item.location) {
                     <span class="text-muted-foreground truncate text-xs">{{
                       item.location | aioTranslate

@@ -235,6 +235,11 @@ When the owner gives a new instruction, add it to this list in the same change.
     on `lx-stage` with their own ambient colours (`--lx-1..4` on the applet class); health keeps the companion
     layout of directive 30, with glass cards (the `.health-calm` glass block at the end of `theme.css`).
 
+40. **Static text follows the language, user content is never translated** (2026-11-02, owner). In English mode every
+    piece of the app's own copy is English and the layout is LTR; names, titles, units and notes the user wrote (decks,
+    texts, habits, sections, tags, tasks, checklist items) are shown exactly as written: never pipe them through
+    `aioTranslate`. Pass them as `{0}` values of a translated template instead of concatenating.
+
 ## Approved custom components
 
 - **BottomNav** (2026-10-29): floating bottom navigation for phone sizes, in `libs/shared/packages`,
