@@ -79,9 +79,9 @@ export interface AioAppletTab {
       line-height: 1.75;
     }
     .applet-tabs {
-      display: grid;
-      grid-auto-flow: column;
-      grid-auto-columns: minmax(0, 1fr);
+      /* Tabs size to their labels, so a long one (Countdowns) borrows space
+         from short ones instead of breaking mid-word. */
+      display: flex;
       gap: 0.25rem;
       padding: 0.25rem;
       border: 1px solid var(--border);
@@ -92,6 +92,7 @@ export interface AioAppletTab {
     }
     .applet-tabs .applet-tab {
       display: flex;
+      flex: 1 1 auto;
       min-width: 0;
       min-height: 3rem;
       height: auto;
@@ -105,9 +106,13 @@ export interface AioAppletTab {
       font-size: 0.75rem;
       font-weight: 600;
       line-height: 1.5;
-      white-space: normal;
+      white-space: nowrap;
       text-align: center;
-      overflow-wrap: anywhere;
+    }
+    .applet-tab span {
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .applet-tabs .applet-tab[aria-current='page'] {
       color: var(--primary-foreground);
