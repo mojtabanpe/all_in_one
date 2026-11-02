@@ -229,7 +229,6 @@ const emptyDraft = (): Draft => ({
                   <bdi dir="auto">{{ h.name }}</bdi>
                 </span>
                 <span
-                  dir="rtl"
                   class="text-muted-foreground flex w-full flex-wrap items-center gap-x-3 gap-y-1 text-xs leading-relaxed"
                 >
                   <span
