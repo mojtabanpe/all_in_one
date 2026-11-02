@@ -96,11 +96,11 @@ class AioBottomSheetMotion {
         >
           <hlm-drawer-header class="relative min-w-0 shrink-0 pe-24 text-start">
             <h2 hlmDrawerTitle class="min-w-0 break-words">
-              {{ title() | aioTranslate }}
+              {{ title() }}
             </h2>
             @if (description()) {
               <p hlmDrawerDescription class="min-w-0 break-words">
-                {{ description() | aioTranslate }}
+                {{ description() }}
               </p>
             }
             <button
@@ -144,9 +144,9 @@ class AioBottomSheetMotion {
           "
         >
           <hlm-dialog-header class="shrink-0">
-            <h2 hlmDialogTitle>{{ title() | aioTranslate }}</h2>
+            <h2 hlmDialogTitle>{{ title() }}</h2>
             @if (description()) {
-              <p hlmDialogDescription>{{ description() | aioTranslate }}</p>
+              <p hlmDialogDescription>{{ description() }}</p>
             }
           </hlm-dialog-header>
           @if (body(); as b) {
@@ -172,6 +172,7 @@ class AioBottomSheetMotion {
 })
 export class AioDialog {
   readonly open = model(false);
+  /** Shown as given: callers translate fixed copy, user content stays as written. */
   readonly title = input.required<string>();
   readonly description = input<string>();
   /**

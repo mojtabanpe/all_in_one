@@ -152,7 +152,7 @@ const POINTS: Record<Rating, number> = {
         </div>
       } @else if (current(); as card) {
         <h1 class="text-muted-foreground text-sm font-bold">
-          {{ deck()?.name | aioTranslate }}
+          {{ deck()?.name }}
         </h1>
         <button
           type="button"
@@ -168,7 +168,7 @@ const POINTS: Record<Rating, number> = {
               <span
                 class="bg-accent text-accent-foreground rounded-full px-2 text-xs"
                 dir="ltr"
-                >{{ u | aioTranslate }}</span
+                >{{ u }}</span
               >
             }
             <span dir="ltr" class="text-xl font-semibold">{{
@@ -222,7 +222,7 @@ const POINTS: Record<Rating, number> = {
             class="lx-glass text-muted-foreground flex list-disc flex-col gap-1 rounded-2xl py-3 ps-8 pe-4 text-sm"
           >
             @for (line of examples(); track $index) {
-              <li>{{ line | aioTranslate }}</li>
+              <li>{{ line }}</li>
             }
           </ul>
         }

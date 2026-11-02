@@ -320,7 +320,7 @@ const emptyDraft = (): Draft => ({
 
     <aio-dialog
       [(open)]="editing"
-      [title]="draft().id ? 'ویرایش عادت' : 'عادت تازه'"
+      [title]="(draft().id ? 'ویرایش عادت' : 'عادت تازه') | aioTranslate"
       contentClass="applet-planner sm:max-w-md"
     >
       <ng-template aioDialogBody>

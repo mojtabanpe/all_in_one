@@ -239,6 +239,8 @@ When the owner gives a new instruction, add it to this list in the same change.
     piece of the app's own copy is English and the layout is LTR; names, titles, units and notes the user wrote (decks,
     texts, habits, sections, tags, tasks, checklist items) are shown exactly as written: never pipe them through
     `aioTranslate`. Pass them as `{0}` values of a translated template instead of concatenating.
+    `aio-dialog` shows `title`/`description` as given (callers pipe fixed copy); items the app itself creates (the
+    inbox) do follow the language.
 
 ## Approved custom components
 

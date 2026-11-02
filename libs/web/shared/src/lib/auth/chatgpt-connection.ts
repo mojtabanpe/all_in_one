@@ -151,7 +151,7 @@ interface KeysResponse {
           @for (key of keys(); track key.id) {
             <li class="flex min-h-12 items-center gap-3 py-2 text-sm">
               <span class="flex-1">
-                {{ key.name | aioTranslate
+                {{ key.name
                 }}<span class="text-muted-foreground block text-xs">
                   {{
                     '{0}، تا {1}'

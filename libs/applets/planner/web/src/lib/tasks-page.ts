@@ -142,7 +142,7 @@ const DONE_DAYS = 30;
                 aria-hidden="true"
               ></span>
             } @else {
-              {{ title() | aioTranslate }}
+              {{ titleIsUser() ? title() : (title() | aioTranslate) }}
             }
           </span>
           <span class="text-muted-foreground min-h-6 text-sm font-normal">
@@ -412,7 +412,7 @@ const DONE_DAYS = 30;
                 @if (m.list) {
                   <span class="flex items-center gap-1">
                     <span [class]="'size-2 rounded-full ' + m.dot"></span
-                    >{{ m.list | aioTranslate }}</span
+                    >{{ m.list }}</span
                   >
                 }
                 @if (m.items) {
@@ -477,9 +477,7 @@ const DONE_DAYS = 30;
       [open]="!!selected()"
       (openChange)="$event || selectedId.set(null)"
       [title]="'جزئیات کار' | aioTranslate"
-      [description]="
-        (selected() ? listName(selected()!.listId) : '') | aioTranslate
-      "
+      [description]="selected() ? listName(selected()!.listId) : ''"
       contentClass="applet-planner sm:max-w-lg"
     >
       <ng-template aioDialogBody>
@@ -688,6 +686,12 @@ export class TasksPage {
       : undefined;
   });
 
+  /** A list or tag name the user wrote: shown as written, never translated. */
+  protected readonly titleIsUser = computed(
+    () =>
+      this.view().startsWith('tag:') ||
+      (this.view().startsWith('list:') && !this.currentList()?.isInbox),
+  );
   protected readonly title = computed(() => {
     const v = this.view();
     if (v === 'completed') return 'انجام‌شده';
@@ -868,8 +872,11 @@ export class TasksPage {
     return `relative size-5 rounded-full border-2 after:absolute after:-inset-3 after:content-[''] ${PRIORITY_BOX[task.priority as TaskPriority]}`;
   }
 
+  /** User lists keep their name; the app-made inbox follows the language. */
   protected listName(id: string) {
-    return this.lists().find((l) => l.id === id)?.name ?? '';
+    const list = this.lists().find((l) => l.id === id);
+    if (!list) return '';
+    return list.isInbox ? this.locale.text(list.name) : list.name;
   }
 
   protected meta(task: PlannerTask) {

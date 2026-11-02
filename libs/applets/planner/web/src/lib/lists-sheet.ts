@@ -195,7 +195,7 @@ type Adding = 'list' | 'folder' | 'tag' | null;
               class="text-muted-foreground flex min-h-11 cursor-pointer items-center gap-2 px-2 text-sm font-semibold"
             >
               <aio-icon name="lucideFolder" size="sm" />
-              <span class="flex-1">{{ f.folder.name | aioTranslate }}</span>
+              <span class="flex-1">{{ f.folder.name }}</span>
               <button
                 aioBtn
                 variant="ghost"

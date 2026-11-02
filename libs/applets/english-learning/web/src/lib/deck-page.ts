@@ -293,7 +293,7 @@ const UNIT = /^(?:u\d+)?$/i;
                 </option>
                 @for (u of units(); track u) {
                   <option aioNativeSelectOption [value]="u">
-                    {{ u | aioTranslate }}
+                    {{ u }}
                   </option>
                 }
               </aio-native-select>
@@ -338,14 +338,14 @@ const UNIT = /^(?:u\d+)?$/i;
                         <span
                           class="bg-accent text-accent-foreground rounded-full px-2 text-xs"
                           dir="ltr"
-                          >{{ u | aioTranslate }}</span
+                          >{{ u }}</span
                         >
                       }
                     </span>
                     <span
                       dir="ltr"
                       class="text-muted-foreground line-clamp-1 text-sm"
-                      >{{ parts(card).body | aioTranslate }}</span
+                      >{{ parts(card).body }}</span
                     >
                   </button>
                   <button
@@ -458,12 +458,10 @@ const UNIT = /^(?:u\d+)?$/i;
               @if (previewFlipped()) {
                 @if (parts(card).unit; as u) {
                   <span class="text-muted-foreground text-xs" dir="ltr">{{
-                    u | aioTranslate
+                    u
                   }}</span>
                 }
-                <span dir="ltr" class="text-lg">{{
-                  parts(card).body | aioTranslate
-                }}</span>
+                <span dir="ltr" class="text-lg">{{ parts(card).body }}</span>
               } @else {
                 <span dir="ltr" lang="en" class="text-3xl font-bold">{{
                   card.front
@@ -480,7 +478,7 @@ const UNIT = /^(?:u\d+)?$/i;
                 class="text-muted-foreground flex list-disc flex-col gap-1 ps-5 text-sm"
               >
                 @for (line of exampleList(card); track $index) {
-                  <li>{{ line | aioTranslate }}</li>
+                  <li>{{ line }}</li>
                 }
               </ul>
             }

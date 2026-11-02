@@ -321,7 +321,7 @@ export class VerifyEmailPage implements OnInit {
       <header class="flex flex-col gap-1">
         <h1 class="text-2xl font-bold">{{ 'حساب کاربری' | aioTranslate }}</h1>
         <p class="text-muted-foreground text-sm" dir="ltr">
-          {{ auth.user()?.email | aioTranslate }}
+          {{ auth.user()?.email }}
         </p>
       </header>
       <section aioCard>

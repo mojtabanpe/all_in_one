@@ -137,12 +137,10 @@ const UNIT_KEY = 'aio.english.reader.unit';
                     [attr.data-t]="token.id"
                     class="cursor-pointer rounded"
                     [class]="tokenClass(token)"
-                    >{{ token.text | aioTranslate }}</span
+                    >{{ token.text }}</span
                   >
                 } @else {
-                  <span [class]="tokenClass(token)">{{
-                    token.text | aioTranslate
-                  }}</span>
+                  <span [class]="tokenClass(token)">{{ token.text }}</span>
                 }
               }
             </p>

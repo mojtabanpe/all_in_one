@@ -262,7 +262,7 @@ const freshTask = (): TaskState => ({
                 lang="en"
                 class="text-start text-xl leading-9 wrap-anywhere"
               >
-                {{ sentence.text | aioTranslate }}
+                {{ sentence.text }}
               </p>
             }
             <div class="flex flex-wrap gap-3">
@@ -432,7 +432,7 @@ const freshTask = (): TaskState => ({
                     >
                       {{ l.speaker }}:
                     </button>
-                    <span>{{ l.text | aioTranslate }}</span>
+                    <span>{{ l.text }}</span>
                   </li>
                 }
               </ol>
@@ -459,7 +459,7 @@ const freshTask = (): TaskState => ({
                     lang="en"
                     class="mb-1 text-start font-semibold"
                   >
-                    {{ q.question | aioTranslate }}
+                    {{ q.question }}
                   </p>
                   @for (o of q.options; track $index; let oi = $index) {
                     <button
@@ -471,7 +471,7 @@ const freshTask = (): TaskState => ({
                       [disabled]="qi in choices()"
                       (click)="choose(qi, oi)"
                     >
-                      <span>{{ o | aioTranslate }}</span>
+                      <span>{{ o }}</span>
                       @if (qi in choices() && oi === q.answer) {
                         <aio-icon
                           name="lucideCheck"
@@ -536,7 +536,7 @@ const freshTask = (): TaskState => ({
                   size="sm"
                   class="mt-1 shrink-0"
                 />
-                <span>{{ task.message | aioTranslate }}</span>
+                <span>{{ task.message }}</span>
                 <button
                   aioBtn
                   variant="ghost"
@@ -637,7 +637,7 @@ const freshTask = (): TaskState => ({
                   'Corrected' | aioTranslate
                 }}</span>
                 <p dir="ltr" lang="en" class="text-start">
-                  {{ f.corrected | aioTranslate }}
+                  {{ f.corrected }}
                 </p>
               </div>
               <div class="flex flex-col gap-1">
@@ -649,7 +649,7 @@ const freshTask = (): TaskState => ({
                   lang="en"
                   class="flex items-start gap-2 text-start"
                 >
-                  {{ f.natural | aioTranslate
+                  {{ f.natural
                   }}<button
                     aioBtn
                     variant="ghost"

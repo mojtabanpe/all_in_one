@@ -52,7 +52,7 @@ export function parseRemind(
     <aio-dialog
       [(open)]="open"
       (openChange)="$event || close()"
-      [title]="title() | aioTranslate"
+      [title]="task() || habit() ? title() : (title() | aioTranslate)"
       [description]="description() | aioTranslate"
       contentClass="applet-planner sm:max-w-md"
     >
@@ -166,7 +166,7 @@ export class ReminderSheet {
       ? this.habitsRes.value().find((h) => h.id === t.id)
       : undefined;
   });
-  private readonly task = computed(() =>
+  protected readonly task = computed(() =>
     this.taskRes.hasValue() ? this.taskRes.value() : undefined,
   );
 
