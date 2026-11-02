@@ -1,5 +1,7 @@
 /** Reviewed product terminology and complete dynamic sentences. These override legacy copy. */
 export const REVIEWED_MESSAGES: readonly (readonly [string, string])[] = [
+  ['عقب‌افتاده', 'Overdue'],
+  ['نسخهٔ برنامه', 'App version'],
   ['همه', 'All'],
   ['رژیم شما', 'Your diet'],
   ['سرعت مناسب', 'Steady progress'],

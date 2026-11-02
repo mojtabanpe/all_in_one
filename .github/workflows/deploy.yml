@@ -31,6 +31,11 @@ jobs:
       - id: release
         run: echo "release=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
 
+      - name: Stamp application version
+        env:
+          RELEASE_PATCH: ${{ github.run_number }}
+        run: node tools/scripts/write-app-version.mjs
+
       - uses: docker/setup-buildx-action@v3
 
       - name: Build images

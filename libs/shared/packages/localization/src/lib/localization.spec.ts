@@ -25,6 +25,7 @@ describe('application messages', () => {
     }
   });
   it('uses reviewed complete sentences and preserves unknown user titles', () => {
+    expect(translateMessage('عقب‌افتاده', 'en')).toBe('Overdue');
     expect(translateMessage('TRX کل بدن — هر روز ۳۰ دقیقه', 'en')).toBe(
       'Full-body TRX · 30 minutes daily',
     );

@@ -16,6 +16,7 @@ import {
 } from '@all-in-one/ui';
 import { apiErrorMessage } from './auth.guards';
 import { AiSettingsCard } from './ai-settings';
+import { APP_VERSION } from '../release-version';
 import { ChatGptConnection } from './chatgpt-connection';
 import { AuthStore } from './auth.store';
 
@@ -328,11 +329,19 @@ export class VerifyEmailPage implements OnInit {
         <div
           aioCardHeading
           [title]="'زبان برنامه' | aioTranslate"
+          [level]="2"
           [description]="
             'زبان تمام بخش‌های برنامه را انتخاب کن.' | aioTranslate
           "
         ></div>
         <div aioCardContent><aio-language-switcher /></div>
+        <div
+          aioCardFooter
+          class="flex-wrap justify-between gap-2 text-sm text-muted-foreground"
+        >
+          <span>{{ 'نسخهٔ برنامه' | aioTranslate }}</span>
+          <bdi dir="ltr">{{ version }}</bdi>
+        </div>
       </section>
       <section aioCard>
         <div
@@ -503,6 +512,7 @@ export class VerifyEmailPage implements OnInit {
   `,
 })
 export class AccountPage implements OnInit {
+  protected readonly version = APP_VERSION;
   private readonly notifications = inject(AioNotifications);
 
   ngOnInit() {

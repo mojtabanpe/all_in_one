@@ -1,5 +1,4 @@
 import { AioTranslate } from '../locale';
-import { AioLanguageSwitcher } from './language-switcher';
 import { AioLocale } from '../locale';
 import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
@@ -22,7 +21,6 @@ import { AioIcon } from './icon';
   },
   selector: 'aio-app-shell',
   imports: [
-    AioLanguageSwitcher,
     AioBottomNav,
     AioConfirmHost,
     AioIcon,
@@ -125,7 +123,7 @@ import { AioIcon } from './icon';
             }}</bdi>
           </a>
           <div class="ms-auto flex min-w-0 items-center gap-1 sm:gap-2">
-            <aio-language-switcher /><ng-content select="[aioShellActions]" />
+            <ng-content select="[aioShellActions]" />
           </div>
         </header>
         <div
