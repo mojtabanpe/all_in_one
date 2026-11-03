@@ -3996,6 +3996,14 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['در فهرست ذخیره شد', 'Saved to the list'],
   ['پراکسی', 'Proxy'],
   ['نشانی پراکسی', 'Proxy URL'],
+  ['لینک‌ها', 'Links'],
+  ['باز کردن {0}', 'Open {0}'],
+  ['لینک تازه', 'New link'],
+  ['افزودن لینک', 'Add link'],
+  [
+    'لینک باید با http:// یا https:// شروع شود',
+    'A link must start with http:// or https://',
+  ],
   [
     'خواندن قطع شد. دوباره «Read aloud» را بزن تا از همین‌جا ادامه دهد.',
     'Reading stopped. Press "Read aloud" to continue from here.',

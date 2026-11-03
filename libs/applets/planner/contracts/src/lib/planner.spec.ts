@@ -1,6 +1,7 @@
 import {
   compareTasks,
   createTaskSchema,
+  updateTaskSchema,
   habitStreak,
   inWindow,
   nextOccurrence,
@@ -135,5 +136,17 @@ describe('planner contracts', () => {
     expect(nextOccurrence('2026-01-01', false, '2026-10-29')).toBe(
       '2026-01-01',
     );
+  });
+});
+
+describe('task links', () => {
+  it('accepts http(s) links, defaults to none and refuses other schemes', () => {
+    expect(
+      updateTaskSchema.safeParse({ links: ['https://youtu.be/x'] }).success,
+    ).toBe(true);
+    expect(createTaskSchema.parse({ title: 'a' }).links).toBeUndefined();
+    expect(
+      updateTaskSchema.safeParse({ links: ['javascript:alert(1)'] }).success,
+    ).toBe(false);
   });
 });

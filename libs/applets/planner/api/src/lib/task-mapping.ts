@@ -50,6 +50,7 @@ export function toTask(t: DbTask): PlannerTask {
     externalSourceId: t.externalSourceId,
     recurrenceRule: t.recurrenceRule,
     reminders: t.reminders,
+    links: t.links,
     timeZone: t.timeZone,
     endTime: t.endTime,
     priority: t.priority,

@@ -29,6 +29,7 @@ import {
   PLANNER_COLORS,
   PLANNER_LIMITS,
   TASK_KINDS,
+  TASK_LINKS_LIMIT,
   TASK_PRIORITIES,
   TIME_PRESETS,
   updateCountdownSchema,
@@ -167,6 +168,18 @@ const taskFields = {
     ),
   title: z.string().min(1).max(200),
   content: z.string().max(10000).optional().describe('Description / notes'),
+  links: z
+    .array(
+      z
+        .string()
+        .regex(/^https?:\/\/\S+$/i)
+        .max(2000),
+    )
+    .max(TASK_LINKS_LIMIT)
+    .optional()
+    .describe(
+      'Web links (http/https), e.g. a YouTube video. Default []. On update the list replaces the existing links: send the old ones plus the new to add.',
+    ),
   kind: z.enum(TASK_KINDS).optional().describe('TASK (checkable) or NOTE'),
   list_id: id.optional().describe('Defaults to the Inbox'),
   section_id: id.nullable().optional(),

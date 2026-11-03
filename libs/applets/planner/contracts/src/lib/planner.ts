@@ -192,6 +192,8 @@ export interface PlannerTask {
   externalSourceId: string | null;
   recurrenceRule: string | null;
   reminders: string[];
+  /** Web links (http/https), opened outside the app. */
+  links: string[];
   timeZone: string | null;
   endTime: string | null;
   /** Set while the task is in the trash. */
@@ -387,6 +389,20 @@ const recurrenceFields = {
     z.nullable(z.int().check(z.minimum(1), z.maximum(10080))),
   ),
 };
+/** How many links a task keeps. */
+export const TASK_LINKS_LIMIT = 20;
+
+/** A web link: http(s) only, so a link can never run script. */
+export const taskLink = z
+  .string()
+  .check(
+    z.trim(),
+    z.minLength(1),
+    z.maxLength(2000),
+    z.regex(/^https?:\/\/\S+$/i, 'لینک باید با http:// یا https:// شروع شود'),
+  );
+const taskLinks = z.array(taskLink).check(z.maxLength(TASK_LINKS_LIMIT));
+
 export const createTaskSchema = z.object({
   ...recurrenceFields,
   idempotencyKey: z.optional(
@@ -411,6 +427,7 @@ export const createTaskSchema = z.object({
   reminders: z.optional(
     z.array(z.string().check(z.maxLength(150))).check(z.maxLength(30)),
   ),
+  links: z.optional(taskLinks),
   timeZone: z.optional(z.nullable(z.string().check(z.maxLength(80)))),
   endTime: z.optional(z.nullable(timeOfDay)),
   completedAt: z.optional(z.iso.datetime({ offset: true })),
@@ -437,6 +454,8 @@ export const updateTaskSchema = z.partial(
     reminders: z
       .array(z.string().check(z.maxLength(150)))
       .check(z.maxLength(30)),
+    /** Replaces the links. */
+    links: taskLinks,
     timeZone: z.nullable(z.string().check(z.maxLength(80))),
     endTime: z.nullable(timeOfDay),
     done: z.boolean(),

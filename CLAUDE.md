@@ -333,3 +333,11 @@ When the owner gives a new instruction, add it to this list in the same change.
 44. **The AI assistant opens from a floating round button** (owner) in the customer app, not the header: spartan
     `aioBtn size="icon"` (no new component), `web-assistant floating`, bottom-end corner above the phone bottom nav
     (`bottom-[calc(5.5rem+safe-area)]`), `md:bottom-6` on larger screens.
+
+## Task links (2026-11-03)
+
+45. **Tasks have links** (owner): `PlannerTask.links String[] @default([])`, http(s) only (`taskLink`, at most
+    `TASK_LINKS_LIMIT` = 20; an update replaces the list). The task detail lists them with an open button (a plain
+    `<a target="_blank">`, so a YouTube link opens the YouTube app on phones) and a remove button, plus a field to
+    add more (a link without a scheme gets `https://`). MCP/assistant: `links` on create_task, update_task and the
+    batch tools; series pass them to their occurrences.

@@ -15,6 +15,7 @@ import {
   type PlannerListDetail,
   type PlannerTask,
   type TaskPriority,
+  TASK_LINKS_LIMIT,
   TASK_PRIORITIES,
   TASK_PRIORITY_LABELS,
   toIsoDate,
@@ -46,6 +47,8 @@ import {
 import { apiErrorMessage } from '@all-in-one/web/shared';
 import {
   lucideCircleSlash,
+  lucideExternalLink,
+  lucideLink,
   lucideFlag,
   lucideRotateCcw,
   lucidePlus,
@@ -94,6 +97,8 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
   providers: [
     provideIcons({
       lucideCircleSlash,
+      lucideExternalLink,
+      lucideLink,
       lucideFlag,
       lucideRotateCcw,
       lucidePlus,
@@ -341,6 +346,76 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
       </div>
 
       <div class="flex flex-col gap-2">
+        <span class="text-sm font-medium">{{ 'لینک‌ها' | aioTranslate }}</span>
+        @if (t.links.length) {
+          <ul class="flex flex-col">
+            @for (link of t.links; track $index) {
+              <li class="flex min-h-11 min-w-0 items-center gap-2">
+                <aio-icon
+                  name="lucideLink"
+                  size="sm"
+                  class="text-muted-foreground shrink-0"
+                />
+                <span
+                  class="min-w-0 flex-1 truncate text-sm"
+                  dir="ltr"
+                  lang="en"
+                  [title]="link"
+                  >{{ linkLabel(link) }}</span
+                >
+                <!-- A plain link: the phone hands YouTube and other app links to their app. -->
+                <a
+                  aioBtn
+                  variant="outline"
+                  size="icon"
+                  [href]="link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  [attr.aria-label]="
+                    'باز کردن {0}' | aioTranslate: [verbatim(linkLabel(link))]
+                  "
+                >
+                  <aio-icon name="lucideExternalLink" size="sm" />
+                </a>
+                <button
+                  aioBtn
+                  variant="ghost"
+                  size="icon"
+                  type="button"
+                  [attr.aria-label]="
+                    'حذف {0}' | aioTranslate: [verbatim(linkLabel(link))]
+                  "
+                  (click)="removeLink($index)"
+                >
+                  <aio-icon name="lucideX" size="sm" />
+                </button>
+              </li>
+            }
+          </ul>
+        }
+        @if (t.links.length < linksLimit) {
+          <form aioInputGroup (submit)="$event.preventDefault(); addLink()">
+            <input
+              aioInputGroupInput
+              type="url"
+              inputmode="url"
+              dir="ltr"
+              lang="en"
+              placeholder="https://…"
+              [attr.aria-label]="'لینک تازه' | aioTranslate"
+              enterkeyhint="done"
+              [value]="newLink()"
+              (input)="newLink.set($any($event.target).value)"
+            />
+            <aio-input-group-submit
+              [label]="'افزودن لینک' | aioTranslate"
+              icon="lucidePlus"
+            />
+          </form>
+        }
+      </div>
+
+      <div class="flex flex-col gap-2">
         <span class="text-sm font-medium">
           {{ 'زیرکارها' | aioTranslate }}
           @if (t.checklist.length) {
@@ -562,6 +637,8 @@ export class TaskDetail {
 
   protected readonly newTag = signal('');
   protected readonly newItem = signal('');
+  protected readonly newLink = signal('');
+  protected readonly linksLimit = TASK_LINKS_LIMIT;
   protected readonly newComment = signal('');
   protected readonly splitting = signal(false);
 
@@ -636,6 +713,36 @@ export class TaskDetail {
 
   protected removeTag(tag: string) {
     void this.save({ tags: this.task().tags.filter((t) => t !== tag) });
+  }
+
+  /** Host and path, without the scheme: short enough for a phone row. */
+  protected linkLabel(link: string): string {
+    try {
+      const u = new URL(link);
+      return (u.host + u.pathname + u.search).replace(/\/$/, '');
+    } catch {
+      return link;
+    }
+  }
+
+  protected addLink() {
+    let link = this.newLink().trim();
+    if (!link) return;
+    // "youtube.com/…" without a scheme is still meant as a web link.
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(link)) link = 'https://' + link;
+    if (!/^https?:\/\/\S+$/i.test(link)) {
+      this.notifications.error('لینک باید با http:// یا https:// شروع شود');
+      return;
+    }
+    this.newLink.set('');
+    if (!this.task().links.includes(link))
+      void this.save({ links: [...this.task().links, link] });
+  }
+
+  protected removeLink(index: number) {
+    void this.save({
+      links: this.task().links.filter((_, i) => i !== index),
+    });
   }
 
   protected addItem() {

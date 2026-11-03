@@ -282,6 +282,7 @@ export class TasksService {
         externalSourceId: input.externalSourceId ?? null,
         recurrenceRule: input.recurrenceRule ?? null,
         reminders: input.reminders ?? [],
+        links: [...new Set(input.links ?? [])],
         timeZone: input.timeZone ?? null,
         endTime: input.endTime ?? null,
         ...(input.completedAt && !input.repeatRule
@@ -533,6 +534,9 @@ export class TasksService {
         ? { recurrenceRule: input.recurrenceRule }
         : {}),
       ...(input.reminders !== undefined ? { reminders: input.reminders } : {}),
+      ...(input.links !== undefined
+        ? { links: [...new Set(input.links)] }
+        : {}),
       ...(input.timeZone !== undefined ? { timeZone: input.timeZone } : {}),
       ...(input.endTime !== undefined ? { endTime: input.endTime } : {}),
       ...(input.sortOrder !== undefined ? { sortOrder: input.sortOrder } : {}),
@@ -622,6 +626,7 @@ export class TasksService {
           'timeZone',
           'endTime',
           'reminders',
+          'links',
           'repeatRule',
           'repeatFrom',
           'recurrenceEnd',

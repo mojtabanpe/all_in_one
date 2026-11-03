@@ -126,6 +126,8 @@ model PlannerTask {
   externalSourceId String? @db.VarChar(120)
   recurrenceRule String? @db.VarChar(500)
   reminders String[] @default([])
+  /// Web links (http/https) the task points to, e.g. a YouTube video (owner, 2026-11-03).
+  links String[] @default([])
   timeZone String? @db.VarChar(80)
   endTime String? @db.VarChar(5)
   /// Set when moved to the Trash.
