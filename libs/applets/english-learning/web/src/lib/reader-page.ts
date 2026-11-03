@@ -375,6 +375,8 @@ export class ReaderPage {
 
   protected readonly reading = signal(false);
   protected readonly chunk = signal(-1);
+  /** Where the next "Read aloud" starts: the chunk an error stopped at, else 0. */
+  private resumeAt = 0;
   protected readonly readingSentences = computed(
     () => new Set(this.doc().chunks[this.chunk()] ?? []),
   );
@@ -463,10 +465,14 @@ export class ReaderPage {
     const { chunks, sentences } = this.doc();
     this.reading.set(true);
     try {
-      await this.tts.readAloud(
+      // After an error, continue from the chunk that failed instead of the start.
+      this.resumeAt = await this.tts.readAloud(
         chunks.map((c) => c.map((i) => sentences[i]).join(' ')),
         (i) => this.chunk.set(i),
+        [],
+        Math.max(0, Math.min(this.resumeAt, chunks.length - 1)),
       );
+      if (this.resumeAt < 0) this.resumeAt = 0;
     } finally {
       this.reading.set(false);
       this.chunk.set(-1);

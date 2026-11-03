@@ -1,5 +1,5 @@
 import { deepgramBase, elevenBase, endpointFor } from './ai-settings.service';
-import { transcriptOf } from './ai-gateway.service';
+import { isRetryable, retryDelay, transcriptOf } from './ai-gateway.service';
 import { isPrivateAddress } from './net-guard';
 import { SecretBox } from './secret-box';
 
@@ -60,5 +60,18 @@ describe('deepgram', () => {
       }),
     ).toBe('hello');
     expect(transcriptOf({})).toBe('');
+  });
+});
+
+describe('speech retry', () => {
+  it('retries rate limits and server errors only', () => {
+    expect([429, 500, 503, 408].every(isRetryable)).toBe(true);
+    expect([400, 401, 404].some(isRetryable)).toBe(false);
+  });
+  it('waits longer each time, or as the service asks (capped)', () => {
+    expect(retryDelay(1)).toBe(600);
+    expect(retryDelay(2)).toBe(1200);
+    expect(retryDelay(1, '2')).toBe(2000);
+    expect(retryDelay(1, '60')).toBe(4000);
   });
 });

@@ -223,17 +223,31 @@ export class AiGateway {
     voice: 'primary' | 'secondary',
   ): Promise<{ audio: Buffer; contentType: string }> {
     const target = await this.speechTarget(userId, voice);
-    const response = await this.request(target, {
-      json: true,
-      timeout: 30_000,
-      body: JSON.stringify(
-        target.provider === 'elevenlabs'
-          ? { text, model_id: ELEVEN_DEFAULTS.ttsModel }
-          : target.provider === 'deepgram'
-            ? { text }
-            : { model: target.model, input: text },
-      ),
-    });
+    const body = JSON.stringify(
+      target.provider === 'elevenlabs'
+        ? { text, model_id: ELEVEN_DEFAULTS.ttsModel }
+        : target.provider === 'deepgram'
+          ? { text }
+          : { model: target.model, input: text },
+    );
+    // Speech services fail now and then (429, 5xx, a dropped proxy connection): try again.
+    let response: Awaited<ReturnType<typeof fetch>> | null = null;
+    for (let attempt = 1; ; attempt++) {
+      try {
+        response = await this.request(target, {
+          json: true,
+          timeout: 30_000,
+          body,
+        });
+      } catch (error) {
+        if (attempt >= SPEECH_ATTEMPTS) throw error;
+        await sleep(retryDelay(attempt));
+        continue;
+      }
+      if (!isRetryable(response.status) || attempt >= SPEECH_ATTEMPTS) break;
+      await response.body?.cancel().catch(() => undefined);
+      await sleep(retryDelay(attempt, response.headers.get('retry-after')));
+    }
     if (!response.ok) return this.fail(response, 'سرویس متن به گفتار');
     const contentType = response.headers.get('content-type') ?? '';
     if (!/^(audio\/|application\/octet-stream)/i.test(contentType))
@@ -325,6 +339,28 @@ function silentWav(): Buffer {
   header.write('data', 36);
   header.writeUInt32LE(samples * 2, 40);
   return Buffer.concat([header, Buffer.alloc(samples * 2)]);
+}
+
+const SPEECH_ATTEMPTS = 3;
+
+/** Rate limits and server-side failures are worth a second try; other 4xx are not. */
+export function isRetryable(status: number): boolean {
+  return status === 408 || status === 429 || status >= 500;
+}
+
+/** 0.6 s, 1.2 s… or the service's Retry-After (at most 4 s). */
+export function retryDelay(
+  attempt: number,
+  retryAfter?: string | null,
+): number {
+  const seconds = Number(retryAfter);
+  if (retryAfter && Number.isFinite(seconds) && seconds >= 0)
+    return Math.min(seconds * 1000, 4000);
+  return 600 * attempt;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /** The key header each provider expects. */

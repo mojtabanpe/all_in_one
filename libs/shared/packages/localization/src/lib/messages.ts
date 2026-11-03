@@ -3997,6 +3997,10 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['پراکسی', 'Proxy'],
   ['نشانی پراکسی', 'Proxy URL'],
   [
+    'خواندن قطع شد. دوباره «Read aloud» را بزن تا از همین‌جا ادامه دهد.',
+    'Reading stopped. Press "Read aloud" to continue from here.',
+  ],
+  [
     'Deepgram: نشانی خالی = api.deepgram.com؛ در «مدل» نام صدا را بنویس (مثلاً aura-2-thalia-en).',
     'Deepgram: empty URL = api.deepgram.com; put the voice in "Model" (e.g. aura-2-thalia-en).',
   ],

@@ -38,37 +38,72 @@ export class Tts {
     }
   }
 
-  /** Resolves when every chunk has played or reading was stopped. */
+  /**
+   * Reads the chunks in order from `start`, fetching the next one while one plays.
+   * A chunk that fails is asked for again (twice); resolves with the index reading
+   * stopped at after an error, so the caller can resume there, or -1.
+   */
   async readAloud(
     chunks: string[],
     onChunk: (index: number) => void,
     voices: SpeechVoice[] = [],
-  ): Promise<void> {
+    start = 0,
+  ): Promise<number> {
     const generation = ++this.generation;
     this.cancel();
     const parts = chunks.map((c) => c.trim());
+    const fetchChunk = (i: number) => {
+      const p = this.speechWithRetry(parts[i], voices[i], generation);
+      p.catch(() => undefined);
+      return p;
+    };
     let next: Promise<Blob> | null = null;
+    let at = start;
     try {
-      for (let i = 0; i < parts.length; i++) {
+      for (let i = start; i < parts.length; i++) {
         if (!parts[i]) continue;
-        const current = next ?? this.api.speech(parts[i], voices[i]);
+        at = i;
+        const current = next ?? fetchChunk(i);
         const following = parts.findIndex((p, j) => j > i && !!p);
-        next =
-          following > 0
-            ? this.api.speech(parts[following], voices[following])
-            : null;
-        next?.catch(() => undefined);
-        const blob = await current;
-        if (generation !== this.generation) return;
+        next = following > 0 ? fetchChunk(following) : null;
+        let blob: Blob;
+        try {
+          blob = await current;
+        } catch {
+          // The prefetched copy failed: one more fresh try before giving up.
+          if (generation !== this.generation) return -1;
+          blob = await this.speechWithRetry(parts[i], voices[i], generation);
+        }
+        if (generation !== this.generation) return -1;
         onChunk(i);
         await this.play(blob, generation);
-        if (generation !== this.generation) return;
+        if (generation !== this.generation) return -1;
       }
+      return -1;
     } catch {
-      if (generation === this.generation)
-        this.notifications.error('Unable to read the text aloud.');
+      if (generation !== this.generation) return -1;
+      this.notifications.error(
+        'خواندن قطع شد. دوباره «Read aloud» را بزن تا از همین‌جا ادامه دهد.',
+      );
+      return at;
     } finally {
       if (generation === this.generation) this.cancel();
+    }
+  }
+
+  /** One clip, asked for up to three times (the speech service fails now and then). */
+  private async speechWithRetry(
+    text: string,
+    voice: SpeechVoice | undefined,
+    generation: number,
+  ): Promise<Blob> {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        return await this.api.speech(text, voice);
+      } catch (error) {
+        if (attempt >= 3 || generation !== this.generation) throw error;
+        await new Promise((r) => setTimeout(r, 800 * attempt));
+      }
     }
   }
 
