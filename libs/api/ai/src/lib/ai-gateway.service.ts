@@ -88,7 +88,13 @@ export class AiGateway {
 
   private async request(
     target: AiTarget,
-    init: { body: string | FormData; json: boolean; timeout: number },
+    init: {
+      body: string | FormData | Uint8Array;
+      json: boolean;
+      timeout: number;
+      /** Raw body type (Deepgram takes the audio itself). */
+      contentType?: string;
+    },
   ) {
     const url = new URL(target.endpoint);
     try {
@@ -97,11 +103,8 @@ export class AiGateway {
         method: 'POST',
         headers: {
           ...(init.json ? { 'Content-Type': 'application/json' } : {}),
-          ...(target.key
-            ? target.elevenlabs
-              ? { 'xi-api-key': target.key }
-              : { Authorization: `Bearer ${target.key}` }
-            : {}),
+          ...(init.contentType ? { 'Content-Type': init.contentType } : {}),
+          ...(target.key ? authHeader(target) : {}),
         },
         body: init.body,
         redirect: 'error',
@@ -129,8 +132,10 @@ export class AiGateway {
         error?: { message?: string } | string;
         /** ElevenLabs */
         detail?: { message?: string } | string;
+        /** Deepgram */
+        err_msg?: string;
       };
-      const e = body.error ?? body.detail;
+      const e = body.error ?? body.detail ?? body.err_msg;
       detail = typeof e === 'string' ? e : (e?.message ?? '');
     } catch {
       // not JSON
@@ -199,13 +204,16 @@ export class AiGateway {
     const target = await this.target(userId, 'tts');
     const model = voice === 'secondary' ? target.model2 : target.model;
     return {
-      endpoint: target.elevenlabs
-        ? `${target.endpoint}/v1/text-to-speech/${encodeURIComponent(model)}?output_format=mp3_44100_128`
-        : target.endpoint,
+      endpoint:
+        target.provider === 'elevenlabs'
+          ? `${target.endpoint}/v1/text-to-speech/${encodeURIComponent(model)}?output_format=mp3_44100_128`
+          : target.provider === 'deepgram'
+            ? `${target.endpoint}/v1/speak?model=${encodeURIComponent(model)}`
+            : target.endpoint,
       model,
       key: target.key,
       proxy: target.proxy,
-      elevenlabs: target.elevenlabs,
+      provider: target.provider,
     };
   }
 
@@ -219,9 +227,11 @@ export class AiGateway {
       json: true,
       timeout: 30_000,
       body: JSON.stringify(
-        target.elevenlabs
+        target.provider === 'elevenlabs'
           ? { text, model_id: ELEVEN_DEFAULTS.ttsModel }
-          : { model: target.model, input: text },
+          : target.provider === 'deepgram'
+            ? { text }
+            : { model: target.model, input: text },
       ),
     });
     if (!response.ok) return this.fail(response, 'سرویس متن به گفتار');
@@ -250,24 +260,17 @@ export class AiGateway {
     if (!extension)
       throw new BadRequestException('این قالب صدا پشتیبانی نمی‌شود.');
     const target = sttTarget(await this.target(userId, 'stt'));
-    const form = sttForm(target);
-    form.set(
-      'file',
-      new Blob([new Uint8Array(audio)], { type: mime }),
-      `speech.${extension}`,
-    );
     const response = await this.request(target, {
-      json: false,
+      ...sttBody(target, audio, mime, `speech.${extension}`),
       timeout: 90_000,
-      body: form,
     });
     if (!response.ok) return this.fail(response, 'سرویس گفتار به متن');
-    const result = (await response.json()) as { text?: unknown };
-    if (typeof result.text !== 'string' || !result.text.trim())
+    const text = transcriptOf(await response.json());
+    if (!text)
       throw new BadGatewayException(
         'صدایی تشخیص داده نشد. دوباره بگو یا بنویس.',
       );
-    return result.text.trim().slice(0, 3000);
+    return text.slice(0, 3000);
   }
 
   /** "Test connection" in settings: a tiny real request to that service. */
@@ -288,16 +291,9 @@ export class AiGateway {
       }
       const probe = sttTarget(await this.target(userId, 'stt'));
       // A minimal request: a valid answer or a 4xx about the audio both prove the url and key work.
-      const form = sttForm(probe);
-      form.set(
-        'file',
-        new Blob([new Uint8Array(silentWav())], { type: 'audio/wav' }),
-        'probe.wav',
-      );
       const response = await this.request(probe, {
-        json: false,
+        ...sttBody(probe, silentWav(), 'audio/wav', 'probe.wav'),
         timeout: 30_000,
-        body: form,
       });
       if (
         response.status === 401 ||
@@ -331,16 +327,53 @@ function silentWav(): Buffer {
   return Buffer.concat([header, Buffer.alloc(samples * 2)]);
 }
 
-/** ElevenLabs keeps the base url in `endpoint`; point it at speech-to-text. */
-function sttTarget(target: AiTarget): AiTarget {
-  return target.elevenlabs
-    ? { ...target, endpoint: `${target.endpoint}/v1/speech-to-text` }
-    : target;
+/** The key header each provider expects. */
+function authHeader(target: AiTarget): Record<string, string> {
+  const key = target.key ?? '';
+  if (target.provider === 'elevenlabs') return { 'xi-api-key': key };
+  if (target.provider === 'deepgram') return { Authorization: `Token ${key}` };
+  return { Authorization: `Bearer ${key}` };
 }
 
-/** The transcription form: ElevenLabs names the model `model_id`. */
-function sttForm(target: AiTarget): FormData {
+/** Non-OpenAI providers keep the base url in `endpoint`; point it at speech-to-text. */
+function sttTarget(target: AiTarget): AiTarget {
+  if (target.provider === 'elevenlabs')
+    return { ...target, endpoint: `${target.endpoint}/v1/speech-to-text` };
+  if (target.provider === 'deepgram')
+    return {
+      ...target,
+      endpoint: `${target.endpoint}/v1/listen?model=${encodeURIComponent(target.model)}&smart_format=true&detect_language=true`,
+    };
+  return target;
+}
+
+/** The transcription request body: a form (OpenAI, ElevenLabs `model_id`) or the raw audio (Deepgram). */
+function sttBody(
+  target: AiTarget,
+  audio: Buffer,
+  mime: string,
+  filename: string,
+): { body: FormData | Uint8Array; json: false; contentType?: string } {
+  if (target.provider === 'deepgram')
+    return { body: new Uint8Array(audio), json: false, contentType: mime };
   const form = new FormData();
-  form.set(target.elevenlabs ? 'model_id' : 'model', target.model);
-  return form;
+  form.set(
+    target.provider === 'elevenlabs' ? 'model_id' : 'model',
+    target.model,
+  );
+  form.set('file', new Blob([new Uint8Array(audio)], { type: mime }), filename);
+  return { body: form, json: false };
+}
+
+/** `{ text }` (OpenAI, ElevenLabs) or Deepgram's `results.channels[0].alternatives[0].transcript`. */
+export function transcriptOf(result: unknown): string {
+  const r = result as {
+    text?: unknown;
+    results?: {
+      channels?: { alternatives?: { transcript?: unknown }[] }[];
+    };
+  };
+  const text =
+    r?.text ?? r?.results?.channels?.[0]?.alternatives?.[0]?.transcript;
+  return typeof text === 'string' ? text.trim() : '';
 }

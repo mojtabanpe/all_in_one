@@ -3997,6 +3997,14 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['پراکسی', 'Proxy'],
   ['نشانی پراکسی', 'Proxy URL'],
   [
+    'Deepgram: نشانی خالی = api.deepgram.com؛ در «مدل» نام صدا را بنویس (مثلاً aura-2-thalia-en).',
+    'Deepgram: empty URL = api.deepgram.com; put the voice in "Model" (e.g. aura-2-thalia-en).',
+  ],
+  [
+    'Deepgram: نشانی خالی = api.deepgram.com؛ مدل خالی = nova-3.',
+    'Deepgram: empty URL = api.deepgram.com; empty model = nova-3.',
+  ],
+  [
     'ElevenLabs: نشانی خالی = api.elevenlabs.io؛ در «مدل» شناسهٔ صدا (voice id) را بنویس.',
     'ElevenLabs: empty URL = api.elevenlabs.io; put the voice id in "Model".',
   ],

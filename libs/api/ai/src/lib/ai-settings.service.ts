@@ -10,6 +10,7 @@ import {
   AI_PRESETS_LIMIT,
   DEFAULT_AI_PROXY,
   ELEVENLABS_URL,
+  DEEPGRAM_URL,
   type AiKind,
   type AiPresetView,
   SAVED_MODELS_LIMIT,
@@ -25,9 +26,11 @@ export interface AiTarget {
   key: string | null;
   /** HTTP proxy url, or null for a direct connection. */
   proxy: string | null;
-  /** ElevenLabs api: `endpoint` is then the base url (e.g. https://api.elevenlabs.io). */
-  elevenlabs: boolean;
+  /** Not OpenAI-compatible: `endpoint` is then the provider's base url (no /v1). */
+  provider: AiProvider;
 }
+
+export type AiProvider = 'openai' | 'elevenlabs' | 'deepgram';
 
 export interface AiTargets {
   chat: AiTarget | null;
@@ -55,6 +58,14 @@ export const ELEVEN_DEFAULTS = {
   ttsModel: 'eleven_multilingual_v2',
   stt: 'scribe_v1',
 };
+
+/** Deepgram: the model field is the voice (tts) or the model (stt). */
+export const DEEPGRAM_DEFAULTS = { voice: 'aura-2-thalia-en', stt: 'nova-3' };
+
+/** The Deepgram base url, without a trailing /v1. */
+export function deepgramBase(url: string | null | undefined): string {
+  return (url?.trim() || DEEPGRAM_URL).replace(/\/+$/, '').replace(/\/v1$/, '');
+}
 
 /** The ElevenLabs base url, without a trailing /v1. */
 export function elevenBase(url: string | null | undefined): string {
@@ -133,6 +144,7 @@ export class AiSettingsService {
         keyHint: key ? `…${key.slice(-4)}` : '',
         proxy: p.proxy ?? '',
         elevenlabs: p.elevenlabs,
+        deepgram: p.deepgram,
         createdAt: p.createdAt.toISOString(),
       };
     });
@@ -150,6 +162,7 @@ export class AiSettingsService {
     const model2 = input.kind === 'tts' ? input.model2 || null : null;
     const proxy = input.proxy || null;
     const elevenlabs = input.kind !== 'chat' && !!input.elevenlabs;
+    const deepgram = input.kind !== 'chat' && !elevenlabs && !!input.deepgram;
     const same = (
       await this.prisma.userAiPreset.findMany({
         where: {
@@ -160,6 +173,7 @@ export class AiSettingsService {
           model2,
           proxy,
           elevenlabs,
+          deepgram,
         },
       })
     ).find((p) => (this.box.open(p.key) ?? null) === (key ?? null));
@@ -178,6 +192,7 @@ export class AiSettingsService {
           model2,
           proxy,
           elevenlabs,
+          deepgram,
           key: key ? this.box.seal(key) : null,
         },
       });
@@ -208,7 +223,9 @@ export class AiSettingsService {
         model: p.model,
         ...(kind === 'tts' ? { model2: p.model2 ?? '' } : {}),
         proxy: !!p.proxy,
-        ...(kind !== 'chat' ? { elevenlabs: p.elevenlabs } : {}),
+        ...(kind !== 'chat'
+          ? { elevenlabs: p.elevenlabs, deepgram: p.deepgram }
+          : {}),
         ...(p.proxy ? { proxyUrl: p.proxy } : {}),
       },
     });
@@ -244,6 +261,7 @@ export class AiSettingsService {
             proxy?: boolean;
             proxyUrl?: string;
             elevenlabs?: boolean;
+            deepgram?: boolean;
           }
         | undefined,
     ) => {
@@ -253,8 +271,17 @@ export class AiSettingsService {
       if (value.key !== undefined)
         data[`${kind}Key`] = value.key ? this.box.seal(value.key) : null;
       if (value.proxy !== undefined) data[`${kind}ProxyOn`] = value.proxy;
-      if (value.elevenlabs !== undefined && kind !== 'chat')
-        data[`${kind}Eleven`] = value.elevenlabs;
+      if (kind !== 'chat') {
+        // One provider at a time: ticking one clears the other.
+        if (value.deepgram !== undefined) {
+          data[`${kind}Deepgram`] = value.deepgram;
+          if (value.deepgram) data[`${kind}Eleven`] = false;
+        }
+        if (value.elevenlabs !== undefined) {
+          data[`${kind}Eleven`] = value.elevenlabs;
+          if (value.elevenlabs) data[`${kind}Deepgram`] = false;
+        }
+      }
       if (value.proxyUrl !== undefined)
         data[`${kind}Proxy`] = value.proxyUrl || null;
     };
@@ -296,45 +323,62 @@ export class AiSettingsService {
               model: r.chatModel,
               key: this.box.open(r.chatKey),
               proxy: proxyOf(r, 'chat'),
-              elevenlabs: false,
+              provider: 'openai',
             }
           : null,
-      tts: r?.ttsEleven
+      tts: r?.ttsDeepgram
         ? {
-            endpoint: elevenBase(r.ttsUrl),
-            model: r.ttsModel || ELEVEN_DEFAULTS.voice,
-            model2: r.ttsModel2 || r.ttsModel || ELEVEN_DEFAULTS.voice,
+            endpoint: deepgramBase(r.ttsUrl),
+            model: r.ttsModel || DEEPGRAM_DEFAULTS.voice,
+            model2: r.ttsModel2 || r.ttsModel || DEEPGRAM_DEFAULTS.voice,
             key: this.box.open(r.ttsKey),
             proxy: proxyOf(r, 'tts'),
-            elevenlabs: true,
+            provider: 'deepgram',
           }
-        : r?.ttsUrl
+        : r?.ttsEleven
           ? {
-              endpoint: endpointFor('tts', r.ttsUrl),
-              model: r.ttsModel || DEFAULT_MODELS.tts,
-              model2: r.ttsModel2 || r.ttsModel || DEFAULT_MODELS.tts,
+              endpoint: elevenBase(r.ttsUrl),
+              model: r.ttsModel || ELEVEN_DEFAULTS.voice,
+              model2: r.ttsModel2 || r.ttsModel || ELEVEN_DEFAULTS.voice,
               key: this.box.open(r.ttsKey),
               proxy: proxyOf(r, 'tts'),
-              elevenlabs: false,
+              provider: 'elevenlabs',
             }
-          : null,
-      stt: r?.sttEleven
+          : r?.ttsUrl
+            ? {
+                endpoint: endpointFor('tts', r.ttsUrl),
+                model: r.ttsModel || DEFAULT_MODELS.tts,
+                model2: r.ttsModel2 || r.ttsModel || DEFAULT_MODELS.tts,
+                key: this.box.open(r.ttsKey),
+                proxy: proxyOf(r, 'tts'),
+                provider: 'openai',
+              }
+            : null,
+      stt: r?.sttDeepgram
         ? {
-            endpoint: elevenBase(r.sttUrl),
-            model: r.sttModel || ELEVEN_DEFAULTS.stt,
+            endpoint: deepgramBase(r.sttUrl),
+            model: r.sttModel || DEEPGRAM_DEFAULTS.stt,
             key: this.box.open(r.sttKey),
             proxy: proxyOf(r, 'stt'),
-            elevenlabs: true,
+            provider: 'deepgram',
           }
-        : r?.sttUrl
+        : r?.sttEleven
           ? {
-              endpoint: endpointFor('stt', r.sttUrl),
-              model: r.sttModel || DEFAULT_MODELS.stt,
+              endpoint: elevenBase(r.sttUrl),
+              model: r.sttModel || ELEVEN_DEFAULTS.stt,
               key: this.box.open(r.sttKey),
               proxy: proxyOf(r, 'stt'),
-              elevenlabs: false,
+              provider: 'elevenlabs',
             }
-          : null,
+          : r?.sttUrl
+            ? {
+                endpoint: endpointFor('stt', r.sttUrl),
+                model: r.sttModel || DEFAULT_MODELS.stt,
+                key: this.box.open(r.sttKey),
+                proxy: proxyOf(r, 'stt'),
+                provider: 'openai',
+              }
+            : null,
     };
   }
 }
@@ -342,6 +386,7 @@ export class AiSettingsService {
 function proxyView(r: UserAiSettings | null, kind: AiKind) {
   return {
     elevenlabs: kind !== 'chat' && !!r?.[`${kind}Eleven`],
+    deepgram: kind !== 'chat' && !!r?.[`${kind}Deepgram`],
     proxy: !!r?.[`${kind}ProxyOn`],
     proxyUrl: r?.[`${kind}Proxy`] || DEFAULT_AI_PROXY,
   };
@@ -355,8 +400,8 @@ function proxyOf(r: UserAiSettings, kind: AiKind): string | null {
 function status(r: UserAiSettings | null): AiStatus {
   return {
     chat: !!(r?.chatUrl && r.chatModel),
-    tts: !!(r?.ttsUrl || r?.ttsEleven),
-    stt: !!(r?.sttUrl || r?.sttEleven),
+    tts: !!(r?.ttsUrl || r?.ttsEleven || r?.ttsDeepgram),
+    stt: !!(r?.sttUrl || r?.sttEleven || r?.sttDeepgram),
   };
 }
 

@@ -46,6 +46,7 @@ interface Draft {
   proxy: boolean;
   proxyUrl: string;
   elevenlabs: boolean;
+  deepgram: boolean;
 }
 
 const SERVICES: {
@@ -219,10 +220,41 @@ const SERVICES: {
                 <aio-checkbox
                   [inputId]="'ai-eleven-' + s.kind"
                   [checked]="d.elevenlabs"
-                  (checkedChange)="patch(s.kind, { elevenlabs: $event })"
+                  (checkedChange)="
+                    patch(s.kind, {
+                      elevenlabs: $event,
+                      deepgram: $event ? false : d.deepgram,
+                    })
+                  "
                 />
                 ElevenLabs
               </label>
+              <label
+                class="flex min-h-11 w-fit cursor-pointer items-center gap-2 text-sm font-medium"
+                [for]="'ai-deepgram-' + s.kind"
+              >
+                <aio-checkbox
+                  [inputId]="'ai-deepgram-' + s.kind"
+                  [checked]="d.deepgram"
+                  (checkedChange)="
+                    patch(s.kind, {
+                      deepgram: $event,
+                      elevenlabs: $event ? false : d.elevenlabs,
+                    })
+                  "
+                />
+                Deepgram
+              </label>
+              @if (d.deepgram) {
+                <p class="text-muted-foreground -mt-2 text-xs">
+                  {{
+                    (s.kind === 'tts'
+                      ? 'Deepgram: نشانی خالی = api.deepgram.com؛ در «مدل» نام صدا را بنویس (مثلاً aura-2-thalia-en).'
+                      : 'Deepgram: نشانی خالی = api.deepgram.com؛ مدل خالی = nova-3.'
+                    ) | aioTranslate
+                  }}
+                </p>
+              }
               @if (d.elevenlabs) {
                 <p class="text-muted-foreground -mt-2 text-xs">
                   {{
@@ -297,7 +329,8 @@ const SERVICES: {
                 type="button"
                 variant="outline"
                 [disabled]="
-                  busy() === s.kind || (!d.url.trim() && !d.elevenlabs)
+                  busy() === s.kind ||
+                  (!d.url.trim() && !d.elevenlabs && !d.deepgram)
                 "
                 (click)="savePreset(s.kind)"
               >
@@ -333,9 +366,9 @@ const SERVICES: {
                           >
                             {{ p.url }}
                           </div>
-                          @if (p.elevenlabs) {
+                          @if (p.elevenlabs || p.deepgram) {
                             <div class="text-muted-foreground" dir="ltr">
-                              ElevenLabs
+                              {{ p.elevenlabs ? 'ElevenLabs' : 'Deepgram' }}
                             </div>
                           }
                           @if (p.proxy) {
@@ -414,6 +447,7 @@ export class AiSettingsCard {
             proxy: boolean;
             proxyUrl: string;
             elevenlabs: boolean;
+            deepgram: boolean;
           }
         | undefined,
       model2 = '',
@@ -425,6 +459,7 @@ export class AiSettingsCard {
       proxy: v?.proxy ?? false,
       proxyUrl: v?.proxyUrl || DEFAULT_AI_PROXY,
       elevenlabs: v?.elevenlabs ?? false,
+      deepgram: v?.deepgram ?? false,
     });
     return {
       chat: draft(s?.chat),
@@ -477,7 +512,9 @@ export class AiSettingsCard {
       ...(kind === 'tts' ? { model2: d.model2.trim() } : {}),
       proxy: d.proxy,
       proxyUrl: d.proxyUrl.trim(),
-      ...(kind !== 'chat' ? { elevenlabs: d.elevenlabs } : {}),
+      ...(kind !== 'chat'
+        ? { elevenlabs: d.elevenlabs, deepgram: d.deepgram }
+        : {}),
     };
     if (kind === 'chat' && service.url && !service.model) {
       this.notifications.error('نام مدل گفتگو را هم بنویس.');
@@ -502,6 +539,7 @@ export class AiSettingsCard {
       cur.model === p.model &&
       (cur.proxy ? cur.proxyUrl : '') === p.proxy &&
       cur.elevenlabs === p.elevenlabs &&
+      cur.deepgram === p.deepgram &&
       (p.kind !== 'tts' || v.tts.model2 === p.model2)
     );
   }
@@ -521,6 +559,7 @@ export class AiSettingsCard {
             ...(d.key.trim() ? { key: d.key.trim() } : {}),
             ...(d.proxy ? { proxy: d.proxyUrl.trim() } : {}),
             ...(d.elevenlabs && kind !== 'chat' ? { elevenlabs: true } : {}),
+            ...(d.deepgram && kind !== 'chat' ? { deepgram: true } : {}),
           }),
         ),
       );

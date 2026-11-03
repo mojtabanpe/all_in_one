@@ -283,6 +283,10 @@ When the owner gives a new instruction, add it to this list in the same change.
     `/v1/text-to-speech/{voice id}` (the model fields hold voice ids, `eleven_multilingual_v2`) and
     `/v1/speech-to-text` (`model_id`, default `scribe_v1`). An empty url means `https://api.elevenlabs.io`.
     Stored as `ttsEleven`/`sttEleven` and `user_ai_presets.elevenlabs`.
+    **Deepgram** (2026-11-03, owner): a «Deepgram» checkbox beside it (one provider at a time). `Authorization: Token`,
+    `/v1/speak?model=<voice>` (default `aura-2-thalia-en`) and `/v1/listen?model=` (raw audio body, default `nova-3`);
+    an empty url means `https://api.deepgram.com`. Stored as `ttsDeepgram`/`sttDeepgram` and
+    `user_ai_presets.deepgram`. Internally `AiTarget.provider` is `openai | elevenlabs | deepgram`.
 
 ## Approved custom components
 

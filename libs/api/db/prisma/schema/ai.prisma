@@ -30,6 +30,9 @@ model UserAiSettings {
   /// ElevenLabs instead of an OpenAI-compatible api (owner, 2026-11-03); tts and stt only.
   ttsEleven   Boolean @default(false)
   sttEleven   Boolean @default(false)
+  /// Deepgram instead of an OpenAI-compatible api (owner, 2026-11-03); tts and stt only.
+  ttsDeepgram Boolean @default(false)
+  sttDeepgram Boolean @default(false)
   updatedAt DateTime @updatedAt
 
   @@map("user_ai_settings")
@@ -50,6 +53,7 @@ model UserAiPreset {
   /// Proxy url the setup goes through; null = direct.
   proxy     String?  @db.VarChar(500)
   elevenlabs Boolean @default(false)
+  deepgram   Boolean @default(false)
   createdAt DateTime @default(now())
 
   @@index([userId, kind, createdAt])

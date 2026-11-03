@@ -11,10 +11,14 @@ export interface AiServiceView {
   proxyUrl: string;
   /** ElevenLabs api instead of OpenAI-compatible (tts/stt only). */
   elevenlabs: boolean;
+  /** Deepgram api instead of OpenAI-compatible (tts/stt only). */
+  deepgram: boolean;
 }
 
 /** Used when ElevenLabs is on and the url is left empty. */
 export const ELEVENLABS_URL = 'https://api.elevenlabs.io';
+/** Used when Deepgram is on and the url is left empty. */
+export const DEEPGRAM_URL = 'https://api.deepgram.com';
 
 export const DEFAULT_AI_PROXY = 'http://127.0.0.1:7890';
 
@@ -44,6 +48,7 @@ export interface AiPresetView {
   /** Proxy url, '' = direct. */
   proxy: string;
   elevenlabs: boolean;
+  deepgram: boolean;
   createdAt: string;
 }
 
@@ -79,6 +84,7 @@ const service = z.partial(
     proxy: z.boolean(),
     proxyUrl: url,
     elevenlabs: z.boolean(),
+    deepgram: z.boolean(),
   }),
 );
 
@@ -110,6 +116,7 @@ export const saveAiPresetSchema = z.object({
   /** Proxy url the setup uses; omitted or '' = direct. */
   proxy: z.optional(url),
   elevenlabs: z.optional(z.boolean()),
+  deepgram: z.optional(z.boolean()),
 });
 export type SaveAiPresetInput = z.infer<typeof saveAiPresetSchema>;
 /** How many saved setups each service keeps. */

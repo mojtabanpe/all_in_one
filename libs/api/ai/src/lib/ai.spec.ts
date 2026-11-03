@@ -1,4 +1,5 @@
-import { elevenBase, endpointFor } from './ai-settings.service';
+import { deepgramBase, elevenBase, endpointFor } from './ai-settings.service';
+import { transcriptOf } from './ai-gateway.service';
 import { isPrivateAddress } from './net-guard';
 import { SecretBox } from './secret-box';
 
@@ -44,5 +45,20 @@ describe('elevenBase', () => {
   it('defaults to api.elevenlabs.io and drops /v1', () => {
     expect(elevenBase('')).toBe('https://api.elevenlabs.io');
     expect(elevenBase('https://x.io/v1/')).toBe('https://x.io');
+  });
+});
+
+describe('deepgram', () => {
+  it('defaults to api.deepgram.com', () => {
+    expect(deepgramBase(null)).toBe('https://api.deepgram.com');
+  });
+  it('reads OpenAI and Deepgram transcripts', () => {
+    expect(transcriptOf({ text: ' hi ' })).toBe('hi');
+    expect(
+      transcriptOf({
+        results: { channels: [{ alternatives: [{ transcript: 'hello' }] }] },
+      }),
+    ).toBe('hello');
+    expect(transcriptOf({})).toBe('');
   });
 });
