@@ -20,6 +20,13 @@ model UserAiSettings {
   chatModels String[] @default([])
   ttsModels  String[] @default([])
   sttModels  String[] @default([])
+  /// HTTP proxy per service (owner, 2026-11-03): on/off and its url, kept while off.
+  chatProxyOn Boolean @default(false)
+  chatProxy   String? @db.VarChar(500)
+  ttsProxyOn  Boolean @default(false)
+  ttsProxy    String? @db.VarChar(500)
+  sttProxyOn  Boolean @default(false)
+  sttProxy    String? @db.VarChar(500)
   updatedAt DateTime @updatedAt
 
   @@map("user_ai_settings")
@@ -37,6 +44,8 @@ model UserAiPreset {
   model     String   @db.VarChar(100)
   model2    String?  @db.VarChar(100)
   key       String?  @db.VarChar(1000)
+  /// Proxy url the setup goes through; null = direct.
+  proxy     String?  @db.VarChar(500)
   createdAt DateTime @default(now())
 
   @@index([userId, kind, createdAt])

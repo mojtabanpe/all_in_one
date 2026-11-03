@@ -3994,6 +3994,8 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['مدل‌های قبلی', 'Previous models'],
   ['ذخیره در فهرست', 'Save to list'],
   ['در فهرست ذخیره شد', 'Saved to the list'],
+  ['پراکسی', 'Proxy'],
+  ['نشانی پراکسی', 'Proxy URL'],
   ['این تنظیم فعال شد', 'This setup is now active'],
   ['استفاده', 'Use'],
   ['فعال', 'Active'],

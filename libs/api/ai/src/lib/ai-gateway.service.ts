@@ -9,7 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import type { AiKind, AiTestResult } from '@all-in-one/shared/schemas';
 import { fetch, FormData } from 'undici';
 import { AiSettingsService, type AiTarget } from './ai-settings.service';
-import { assertPublicUrl, guardedAgent } from './net-guard';
+import { assertPublicUrl, guardedAgent, proxyAgent } from './net-guard';
 
 export interface ToolCall {
   id: string;
@@ -97,7 +97,9 @@ export class AiGateway {
         },
         body: init.body,
         redirect: 'error',
-        dispatcher: guardedAgent(this.allowPrivate),
+        dispatcher: target.proxy
+          ? proxyAgent(target.proxy)
+          : guardedAgent(this.allowPrivate),
         signal: AbortSignal.timeout(init.timeout),
       });
     } catch (error) {
@@ -191,6 +193,7 @@ export class AiGateway {
       endpoint: target.endpoint,
       model: voice === 'secondary' ? target.model2 : target.model,
       key: target.key,
+      proxy: target.proxy,
     };
   }
 

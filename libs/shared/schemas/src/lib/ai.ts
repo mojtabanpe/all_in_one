@@ -5,7 +5,13 @@ export interface AiServiceView {
   url: string;
   model: string;
   hasKey: boolean;
+  /** Requests of this service go through `proxyUrl`. */
+  proxy: boolean;
+  /** The stored proxy url, or DEFAULT_AI_PROXY. */
+  proxyUrl: string;
 }
+
+export const DEFAULT_AI_PROXY = 'http://127.0.0.1:7890';
 
 export interface AiSettings {
   /** OpenAI-compatible chat completions (cards, texts, coach, assistant). */
@@ -30,6 +36,8 @@ export interface AiPresetView {
   model2: string;
   /** e.g. '…a1b2', or '' when the setup has no key. */
   keyHint: string;
+  /** Proxy url, '' = direct. */
+  proxy: string;
   createdAt: string;
 }
 
@@ -57,7 +65,9 @@ const model = z.string().check(z.trim(), z.maxLength(100));
 /** Omitted = keep the stored key; '' = remove it. */
 const key = z.string().check(z.trim(), z.maxLength(500));
 
-const service = z.partial(z.object({ url, model, key }));
+const service = z.partial(
+  z.object({ url, model, key, proxy: z.boolean(), proxyUrl: url }),
+);
 
 export const updateAiSettingsSchema = z.partial(
   z.object({
@@ -84,6 +94,8 @@ export const saveAiPresetSchema = z.object({
   model2: z.optional(z.string().check(z.trim(), z.maxLength(100))),
   /** Omitted or '' = use the key stored for this service now. */
   key: z.optional(z.string().check(z.trim(), z.maxLength(500))),
+  /** Proxy url the setup uses; omitted or '' = direct. */
+  proxy: z.optional(url),
 });
 export type SaveAiPresetInput = z.infer<typeof saveAiPresetSchema>;
 /** How many saved setups each service keeps. */

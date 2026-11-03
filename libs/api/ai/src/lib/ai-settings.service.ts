@@ -8,6 +8,7 @@ import type {
 } from '@all-in-one/shared/schemas';
 import {
   AI_PRESETS_LIMIT,
+  DEFAULT_AI_PROXY,
   type AiKind,
   type AiPresetView,
   SAVED_MODELS_LIMIT,
@@ -21,6 +22,8 @@ export interface AiTarget {
   endpoint: string;
   model: string;
   key: string | null;
+  /** HTTP proxy url, or null for a direct connection. */
+  proxy: string | null;
 }
 
 export interface AiTargets {
@@ -73,17 +76,20 @@ export class AiSettingsService {
         url: r?.chatUrl ?? '',
         model: r?.chatModel ?? '',
         hasKey: !!r?.chatKey,
+        ...proxyView(r, 'chat'),
       },
       tts: {
         url: r?.ttsUrl ?? '',
         model: r?.ttsModel ?? '',
         model2: r?.ttsModel2 ?? '',
         hasKey: !!r?.ttsKey,
+        ...proxyView(r, 'tts'),
       },
       stt: {
         url: r?.sttUrl ?? '',
         model: r?.sttModel ?? '',
         hasKey: !!r?.sttKey,
+        ...proxyView(r, 'stt'),
       },
       ready: status(r),
       presets: await this.presets(userId),
@@ -109,6 +115,7 @@ export class AiSettingsService {
         model: p.model,
         model2: p.model2 ?? '',
         keyHint: key ? `…${key.slice(-4)}` : '',
+        proxy: p.proxy ?? '',
         createdAt: p.createdAt.toISOString(),
       };
     });
@@ -124,6 +131,7 @@ export class AiSettingsService {
       ? input.key
       : this.box.open(current?.[`${input.kind}Key`]);
     const model2 = input.kind === 'tts' ? input.model2 || null : null;
+    const proxy = input.proxy || null;
     const same = (
       await this.prisma.userAiPreset.findMany({
         where: {
@@ -132,6 +140,7 @@ export class AiSettingsService {
           url: input.url,
           model: input.model,
           model2,
+          proxy,
         },
       })
     ).find((p) => (this.box.open(p.key) ?? null) === (key ?? null));
@@ -148,6 +157,7 @@ export class AiSettingsService {
           url: input.url,
           model: input.model,
           model2,
+          proxy,
           key: key ? this.box.seal(key) : null,
         },
       });
@@ -177,6 +187,8 @@ export class AiSettingsService {
         url: p.url,
         model: p.model,
         ...(kind === 'tts' ? { model2: p.model2 ?? '' } : {}),
+        proxy: !!p.proxy,
+        ...(p.proxy ? { proxyUrl: p.proxy } : {}),
       },
     });
     // The key is copied sealed, without passing through plain text.
@@ -203,13 +215,24 @@ export class AiSettingsService {
     const data: Partial<Omit<UserAiSettings, 'userId' | 'updatedAt'>> = {};
     const put = (
       kind: 'chat' | 'tts' | 'stt',
-      value: { url?: string; model?: string; key?: string } | undefined,
+      value:
+        | {
+            url?: string;
+            model?: string;
+            key?: string;
+            proxy?: boolean;
+            proxyUrl?: string;
+          }
+        | undefined,
     ) => {
       if (!value) return;
       if (value.url !== undefined) data[`${kind}Url`] = value.url || null;
       if (value.model !== undefined) data[`${kind}Model`] = value.model || null;
       if (value.key !== undefined)
         data[`${kind}Key`] = value.key ? this.box.seal(value.key) : null;
+      if (value.proxy !== undefined) data[`${kind}ProxyOn`] = value.proxy;
+      if (value.proxyUrl !== undefined)
+        data[`${kind}Proxy`] = value.proxyUrl || null;
     };
     put('chat', input.chat);
     put('tts', input.tts);
@@ -248,6 +271,7 @@ export class AiSettingsService {
               endpoint: endpointFor('chat', r.chatUrl),
               model: r.chatModel,
               key: this.box.open(r.chatKey),
+              proxy: proxyOf(r, 'chat'),
             }
           : null,
       tts: r?.ttsUrl
@@ -256,6 +280,7 @@ export class AiSettingsService {
             model: r.ttsModel || DEFAULT_MODELS.tts,
             model2: r.ttsModel2 || r.ttsModel || DEFAULT_MODELS.tts,
             key: this.box.open(r.ttsKey),
+            proxy: proxyOf(r, 'tts'),
           }
         : null,
       stt: r?.sttUrl
@@ -263,10 +288,23 @@ export class AiSettingsService {
             endpoint: endpointFor('stt', r.sttUrl),
             model: r.sttModel || DEFAULT_MODELS.stt,
             key: this.box.open(r.sttKey),
+            proxy: proxyOf(r, 'stt'),
           }
         : null,
     };
   }
+}
+
+function proxyView(r: UserAiSettings | null, kind: AiKind) {
+  return {
+    proxy: !!r?.[`${kind}ProxyOn`],
+    proxyUrl: r?.[`${kind}Proxy`] || DEFAULT_AI_PROXY,
+  };
+}
+
+/** The proxy a service's requests go through, or null for direct. */
+function proxyOf(r: UserAiSettings, kind: AiKind): string | null {
+  return r[`${kind}ProxyOn`] ? r[`${kind}Proxy`] || DEFAULT_AI_PROXY : null;
 }
 
 function status(r: UserAiSettings | null): AiStatus {

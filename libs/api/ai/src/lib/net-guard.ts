@@ -1,6 +1,6 @@
 import { lookup as dnsLookup, type LookupAddress } from 'node:dns';
 import { BlockList, isIP, type LookupFunction } from 'node:net';
-import { Agent } from 'undici';
+import { Agent, ProxyAgent } from 'undici';
 
 /** Addresses a user-supplied url must not reach (SSRF), unless the operator allows it. */
 const PRIVATE_V4 = new BlockList();
@@ -80,6 +80,29 @@ export function guardedAgent(allowPrivate: boolean): Agent {
   if (!agent) {
     agent = new Agent({ connect: { lookup: guardedLookup(allowPrivate) } });
     agents.set(allowPrivate, agent);
+  }
+  return agent;
+}
+
+const proxies = new Map<string, ProxyAgent>();
+/**
+ * A dispatcher through the user's own HTTP proxy (e.g. http://127.0.0.1:7890 on the
+ * server). The proxy resolves the target itself, so the guarded lookup does not run
+ * for it; the target's IP literal is still checked by assertPublicUrl.
+ */
+export function proxyAgent(url: string): ProxyAgent {
+  let agent = proxies.get(url);
+  if (!agent) {
+    if (proxies.size >= 50) {
+      const [first, old] = proxies.entries().next().value as [
+        string,
+        ProxyAgent,
+      ];
+      proxies.delete(first);
+      void old.close();
+    }
+    agent = new ProxyAgent(url);
+    proxies.set(url, agent);
   }
   return agent;
 }

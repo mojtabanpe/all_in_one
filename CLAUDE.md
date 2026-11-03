@@ -274,6 +274,10 @@ When the owner gives a new instruction, add it to this list in the same change.
     **No model chips, clear sections** (2026-11-03, owner): the saved setups hold the whole config, so the model-name
     chips under the fields are gone from the UI (the backend still keeps the lists). Chat, text-to-speech and
     speech-to-text each sit in their own bordered panel so the boundary between them is obvious.
+    **Proxy per service** (2026-11-03, owner): each of the three sections has a «پراکسی» checkbox; when ticked, a
+    proxy url (default `http://127.0.0.1:7890`, `DEFAULT_AI_PROXY`) is shown and that service's requests go through it
+    (undici `ProxyAgent`, `proxyAgent()` in `net-guard.ts`). On/off and the url are stored in `user_ai_settings`
+    (`<kind>ProxyOn`, `<kind>Proxy`) and in saved setups (`user_ai_presets.proxy`, null = direct).
 
 ## Approved custom components
 

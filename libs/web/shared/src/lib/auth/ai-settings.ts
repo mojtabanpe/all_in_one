@@ -13,6 +13,7 @@ import type {
   UpdateAiSettingsInput,
   AiPresetView,
 } from '@all-in-one/shared/schemas';
+import { DEFAULT_AI_PROXY } from '@all-in-one/shared/schemas';
 import {
   AioTranslate,
   AioButton,
@@ -24,6 +25,7 @@ import {
   AioAsyncButton,
   AioNotifications,
   AioTableDirectives,
+  AioCheckbox,
 } from '@all-in-one/ui';
 import {
   lucideCircleCheck,
@@ -41,6 +43,8 @@ interface Draft {
   model: string;
   model2: string;
   key: string;
+  proxy: boolean;
+  proxyUrl: string;
 }
 
 const SERVICES: {
@@ -85,6 +89,7 @@ const SERVICES: {
     AioFormField,
     AioAsyncButton,
     AioTranslate,
+    AioCheckbox,
   ],
   providers: [
     provideIcons({
@@ -205,6 +210,39 @@ const SERVICES: {
                 (input)="patch(s.kind, { key: $any($event.target).value })"
               />
             </aio-form-field>
+            <div class="flex flex-col gap-2">
+              <label
+                class="flex min-h-11 w-fit cursor-pointer items-center gap-2 text-sm font-medium"
+                [for]="'ai-proxy-on-' + s.kind"
+              >
+                <aio-checkbox
+                  [inputId]="'ai-proxy-on-' + s.kind"
+                  [checked]="d.proxy"
+                  (checkedChange)="patch(s.kind, { proxy: $event })"
+                />
+                {{ 'پراکسی' | aioTranslate }}
+              </label>
+              @if (d.proxy) {
+                <aio-form-field
+                  [label]="'نشانی پراکسی' | aioTranslate"
+                  [controlId]="'ai-proxy-' + s.kind"
+                >
+                  <input
+                    aioInput
+                    type="url"
+                    dir="ltr"
+                    lang="en"
+                    inputmode="url"
+                    placeholder="http://127.0.0.1:7890"
+                    [id]="'ai-proxy-' + s.kind"
+                    [value]="d.proxyUrl"
+                    (input)="
+                      patch(s.kind, { proxyUrl: $any($event.target).value })
+                    "
+                  />
+                </aio-form-field>
+              }
+            </div>
             <div class="flex flex-wrap gap-2">
               <button aioBtn type="submit" [disabled]="busy() === s.kind">
                 {{ 'ذخیره' | aioTranslate }}
@@ -269,6 +307,15 @@ const SERVICES: {
                           >
                             {{ p.url }}
                           </div>
+                          @if (p.proxy) {
+                            <div
+                              class="text-muted-foreground truncate"
+                              dir="ltr"
+                              [title]="p.proxy"
+                            >
+                              proxy: {{ p.proxy }}
+                            </div>
+                          }
                         </td>
                         <td aioTd class="font-mono">{{ p.keyHint || '—' }}</td>
                         <td aioTd class="whitespace-nowrap">
@@ -328,16 +375,23 @@ export class AiSettingsCard {
 
   protected readonly drafts = linkedSignal<Record<AiKind, Draft>>(() => {
     const s = this.settings.hasValue() ? this.settings.value() : null;
-    const draft = (url = '', model = '', model2 = ''): Draft => ({
-      url,
-      model,
+    const draft = (
+      v:
+        | { url: string; model: string; proxy: boolean; proxyUrl: string }
+        | undefined,
+      model2 = '',
+    ): Draft => ({
+      url: v?.url ?? '',
+      model: v?.model ?? '',
       model2,
       key: '',
+      proxy: v?.proxy ?? false,
+      proxyUrl: v?.proxyUrl || DEFAULT_AI_PROXY,
     });
     return {
-      chat: draft(s?.chat.url, s?.chat.model),
-      tts: draft(s?.tts.url, s?.tts.model, s?.tts.model2),
-      stt: draft(s?.stt.url, s?.stt.model),
+      chat: draft(s?.chat),
+      tts: draft(s?.tts, s?.tts.model2),
+      stt: draft(s?.stt),
     };
   });
 
@@ -383,6 +437,8 @@ export class AiSettingsCard {
       model: d.model.trim(),
       ...(d.key.trim() ? { key: d.key.trim() } : {}),
       ...(kind === 'tts' ? { model2: d.model2.trim() } : {}),
+      proxy: d.proxy,
+      proxyUrl: d.proxyUrl.trim(),
     };
     if (kind === 'chat' && service.url && !service.model) {
       this.notifications.error('نام مدل گفتگو را هم بنویس.');
@@ -405,6 +461,7 @@ export class AiSettingsCard {
     return (
       cur.url === p.url &&
       cur.model === p.model &&
+      (cur.proxy ? cur.proxyUrl : '') === p.proxy &&
       (p.kind !== 'tts' || v.tts.model2 === p.model2)
     );
   }
@@ -422,6 +479,7 @@ export class AiSettingsCard {
             model: d.model.trim(),
             ...(kind === 'tts' ? { model2: d.model2.trim() } : {}),
             ...(d.key.trim() ? { key: d.key.trim() } : {}),
+            ...(d.proxy ? { proxy: d.proxyUrl.trim() } : {}),
           }),
         ),
       );
