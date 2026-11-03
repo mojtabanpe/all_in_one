@@ -1,4 +1,4 @@
-import { endpointFor } from './ai-settings.service';
+import { elevenBase, endpointFor } from './ai-settings.service';
 import { isPrivateAddress } from './net-guard';
 import { SecretBox } from './secret-box';
 
@@ -37,5 +37,12 @@ describe('api-ai', () => {
     ['2606:4700::1111', false],
   ])('treats %s as private: %s', (address, expected) => {
     expect(isPrivateAddress(address)).toBe(expected);
+  });
+});
+
+describe('elevenBase', () => {
+  it('defaults to api.elevenlabs.io and drops /v1', () => {
+    expect(elevenBase('')).toBe('https://api.elevenlabs.io');
+    expect(elevenBase('https://x.io/v1/')).toBe('https://x.io');
   });
 });

@@ -8,7 +8,11 @@ import {
 import { ConfigService } from '@nestjs/config';
 import type { AiKind, AiTestResult } from '@all-in-one/shared/schemas';
 import { fetch, FormData } from 'undici';
-import { AiSettingsService, type AiTarget } from './ai-settings.service';
+import {
+  AiSettingsService,
+  ELEVEN_DEFAULTS,
+  type AiTarget,
+} from './ai-settings.service';
 import { assertPublicUrl, guardedAgent, proxyAgent } from './net-guard';
 
 export interface ToolCall {
@@ -93,7 +97,11 @@ export class AiGateway {
         method: 'POST',
         headers: {
           ...(init.json ? { 'Content-Type': 'application/json' } : {}),
-          ...(target.key ? { Authorization: `Bearer ${target.key}` } : {}),
+          ...(target.key
+            ? target.elevenlabs
+              ? { 'xi-api-key': target.key }
+              : { Authorization: `Bearer ${target.key}` }
+            : {}),
         },
         body: init.body,
         redirect: 'error',
@@ -119,11 +127,11 @@ export class AiGateway {
     try {
       const body = (await response.json()) as {
         error?: { message?: string } | string;
+        /** ElevenLabs */
+        detail?: { message?: string } | string;
       };
-      detail =
-        typeof body.error === 'string'
-          ? body.error
-          : (body.error?.message ?? '');
+      const e = body.error ?? body.detail;
+      detail = typeof e === 'string' ? e : (e?.message ?? '');
     } catch {
       // not JSON
     }
@@ -189,11 +197,15 @@ export class AiGateway {
   /** Where speech for a voice comes from; also part of the audio cache key. */
   async speechTarget(userId: string, voice: 'primary' | 'secondary') {
     const target = await this.target(userId, 'tts');
+    const model = voice === 'secondary' ? target.model2 : target.model;
     return {
-      endpoint: target.endpoint,
-      model: voice === 'secondary' ? target.model2 : target.model,
+      endpoint: target.elevenlabs
+        ? `${target.endpoint}/v1/text-to-speech/${encodeURIComponent(model)}?output_format=mp3_44100_128`
+        : target.endpoint,
+      model,
       key: target.key,
       proxy: target.proxy,
+      elevenlabs: target.elevenlabs,
     };
   }
 
@@ -206,7 +218,11 @@ export class AiGateway {
     const response = await this.request(target, {
       json: true,
       timeout: 30_000,
-      body: JSON.stringify({ model: target.model, input: text }),
+      body: JSON.stringify(
+        target.elevenlabs
+          ? { text, model_id: ELEVEN_DEFAULTS.ttsModel }
+          : { model: target.model, input: text },
+      ),
     });
     if (!response.ok) return this.fail(response, 'سرویس متن به گفتار');
     const contentType = response.headers.get('content-type') ?? '';
@@ -233,9 +249,8 @@ export class AiGateway {
     const extension = RECORDING_TYPES[mime];
     if (!extension)
       throw new BadRequestException('این قالب صدا پشتیبانی نمی‌شود.');
-    const target = await this.target(userId, 'stt');
-    const form = new FormData();
-    form.set('model', target.model);
+    const target = sttTarget(await this.target(userId, 'stt'));
+    const form = sttForm(target);
     form.set(
       'file',
       new Blob([new Uint8Array(audio)], { type: mime }),
@@ -271,10 +286,9 @@ export class AiGateway {
         await this.speech(userId, 'Hello', 'primary');
         return { ok: true, message: 'سرویس متن به گفتار صدا ساخت.' };
       }
-      const probe = await this.target(userId, 'stt');
+      const probe = sttTarget(await this.target(userId, 'stt'));
       // A minimal request: a valid answer or a 4xx about the audio both prove the url and key work.
-      const form = new FormData();
-      form.set('model', probe.model);
+      const form = sttForm(probe);
       form.set(
         'file',
         new Blob([new Uint8Array(silentWav())], { type: 'audio/wav' }),
@@ -315,4 +329,18 @@ function silentWav(): Buffer {
   header.write('data', 36);
   header.writeUInt32LE(samples * 2, 40);
   return Buffer.concat([header, Buffer.alloc(samples * 2)]);
+}
+
+/** ElevenLabs keeps the base url in `endpoint`; point it at speech-to-text. */
+function sttTarget(target: AiTarget): AiTarget {
+  return target.elevenlabs
+    ? { ...target, endpoint: `${target.endpoint}/v1/speech-to-text` }
+    : target;
+}
+
+/** The transcription form: ElevenLabs names the model `model_id`. */
+function sttForm(target: AiTarget): FormData {
+  const form = new FormData();
+  form.set(target.elevenlabs ? 'model_id' : 'model', target.model);
+  return form;
 }

@@ -278,6 +278,11 @@ When the owner gives a new instruction, add it to this list in the same change.
     proxy url (default `http://127.0.0.1:7890`, `DEFAULT_AI_PROXY`) is shown and that service's requests go through it
     (undici `ProxyAgent`, `proxyAgent()` in `net-guard.ts`). On/off and the url are stored in `user_ai_settings`
     (`<kind>ProxyOn`, `<kind>Proxy`) and in saved setups (`user_ai_presets.proxy`, null = direct).
+    **ElevenLabs** (2026-11-03, owner): text-to-speech and speech-to-text have an «ElevenLabs» checkbox next to the
+    proxy one; when ticked, that service calls the ElevenLabs api (not OpenAI-compatible): `xi-api-key` header,
+    `/v1/text-to-speech/{voice id}` (the model fields hold voice ids, `eleven_multilingual_v2`) and
+    `/v1/speech-to-text` (`model_id`, default `scribe_v1`). An empty url means `https://api.elevenlabs.io`.
+    Stored as `ttsEleven`/`sttEleven` and `user_ai_presets.elevenlabs`.
 
 ## Approved custom components
 

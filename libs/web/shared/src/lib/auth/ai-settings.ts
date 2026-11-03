@@ -45,6 +45,7 @@ interface Draft {
   key: string;
   proxy: boolean;
   proxyUrl: string;
+  elevenlabs: boolean;
 }
 
 const SERVICES: {
@@ -210,6 +211,29 @@ const SERVICES: {
                 (input)="patch(s.kind, { key: $any($event.target).value })"
               />
             </aio-form-field>
+            @if (s.kind !== 'chat') {
+              <label
+                class="flex min-h-11 w-fit cursor-pointer items-center gap-2 text-sm font-medium"
+                [for]="'ai-eleven-' + s.kind"
+              >
+                <aio-checkbox
+                  [inputId]="'ai-eleven-' + s.kind"
+                  [checked]="d.elevenlabs"
+                  (checkedChange)="patch(s.kind, { elevenlabs: $event })"
+                />
+                ElevenLabs
+              </label>
+              @if (d.elevenlabs) {
+                <p class="text-muted-foreground -mt-2 text-xs">
+                  {{
+                    (s.kind === 'tts'
+                      ? 'ElevenLabs: نشانی خالی = api.elevenlabs.io؛ در «مدل» شناسهٔ صدا (voice id) را بنویس.'
+                      : 'ElevenLabs: نشانی خالی = api.elevenlabs.io؛ مدل خالی = scribe_v1.'
+                    ) | aioTranslate
+                  }}
+                </p>
+              }
+            }
             <div class="flex flex-col gap-2">
               <label
                 class="flex min-h-11 w-fit cursor-pointer items-center gap-2 text-sm font-medium"
@@ -272,7 +296,9 @@ const SERVICES: {
                 aioBtn
                 type="button"
                 variant="outline"
-                [disabled]="busy() === s.kind || !d.url.trim()"
+                [disabled]="
+                  busy() === s.kind || (!d.url.trim() && !d.elevenlabs)
+                "
                 (click)="savePreset(s.kind)"
               >
                 <aio-icon name="lucideBookmarkPlus" size="sm" />
@@ -307,6 +333,11 @@ const SERVICES: {
                           >
                             {{ p.url }}
                           </div>
+                          @if (p.elevenlabs) {
+                            <div class="text-muted-foreground" dir="ltr">
+                              ElevenLabs
+                            </div>
+                          }
                           @if (p.proxy) {
                             <div
                               class="text-muted-foreground truncate"
@@ -377,7 +408,13 @@ export class AiSettingsCard {
     const s = this.settings.hasValue() ? this.settings.value() : null;
     const draft = (
       v:
-        | { url: string; model: string; proxy: boolean; proxyUrl: string }
+        | {
+            url: string;
+            model: string;
+            proxy: boolean;
+            proxyUrl: string;
+            elevenlabs: boolean;
+          }
         | undefined,
       model2 = '',
     ): Draft => ({
@@ -387,6 +424,7 @@ export class AiSettingsCard {
       key: '',
       proxy: v?.proxy ?? false,
       proxyUrl: v?.proxyUrl || DEFAULT_AI_PROXY,
+      elevenlabs: v?.elevenlabs ?? false,
     });
     return {
       chat: draft(s?.chat),
@@ -439,6 +477,7 @@ export class AiSettingsCard {
       ...(kind === 'tts' ? { model2: d.model2.trim() } : {}),
       proxy: d.proxy,
       proxyUrl: d.proxyUrl.trim(),
+      ...(kind !== 'chat' ? { elevenlabs: d.elevenlabs } : {}),
     };
     if (kind === 'chat' && service.url && !service.model) {
       this.notifications.error('نام مدل گفتگو را هم بنویس.');
@@ -462,6 +501,7 @@ export class AiSettingsCard {
       cur.url === p.url &&
       cur.model === p.model &&
       (cur.proxy ? cur.proxyUrl : '') === p.proxy &&
+      cur.elevenlabs === p.elevenlabs &&
       (p.kind !== 'tts' || v.tts.model2 === p.model2)
     );
   }
@@ -480,6 +520,7 @@ export class AiSettingsCard {
             ...(kind === 'tts' ? { model2: d.model2.trim() } : {}),
             ...(d.key.trim() ? { key: d.key.trim() } : {}),
             ...(d.proxy ? { proxy: d.proxyUrl.trim() } : {}),
+            ...(d.elevenlabs && kind !== 'chat' ? { elevenlabs: true } : {}),
           }),
         ),
       );

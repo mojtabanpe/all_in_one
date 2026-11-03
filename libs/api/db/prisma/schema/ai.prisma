@@ -27,6 +27,9 @@ model UserAiSettings {
   ttsProxy    String? @db.VarChar(500)
   sttProxyOn  Boolean @default(false)
   sttProxy    String? @db.VarChar(500)
+  /// ElevenLabs instead of an OpenAI-compatible api (owner, 2026-11-03); tts and stt only.
+  ttsEleven   Boolean @default(false)
+  sttEleven   Boolean @default(false)
   updatedAt DateTime @updatedAt
 
   @@map("user_ai_settings")
@@ -46,6 +49,7 @@ model UserAiPreset {
   key       String?  @db.VarChar(1000)
   /// Proxy url the setup goes through; null = direct.
   proxy     String?  @db.VarChar(500)
+  elevenlabs Boolean @default(false)
   createdAt DateTime @default(now())
 
   @@index([userId, kind, createdAt])

@@ -3996,6 +3996,14 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['در فهرست ذخیره شد', 'Saved to the list'],
   ['پراکسی', 'Proxy'],
   ['نشانی پراکسی', 'Proxy URL'],
+  [
+    'ElevenLabs: نشانی خالی = api.elevenlabs.io؛ در «مدل» شناسهٔ صدا (voice id) را بنویس.',
+    'ElevenLabs: empty URL = api.elevenlabs.io; put the voice id in "Model".',
+  ],
+  [
+    'ElevenLabs: نشانی خالی = api.elevenlabs.io؛ مدل خالی = scribe_v1.',
+    'ElevenLabs: empty URL = api.elevenlabs.io; empty model = scribe_v1.',
+  ],
   ['این تنظیم فعال شد', 'This setup is now active'],
   ['استفاده', 'Use'],
   ['فعال', 'Active'],

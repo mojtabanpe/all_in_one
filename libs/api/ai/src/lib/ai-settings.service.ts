@@ -9,6 +9,7 @@ import type {
 import {
   AI_PRESETS_LIMIT,
   DEFAULT_AI_PROXY,
+  ELEVENLABS_URL,
   type AiKind,
   type AiPresetView,
   SAVED_MODELS_LIMIT,
@@ -24,6 +25,8 @@ export interface AiTarget {
   key: string | null;
   /** HTTP proxy url, or null for a direct connection. */
   proxy: string | null;
+  /** ElevenLabs api: `endpoint` is then the base url (e.g. https://api.elevenlabs.io). */
+  elevenlabs: boolean;
 }
 
 export interface AiTargets {
@@ -46,6 +49,19 @@ export function endpointFor(kind: keyof typeof PATHS, url: string): string {
 }
 
 const DEFAULT_MODELS = { tts: 'tts-1', stt: 'whisper-1' };
+/** ElevenLabs: the model field is the voice id for tts and the model id for stt. */
+export const ELEVEN_DEFAULTS = {
+  voice: '21m00Tcm4TlvDq8ikWAM',
+  ttsModel: 'eleven_multilingual_v2',
+  stt: 'scribe_v1',
+};
+
+/** The ElevenLabs base url, without a trailing /v1. */
+export function elevenBase(url: string | null | undefined): string {
+  return (url?.trim() || ELEVENLABS_URL)
+    .replace(/\/+$/, '')
+    .replace(/\/v1$/, '');
+}
 
 /**
  * Each user's own OpenAI-compatible services. Nothing falls back to a
@@ -116,6 +132,7 @@ export class AiSettingsService {
         model2: p.model2 ?? '',
         keyHint: key ? `…${key.slice(-4)}` : '',
         proxy: p.proxy ?? '',
+        elevenlabs: p.elevenlabs,
         createdAt: p.createdAt.toISOString(),
       };
     });
@@ -132,6 +149,7 @@ export class AiSettingsService {
       : this.box.open(current?.[`${input.kind}Key`]);
     const model2 = input.kind === 'tts' ? input.model2 || null : null;
     const proxy = input.proxy || null;
+    const elevenlabs = input.kind !== 'chat' && !!input.elevenlabs;
     const same = (
       await this.prisma.userAiPreset.findMany({
         where: {
@@ -141,6 +159,7 @@ export class AiSettingsService {
           model: input.model,
           model2,
           proxy,
+          elevenlabs,
         },
       })
     ).find((p) => (this.box.open(p.key) ?? null) === (key ?? null));
@@ -158,6 +177,7 @@ export class AiSettingsService {
           model: input.model,
           model2,
           proxy,
+          elevenlabs,
           key: key ? this.box.seal(key) : null,
         },
       });
@@ -188,6 +208,7 @@ export class AiSettingsService {
         model: p.model,
         ...(kind === 'tts' ? { model2: p.model2 ?? '' } : {}),
         proxy: !!p.proxy,
+        ...(kind !== 'chat' ? { elevenlabs: p.elevenlabs } : {}),
         ...(p.proxy ? { proxyUrl: p.proxy } : {}),
       },
     });
@@ -222,6 +243,7 @@ export class AiSettingsService {
             key?: string;
             proxy?: boolean;
             proxyUrl?: string;
+            elevenlabs?: boolean;
           }
         | undefined,
     ) => {
@@ -231,6 +253,8 @@ export class AiSettingsService {
       if (value.key !== undefined)
         data[`${kind}Key`] = value.key ? this.box.seal(value.key) : null;
       if (value.proxy !== undefined) data[`${kind}ProxyOn`] = value.proxy;
+      if (value.elevenlabs !== undefined && kind !== 'chat')
+        data[`${kind}Eleven`] = value.elevenlabs;
       if (value.proxyUrl !== undefined)
         data[`${kind}Proxy`] = value.proxyUrl || null;
     };
@@ -272,31 +296,52 @@ export class AiSettingsService {
               model: r.chatModel,
               key: this.box.open(r.chatKey),
               proxy: proxyOf(r, 'chat'),
+              elevenlabs: false,
             }
           : null,
-      tts: r?.ttsUrl
+      tts: r?.ttsEleven
         ? {
-            endpoint: endpointFor('tts', r.ttsUrl),
-            model: r.ttsModel || DEFAULT_MODELS.tts,
-            model2: r.ttsModel2 || r.ttsModel || DEFAULT_MODELS.tts,
+            endpoint: elevenBase(r.ttsUrl),
+            model: r.ttsModel || ELEVEN_DEFAULTS.voice,
+            model2: r.ttsModel2 || r.ttsModel || ELEVEN_DEFAULTS.voice,
             key: this.box.open(r.ttsKey),
             proxy: proxyOf(r, 'tts'),
+            elevenlabs: true,
           }
-        : null,
-      stt: r?.sttUrl
+        : r?.ttsUrl
+          ? {
+              endpoint: endpointFor('tts', r.ttsUrl),
+              model: r.ttsModel || DEFAULT_MODELS.tts,
+              model2: r.ttsModel2 || r.ttsModel || DEFAULT_MODELS.tts,
+              key: this.box.open(r.ttsKey),
+              proxy: proxyOf(r, 'tts'),
+              elevenlabs: false,
+            }
+          : null,
+      stt: r?.sttEleven
         ? {
-            endpoint: endpointFor('stt', r.sttUrl),
-            model: r.sttModel || DEFAULT_MODELS.stt,
+            endpoint: elevenBase(r.sttUrl),
+            model: r.sttModel || ELEVEN_DEFAULTS.stt,
             key: this.box.open(r.sttKey),
             proxy: proxyOf(r, 'stt'),
+            elevenlabs: true,
           }
-        : null,
+        : r?.sttUrl
+          ? {
+              endpoint: endpointFor('stt', r.sttUrl),
+              model: r.sttModel || DEFAULT_MODELS.stt,
+              key: this.box.open(r.sttKey),
+              proxy: proxyOf(r, 'stt'),
+              elevenlabs: false,
+            }
+          : null,
     };
   }
 }
 
 function proxyView(r: UserAiSettings | null, kind: AiKind) {
   return {
+    elevenlabs: kind !== 'chat' && !!r?.[`${kind}Eleven`],
     proxy: !!r?.[`${kind}ProxyOn`],
     proxyUrl: r?.[`${kind}Proxy`] || DEFAULT_AI_PROXY,
   };
@@ -310,8 +355,8 @@ function proxyOf(r: UserAiSettings, kind: AiKind): string | null {
 function status(r: UserAiSettings | null): AiStatus {
   return {
     chat: !!(r?.chatUrl && r.chatModel),
-    tts: !!r?.ttsUrl,
-    stt: !!r?.sttUrl,
+    tts: !!(r?.ttsUrl || r?.ttsEleven),
+    stt: !!(r?.sttUrl || r?.sttEleven),
   };
 }
 

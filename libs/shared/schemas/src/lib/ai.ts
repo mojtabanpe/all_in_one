@@ -9,7 +9,12 @@ export interface AiServiceView {
   proxy: boolean;
   /** The stored proxy url, or DEFAULT_AI_PROXY. */
   proxyUrl: string;
+  /** ElevenLabs api instead of OpenAI-compatible (tts/stt only). */
+  elevenlabs: boolean;
 }
+
+/** Used when ElevenLabs is on and the url is left empty. */
+export const ELEVENLABS_URL = 'https://api.elevenlabs.io';
 
 export const DEFAULT_AI_PROXY = 'http://127.0.0.1:7890';
 
@@ -38,6 +43,7 @@ export interface AiPresetView {
   keyHint: string;
   /** Proxy url, '' = direct. */
   proxy: string;
+  elevenlabs: boolean;
   createdAt: string;
 }
 
@@ -66,7 +72,14 @@ const model = z.string().check(z.trim(), z.maxLength(100));
 const key = z.string().check(z.trim(), z.maxLength(500));
 
 const service = z.partial(
-  z.object({ url, model, key, proxy: z.boolean(), proxyUrl: url }),
+  z.object({
+    url,
+    model,
+    key,
+    proxy: z.boolean(),
+    proxyUrl: url,
+    elevenlabs: z.boolean(),
+  }),
 );
 
 export const updateAiSettingsSchema = z.partial(
@@ -96,6 +109,7 @@ export const saveAiPresetSchema = z.object({
   key: z.optional(z.string().check(z.trim(), z.maxLength(500))),
   /** Proxy url the setup uses; omitted or '' = direct. */
   proxy: z.optional(url),
+  elevenlabs: z.optional(z.boolean()),
 });
 export type SaveAiPresetInput = z.infer<typeof saveAiPresetSchema>;
 /** How many saved setups each service keeps. */
