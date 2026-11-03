@@ -1,5 +1,6 @@
 import { HttpClient, httpResource } from '@angular/common/http';
 import {
+  booleanAttribute,
   Component,
   computed,
   ElementRef,
@@ -105,20 +106,36 @@ export class AssistantStore {
     }),
   ],
   template: `
-    <button
-      aioBtn
-      variant="ghost"
-      class="text-primary h-11"
-      [attr.aria-label]="
-        copy('دستیار هوش مصنوعی', 'AI assistant') | aioTranslate
-      "
-      (click)="open.set(true)"
-    >
-      <aio-icon name="lucideSparkles" size="sm" />
-      <span class="hidden sm:inline">{{
-        copy('دستیار', 'Assistant') | aioTranslate
-      }}</span>
-    </button>
+    @if (floating()) {
+      <!-- Floating action button: above the phone bottom nav, bottom corner on larger screens. -->
+      <button
+        aioBtn
+        size="icon"
+        class="fixed end-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 size-14 rounded-full shadow-lg md:end-6 md:bottom-6"
+        [attr.aria-label]="
+          copy('دستیار هوش مصنوعی', 'AI assistant') | aioTranslate
+        "
+        [title]="copy('دستیار هوش مصنوعی', 'AI assistant') | aioTranslate"
+        (click)="open.set(true)"
+      >
+        <aio-icon name="lucideSparkles" size="base" />
+      </button>
+    } @else {
+      <button
+        aioBtn
+        variant="ghost"
+        class="text-primary h-11"
+        [attr.aria-label]="
+          copy('دستیار هوش مصنوعی', 'AI assistant') | aioTranslate
+        "
+        (click)="open.set(true)"
+      >
+        <aio-icon name="lucideSparkles" size="sm" />
+        <span class="hidden sm:inline">{{
+          copy('دستیار', 'Assistant') | aioTranslate
+        }}</span>
+      </button>
+    }
 
     <aio-dialog
       [(open)]="open"
@@ -300,6 +317,8 @@ export class Assistant implements OnDestroy {
   /** Which part of the app the user is in (focuses the assistant). */
   readonly context = input<AssistantContext>('home');
 
+  /** Show the trigger as a floating round button instead of a header button. */
+  readonly floating = input(false, { transform: booleanAttribute });
   protected readonly open = signal(false);
   protected readonly busy = signal(false);
   protected readonly draft = signal('');

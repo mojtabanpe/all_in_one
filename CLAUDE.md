@@ -327,3 +327,9 @@ When the owner gives a new instruction, add it to this list in the same change.
 36. **The assistant must remember what it did and speak Persian dates.** Each reply carries a tool log the client sends
     back; the system prompt has a Gregorian↔Solar Hijri table around today. It never completes a task the user asked to
     move, and uses `list_overdue_tasks` for «عقب‌افتاده».
+
+## Floating assistant button (2026-11-03)
+
+44. **The AI assistant opens from a floating round button** (owner) in the customer app, not the header: spartan
+    `aioBtn size="icon"` (no new component), `web-assistant floating`, bottom-end corner above the phone bottom nav
+    (`bottom-[calc(5.5rem+safe-area)]`), `md:bottom-6` on larger screens.

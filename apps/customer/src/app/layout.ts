@@ -68,7 +68,7 @@ import {
       [navItems]="navigation()"
       [language]="english() ? 'en' : 'fa'"
     >
-      <web-assistant aioShellActions [context]="assistantContext()" />
+      <web-assistant floating [context]="assistantContext()" />
       @if (pwa.installAvailable()) {
         <button
           aioShellActions
