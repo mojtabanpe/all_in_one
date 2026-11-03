@@ -959,18 +959,19 @@ const freshTask = (): TaskState => ({
               {{ 'Useful phrases' | aioTranslate }}
             </h2>
             @if (decks().length) {
-              <aio-native-select
-                class="w-40"
-                selectId="phrase-deck"
-                [value]="deckId()"
-                (valueChange)="deckId.set($event)"
-              >
-                @for (d of decks(); track d.id) {
-                  <option aioNativeSelectOption [value]="d.id">
-                    {{ d.name }}
-                  </option>
-                }
-              </aio-native-select>
+              <div class="w-40 shrink-0">
+                <aio-native-select
+                  selectId="phrase-deck"
+                  [value]="deckId()"
+                  (valueChange)="deckId.set($event)"
+                >
+                  @for (d of decks(); track d.id) {
+                    <option aioNativeSelectOption [value]="d.id">
+                      {{ d.name }}
+                    </option>
+                  }
+                </aio-native-select>
+              </div>
             }
           </div>
           <ul

@@ -267,7 +267,7 @@ const UNIT = /^(?:u\d+)?$/i;
             {{ 'Cards' | aioTranslate }}
           </h2>
           <div class="flex gap-2">
-            <div aioInputGroup class="flex-1">
+            <div aioInputGroup class="min-w-0 flex-1">
               <aio-input-group-addon>
                 <aio-icon name="lucideSearch" size="sm" />
               </aio-input-group-addon>
@@ -281,22 +281,23 @@ const UNIT = /^(?:u\d+)?$/i;
               />
             </div>
             @if (units().length) {
-              <aio-native-select
-                class="w-28"
-                selectId="unit-filter"
-                [aria-label]="'Unit' | aioTranslate"
-                [value]="selectedUnit()"
-                (valueChange)="setUnit($event)"
-              >
-                <option aioNativeSelectOption value="">
-                  {{ 'All units' | aioTranslate }}
-                </option>
-                @for (u of units(); track u) {
-                  <option aioNativeSelectOption [value]="u">
-                    {{ u }}
+              <div class="w-28 shrink-0">
+                <aio-native-select
+                  selectId="unit-filter"
+                  [aria-label]="'Unit' | aioTranslate"
+                  [value]="selectedUnit()"
+                  (valueChange)="setUnit($event)"
+                >
+                  <option aioNativeSelectOption value="">
+                    {{ 'All units' | aioTranslate }}
                   </option>
-                }
-              </aio-native-select>
+                  @for (u of units(); track u) {
+                    <option aioNativeSelectOption [value]="u">
+                      {{ u }}
+                    </option>
+                  }
+                </aio-native-select>
+              </div>
             }
           </div>
 
