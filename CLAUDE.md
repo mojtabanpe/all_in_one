@@ -271,6 +271,9 @@ When the owner gives a new instruction, add it to this list in the same change.
     field = the stored key; identical rows are not duplicated; 30 per service). Each section lists its rows in a
     spartan table (model / url, key as `…last4`, «استفاده», delete); «استفاده» makes the row current, key included,
     copied sealed. The key itself never reaches the browser.
+    **No model chips, clear sections** (2026-11-03, owner): the saved setups hold the whole config, so the model-name
+    chips under the fields are gone from the UI (the backend still keeps the lists). Chat, text-to-speech and
+    speech-to-text each sit in their own bordered panel so the boundary between them is obvious.
 
 ## Approved custom components
 
