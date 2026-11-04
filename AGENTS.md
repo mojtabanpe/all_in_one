@@ -316,5 +316,4 @@ When the owner gives a new instruction, add it to this list in the same change.
 
 72. **Daily language reminder recovery (2026-11-02):** A missed language review reminder remains eligible after its configured Tehran time through the end of the same Tehran day, while due cards and a valid device exist. Preserve one successful reminder per device/day, disabled and suspended-card rules, and the short midnight grace for yesterday; never replay older days. This prevents a missed five-minute sweep from silently losing the whole day's review.
 
-
 73. **Exercise video production library (2026-11-04):** Maintain a roadmap and an English generation prompt for every catalog exercise, covering bodyweight and all equipment. All videos use one consistent adult male animated character with approved shared reference images. Include a Google storage publication workflow with public viewer links for reviewed videos; do not assume Gemini can upload or change sharing without connected tools and authorization. Keep stable exercise slugs in filenames and the publication manifest.
