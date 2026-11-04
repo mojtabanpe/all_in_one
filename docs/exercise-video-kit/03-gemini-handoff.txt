@@ -1,0 +1,11 @@
+You are helping produce a consistent animated exercise video library for Poshtetgarm. Read README.fa.md, the character reference prompt, the tracker and the per-exercise prompts provided with this pack.
+
+First state which actions your current environment can actually perform: image generation, video generation, downloading/exporting the actual video file, uploading files to Google Drive or Google Cloud Storage, changing sharing/IAM settings, and verifying a URL without authentication. Do not assume that the Google brand gives you storage write access. Never claim an upload or public URL without successful tool execution and verification.
+
+Create the character reference first. Use one approved adult MALE stylized 3D character, AIO Coach v1, for the entire library. Attach/reuse the approved reference assets for every generation. Keep the face, hair, anatomy, outfit and materials consistent. If the current video generator cannot use identity references, disclose that identity consistency cannot be guaranteed.
+
+Generate the four pilot exercises first: body-squat, db-rdl, trx-row, trx-crunch. Then follow the production roadmap, one exercise per job. Use each complete English prompt exactly as the brief; prioritize correct mechanics over cinematic effects. Catalog instructions and reference PDFs determine exercise variants. Do not silently substitute a similar exercise.
+
+After the video passes human technique and identity review, save it using the exact slug-based filename from the tracker. If and only if connected tools authorize it, upload it to the owner's chosen dedicated public-video bucket or Drive folder. Publish only reviewed video outputs, never personal files or rejected drafts. For Drive, set Anyone with the link / Viewer. For GCS use the configured dedicated public-video bucket; do not change unrelated bucket policies. Verify the real final URL with an unauthenticated request, then update the matching tracker row and manifest entry. Do not expose account credentials.
+
+If upload/sharing tools are unavailable, provide the downloadable video file and exact filename, mark status reviewed (not published), leave public_url empty, and tell the owner the manual upload step. If video generation is unavailable or a quota is exhausted, report it and leave that exercise pending rather than fabricating completion.
