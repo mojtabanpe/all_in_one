@@ -44,7 +44,7 @@ export function consentPage(
   page(
     res,
     'اتصال به Poshtetgarm',
-    `<p><strong dir="auto">${escapeHtml(opts.client)}</strong> این دسترسی‌ها را می‌خواهد:</p><ul>${scopes}</ul><p class="muted">کلید شخصی را از <a href="${escapeHtml(opts.accountUrl)}" target="_blank" rel="noopener">صفحه حساب، بخش اتصال به ChatGPT</a> بساز و اینجا بگذار. با تأیید، این اتصال برای حساب صاحب کلید کار می‌کند.</p><form method="post" action="/api/mcp/consent"><input type="hidden" name="request" value="${escapeHtml(opts.request)}"><label for="token">کلید شخصی</label><input id="token" name="token" type="password" autocomplete="off" required maxlength="100" spellcheck="false"><button type="submit">تأیید اتصال</button></form>`,
+    `<p><strong dir="auto">${escapeHtml(opts.client)}</strong> این دسترسی‌ها را می‌خواهد:</p><ul>${scopes}</ul><p class="muted">کلید شخصی را از <a href="${escapeHtml(opts.accountUrl)}" target="_blank" rel="noopener">صفحه حساب، بخش اتصال به ChatGPT و Claude</a> بساز و اینجا بگذار. با تأیید، این اتصال برای حساب صاحب کلید کار می‌کند.</p><form method="post" action="/api/mcp/consent"><input type="hidden" name="request" value="${escapeHtml(opts.request)}"><label for="token">کلید شخصی</label><input id="token" name="token" type="password" autocomplete="off" required maxlength="100" spellcheck="false"><button type="submit">تأیید اتصال</button></form>`,
     new URL(opts.redirectUri).origin,
   );
 }
@@ -53,6 +53,6 @@ export function errorPage(res: Response, message: string) {
   page(
     res.status(400),
     'اتصال انجام نشد',
-    `<p role="alert">${escapeHtml(message)}</p><p class="muted">به ChatGPT برگرد و اتصال را دوباره شروع کن.</p>`,
+    `<p role="alert">${escapeHtml(message)}</p><p class="muted">به ChatGPT یا Claude برگرد و اتصال را دوباره شروع کن.</p>`,
   );
 }

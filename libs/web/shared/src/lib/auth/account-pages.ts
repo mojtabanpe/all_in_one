@@ -17,7 +17,7 @@ import {
 import { apiErrorMessage } from './auth.guards';
 import { AiSettingsCard } from './ai-settings';
 import { APP_VERSION } from '../release-version';
-import { ChatGptConnection } from './chatgpt-connection';
+import { AiConnection } from './ai-connection';
 import { AuthStore } from './auth.store';
 
 const PAGE =
@@ -310,7 +310,7 @@ export class VerifyEmailPage implements OnInit {
     AioFieldDirectives,
     AioInput,
     AiSettingsCard,
-    ChatGptConnection,
+    AiConnection,
     AioFormField,
     AioCardHeading,
     AioLanguageSwitcher,
@@ -505,7 +505,7 @@ export class VerifyEmailPage implements OnInit {
         </div>
       </section>
       <web-ai-settings />
-      <web-chatgpt-connection />
+      <web-ai-connection />
       <ng-content />
     </div>
   `,

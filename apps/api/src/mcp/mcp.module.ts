@@ -4,7 +4,7 @@ import { McpAuthService } from './mcp-auth.service';
 import { McpKeysController } from './mcp.controller';
 import { McpService } from './mcp.service';
 
-/** ChatGPT connection: OAuth + personal tokens + English, planner and health tools. */
+/** ChatGPT and Claude connection: OAuth + personal tokens + English, planner and health tools. */
 @Module({
   imports: [ToolsModule],
   providers: [McpAuthService, McpService],

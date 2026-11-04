@@ -31,7 +31,7 @@ async function bootstrap() {
     type: Object.keys(RECORDING_TYPES),
     limit: '1500kb',
   });
-  // ChatGPT (MCP + OAuth) routes use bearer tokens: mount them before the cookie CSRF check.
+  // ChatGPT/Claude (MCP + OAuth) routes use bearer tokens: mount them before the cookie CSRF check.
   app.get(McpService).mount(app.getHttpAdapter().getInstance());
   app.useSecurityHeaders();
   // Session cookie auth: reject cross-site state-changing requests.

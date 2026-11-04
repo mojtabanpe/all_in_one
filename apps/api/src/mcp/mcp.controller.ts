@@ -15,12 +15,12 @@ import {
 } from '@all-in-one/shared/schemas';
 import { McpAuthService } from './mcp-auth.service';
 
-/** Personal tokens for the ChatGPT connection (session auth + CSRF, like the rest of the api). */
+/** Personal tokens for the ChatGPT and Claude connections (session auth + CSRF, like the rest of the api). */
 @Controller('mcp/keys')
 export class McpKeysController {
   constructor(private readonly auth: McpAuthService) {}
 
-  /** The server url to paste into ChatGPT, and the user's tokens (never the secrets). */
+  /** The server url to paste into ChatGPT or Claude, and the user's tokens (never the secrets). */
   @Get()
   async list(@CurrentUser() user: AuthUser) {
     return {

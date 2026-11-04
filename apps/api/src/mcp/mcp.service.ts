@@ -30,7 +30,7 @@ const INSTRUCTIONS = [
 ].join(' ');
 
 /**
- * The ChatGPT connection: stateless Streamable HTTP at /api/mcp with OAuth
+ * The ChatGPT and Claude connection: stateless Streamable HTTP at /api/mcp with OAuth
  * (Recall's design). Mounted on Express before Nest's CSRF check, since the
  * protocol and OAuth routes authenticate with bearer tokens, not cookies.
  */

@@ -78,8 +78,8 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'The private key is incorrect or expired. Create a new key on the account page and connect again.',
   ],
   [
-    'این درخواست اتصال منقضی شده. از ChatGPT دوباره شروع کن.',
-    'This connection request has timed out. Restart ChatGPT.',
+    'این درخواست اتصال منقضی شده. از ChatGPT یا Claude دوباره شروع کن.',
+    'This connection request has timed out. Start again from ChatGPT or Claude.',
   ],
   [
     'این کلید همه دسترسی‌های خواسته‌شده را ندارد.',
@@ -92,13 +92,13 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ],
   ['اتصال به Poshtetgarm', 'Connect to Poshtetgarm'],
   [
-    '<p><strong dir="auto">{0}</strong> این دسترسی‌ها را می‌خواهد:</p><ul>{1}</ul><p class="muted">کلید شخصی را از <a href="{2}" target="_blank" rel="noopener">صفحه حساب، بخش اتصال به ChatGPT</a> بساز و اینجا بگذار. با تأیید، این اتصال برای حساب صاحب کلید کار می‌کند.</p><form method="post" action="/api/mcp/consent"><input type="hidden" name="request" value="{3}"><label for="token">کلید شخصی</label><input id="token" name="token" type="password" autocomplete="off" required maxlength="100" spellcheck="false"><button type="submit">تأیید اتصال</button></form>',
-    '<p><strong dir="auto">{0}</strong> requires these permissions:</p><ul>{1}</ul><p class="muted">Generate private key from <a href="{2}" target="_blank" rel="noopener">Account page, Connect to ChatGPT</a> section and paste it here. With confirmation, the connection will work for the key owner\'s account.</p><form method="post" action="/api/mcp/consent"><input type="hidden" name="request" value="{3}"><label for="token">Private key</label><input id="token" name="token" type="password" autocomplete="off" required maxlength="100" spellcheck="false"><button type="submit">Confirm connection</button></form>',
+    '<p><strong dir="auto">{0}</strong> این دسترسی‌ها را می‌خواهد:</p><ul>{1}</ul><p class="muted">کلید شخصی را از <a href="{2}" target="_blank" rel="noopener">صفحه حساب، بخش اتصال به ChatGPT و Claude</a> بساز و اینجا بگذار. با تأیید، این اتصال برای حساب صاحب کلید کار می‌کند.</p><form method="post" action="/api/mcp/consent"><input type="hidden" name="request" value="{3}"><label for="token">کلید شخصی</label><input id="token" name="token" type="password" autocomplete="off" required maxlength="100" spellcheck="false"><button type="submit">تأیید اتصال</button></form>',
+    '<p><strong dir="auto">{0}</strong> requires these permissions:</p><ul>{1}</ul><p class="muted">Generate private key from <a href="{2}" target="_blank" rel="noopener">Account page, Connect to ChatGPT and Claude</a> section and paste it here. With confirmation, the connection will work for the key owner\'s account.</p><form method="post" action="/api/mcp/consent"><input type="hidden" name="request" value="{3}"><label for="token">Private key</label><input id="token" name="token" type="password" autocomplete="off" required maxlength="100" spellcheck="false"><button type="submit">Confirm connection</button></form>',
   ],
   ['اتصال انجام نشد', 'Connection failed'],
   [
-    '<p role="alert">{0}</p><p class="muted">به ChatGPT برگرد و اتصال را دوباره شروع کن.</p>',
-    '<p role="alert">{0}</p><p class="muted">Go back to ChatGPT and restart the connection.</p>',
+    '<p role="alert">{0}</p><p class="muted">به ChatGPT یا Claude برگرد و اتصال را دوباره شروع کن.</p>',
+    '<p role="alert">{0}</p><p class="muted">Go back to ChatGPT or Claude and restart the connection.</p>',
   ],
   ['Poshtetgarm: انگلیسی و برنامه‌ریز', 'Poshtetgarm: English and Planner'],
   [

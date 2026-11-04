@@ -37,6 +37,15 @@ const CODE_LIFETIME = 5 * 60_000;
 const ACCESS_LIFETIME = 60 * 60_000;
 const REFRESH_LIFETIME = 30 * 86_400_000;
 
+/** OAuth callback hosts of the supported clients: ChatGPT and Claude (web, desktop, mobile). */
+export const DEFAULT_REDIRECT_HOSTS = [
+  'chatgpt.com',
+  'chat.openai.com',
+  'claude.ai',
+  'claude.com',
+];
+const LOOPBACK = ['127.0.0.1', 'localhost', '[::1]'];
+
 interface Grant {
   keyId: string;
   clientId: string;
@@ -54,7 +63,7 @@ const asParams = (json: Prisma.JsonValue): AuthorizationParams => {
 };
 
 /**
- * OAuth for the ChatGPT connection (Recall's flow): dynamic client
+ * OAuth for the ChatGPT and Claude connections (Recall's flow): dynamic client
  * registration, S256 PKCE, a consent page where the user pastes a personal
  * token, one-use codes, 1-hour access and rotating 30-day refresh tokens.
  * Only SHA-256 hashes of every secret are stored.
@@ -120,12 +129,14 @@ export class McpAuthService implements OAuthServerProvider {
         'client_id' | 'client_id_issued_at'
       >,
     ): Promise<OAuthClientInformationFull> => {
-      const hosts = (
-        this.config.get<string>('MCP_REDIRECT_HOSTS') ||
-        'chatgpt.com,chat.openai.com'
-      )
-        .split(',')
-        .map((h) => h.trim());
+      // ChatGPT and Claude (claude.ai, Claude Desktop) always; extra hosts from the env.
+      const hosts = [
+        ...DEFAULT_REDIRECT_HOSTS,
+        ...(this.config.get<string>('MCP_REDIRECT_HOSTS') || '')
+          .split(',')
+          .map((h) => h.trim())
+          .filter(Boolean),
+      ];
       const allowed = (uri: string) => {
         const u = new URL(uri);
         return (
@@ -133,9 +144,8 @@ export class McpAuthService implements OAuthServerProvider {
           !u.username &&
           !u.password &&
           ((u.protocol === 'https:' && !u.port && hosts.includes(u.hostname)) ||
-            (!this.production &&
-              u.protocol === 'http:' &&
-              u.hostname === '127.0.0.1'))
+            // Native clients (Claude Code, RFC 8252): loopback callbacks on any port.
+            (u.protocol === 'http:' && LOOPBACK.includes(u.hostname)))
         );
       };
       if (
@@ -144,7 +154,7 @@ export class McpAuthService implements OAuthServerProvider {
         !client.redirect_uris.every((uri) => allowed(String(uri)))
       )
         throw new InvalidClientMetadataError(
-          'Redirect URI must belong to an allowed ChatGPT host.',
+          'Redirect URI must belong to ChatGPT, Claude or a loopback address.',
         );
       const full: OAuthClientInformationFull = {
         ...client,
@@ -249,7 +259,7 @@ export class McpAuthService implements OAuthServerProvider {
     });
     consentPage(res, {
       request,
-      client: client.client_name || 'ChatGPT',
+      client: client.client_name || 'MCP',
       scopes,
       redirectUri: params.redirectUri,
       accountUrl: this.accountUrl,
@@ -279,7 +289,7 @@ export class McpAuthService implements OAuthServerProvider {
       });
       if (!pending)
         throw new InvalidGrantError(
-          'این درخواست اتصال منقضی شده. از ChatGPT دوباره شروع کن.',
+          'این درخواست اتصال منقضی شده. از ChatGPT یا Claude دوباره شروع کن.',
         );
       const p = asParams(pending.params);
       if (!(p.scopes ?? []).every((s) => key.scopes.includes(s)))

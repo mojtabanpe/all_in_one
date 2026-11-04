@@ -1,5 +1,32 @@
 /** Reviewed product terminology and complete dynamic sentences. These override legacy copy. */
 export const REVIEWED_MESSAGES: readonly (readonly [string, string])[] = [
+  ['اتصال به ChatGPT و Claude', 'Connect ChatGPT and Claude'],
+  [
+    'از داخل ChatGPT یا Claude کارت انگلیسی بساز، متن ذخیره کن و کارها، عادت‌ها، تمرکز و سلامتت را مدیریت کن.',
+    'Create English flashcards, save texts and manage your tasks, habits, focus and health from ChatGPT or Claude.',
+  ],
+  [
+    'در Claude (وب، دسکتاپ یا موبایل) به Settings ← Connectors برو، «Add custom connector» را بزن و این نشانی را بگذار؛ Client ID و Secret را خالی بگذار:',
+    'In Claude (web, desktop or mobile), go to Settings → Connectors, choose "Add custom connector" and enter this address; leave Client ID and Secret empty:',
+  ],
+  [
+    'در Claude Code سرور را با این نشانی و یک کلید شخصی اضافه کن (دستور کامل پایین‌تر است):',
+    'In Claude Code, add the server with this address and a personal key (the full command is below):',
+  ],
+  [
+    'اینجا یک کلید شخصی بساز؛ دستور اتصال با همان کلید آماده می‌شود.',
+    'Create a personal key here; the connect command is filled in with it.',
+  ],
+  [
+    'اینجا یک کلید شخصی بساز و در صفحه تأییدی که {0} باز می‌کند بگذار.',
+    'Create a personal key here and paste it on the confirmation page that {0} opens.',
+  ],
+  ['کپی دستور', 'Copy command'],
+  ['برنامه‌ای که وصل می‌کنی', 'App to connect'],
+  [
+    'برنامه‌هایی که با این کلید وصل شده‌اند دیگر به حسابت دسترسی ندارند.',
+    'Apps connected with this key will no longer have access to your account.',
+  ],
   [
     'یادآوری ذخیره شد؛ برای دریافت روی این دستگاه، اعلان‌ها را هم فعال کن.',
     'Reminder saved. Enable notifications on this device to receive it.',

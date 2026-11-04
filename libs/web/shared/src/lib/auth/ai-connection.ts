@@ -18,6 +18,7 @@ import {
   AioCardHeading,
   AioLocale,
   AioNotifications,
+  AioTabsDirectives,
 } from '@all-in-one/ui';
 import { lucideCopy, lucideKeyRound, lucideTrash2 } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
@@ -25,17 +26,25 @@ import { API_BASE_URL } from '../api/api-base-url';
 
 import { apiErrorMessage } from './auth.guards';
 
+type Target = 'chatgpt' | 'claude' | 'claude-code';
+const APPS: Record<Target, string> = {
+  chatgpt: 'ChatGPT',
+  claude: 'Claude',
+  'claude-code': 'Claude Code',
+};
+
 interface KeysResponse {
   serverUrl: string;
   keys: McpKeyInfo[];
 }
 
 /**
- * The ChatGPT connection (MCP): the server url to add in ChatGPT and the
- * personal tokens pasted on the consent page. A new token is shown once.
+ * The ChatGPT and Claude connection (MCP): the server url to add in ChatGPT,
+ * Claude or Claude Code, and the personal tokens pasted on the consent page
+ * (or sent as a bearer header by Claude Code). A new token is shown once.
  */
 @Component({
-  selector: 'web-chatgpt-connection',
+  selector: 'web-ai-connection',
   imports: [
     AioButton,
     AioCardDirectives,
@@ -45,28 +54,71 @@ interface KeysResponse {
     AioFormField,
     AioCardHeading,
     AioTranslate,
+    AioTabsDirectives,
   ],
   providers: [provideIcons({ lucideCopy, lucideKeyRound, lucideTrash2 })],
   template: `
     <section aioCard>
       <div
         aioCardHeading
-        [title]="'اتصال به ChatGPT' | aioTranslate"
+        [title]="'اتصال به ChatGPT و Claude' | aioTranslate"
         [level]="2"
         [description]="
-          'از داخل ChatGPT کارت انگلیسی بساز، متن ذخیره کن و کارها، عادت‌ها و تمرکزت را مدیریت کن.'
+          'از داخل ChatGPT یا Claude کارت انگلیسی بساز، متن ذخیره کن و کارها، عادت‌ها، تمرکز و سلامتت را مدیریت کن.'
             | aioTranslate
         "
       ></div>
       <div aioCardContent class="flex flex-col gap-4">
-        <ol class="text-muted-foreground list-decimal space-y-1 ps-5 text-sm">
-          <li>
-            {{
-              'در ChatGPT یک «اتصال» (MCP سفارشی) با این نشانی بساز و احراز هویت را OAuth بگذار:'
-                | aioTranslate
-            }}
-          </li>
-        </ol>
+        <aio-tabs [tab]="target()" (tabActivated)="pick($event)">
+          <aio-tabs-list
+            class="w-full"
+            [attr.aria-label]="'برنامه‌ای که وصل می‌کنی' | aioTranslate"
+          >
+            <button aioTabsTrigger hlmTabsTrigger="chatgpt" class="min-h-11">
+              ChatGPT
+            </button>
+            <button aioTabsTrigger hlmTabsTrigger="claude" class="min-h-11">
+              Claude
+            </button>
+            <button
+              aioTabsTrigger
+              hlmTabsTrigger="claude-code"
+              class="min-h-11"
+            >
+              Claude Code
+            </button>
+          </aio-tabs-list>
+          <div aioTabsContent hlmTabsContent="chatgpt">
+            <ol class="text-muted-foreground list-decimal space-y-1 ps-5">
+              <li>
+                {{
+                  'در ChatGPT یک «اتصال» (MCP سفارشی) با این نشانی بساز و احراز هویت را OAuth بگذار:'
+                    | aioTranslate
+                }}
+              </li>
+            </ol>
+          </div>
+          <div aioTabsContent hlmTabsContent="claude">
+            <ol class="text-muted-foreground list-decimal space-y-1 ps-5">
+              <li>
+                {{
+                  'در Claude (وب، دسکتاپ یا موبایل) به Settings ← Connectors برو، «Add custom connector» را بزن و این نشانی را بگذار؛ Client ID و Secret را خالی بگذار:'
+                    | aioTranslate
+                }}
+              </li>
+            </ol>
+          </div>
+          <div aioTabsContent hlmTabsContent="claude-code">
+            <ol class="text-muted-foreground list-decimal space-y-1 ps-5">
+              <li>
+                {{
+                  'در Claude Code سرور را با این نشانی و یک کلید شخصی اضافه کن (دستور کامل پایین‌تر است):'
+                    | aioTranslate
+                }}
+              </li>
+            </ol>
+          </div>
+        </aio-tabs>
         <div class="flex items-center gap-2">
           <code
             class="bg-muted flex-1 truncate rounded-xl px-3 py-2 text-sm"
@@ -88,10 +140,17 @@ interface KeysResponse {
           class="text-muted-foreground list-decimal space-y-1 ps-5 text-sm"
         >
           <li>
-            {{
-              'اینجا یک کلید شخصی بساز و در صفحه تأییدی که ChatGPT باز می‌کند بگذار.'
-                | aioTranslate
-            }}
+            @if (target() === 'claude-code') {
+              {{
+                'اینجا یک کلید شخصی بساز؛ دستور اتصال با همان کلید آماده می‌شود.'
+                  | aioTranslate
+              }}
+            } @else {
+              {{
+                'اینجا یک کلید شخصی بساز و در صفحه تأییدی که {0} باز می‌کند بگذار.'
+                  | aioTranslate: [app()]
+              }}
+            }
           </li>
         </ol>
 
@@ -147,6 +206,26 @@ interface KeysResponse {
           </aio-form-field>
         }
 
+        @if (target() === 'claude-code') {
+          <div class="flex items-start gap-2">
+            <code
+              class="bg-muted flex-1 rounded-xl px-3 py-2 text-xs break-all"
+              dir="ltr"
+              lang="en"
+              >{{ claudeCodeCommand() }}</code
+            >
+            <button
+              aioBtn
+              variant="outline"
+              size="icon"
+              [attr.aria-label]="'کپی دستور' | aioTranslate"
+              (click)="copy(claudeCodeCommand())"
+            >
+              <aio-icon name="lucideCopy" size="sm" />
+            </button>
+          </div>
+        }
+
         <ul class="divide-border/60 flex flex-col divide-y">
           @for (key of keys(); track key.id) {
             <li class="flex min-h-12 items-center gap-3 py-2 text-sm">
@@ -185,7 +264,7 @@ interface KeysResponse {
     </section>
   `,
 })
-export class ChatGptConnection {
+export class AiConnection {
   protected readonly locale = inject(AioLocale);
 
   private readonly notifications = inject(AioNotifications);
@@ -194,6 +273,8 @@ export class ChatGptConnection {
   private readonly confirm = inject(AioConfirm);
   private readonly base = `${inject(API_BASE_URL)}/mcp/keys`;
 
+  protected readonly target = signal<Target>('chatgpt');
+  protected readonly app = computed(() => APPS[this.target()]);
   protected readonly name = signal('ChatGPT');
   protected readonly busy = signal(false);
   protected readonly fresh = signal<string | null>(null);
@@ -205,6 +286,19 @@ export class ChatGptConnection {
   protected readonly serverUrl = computed(() =>
     this.res.hasValue() ? this.res.value().serverUrl : '…',
   );
+
+  /** Claude Code: the server with the new token as a header (a placeholder until one is made). */
+  protected readonly claudeCodeCommand = computed(
+    () =>
+      `claude mcp add --transport http --scope user poshtetgarm ${this.serverUrl()} --header "Authorization: Bearer ${this.fresh() ?? '<TOKEN>'}"`,
+  );
+
+  /** Switching app names the next key after it, unless the user typed a name. */
+  protected pick(tab: string) {
+    const next = (tab in APPS ? tab : 'chatgpt') as Target;
+    if (Object.values(APPS).includes(this.name())) this.name.set(APPS[next]);
+    this.target.set(next);
+  }
 
   protected date(iso: string) {
     return this.locale.date(iso, {
@@ -249,7 +343,8 @@ export class ChatGptConnection {
   protected async revoke(key: McpKeyInfo) {
     const ok = await this.confirm.ask({
       title: `کلید «${key.name}» باطل شود؟`,
-      description: 'ChatGPT دیگر با این کلید به حسابت دسترسی ندارد.',
+      description:
+        'برنامه‌هایی که با این کلید وصل شده‌اند دیگر به حسابت دسترسی ندارند.',
       confirmText: 'باطل کن',
       destructive: true,
     });

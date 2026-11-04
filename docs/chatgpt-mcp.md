@@ -1,16 +1,24 @@
-# ChatGPT connection (MCP)
+# ChatGPT and Claude connection (MCP)
 
 Ported from Recall (`github.com/mojtabanpe/flashcard`, `server/MCP.md`) and extended with the
 planner tools of TickTick's ChatGPT MCP and the health tools (CLAUDE.md directives 21, 23 and 25). Code:
 `apps/api/src/mcp` (server, OAuth) and `apps/api/src/tools` (tool definitions shared with the in-app assistant).
+The same server works for ChatGPT, Claude (claude.ai web, desktop, mobile) and Claude Code; nothing is
+client-specific except the OAuth callback hosts.
 
 ## Connecting
 
-1. Sign in to the customer app → **حساب کاربری** → **اتصال به ChatGPT**. Copy the server url
-   (`https://poshtetgarm.ir/api/mcp`) and create a personal token (shown once).
-2. In ChatGPT add a custom MCP connector with that url, authentication **OAuth**, client id and
-   secret empty (dynamic client registration).
-3. On the Persian consent page that opens, paste the personal token and confirm.
+Sign in to the customer app → **حساب کاربری** → **اتصال به ChatGPT و Claude**, pick the app tab, copy the
+server url (`https://poshtetgarm.ir/api/mcp`) and create a personal token (shown once).
+
+- **ChatGPT:** add a custom MCP connector with that url, authentication **OAuth**, client id and secret empty
+  (dynamic client registration). Paste the personal token on the Persian consent page that opens.
+- **Claude (web/desktop/mobile):** Settings → Connectors → **Add custom connector**, paste the url, leave
+  Client ID/Secret empty, then **Connect**. Paste the personal token on the consent page. A connector added on
+  claude.ai also shows up in Claude Desktop and the mobile apps.
+- **Claude Code:** the page builds the command with the new token:
+  `claude mcp add --transport http --scope user poshtetgarm https://poshtetgarm.ir/api/mcp --header "Authorization: Bearer aio_mcp_…"`.
+  Without `--header`, `/mcp` → _Authenticate_ runs the OAuth flow instead (loopback callback).
 
 Personal tokens (`aio_mcp_…`) last 90 days and can also be sent directly as
 `Authorization: Bearer aio_mcp_…`. Revoking a token ends every OAuth grant made with it.
@@ -62,8 +70,9 @@ validates input with the same Zod contracts as the REST api.
 
 ## Security
 
-- OAuth: S256 PKCE, registered redirect hosts only (`MCP_REDIRECT_HOSTS`, default
-  `chatgpt.com,chat.openai.com`; loopback http only outside production), browser-bound consent
+- OAuth: S256 PKCE, registered redirect hosts only (always `chatgpt.com`, `chat.openai.com`, `claude.ai`,
+  `claude.com`, plus any in `MCP_REDIRECT_HOSTS`; loopback http on any port for native clients such as
+  Claude Code, RFC 8252), browser-bound consent
   (cookie + Origin check), one-use 5-minute codes, 1-hour access tokens, rotating 30-day
   refresh tokens. Only SHA-256 hashes of tokens, codes and requests are stored (Postgres).
 - `/api/mcp` accepts only bearer tokens (never the session cookie) and rejects foreign

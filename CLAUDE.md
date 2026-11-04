@@ -83,7 +83,7 @@
   single-user servers). Tools live once in `apps/api/src/tools` (`ToolsService.register(sink)`); the MCP server
   (`apps/api/src/mcp`) and the in-app assistant (`apps/api/src/assistant`, web `web-assistant` in the customer header)
   both consume them. `assistant: false` keeps bulk-destructive or sharing tools out of the assistant.
-- ChatGPT connection: `apps/api/src/mcp` (OAuth + personal tokens, tools from `apps/api/src/tools`,
+- ChatGPT/Claude connection: `apps/api/src/mcp` (OAuth + personal tokens, tools from `apps/api/src/tools`,
   validated with the contracts schemas). Mounted on Express before the CSRF check. A new applet capability that
   ChatGPT should reach gets a tool there. Docs: `docs/chatgpt-mcp.md`.
 - Production layout (`deploy/`, guide `deploy/README.fa.md`): one domain; `/` public SSR, `/app/` customer (PWA,
@@ -287,6 +287,15 @@ When the owner gives a new instruction, add it to this list in the same change.
     `/v1/speak?model=<voice>` (default `aura-2-thalia-en`) and `/v1/listen?model=` (raw audio body, default `nova-3`);
     an empty url means `https://api.deepgram.com`. Stored as `ttsDeepgram`/`sttDeepgram` and
     `user_ai_presets.deepgram`. Internally `AiTarget.provider` is `openai | elevenlabs | deepgram`.
+
+## Claude connection (2026-11-04)
+
+46. **The MCP server serves Claude too** (owner: "write the ChatGPT MCP for Claude as well, and let the token page
+    make tokens for Claude"). Same server, tools and personal tokens; OAuth always accepts the ChatGPT and Claude
+    callback hosts (`DEFAULT_REDIRECT_HOSTS`: chatgpt.com, chat.openai.com, claude.ai, claude.com; `MCP_REDIRECT_HOSTS`
+    adds more) and loopback http callbacks (Claude Code). The account card «اتصال به ChatGPT و Claude»
+    (`web-ai-connection`) has ChatGPT / Claude / Claude Code tabs with each app's steps; the Claude Code tab builds the
+    `claude mcp add … --header "Authorization: Bearer …"` command with the new token.
 
 ## Approved custom components
 
