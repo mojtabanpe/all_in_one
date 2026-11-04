@@ -1,5 +1,11 @@
 /** Reviewed product terminology and complete dynamic sentences. These override legacy copy. */
 export const REVIEWED_MESSAGES: readonly (readonly [string, string])[] = [
+  ['کمی استراحت کن', 'Take a rest'],
+  [
+    'ست قبلی انجام شد؛ قبل از ادامه {0} ثانیه استراحت کن.',
+    'Previous set completed. Rest for {0} seconds before continuing.',
+  ],
+  ['{0} ست را طبق برنامه انجام دادی.', 'You completed {0} sets as planned.'],
   ['اتصال به ChatGPT و Claude', 'Connect ChatGPT and Claude'],
   [
     'از داخل ChatGPT یا Claude کارت انگلیسی بساز، متن ذخیره کن و کارها، عادت‌ها، تمرکز و سلامتت را مدیریت کن.',

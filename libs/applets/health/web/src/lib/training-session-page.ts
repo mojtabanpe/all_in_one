@@ -128,9 +128,8 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
               [title]="'کمی استراحت کن' | aioTranslate"
               [level]="3"
               [description]="
-                'ست قبلی انجام شد؛ قبل از ادامه ' +
-                  fa(restSeconds()) +
-                  ' ثانیه استراحت کن.' | aioTranslate
+                'ست قبلی انجام شد؛ قبل از ادامه {0} ثانیه استراحت کن.'
+                  | aioTranslate: [restSeconds()]
               "
             ></div>
             <div aioCardContent>
@@ -320,8 +319,8 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
               [title]="'خسته نباشی! جلسه ثبت شد' | aioTranslate"
               [level]="3"
               [description]="
-                fa(completed().length) + ' ست را طبق برنامه انجام دادی.'
-                  | aioTranslate
+                '{0} ست را طبق برنامه انجام دادی.'
+                  | aioTranslate: [completed().length]
               "
             ></div>
             <div aioCardFooter>

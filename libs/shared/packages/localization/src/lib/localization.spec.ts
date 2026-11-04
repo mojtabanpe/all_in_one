@@ -55,6 +55,24 @@ describe('application messages', () => {
       ]),
     ).toBe('13 hours 31 minutes elapsed · Started at 22:30');
   });
+  it('translates workout rest and completion sentences with locale-specific numbers', () => {
+    const rest = 'ست قبلی انجام شد؛ قبل از ادامه {0} ثانیه استراحت کن.';
+    for (const seconds of [30, 45, 90]) {
+      expect(translateMessage(rest, 'en', [seconds])).toBe(
+        `Previous set completed. Rest for ${seconds} seconds before continuing.`,
+      );
+      expect(translateMessage(rest, 'fa', [seconds])).toBe(
+        `ست قبلی انجام شد؛ قبل از ادامه ${seconds.toLocaleString('fa-IR')} ثانیه استراحت کن.`,
+      );
+    }
+    const completed = '{0} ست را طبق برنامه انجام دادی.';
+    expect(translateMessage(completed, 'en', [14])).toBe(
+      'You completed 14 sets as planned.',
+    );
+    expect(translateMessage(completed, 'fa', [14])).toBe(
+      '۱۴ ست را طبق برنامه انجام دادی.',
+    );
+  });
   it('never translates verbatim values', () => {
     expect(translateMessage('{0} از {1}', 'fa', [verbatim('home'), 3])).toBe(
       'home از ۳',
