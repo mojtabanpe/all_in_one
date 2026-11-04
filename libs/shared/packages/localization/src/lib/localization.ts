@@ -77,8 +77,13 @@ export function loadMessages(): Promise<void> {
   return (loading ??= Promise.all([
     import('./messages'),
     import('./reviewed-messages'),
-  ]).then(([m, r]) =>
-    registerMessages([...m.MESSAGES, ...r.REVIEWED_MESSAGES]),
+    import('./fitness-messages'),
+  ]).then(([m, r, f]) =>
+    registerMessages([
+      ...m.MESSAGES,
+      ...r.REVIEWED_MESSAGES,
+      ...f.FITNESS_MESSAGES,
+    ]),
   ));
 }
 

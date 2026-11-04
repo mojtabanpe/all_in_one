@@ -214,7 +214,7 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
                   @if (movement.guide; as guide) {
                     <img
                       [src]="guide.imageUrl"
-                      [alt]="'روش اجرای ' + movement.name | aioTranslate"
+                      [alt]="'روش اجرای {0}' | aioTranslate: [movement.name]"
                       width="1400"
                       height="700"
                       class="h-auto max-h-72 w-full rounded-lg bg-white object-contain"

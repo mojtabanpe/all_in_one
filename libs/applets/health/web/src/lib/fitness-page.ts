@@ -857,7 +857,7 @@ type CategoryFilter = ActivityCategory | 'all';
               <figure class="flex flex-col gap-2">
                 <img
                   [src]="guide.imageUrl"
-                  [alt]="'مراحل اجرای ' + e.name | aioTranslate"
+                  [alt]="'مراحل اجرای {0}' | aioTranslate: [e.name]"
                   width="1400"
                   height="700"
                   loading="lazy"
