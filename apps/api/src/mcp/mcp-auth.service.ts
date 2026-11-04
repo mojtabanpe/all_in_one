@@ -106,7 +106,9 @@ export class McpAuthService implements OAuthServerProvider {
   }
 
   private resourceCheck(resource?: URL) {
-    if (resource && resource.href !== this.resource.href)
+    // A pasted url may carry a trailing slash (…/api/mcp/): same endpoint.
+    const strip = (u: URL) => u.href.replace(/\/+$/, '');
+    if (resource && strip(resource) !== strip(this.resource))
       throw new InvalidTargetError('Token audience must be this MCP endpoint.');
   }
 
@@ -221,8 +223,12 @@ export class McpAuthService implements OAuthServerProvider {
     res: Response,
   ): Promise<void> {
     this.resourceCheck(params.resource);
-    const scopes = params.scopes?.length ? params.scopes : [...MCP_SCOPES];
-    this.scopesCheck(scopes);
+    // Clients may ask for their own scope names (Claude sends e.g. `claudeai`):
+    // keep the ones we know and grant everything when none is ours.
+    const known = (params.scopes ?? []).filter((s) =>
+      (MCP_SCOPES as readonly string[]).includes(s),
+    );
+    const scopes = known.length ? known : [...MCP_SCOPES];
     if (!/^[A-Za-z0-9_-]{43}$/.test(params.codeChallenge))
       throw new InvalidGrantError('Invalid PKCE challenge.');
     const request = secret();

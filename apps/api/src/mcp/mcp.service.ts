@@ -16,7 +16,7 @@ import express, {
 } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { MCP_SCOPES } from '@all-in-one/shared/schemas';
-import { McpAuthService } from './mcp-auth.service';
+import { DEFAULT_REDIRECT_HOSTS, McpAuthService } from './mcp-auth.service';
 import { errorPage } from './mcp-pages';
 import { ToolsService } from '../tools/tools.service';
 import { ToolKit } from './mcp-tool-kit';
@@ -96,7 +96,7 @@ export class McpService {
     const route = express.Router();
     route.use((req, res, next) => {
       res.setHeader('Cache-Control', 'no-store');
-      if (req.headers.origin && req.headers.origin !== this.auth.origin) {
+      if (req.headers.origin && !this.allowedOrigin(req.headers.origin)) {
         res.status(403).json({ error: 'invalid_origin' });
         return;
       }
@@ -145,6 +145,22 @@ export class McpService {
       }
       route(req, res, next);
     });
+  }
+
+  /** Our own origin, or a supported client's web app (ChatGPT, Claude); bearer auth still applies. */
+  private allowedOrigin(origin: string): boolean {
+    if (origin === this.auth.origin) return true;
+    try {
+      const u = new URL(origin);
+      return (
+        u.protocol === 'https:' &&
+        DEFAULT_REDIRECT_HOSTS.some(
+          (h) => u.hostname === h || u.hostname.endsWith(`.${h}`),
+        )
+      );
+    } catch {
+      return false;
+    }
   }
 
   /** A fresh server per request with the caller's tools (stateless). */
