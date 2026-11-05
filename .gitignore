@@ -65,3 +65,6 @@ vitest.config.*.timestamp*
 __screenshots__/
 libs/api/db/src/generated
 .vitest
+
+# Uploaded exercise videos (persistent runtime data)
+/data/exercise-videos/
