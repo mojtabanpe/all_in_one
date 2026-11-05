@@ -136,7 +136,8 @@ export class ToolsService {
     sink.tool(
       'upload_exercise_video',
       {
-        description: 'Upload an approved MP4 exercise demonstration (max 8 MiB, base64). Replaces the catalog video URL for the given exercise slug. Requires persistent server storage configuration.',
+        description:
+          'Upload an approved MP4 exercise demonstration (max 8 MiB, base64). Replaces the catalog video URL for the given exercise slug. Requires persistent server storage configuration.',
         scope: 'exercise:video:write',
         kind: 'update',
         assistant: false,

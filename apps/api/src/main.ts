@@ -1,5 +1,9 @@
 import { requestLanguage } from '@all-in-one/api/ai';
-import express, { type Request, type Response, type NextFunction } from 'express';
+import express, {
+  type Request,
+  type Response,
+  type NextFunction,
+} from 'express';
 import { resolve } from 'node:path';
 /**
  * This is not a production server yet!
@@ -35,12 +39,17 @@ async function bootstrap() {
   // ChatGPT/Claude (MCP + OAuth) routes use bearer tokens: mount them before the cookie CSRF check.
   app.get(McpService).mount(app.getHttpAdapter().getInstance());
   // Public, read-only exercise clips. Persist data/exercise-videos across deployments.
-  app.use('/api/exercise-videos', express.static(resolve(process.cwd(), 'data/exercise-videos'), {
-    fallthrough: false,
-    immutable: true,
-    maxAge: '1y',
-    setHeaders: (res) => { res.setHeader('X-Content-Type-Options', 'nosniff'); },
-  }));
+  app.use(
+    '/api/exercise-videos',
+    express.static(resolve(process.cwd(), 'data/exercise-videos'), {
+      fallthrough: false,
+      immutable: true,
+      maxAge: '1y',
+      setHeaders: (res) => {
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+      },
+    }),
+  );
   app.useSecurityHeaders();
   // Session cookie auth: reject cross-site state-changing requests.
   app.enableCsrfProtection();

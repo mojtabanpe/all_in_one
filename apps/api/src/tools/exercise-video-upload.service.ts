@@ -1,4 +1,8 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { PrismaService } from '@all-in-one/api/db';
 import { TrainingService } from '@all-in-one/applets/health/api';
 import { randomUUID } from 'node:crypto';
@@ -12,7 +16,10 @@ import { resolve } from 'node:path';
  */
 @Injectable()
 export class ExerciseVideoUploadService {
-  constructor(private readonly training: TrainingService, private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly training: TrainingService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async upload(userId: string, slug: string, encoded: string) {
     const user = await this.prisma.user.findUnique({
@@ -20,7 +27,9 @@ export class ExerciseVideoUploadService {
       select: { role: true },
     });
     if (user?.role !== 'ADMIN')
-      throw new ForbiddenException('Admin access required to change exercise videos');
+      throw new ForbiddenException(
+        'Admin access required to change exercise videos',
+      );
     if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(slug))
       throw new BadRequestException('Invalid exercise slug');
     await this.training.exercise(slug);
@@ -30,12 +39,21 @@ export class ExerciseVideoUploadService {
 
     // MCP JSON uploads are deliberately capped at 8 MiB; larger clips should
     // use a dedicated streaming/presigned upload endpoint instead.
-    if (encoded.length > Math.ceil(8 * 1024 * 1024 / 3) * 4 + 4 ||
-        !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encoded))
-      throw new BadRequestException('Invalid or oversized base64 MP4 (max 8 MiB)');
+    if (
+      encoded.length > Math.ceil((8 * 1024 * 1024) / 3) * 4 + 4 ||
+      !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(
+        encoded,
+      )
+    )
+      throw new BadRequestException(
+        'Invalid or oversized base64 MP4 (max 8 MiB)',
+      );
     const bytes = Buffer.from(encoded, 'base64');
-    if (bytes.length < 12 || bytes.length > 8 * 1024 * 1024 ||
-        bytes.toString('ascii', 4, 8) !== 'ftyp')
+    if (
+      bytes.length < 12 ||
+      bytes.length > 8 * 1024 * 1024 ||
+      bytes.toString('ascii', 4, 8) !== 'ftyp'
+    )
       throw new BadRequestException('Expected an MP4 file (max 8 MiB)');
 
     const filename = `${slug}-${randomUUID()}.mp4`;
