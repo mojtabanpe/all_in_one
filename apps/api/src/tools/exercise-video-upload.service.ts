@@ -1,13 +1,13 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { TrainingService } from '@all-in-one/applets/health/api';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile, unlink } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 /**
- * Stores approved exercise MP4 clips on a persistent server volume.
- * Set EXERCISE_VIDEO_DIR to a mounted persistent directory and
- * EXERCISE_VIDEO_PUBLIC_URL to its externally reachable base URL.
+ * Stores approved exercise MP4 clips under the working directory.
+ * No environment variables required. Back up data/exercise-videos and
+ * mount that directory as a persistent volume if the API runs in Docker.
  */
 @Injectable()
 export class ExerciseVideoUploadService {
@@ -18,13 +18,8 @@ export class ExerciseVideoUploadService {
       throw new BadRequestException('Invalid exercise slug');
     await this.training.exercise(slug);
 
-    const dir = process.env.EXERCISE_VIDEO_DIR;
-    const base = process.env.EXERCISE_VIDEO_PUBLIC_URL;
-    if (!dir || !base)
-      throw new InternalServerErrorException('Exercise video storage is not configured');
-    const url = new URL(base);
-    if (url.protocol !== 'https:' && url.hostname !== 'localhost')
-      throw new InternalServerErrorException('Public video URL must use HTTPS');
+    const dir = resolve(process.cwd(), 'data/exercise-videos');
+    const base = '/api/exercise-videos';
 
     // MCP JSON uploads are deliberately capped at 8 MiB; larger clips should
     // use a dedicated streaming/presigned upload endpoint instead.
