@@ -106,7 +106,7 @@ export class McpService {
     route.use(bearer);
     route.post(
       '/',
-      express.json({ limit: '1mb' }),
+      express.json({ limit: '12mb' }),
       async (
         req: Request & { auth?: AuthInfo },
         res: Response,
