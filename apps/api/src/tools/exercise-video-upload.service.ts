@@ -40,7 +40,7 @@ export class ExerciseVideoUploadService {
     const file = resolve(dir, filename);
     await mkdir(dir, { recursive: true });
     await writeFile(file, bytes, { flag: 'wx', mode: 0o644 });
-    const videoUrl = `${base.replace(/\\/$/, '')}/${filename}`;
+    const videoUrl = `${base.replace(/\/$/, '')}/${filename}`;
     try {
       const exercise = await this.training.video(slug, videoUrl);
       return { slug, videoUrl, bytes: bytes.length, exercise };
