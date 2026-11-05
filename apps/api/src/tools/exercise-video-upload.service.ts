@@ -1,4 +1,5 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { PrismaService } from '@all-in-one/api/db';
 import { TrainingService } from '@all-in-one/applets/health/api';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile, unlink } from 'node:fs/promises';
@@ -11,9 +12,15 @@ import { resolve } from 'node:path';
  */
 @Injectable()
 export class ExerciseVideoUploadService {
-  constructor(private readonly training: TrainingService) {}
+  constructor(private readonly training: TrainingService, private readonly prisma: PrismaService) {}
 
-  async upload(slug: string, encoded: string) {
+  async upload(userId: string, slug: string, encoded: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (user?.role !== 'ADMIN')
+      throw new ForbiddenException('Admin access required to change exercise videos');
     if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(slug))
       throw new BadRequestException('Invalid exercise slug');
     await this.training.exercise(slug);
