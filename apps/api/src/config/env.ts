@@ -34,10 +34,6 @@ export const envSchema = z.object({
   // ChatGPT connection (MCP)
   MCP_PUBLIC_URL: z.url().optional(),
   MCP_REDIRECT_HOSTS: z.string().optional(),
-  /** Persistent directory for uploaded exercise MP4 files. */
-  EXERCISE_VIDEO_DIR: z.string().optional(),
-  /** Public HTTPS URL ending in /api/exercise-videos. */
-  EXERCISE_VIDEO_PUBLIC_URL: z.url().optional(),
 
   /** Planner: let calendar feeds reach private addresses (local testing only). */
   PLANNER_ICS_ALLOW_PRIVATE: z.enum(['true', 'false']).optional(),
