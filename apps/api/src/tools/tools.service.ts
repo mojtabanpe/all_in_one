@@ -1,4 +1,5 @@
 import * as z from 'zod';
+import { ExerciseVideoUploadService } from './exercise-video-upload.service';
 import { reviewReminderSchema } from '@all-in-one/shared/schemas';
 import { PushService } from '../push/push.service';
 import { Injectable } from '@nestjs/common';
@@ -57,6 +58,7 @@ export class ToolsService {
     private readonly training: TrainingService,
     private readonly healthAi: HealthAiService,
     private readonly body: BodyService,
+    private readonly videoUpload: ExerciseVideoUploadService,
   ) {}
 
   register(sink: ToolSink): void {
@@ -131,6 +133,32 @@ export class ToolsService {
       countdowns: this.countdowns,
     });
     healthCoachTools(sink, { health: this.health, training: this.training });
+    sink.tool(
+      'upload_exercise_video',
+      {
+        description: 'Upload an approved MP4 exercise demonstration (max 8 MiB, base64). Replaces the catalog video URL for the given exercise slug. Requires persistent server storage configuration.',
+        scope: 'health:write',
+        kind: 'update',
+        input: {
+          slug: z.string().min(1).max(64),
+          mp4_base64: z.string().min(16),
+        },
+      },
+      (args) => this.videoUpload.upload(args.slug, args.mp4_base64),
+    );
+    sink.tool(
+      'get_exercise_video',
+      {
+        description: 'Get the current video URL for an exercise.',
+        scope: 'health:read',
+        kind: 'read',
+        input: { slug: z.string().min(1).max(64) },
+      },
+      async (args) => {
+        const exercise = await this.training.exercise(args.slug);
+        return { slug: exercise.slug, videoUrl: exercise.videoUrl };
+      },
+    );
     healthTools(sink, { health: this.health, ai: this.healthAi });
     healthBodyTools(sink, { body: this.body });
   }
