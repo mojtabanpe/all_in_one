@@ -1,5 +1,5 @@
 import { requestLanguage } from '@all-in-one/api/ai';
-import type { Request, Response, NextFunction } from 'express';
+import express, { type Request, type Response, type NextFunction } from 'express';
 /**
  * This is not a production server yet!
  * This is only a minimal backend to get started.
@@ -33,6 +33,15 @@ async function bootstrap() {
   });
   // ChatGPT/Claude (MCP + OAuth) routes use bearer tokens: mount them before the cookie CSRF check.
   app.get(McpService).mount(app.getHttpAdapter().getInstance());
+  // Public, read-only exercise clips; the directory must be a persistent volume.
+  if (process.env.EXERCISE_VIDEO_DIR) {
+    app.use('/api/exercise-videos', express.static(process.env.EXERCISE_VIDEO_DIR, {
+      fallthrough: false,
+      immutable: true,
+      maxAge: '1y',
+      setHeaders: (res) => { res.setHeader('X-Content-Type-Options', 'nosniff'); },
+    }));
+  }
   app.useSecurityHeaders();
   // Session cookie auth: reject cross-site state-changing requests.
   app.enableCsrfProtection();
