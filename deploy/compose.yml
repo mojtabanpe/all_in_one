@@ -26,6 +26,8 @@ services:
       redis:
         condition: service_healthy
     read_only: true
+    volumes:
+      - exercise-videos:/app/data/exercise-videos
     tmpfs: [/tmp]
     security_opt: [no-new-privileges:true]
 
@@ -92,3 +94,4 @@ services:
 volumes:
   postgres-data:
   redis-data:
+  exercise-videos:

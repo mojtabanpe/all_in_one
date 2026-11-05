@@ -18,7 +18,9 @@ RUN pnpm nx run api-db:prisma-generate \
 FROM node:24-bookworm-slim AS api
 WORKDIR /app
 ENV NODE_ENV=production
-RUN groupadd -g 10001 app && useradd -u 10001 -g app -s /usr/sbin/nologin app
+RUN groupadd -g 10001 app && useradd -u 10001 -g app -s /usr/sbin/nologin app \
+ && mkdir -p /app/data/exercise-videos \
+ && chown -R app:app /app/data
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/dist/apps/api ./dist/apps/api
