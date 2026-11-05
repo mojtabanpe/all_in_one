@@ -137,14 +137,15 @@ export class ToolsService {
       'upload_exercise_video',
       {
         description: 'Upload an approved MP4 exercise demonstration (max 8 MiB, base64). Replaces the catalog video URL for the given exercise slug. Requires persistent server storage configuration.',
-        scope: 'health:write',
+        scope: 'exercise:video:write',
         kind: 'update',
+        assistant: false,
         input: {
           slug: z.string().min(1).max(64),
           mp4_base64: z.string().min(16),
         },
       },
-      (args) => this.videoUpload.upload(args.slug, args.mp4_base64),
+      (args) => this.videoUpload.upload(sink.user, args.slug, args.mp4_base64),
     );
     sink.tool(
       'get_exercise_video',
