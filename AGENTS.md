@@ -337,3 +337,5 @@ When the owner gives a new instruction, add it to this list in the same change.
 82. **SMS template variables:** SMS provider templates must use percent-delimited variables such as `%code%`, `%name%`, `%minutes%`, `%plan%` and `%expiry_date%`; curly-brace placeholders are not recognized. Use this format for every submitted SMS template.
 
 83. **Pending SMS template IDs (2026-11-06):** Continue independent roadmap work while SMS templates await approval. The owner will supply approved template IDs in this order: AUTH_CODE, PASSWORD_RESET, PASSWORD_CHANGED, SUBSCRIPTION_ACTIVATED, SUBSCRIPTION_EXPIRING. Do not invent IDs or mark SMS delivery operational before configuration and verification.
+
+84. **Persian conversation (2026-11-06):** Talk to the owner in Persian in every chat and session: replies, short progress updates, questions and summaries. Only code, paths, commands and identifiers stay as written.

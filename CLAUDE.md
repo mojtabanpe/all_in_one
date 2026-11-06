@@ -297,6 +297,11 @@ When the owner gives a new instruction, add it to this list in the same change.
     (`web-ai-connection`) has ChatGPT / Claude / Claude Code tabs with each app's steps; the Claude Code tab builds the
     `claude mcp add … --header "Authorization: Bearer …"` command with the new token.
 
+## Conversation language (2026-11-06)
+
+84. **Talk to the owner in Persian, in every chat** (owner: «کلا به فارسی حرف بزن با من، توی همه چت‌ها»): replies,
+    one-line progress updates, questions and summaries. Only code, paths, commands and identifiers stay as written.
+
 ## Approved custom components
 
 - **BottomNav** (2026-10-29): floating bottom navigation for phone sizes, in `libs/shared/packages`,
