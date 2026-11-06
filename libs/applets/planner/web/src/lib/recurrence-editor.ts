@@ -308,25 +308,29 @@ export function recurrencePreset(rule: string | null | undefined): string {
               </aio-form-field>
             }
           }
-          <aio-form-field
-            class="min-w-0 gap-2"
-            [label]="'مدت کار (دقیقه، اختیاری)' | aioTranslate"
-            [controlId]="prefix() + 'duration'"
-          >
-            <input
-              aioInput
-              type="number"
-              min="1"
-              max="10080"
-              [id]="prefix() + 'duration'"
-              [value]="duration() ?? ''"
-              (input)="
-                duration.set(
-                  $any($event.target).value ? +$any($event.target).value : null
-                )
-              "
-            />
-          </aio-form-field>
+          @if (showDuration()) {
+            <aio-form-field
+              class="min-w-0 gap-2"
+              [label]="'مدت کار (دقیقه، اختیاری)' | aioTranslate"
+              [controlId]="prefix() + 'duration'"
+            >
+              <input
+                aioInput
+                type="number"
+                min="1"
+                max="10080"
+                [id]="prefix() + 'duration'"
+                [value]="duration() ?? ''"
+                (input)="
+                  duration.set(
+                    $any($event.target).value
+                      ? +$any($event.target).value
+                      : null
+                  )
+                "
+              />
+            </aio-form-field>
+          }
         </div>
       }
       @if (error()) {
@@ -350,6 +354,8 @@ export function recurrencePreset(rule: string | null | undefined): string {
 export class RecurrenceEditor {
   readonly value = input<Settings>({});
   readonly prefix = input('repeat-');
+  /** Off where the host form has its own duration field (task detail). */
+  readonly showDuration = input(true);
   readonly changed = output<Settings>();
   protected readonly weekdays = days;
   protected readonly advanced = signal(false);

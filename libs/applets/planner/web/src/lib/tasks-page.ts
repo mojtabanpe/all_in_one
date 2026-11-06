@@ -401,12 +401,12 @@ const DONE_DAYS = 30;
           (click)="selectedId.set(task.id)"
         >
           <span class="flex min-w-0 flex-1 flex-col gap-0.5">
+            <!-- Aligned by the page; the bdi only isolates the title's own direction. -->
             <span
               class="truncate"
-              dir="auto"
               [class.text-muted-foreground]="task.done"
               [class.line-through]="task.done"
-              >{{ task.title }}</span
+              ><bdi>{{ task.title }}</bdi></span
             >
             @if (meta(task); as m) {
               <span

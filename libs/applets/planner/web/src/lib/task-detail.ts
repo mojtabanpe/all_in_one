@@ -185,6 +185,23 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
               (change)="save({ time: $any($event.target).value || null })"
             />
           </aio-form-field>
+          <aio-form-field
+            class="sm:col-span-2"
+            [label]="'مدت (دقیقه)' | aioTranslate"
+            controlId="task-duration"
+          >
+            <input
+              aioInput
+              id="task-duration"
+              type="number"
+              inputmode="numeric"
+              min="1"
+              max="10080"
+              [disabled]="!t.time"
+              [value]="t.durationMin ?? ''"
+              (change)="saveDuration($any($event.target))"
+            />
+          </aio-form-field>
         </div>
         @if (t.date) {
           <p class="text-muted-foreground text-xs">
@@ -251,6 +268,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
       }
       <planner-recurrence-editor
         [value]="recurrenceValue()"
+        [showDuration]="false"
         (changed)="saveRecurrence($event)"
       />
 
@@ -683,6 +701,21 @@ export class TaskDetail {
       minute: '2-digit',
       timeZone: 'Asia/Tehran',
     });
+  }
+
+  /** Empty clears the duration; out-of-range values snap back. */
+  protected saveDuration(el: HTMLInputElement) {
+    const raw = el.value.trim();
+    const value = raw ? Number(raw) : null;
+    if (
+      value !== null &&
+      (!Number.isInteger(value) || value < 1 || value > 10080)
+    ) {
+      el.value = String(this.task().durationMin ?? '');
+      return;
+    }
+    if (value !== (this.task().durationMin ?? null))
+      void this.save({ durationMin: value });
   }
 
   protected saveTitle(value: string) {
