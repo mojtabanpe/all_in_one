@@ -140,7 +140,36 @@ export class GrowthService {
         (SELECT COUNT(*) FROM mature) AS eligible,
         (SELECT COUNT(*) FROM mature WHERE days >= 3) AS retained
     `;
+    // Each offset uses 30 fully observed return days, ending yesterday.
+    // Earliest retained signup per browser prevents a second account from resetting the cohort.
+    const retention = await this.prisma.$queryRaw<
+      {
+        day: number;
+        eligible: bigint;
+        returned: bigint;
+      }[]
+    >`
+      WITH signups AS (
+        SELECT "visitorId", MIN(day::date) AS day FROM growth_events
+        WHERE name = 'signup_completed' AND day <= ${until}
+        GROUP BY "visitorId"
+      ), offsets AS (SELECT * FROM (VALUES (1), (7), (30)) AS d(day))
+      SELECT d.day,
+        COUNT(s."visitorId") AS eligible,
+        COUNT(a."visitorId") AS returned
+      FROM offsets d LEFT JOIN signups s
+        ON s.day >= ${until}::date - d.day - 30
+        AND s.day < ${until}::date - d.day
+      LEFT JOIN growth_events a ON a."visitorId" = s."visitorId"
+        AND a.name = 'active_day' AND a.day = (s.day + d.day)::text
+      GROUP BY d.day ORDER BY d.day
+    `;
     return {
+      retention: retention.map((row) => ({
+        day: row.day,
+        eligibleVisitors: Number(row.eligible),
+        returnedVisitors: Number(row.returned),
+      })),
       activity: {
         dailyVisitors: Number(activity.daily),
         weeklyVisitors: Number(activity.weekly),

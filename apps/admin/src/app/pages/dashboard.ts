@@ -125,6 +125,61 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
             </div>
           </section>
           <h3 class="mt-4 font-semibold">
+            {{ 'بازگشت در روز مشخص' | aioTranslate }}
+          </h3>
+          <p class="text-sm leading-7 text-muted-foreground">
+            {{
+              'فعالیت دقیقاً در روز اول، هفتم یا سی‌ام پس از اولین ثبت‌نام ثبت‌شدهٔ مرورگر. برای هر شاخص، ۳۰ روز کاملِ بازگشت تا دیروز بررسی می‌شود؛ بنابراین گروه‌های ثبت‌نام متفاوت‌اند. امروز شمرده نمی‌شود.'
+                | aioTranslate
+            }}
+          </p>
+          <div
+            aioTableContainer
+            class="max-w-full overflow-x-auto"
+            tabindex="0"
+            [attr.aria-label]="'بازگشت در روز مشخص' | aioTranslate"
+          >
+            <table aioTable>
+              <caption aioCaption>
+                {{
+                  'نبود گروه واجد شرایط با صفر درصد بازگشت تفاوت دارد. آمار فقط فعالیت ثبت‌شده در این مرورگر را می‌سنجد.'
+                    | aioTranslate
+                }}
+              </caption>
+              <thead aioTHead>
+                <tr aioTr>
+                  <th aioTh scope="col">
+                    {{ 'روز پس از ثبت‌نام' | aioTranslate }}
+                  </th>
+                  <th aioTh scope="col">
+                    {{ 'گروه واجد شرایط' | aioTranslate }}
+                  </th>
+                  <th aioTh scope="col">{{ 'بازگشته' | aioTranslate }}</th>
+                  <th aioTh scope="col">{{ 'نرخ بازگشت' | aioTranslate }}</th>
+                </tr>
+              </thead>
+              <tbody aioTBody>
+                @for (row of growth.value().retention; track row.day) {
+                  <tr aioTr>
+                    <th aioTh scope="row">{{ fa(row.day) }}</th>
+                    <td aioTd>{{ fa(row.eligibleVisitors) }}</td>
+                    <td aioTd>{{ fa(row.returnedVisitors) }}</td>
+                    <td aioTd>
+                      {{
+                        row.eligibleVisitors
+                          ? retentionRate(
+                              row.returnedVisitors,
+                              row.eligibleVisitors
+                            )
+                          : ('هنوز قابل سنجش نیست' | aioTranslate)
+                      }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <h3 class="mt-4 font-semibold">
             {{ 'کانال‌های جذب' | aioTranslate }}
           </h3>
           <p class="text-sm leading-7 text-muted-foreground">
@@ -249,6 +304,11 @@ export class Dashboard {
     () => `${this.api}/admin/stats`,
   );
   protected readonly fa = (n: number) => this.locale.number(n);
+  protected readonly retentionRate = (returned: number, eligible: number) =>
+    this.locale.number(returned / eligible, {
+      style: 'percent',
+      maximumFractionDigits: 1,
+    });
   protected readonly growth = httpResource<GrowthSummary>(
     () => `${this.api}/growth/summary`,
   );

@@ -85,11 +85,13 @@ describe('Growth data boundaries', () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         { daily: 0n, weekly: 0n, monthly: 0n, eligible: 0n, retained: 0n },
-      ]);
+      ])
+      .mockResolvedValueOnce([{ day: 1, eligible: 2n, returned: 1n }]);
     const summary = await new GrowthService({
       $queryRaw: query,
     } as never).summary();
     expect(summary).toEqual({
+      retention: [{ day: 1, eligibleVisitors: 2, returnedVisitors: 1 }],
       activity: {
         dailyVisitors: 0,
         weeklyVisitors: 0,

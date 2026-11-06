@@ -21,6 +21,20 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'Health screenshot with sample calorie totals and a logged meal',
   ],
   ...PRIVACY_MESSAGES,
+  ['بازگشت در روز مشخص', 'Return on a specific day'],
+  [
+    'فعالیت دقیقاً در روز اول، هفتم یا سی‌ام پس از اولین ثبت‌نام ثبت‌شدهٔ مرورگر. برای هر شاخص، ۳۰ روز کاملِ بازگشت تا دیروز بررسی می‌شود؛ بنابراین گروه‌های ثبت‌نام متفاوت‌اند. امروز شمرده نمی‌شود.',
+    'Activity exactly 1, 7 or 30 days after the browser\u2019s first recorded signup. Each metric covers 30 complete return days ending yesterday, so signup cohorts differ. Today is excluded.',
+  ],
+  [
+    'نبود گروه واجد شرایط با صفر درصد بازگشت تفاوت دارد. آمار فقط فعالیت ثبت‌شده در این مرورگر را می‌سنجد.',
+    'No eligible cohort is different from a zero return rate. Metrics measure recorded activity in this browser only.',
+  ],
+  ['روز پس از ثبت‌نام', 'Days after signup'],
+  ['بازگشته', 'Returned'],
+  ['نرخ بازگشت', 'Return rate'],
+  ['هنوز قابل سنجش نیست', 'Not measurable yet'],
+
   ['فعالیت و بازگشت', 'Activity and return visits'],
   [
     'مرورگرهای یکتا، نه تعداد افراد؛ ساخت کار، مرور کارت یا ثبت وعده و ورزش موفق. روزها بر اساس تهران هستند و امروز هنوز کامل نشده است. دادهٔ گذشته بازسازی نمی‌شود.',

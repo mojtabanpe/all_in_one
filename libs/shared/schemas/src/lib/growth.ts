@@ -54,6 +54,11 @@ export const growthAttributionSchema = z.omit(growthEventSchema, {
 });
 export type GrowthAttribution = z.infer<typeof growthAttributionSchema>;
 export interface GrowthSummary {
+  retention: {
+    day: number;
+    eligibleVisitors: number;
+    returnedVisitors: number;
+  }[];
   activity: {
     dailyVisitors: number;
     weeklyVisitors: number;
