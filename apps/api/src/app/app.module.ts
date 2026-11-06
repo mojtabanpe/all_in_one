@@ -22,6 +22,12 @@ import { GrowthService } from '../growth/growth.service';
 import { GrowthRetention } from '../growth/growth-retention';
 import { GrowthActivityInterceptor } from '../growth/growth-activity.interceptor';
 import { OnboardingService } from './onboarding.service';
+import {
+  BillingController,
+  PaymentsController,
+} from '../billing/billing.controller';
+import { BillingService } from '../billing/billing.service';
+import { ZibalGateway } from '../billing/zibal.gateway';
 
 @Module({
   imports: [
@@ -45,6 +51,8 @@ import { OnboardingService } from './onboarding.service';
     AdminController,
     GrowthController,
     OnboardingController,
+    BillingController,
+    PaymentsController,
   ],
   providers: [
     AppService,
@@ -53,6 +61,8 @@ import { OnboardingService } from './onboarding.service';
     GrowthRetention,
     { provide: APP_INTERCEPTOR, useClass: GrowthActivityInterceptor },
     OnboardingService,
+    ZibalGateway,
+    BillingService,
   ],
 })
 export class AppModule {}

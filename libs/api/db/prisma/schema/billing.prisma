@@ -1,0 +1,54 @@
+/// A paid plan. Amounts are Rial (Zibal's unit); the UI shows Toman. Admins set prices; nothing is seeded,
+/// and only active plans can be bought.
+model BillingPlan {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  code      String   @unique @db.VarChar(32)
+  titleFa   String   @db.VarChar(60)
+  titleEn   String   @db.VarChar(60)
+  months    Int
+  priceRial Int
+  active    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    BillingOrder[]
+
+  @@map("billing_plans")
+}
+
+enum BillingOrderStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+/// One checkout. Plan, months and amount are copied at creation so a later price change never alters it.
+/// Financial record: deleting a user with orders is refused.
+model BillingOrder {
+  id         String             @id @default(uuid(7)) @db.Uuid
+  userId     String             @db.Uuid
+  user       User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  planId     String             @db.Uuid
+  plan       BillingPlan        @relation(fields: [planId], references: [id], onDelete: Restrict)
+  months     Int
+  amountRial Int
+  status     BillingOrderStatus @default(PENDING)
+  /// Zibal's payment reference, set once the gateway accepts the request.
+  trackId    String?            @unique @db.VarChar(32)
+  refNumber  String?            @db.VarChar(64)
+  paidAt     DateTime?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  @@index([userId, createdAt])
+  @@map("billing_orders")
+}
+
+/// Paid access until `paidUntil`; each verified order extends it from max(now, paidUntil).
+model BillingSubscription {
+  userId    String   @id @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paidUntil DateTime
+  updatedAt DateTime @updatedAt
+
+  @@map("billing_subscriptions")
+}

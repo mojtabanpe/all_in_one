@@ -8,3 +8,4 @@ export * from './lib/assistant';
 export * from './lib/push';
 export * from './lib/growth';
 export * from './lib/onboarding';
+export * from './lib/billing';
