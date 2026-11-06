@@ -1,3 +1,4 @@
+import { CampaignReport } from './campaign-report';
 import { httpResource } from '@angular/common/http';
 import { Component, computed, inject } from '@angular/core';
 import type { AdminStats, GrowthSummary } from '@all-in-one/shared/schemas';
@@ -16,6 +17,7 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
 @Component({
   selector: 'admin-dashboard',
   imports: [
+    CampaignReport,
     AioCardDirectives,
     ApiStatus,
     AioCardHeading,
@@ -357,6 +359,7 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
           </div>
         }
       </section>
+      <admin-campaign-report />
       <web-api-status />
     </div>
   `,

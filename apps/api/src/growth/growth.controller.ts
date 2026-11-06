@@ -5,12 +5,15 @@ import {
   HttpCode,
   NotFoundException,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import { Public, Roles } from '@all-in-one/api/auth';
 import {
   growthEventSchema,
+  growthCampaignFilterSchema,
+  type GrowthCampaignFilter,
   type GrowthEventInput,
 } from '@all-in-one/shared/schemas';
 import { GrowthService } from './growth.service';
@@ -34,6 +37,16 @@ export class GrowthController {
   async record(@Body({ schema: growthEventSchema }) input: GrowthEventInput) {
     this.requireEnabled();
     await this.growth.record(input);
+  }
+
+  @Roles('ADMIN')
+  @Get('campaigns')
+  campaigns(
+    @Query({ schema: growthCampaignFilterSchema })
+    filter: GrowthCampaignFilter = {},
+  ) {
+    this.requireEnabled();
+    return this.growth.campaigns(filter);
   }
 
   @Roles('ADMIN')

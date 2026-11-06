@@ -94,3 +94,26 @@ export interface GrowthChannel {
   completedSignupVisitors: number;
   activatedVisitors: number;
 }
+
+/** Exact first-touch campaign filters; empty form controls are omitted. */
+export const growthCampaignFilterSchema = z.strictObject({
+  source: z.optional(campaignValue),
+  medium: z.optional(campaignValue),
+  campaign: z.optional(campaignValue),
+});
+export type GrowthCampaignFilter = z.infer<typeof growthCampaignFilterSchema>;
+export interface GrowthCampaignMetrics {
+  landingVisitors: number;
+  signupVisitors: number;
+  completedSignupVisitors: number;
+  activeVisitors: number;
+}
+export interface GrowthCampaignReport {
+  windowDays: number;
+  totals: GrowthCampaignMetrics;
+  rows: (GrowthCampaignMetrics & {
+    source: string | null;
+    medium: string | null;
+    campaign: string | null;
+  })[];
+}

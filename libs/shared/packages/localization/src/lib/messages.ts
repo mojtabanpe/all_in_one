@@ -22,6 +22,48 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'Health screenshot with sample calorie totals and a logged meal',
   ],
   ...PRIVACY_MESSAGES,
+  ['عملکرد کمپین‌ها', 'Campaign performance'],
+  [
+    'اولین منبع ثبت‌شدهٔ هر مرورگر در ۳۰ روز اخیر، بر اساس روزهای تهران. فیلترها با مقدار کامل و دقیق تطبیق داده می‌شوند؛ خالی یعنی همه. ثبت‌نام و فعالیت بعدی همان مرورگر هم در نتیجه حساب می‌شود.',
+    'Each browser\u2019s first recorded source in the last 30 Tehran calendar days. Filters match complete values exactly; blank means all. Later signups and activity from the same browser remain included.',
+  ],
+  ['اعمال فیلتر کمپین', 'Apply campaign filters'],
+  ['پاک کردن فیلترها', 'Clear filters'],
+  [
+    'هر فیلتر باید حداکثر ۲۰۰ نویسه و بدون نویسهٔ کنترلی باشد.',
+    'Each filter must be at most 200 characters and contain no control characters.',
+  ],
+  ['فیلترهای اعمال‌شده', 'Applied filters'],
+  ['همهٔ کمپین‌ها', 'All campaigns'],
+  ['در حال دریافت آمار کمپین', 'Loading campaign metrics'],
+  [
+    'شمارنده‌ها شامل همهٔ نتیجه‌های منطبق‌اند؛ جدول فقط ۲۰ ترکیب برتر منبع، رسانه و کمپین را نشان می‌دهد. این اعداد نرخ تبدیل یک گروه ثابت نیستند. منبع ثبت‌نشده با مقدار متنی unknown یا direct یکی نیست.',
+    'Counters include every matching result; the table shows only the top 20 source, medium and campaign combinations. These counts are not a fixed-cohort conversion rate. Missing attribution is distinct from the literal text unknown or direct.',
+  ],
+  ['نتیجهٔ کمپین‌ها', 'Campaign results'],
+  [
+    'مرورگرهای یکتا؛ فعالیت یعنی ساخت کار، مرور کارت یا ثبت وعده و ورزش موفق. آمار حساب‌ها و هدف‌ها جدا و بدون فیلتر کمپین باقی می‌ماند.',
+    'Unique browsers. Activity means successful task creation, card review, meal or workout logging. Account and goal reports remain separate and unfiltered by campaign.',
+  ],
+  ['کمپین', 'Campaign'],
+  ['مرورگرهای دارای فعالیت', 'Browsers with activity'],
+  ['ثبت‌نشده', 'Not recorded'],
+  [
+    'نتیجه‌ای برای این فیلترها ثبت نشده',
+    'No results recorded for these filters',
+  ],
+  [
+    'فیلترها را تغییر بده یا پاک کن تا ورودی‌های دیگر را ببینی.',
+    'Change or clear the filters to see other visits.',
+  ],
+  ['آمار کمپین دریافت نشد', 'Unable to load campaign metrics'],
+  ['منبع کمپین (utm_source)', 'Campaign source (utm_source)'],
+  ['رسانهٔ کمپین (utm_medium)', 'Campaign medium (utm_medium)'],
+  ['نام کمپین (utm_campaign)', 'Campaign name (utm_campaign)'],
+  ['بازدیدکنندگان کمپین', 'Campaign visitors'],
+  ['شروع ثبت‌نام در کمپین', 'Campaign signup starts'],
+  ['ساخت حساب در کمپین', 'Campaign account creation'],
+
   ...MARKETING_MESSAGES,
   ['شروع کار بر اساس هدف', 'Getting started by goal'],
   [

@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@all-in-one/api/db';
 import type {
   GrowthEventInput,
+  GrowthCampaignFilter,
+  GrowthCampaignReport,
   GrowthSummary,
 } from '@all-in-one/shared/schemas';
 
@@ -69,6 +71,71 @@ export class GrowthService {
       ],
       skipDuplicates: true,
     });
+  }
+
+  async campaigns(
+    filter: GrowthCampaignFilter = {},
+  ): Promise<GrowthCampaignReport> {
+    const now = new Date();
+    const since = dayAt(
+      new Date(now.getTime() - (WINDOW_DAYS - 1) * 86_400_000),
+    );
+    const until = dayAt(now);
+    const rows = await this.prisma.$queryRaw<
+      {
+        level: number;
+        source: string | null;
+        medium: string | null;
+        campaign: string | null;
+        landing: bigint;
+        started: bigint;
+        completed: bigint;
+        active: bigint;
+      }[]
+    >`
+      WITH events AS (
+        SELECT * FROM growth_events WHERE day >= ${since} AND day <= ${until}
+      ), first_touch AS (
+        SELECT DISTINCT ON ("visitorId") "visitorId",
+          NULLIF(campaign->>'utm_source', '') AS source,
+          NULLIF(campaign->>'utm_medium', '') AS medium,
+          NULLIF(campaign->>'utm_campaign', '') AS campaign
+        FROM events ORDER BY "visitorId", "createdAt", id
+      ), selected AS (
+        SELECT * FROM first_touch
+        WHERE (${filter.source ?? null}::text IS NULL OR source = ${filter.source ?? null})
+          AND (${filter.medium ?? null}::text IS NULL OR medium = ${filter.medium ?? null})
+          AND (${filter.campaign ?? null}::text IS NULL OR campaign = ${filter.campaign ?? null})
+      )
+      SELECT GROUPING(f.source, f.medium, f.campaign) AS level,
+        f.source, f.medium, f.campaign,
+        COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'landing_view') AS landing,
+        COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'signup_started') AS started,
+        COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'signup_completed') AS completed,
+        COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name IN ('active_day', 'first_task_created', 'first_review_completed')) AS active
+      FROM selected f JOIN events e ON e."visitorId" = f."visitorId"
+      GROUP BY GROUPING SETS ((f.source, f.medium, f.campaign), ())
+      ORDER BY level DESC, landing DESC, completed DESC,
+        f.source NULLS LAST, f.medium NULLS LAST, f.campaign NULLS LAST LIMIT 21
+    `;
+    const metrics = (row?: (typeof rows)[number]) => ({
+      landingVisitors: Number(row?.landing ?? 0),
+      signupVisitors: Number(row?.started ?? 0),
+      completedSignupVisitors: Number(row?.completed ?? 0),
+      activeVisitors: Number(row?.active ?? 0),
+    });
+    return {
+      windowDays: WINDOW_DAYS,
+      totals: metrics(rows.find((row) => row.level === 7)),
+      rows: rows
+        .filter((row) => row.level === 0)
+        .map((row) => ({
+          source: row.source,
+          medium: row.medium,
+          campaign: row.campaign,
+          ...metrics(row),
+        })),
+    };
   }
 
   async summary(): Promise<GrowthSummary> {

@@ -1,6 +1,9 @@
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC, ROLES } from '@all-in-one/api/auth';
-import { growthEventSchema } from '@all-in-one/shared/schemas';
+import {
+  growthEventSchema,
+  growthCampaignFilterSchema,
+} from '@all-in-one/shared/schemas';
 import { GrowthController } from './growth.controller';
 import { GrowthService } from './growth.service';
 
@@ -14,14 +17,17 @@ describe('Growth data boundaries', () => {
   it('does not access storage or aggregates while the rollout is disabled', async () => {
     const record = vi.fn();
     const summary = vi.fn();
+    const campaigns = vi.fn();
     const controller = new GrowthController(
-      { record, summary } as never,
+      { record, summary, campaigns } as never,
       { get: () => 'false' } as never,
     );
     await expect(controller.record(event)).rejects.toThrow();
     expect(() => controller.summary()).toThrow();
+    expect(() => controller.campaigns({})).toThrow();
     expect(record).not.toHaveBeenCalled();
     expect(summary).not.toHaveBeenCalled();
+    expect(campaigns).not.toHaveBeenCalled();
   });
   it('rejects arbitrary/personal payload fields and fabricated completion events', () => {
     expect(growthEventSchema.safeParse(event).success).toBe(true);
@@ -53,6 +59,29 @@ describe('Growth data boundaries', () => {
     ]);
   });
 
+  it('validates campaign filters and protects the campaign report for admins', () => {
+    expect(growthCampaignFilterSchema.safeParse({}).success).toBe(true);
+    expect(
+      growthCampaignFilterSchema.safeParse({ source: 'a&b', campaign: 'alpha' })
+        .success,
+    ).toBe(true);
+    for (const input of [
+      { source: '' },
+      { medium: 'x'.repeat(201) },
+      { campaign: 'a\nb' },
+      { source: ['a', 'b'] },
+      { email: 'personal@example.invalid' },
+    ]) {
+      expect(growthCampaignFilterSchema.safeParse(input).success).toBe(false);
+    }
+    const reflector = new Reflector();
+    expect(
+      reflector.get(IS_PUBLIC, GrowthController.prototype.campaigns),
+    ).toBeUndefined();
+    expect(reflector.get(ROLES, GrowthController.prototype.campaigns)).toEqual([
+      'ADMIN',
+    ]);
+  });
   it('uses server Tehran day and atomic duplicate skipping, without persisting private payload fields', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-11-06T21:00:00Z'));
