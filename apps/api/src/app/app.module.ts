@@ -1,5 +1,6 @@
 import { PushModule } from '../push/push.module';
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { AiModule } from '@all-in-one/api/ai';
 import { AuthModule } from '@all-in-one/api/auth';
@@ -15,6 +16,10 @@ import { McpModule } from '../mcp/mcp.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CatalogSeeder } from './catalog-seeder';
+import { GrowthController } from '../growth/growth.controller';
+import { GrowthService } from '../growth/growth.service';
+import { GrowthRetention } from '../growth/growth-retention';
+import { GrowthActivityInterceptor } from '../growth/growth-activity.interceptor';
 
 @Module({
   imports: [
@@ -32,7 +37,18 @@ import { CatalogSeeder } from './catalog-seeder';
     McpModule,
     AssistantModule,
   ],
-  controllers: [AppController, HealthController, AdminController],
-  providers: [AppService, CatalogSeeder],
+  controllers: [
+    AppController,
+    HealthController,
+    AdminController,
+    GrowthController,
+  ],
+  providers: [
+    AppService,
+    CatalogSeeder,
+    GrowthService,
+    GrowthRetention,
+    { provide: APP_INTERCEPTOR, useClass: GrowthActivityInterceptor },
+  ],
 })
 export class AppModule {}

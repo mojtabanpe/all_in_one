@@ -1,5 +1,6 @@
 // zod/mini keeps browser bundles small: schemas here ship to every Angular app.
 import * as z from 'zod/mini';
+import { growthAttributionSchema } from './growth';
 
 // Mirrors the Role enum in apps/api/prisma/schema.prisma.
 export const roleSchema = z.enum(['ADMIN', 'CUSTOMER']);
@@ -22,6 +23,7 @@ export const loginSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 
 export const registerSchema = z.object({
+  acquisition: z.optional(growthAttributionSchema),
   email: z.email(),
   password: z.string().check(z.minLength(8), z.maxLength(128)),
   name: z.optional(z.string().check(z.trim(), z.minLength(1), z.maxLength(80))),

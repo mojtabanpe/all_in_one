@@ -11,6 +11,7 @@ import type {
 } from '@all-in-one/shared/schemas';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../api/api-base-url';
+import { GrowthAnalytics } from '../growth-analytics';
 
 const LAST_USER = 'aio:last-user';
 
@@ -41,6 +42,7 @@ const unreachable = (error: unknown) =>
 /** Session state. The session itself is an httpOnly cookie set by the api. */
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
+  private readonly analytics = inject(GrowthAnalytics);
   private readonly nativePush = inject(NativePush);
   private readonly push = inject(PushSettings);
   private readonly http = inject(HttpClient);
@@ -94,7 +96,10 @@ export class AuthStore {
   /** Signs in right away, or reports that a confirmation email was sent. */
   async register(input: RegisterInput): Promise<RegisterResult> {
     const result = await firstValueFrom(
-      this.http.post<RegisterResult>(`${this.api}/auth/register`, input),
+      this.http.post<RegisterResult>(`${this.api}/auth/register`, {
+        ...input,
+        acquisition: this.analytics.context(),
+      }),
     );
     if (result.status === 'signed-in') {
       this.user.set(result.user);

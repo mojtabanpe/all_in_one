@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import {
   AioTranslate,
   AioButton,
@@ -12,7 +12,7 @@ import {
   lucideHeartPulse,
   lucideLanguages,
 } from '@ng-icons/lucide';
-import { CUSTOMER_APP_URL } from '../customer-url';
+import { injectCustomerLinks } from '../customer-url';
 import { APPLETS } from './applets-data';
 
 @Component({
@@ -51,13 +51,13 @@ import { APPLETS } from './applets-data';
           </ul>
         </article>
       }
-      <a aioBtn size="lg" class="self-start" [href]="customerUrl">{{
-        'شروع کنید' | aioTranslate
+      <a aioBtn size="lg" class="self-start" [href]="customerLinks.signup()">{{
+        'ساخت حساب رایگان' | aioTranslate
       }}</a>
     </div>
   `,
 })
 export class Applets {
-  protected readonly customerUrl = inject(CUSTOMER_APP_URL);
+  protected readonly customerLinks = injectCustomerLinks();
   protected readonly applets = APPLETS;
 }

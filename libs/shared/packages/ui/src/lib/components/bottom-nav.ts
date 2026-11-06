@@ -35,6 +35,7 @@ export interface AioNavItem {
           hlmBtn
           variant="ghost"
           [routerLink]="item.link"
+          [queryParams]="navigationQueryParams()"
           routerLinkActive
           #rla="routerLinkActive"
           [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
@@ -52,4 +53,5 @@ export interface AioNavItem {
 export class AioBottomNav {
   readonly items = input.required<readonly AioNavItem[]>();
   readonly label = input('ناوبری اصلی');
+  readonly navigationQueryParams = input<Readonly<Record<string, string>>>();
 }

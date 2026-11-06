@@ -38,7 +38,11 @@ import { AioIcon } from './icon';
         collapsible="offcanvas"
       >
         <div hlmSidebarHeader class="flex-row items-center px-4 py-7">
-          <a routerLink="/" class="flex flex-1 items-center gap-2 font-bold">
+          <a
+            routerLink="/"
+            [queryParams]="navigationQueryParams()"
+            class="flex flex-1 items-center gap-2 font-bold"
+          >
             <img
               [src]="logoSrc()"
               width="36"
@@ -72,6 +76,7 @@ import { AioIcon } from './icon';
                   <a
                     hlmSidebarMenuButton
                     [routerLink]="item.link"
+                    [queryParams]="navigationQueryParams()"
                     routerLinkActive
                     #rla="routerLinkActive"
                     [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
@@ -108,6 +113,7 @@ import { AioIcon } from './icon';
           }
           <a
             routerLink="/"
+            [queryParams]="navigationQueryParams()"
             class="flex min-h-11 min-w-0 shrink-0 items-center gap-2 text-base font-bold"
             [attr.aria-label]="appName() | aioTranslate"
           >
@@ -136,6 +142,7 @@ import { AioIcon } from './icon';
 
     <aio-bottom-nav
       [items]="navItems()"
+      [navigationQueryParams]="navigationQueryParams()"
       [label]="
         (activeLanguage() === 'en' ? 'Main navigation' : 'ناوبری اصلی')
           | aioTranslate
@@ -158,4 +165,6 @@ export class AioAppShell {
   );
   readonly logoSrc = input('brand-logo.png');
   readonly navItems = input.required<readonly AioNavItem[]>();
+  /** Explicit caller-approved URL context; never preserve arbitrary current query params. */
+  readonly navigationQueryParams = input<Readonly<Record<string, string>>>();
 }

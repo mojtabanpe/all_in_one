@@ -78,6 +78,32 @@ export class AuthService {
         emailVerifiedAt: verify ? null : new Date(),
       },
     });
+    // Only a successfully created account can emit this event. Analytics must
+    // never turn a successful registration into an error or send auth fields.
+    if (
+      input.acquisition &&
+      this.config.get<string>('GROWTH_ANALYTICS_ENABLED') !== 'false'
+    ) {
+      try {
+        const { visitorId, language, campaign } = input.acquisition;
+        await this.prisma.growthEvent.createMany({
+          data: [
+            {
+              visitorId,
+              language,
+              name: 'signup_completed',
+              day: new Date().toLocaleDateString('en-CA', {
+                timeZone: 'Asia/Tehran',
+              }),
+              ...(campaign ? { campaign } : {}),
+            },
+          ],
+          skipDuplicates: true,
+        });
+      } catch {
+        this.logger.warn('Signup acquisition event could not be recorded');
+      }
+    }
     if (verify)
       this.sendVerificationLink(email).catch((error: Error) =>
         this.logger.error('Verification email failed: ' + error.message),

@@ -1,4 +1,5 @@
 import { provideAioLocale } from '@all-in-one/ui';
+import { provideHttpClient, withFetch } from '@angular/common/http';
 import {
   ApplicationConfig,
   provideBrowserGlobalErrorListeners,
@@ -12,6 +13,7 @@ import {
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideHttpClient(withFetch()),
     provideAioLocale(),
     provideClientHydration(withEventReplay()),
     provideBrowserGlobalErrorListeners(),

@@ -1,12 +1,15 @@
 import { httpResource } from '@angular/common/http';
 import { Component, computed, inject } from '@angular/core';
-import type { AdminStats } from '@all-in-one/shared/schemas';
+import type { AdminStats, GrowthSummary } from '@all-in-one/shared/schemas';
 import {
   AioTranslate,
   AioCardDirectives,
   AioCardHeading,
   AioSkeletonRows,
   AioLocale,
+  AioButton,
+  AioTableDirectives,
+  AioEmptyState,
 } from '@all-in-one/ui';
 import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
 
@@ -18,6 +21,9 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
     AioCardHeading,
     AioSkeletonRows,
     AioTranslate,
+    AioButton,
+    AioTableDirectives,
+    AioEmptyState,
   ],
   template: `
     <div class="flex flex-col gap-4">
@@ -46,6 +52,148 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
           ></div>
         </div>
       }
+      <section
+        class="mt-4 flex flex-col gap-4"
+        aria-labelledby="acquisition-heading"
+      >
+        <div>
+          <h2 id="acquisition-heading" class="text-xl font-semibold">
+            {{ 'جذب و ثبت‌نام' | aioTranslate }}
+          </h2>
+          <p class="mt-2 text-sm leading-7 text-muted-foreground">
+            {{
+              'بازدیدکنندگان یکتا در ۳۰ روز اخیر؛ حساب ساخته‌شده می‌تواند هنوز منتظر تأیید ایمیل باشد. این شمارنده‌ها نرخ تبدیل یک گروه ثابت نیستند.'
+                | aioTranslate
+            }}
+          </p>
+        </div>
+        @if (growth.hasValue()) {
+          <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            @for (tile of growthTiles(); track tile.label) {
+              <section aioCard size="sm">
+                <div
+                  aioCardHeading
+                  [title]="fa(tile.value)"
+                  [level]="3"
+                  [description]="tile.label | aioTranslate"
+                  titleClass="text-2xl"
+                ></div>
+              </section>
+            }
+          </div>
+          <h3 class="mt-4 font-semibold">
+            {{ 'کانال‌های جذب' | aioTranslate }}
+          </h3>
+          <p class="text-sm leading-7 text-muted-foreground">
+            {{
+              '۲۰ کانال برتر بر اساس اولین منبع مشاهده‌شدهٔ هر بازدیدکننده در همین ۳۰ روز؛ مستقیم و نامشخص یعنی منبع ثبت نشده است.'
+                | aioTranslate
+            }}
+          </p>
+          @if (growth.value().channels.length) {
+            <div
+              aioTableContainer
+              class="max-w-full overflow-x-auto"
+              tabindex="0"
+              [attr.aria-label]="'کانال‌های جذب' | aioTranslate"
+            >
+              <table aioTable>
+                <caption aioCaption>
+                  {{
+                    'شمارش بازدیدکنندگان یکتا؛ اولین فعالیت یعنی ساخت کار یا مرور کارت در این مرورگر طی دورهٔ نگهداری آمار.'
+                      | aioTranslate
+                  }}
+                </caption>
+                <thead aioTHead>
+                  <tr aioTr>
+                    <th aioTh scope="col">{{ 'منبع' | aioTranslate }}</th>
+                    <th aioTh scope="col">{{ 'رسانه' | aioTranslate }}</th>
+                    <th aioTh scope="col">{{ 'بازدید' | aioTranslate }}</th>
+                    <th aioTh scope="col">
+                      {{ 'شروع ثبت‌نام' | aioTranslate }}
+                    </th>
+                    <th aioTh scope="col">
+                      {{ 'حساب‌های ساخته‌شده' | aioTranslate }}
+                    </th>
+                    <th aioTh scope="col">
+                      {{ 'اولین فعالیت' | aioTranslate }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody aioTBody>
+                  @for (channel of growth.value().channels; track $index) {
+                    <tr aioTr>
+                      <td aioTd>
+                        <bdi
+                          class="inline-block max-w-40 whitespace-normal break-words"
+                          >{{
+                            channel.source === 'direct'
+                              ? ('مستقیم' | aioTranslate)
+                              : channel.source
+                          }}</bdi
+                        >
+                      </td>
+                      <td aioTd>
+                        <bdi
+                          class="inline-block max-w-40 whitespace-normal break-words"
+                          >{{
+                            channel.medium === 'unknown'
+                              ? ('نامشخص' | aioTranslate)
+                              : channel.medium
+                          }}</bdi
+                        >
+                      </td>
+                      <td aioTd>{{ fa(channel.landingVisitors) }}</td>
+                      <td aioTd>{{ fa(channel.signupVisitors) }}</td>
+                      <td aioTd>{{ fa(channel.completedSignupVisitors) }}</td>
+                      <td aioTd>{{ fa(channel.activatedVisitors) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <div
+              aioEmptyState
+              [title]="'هنوز کانالی ثبت نشده' | aioTranslate"
+              [description]="
+                'آمار پس از اولین بازدید یا فعالیت ثبت‌شده نمایش داده می‌شود.'
+                  | aioTranslate
+              "
+            ></div>
+          }
+        } @else if (growth.error()) {
+          <section aioCard size="sm">
+            <div
+              aioCardHeading
+              [title]="'آمار جذب دریافت نشد' | aioTranslate"
+              [level]="3"
+              [description]="
+                'دریافت نشدن آمار به معنی صفر بودن آن نیست.' | aioTranslate
+              "
+            ></div>
+            <div aioCardFooter>
+              <button
+                aioBtn
+                variant="outline"
+                type="button"
+                (click)="growth.reload()"
+              >
+                {{ 'تلاش دوباره' | aioTranslate }}
+              </button>
+            </div>
+          </section>
+        } @else {
+          <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <div
+              aioSkeletonRows
+              class="contents"
+              [count]="5"
+              itemClass="h-24 rounded-3xl"
+            ></div>
+          </div>
+        }
+      </section>
       <web-api-status />
     </div>
   `,
@@ -58,6 +206,27 @@ export class Dashboard {
     () => `${this.api}/admin/stats`,
   );
   protected readonly fa = (n: number) => this.locale.number(n);
+  protected readonly growth = httpResource<GrowthSummary>(
+    () => `${this.api}/growth/summary`,
+  );
+  protected readonly growthTiles = computed(() => {
+    const data = this.growth.hasValue() ? this.growth.value() : undefined;
+    return data
+      ? [
+          { label: 'بازدیدکنندگان صفحهٔ معرفی', value: data.landingVisitors },
+          { label: 'شروع‌کنندگان ثبت‌نام', value: data.signupVisitors },
+          {
+            label: 'بازدیدکنندگان با حساب ساخته‌شده',
+            value: data.completedSignupVisitors,
+          },
+          { label: 'اولین ساخت کار در مرورگر', value: data.firstTaskVisitors },
+          {
+            label: 'اولین مرور کارت در مرورگر',
+            value: data.firstReviewVisitors,
+          },
+        ]
+      : [];
+  });
   protected readonly tiles = computed(() => {
     const s = this.stats.value();
     if (!s) return [];

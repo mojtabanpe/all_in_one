@@ -1,0 +1,98 @@
+import { Reflector } from '@nestjs/core';
+import { IS_PUBLIC, ROLES } from '@all-in-one/api/auth';
+import { growthEventSchema } from '@all-in-one/shared/schemas';
+import { GrowthController } from './growth.controller';
+import { GrowthService } from './growth.service';
+
+const event = {
+  visitorId: '019a59e3-4070-7000-8000-000000000001',
+  name: 'landing_view',
+  language: 'fa',
+} as const;
+
+describe('Growth data boundaries', () => {
+  it('does not access storage or aggregates while the rollout is disabled', async () => {
+    const record = vi.fn();
+    const summary = vi.fn();
+    const controller = new GrowthController(
+      { record, summary } as never,
+      { get: () => 'false' } as never,
+    );
+    await expect(controller.record(event)).rejects.toThrow();
+    expect(() => controller.summary()).toThrow();
+    expect(record).not.toHaveBeenCalled();
+    expect(summary).not.toHaveBeenCalled();
+  });
+  it('rejects arbitrary/personal payload fields and fabricated completion events', () => {
+    expect(growthEventSchema.safeParse(event).success).toBe(true);
+    for (const input of [
+      { ...event, email: 'private@example.com' },
+      { ...event, name: 'payment_verified' },
+      { ...event, name: 'signup_completed' },
+      { ...event, name: 'first_task_created' },
+      { ...event, name: 'first_review_completed' },
+      { ...event, visitorId: 'user-email@example.com' },
+      { ...event, campaign: { password: 'secret' } },
+      { ...event, campaign: { utm_source: 'x'.repeat(201) } },
+      { ...event, campaign: { utm_source: 'a\nb' } },
+    ])
+      expect(growthEventSchema.safeParse(input).success).toBe(false);
+  });
+
+  it('permits public writes but keeps aggregates admin-only', () => {
+    const reflector = new Reflector();
+    expect(reflector.get(IS_PUBLIC, GrowthController.prototype.record)).toBe(
+      true,
+    );
+    expect(
+      reflector.get(IS_PUBLIC, GrowthController.prototype.summary),
+    ).toBeUndefined();
+    expect(reflector.get(ROLES, GrowthController.prototype.summary)).toEqual([
+      'ADMIN',
+    ]);
+  });
+
+  it('uses server Tehran day and atomic duplicate skipping, without persisting private payload fields', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-06T21:00:00Z'));
+    try {
+      const createMany = vi.fn().mockResolvedValue({ count: 1 });
+      const service = new GrowthService({
+        growthEvent: { createMany },
+      } as never);
+      await service.record(event);
+      expect(createMany).toHaveBeenCalledWith({
+        data: [
+          {
+            visitorId: event.visitorId,
+            name: event.name,
+            language: 'fa',
+            day: '2026-11-07',
+          },
+        ],
+        skipDuplicates: true,
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('returns only aggregate counts and labels the 30-day window', async () => {
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce([{ name: 'landing_view', visitors: 12n }])
+      .mockResolvedValueOnce([]);
+    const summary = await new GrowthService({
+      $queryRaw: query,
+    } as never).summary();
+    expect(summary).toEqual({
+      windowDays: 30,
+      landingVisitors: 12,
+      signupVisitors: 0,
+      completedSignupVisitors: 0,
+      firstTaskVisitors: 0,
+      firstReviewVisitors: 0,
+      channels: [],
+    });
+  });
+});

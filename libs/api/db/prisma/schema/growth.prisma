@@ -1,0 +1,16 @@
+/// Limited pseudonymous acquisition events; no user/profile relationship.
+model GrowthEvent {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  visitorId String   @db.Uuid
+  name      String   @db.VarChar(32)
+  language  String   @db.VarChar(2)
+  day       String   @db.VarChar(10)
+  campaign  Json?
+  milestoneKey String? @unique
+  createdAt DateTime @default(now())
+
+  // One visitor/event/day: retries and reloads do not inflate the funnel.
+  @@unique([visitorId, name, day])
+  @@index([day, name])
+  @@map("growth_events")
+}

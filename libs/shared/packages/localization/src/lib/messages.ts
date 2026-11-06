@@ -1,5 +1,112 @@
 /** Shared Persian/English interface and built-in catalog copy. */
 export const MESSAGES: readonly (readonly [string, string])[] = [
+  ['حساب‌های ساخته‌شده', 'Created accounts'],
+  ['منبع', 'Source'],
+  ['رسانه', 'Medium'],
+  ['بازدید', 'Visits'],
+  ['شروع ثبت‌نام', 'Signup started'],
+  ['مستقیم', 'Direct'],
+  ['نامشخص', 'Unknown'],
+  ['کانال‌های جذب', 'Acquisition channels'],
+  [
+    '۲۰ کانال برتر بر اساس اولین منبع مشاهده‌شدهٔ هر بازدیدکننده در همین ۳۰ روز؛ مستقیم و نامشخص یعنی منبع ثبت نشده است.',
+    'Top 20 channels by each visitor’s first observed source within these 30 days. Direct and unknown mean no source was recorded.',
+  ],
+  [
+    'شمارش بازدیدکنندگان یکتا؛ اولین فعالیت یعنی ساخت کار یا مرور کارت در این مرورگر طی دورهٔ نگهداری آمار.',
+    'Unique visitor counts. First activity means creating a task or reviewing a card in this browser during the analytics retention period.',
+  ],
+  ['اولین فعالیت', 'First activity'],
+  ['اولین ساخت کار در مرورگر', 'First task created in browser'],
+  ['اولین مرور کارت در مرورگر', 'First card review in browser'],
+  ['هنوز کانالی ثبت نشده', 'No channels recorded yet'],
+  [
+    'آمار پس از اولین بازدید یا فعالیت ثبت‌شده نمایش داده می‌شود.',
+    'Metrics appear after the first recorded visit or activity.',
+  ],
+  ['جذب و ثبت‌نام', 'Acquisition and signups'],
+  [
+    'بازدیدکنندگان یکتا در ۳۰ روز اخیر؛ حساب ساخته‌شده می‌تواند هنوز منتظر تأیید ایمیل باشد. این شمارنده‌ها نرخ تبدیل یک گروه ثابت نیستند.',
+    'Unique visitors in the last 30 days. Created accounts may still await email verification. These counts are not a same-cohort conversion rate.',
+  ],
+  ['آمار جذب دریافت نشد', 'Unable to load acquisition metrics'],
+  [
+    'دریافت نشدن آمار به معنی صفر بودن آن نیست.',
+    'Unavailable metrics do not mean there were no visitors.',
+  ],
+  ['بازدیدکنندگان صفحهٔ معرفی', 'Landing page visitors'],
+  ['شروع‌کنندگان ثبت‌نام', 'Visitors who started signup'],
+  ['بازدیدکنندگان با حساب ساخته‌شده', 'Visitors with a created account'],
+
+  ['آمار استفاده', 'Usage analytics'],
+  [
+    'بازدید صفحه و شروع ثبت‌نام را با یک شناسهٔ تصادفی و منبع کمپین ثبت می‌کنیم. ایمیل، رمز و محتوای کارها یا سلامت ارسال نمی‌شوند. داده‌ها پس از ۹۰ روز حذف می‌شوند.',
+    'We record page visits and registration starts using a random ID and campaign source. Your email, password, task content and health details are not sent. Records are removed after 90 days.',
+  ],
+  [
+    'ثبت آمار روشن است. خاموش‌کردن، ثبت‌های بعدی را متوقف می‌کند؛ داده‌های قبلی تا پایان دورهٔ نگهداری باقی می‌مانند.',
+    'Analytics is on. Turning it off stops future records; existing records remain until the retention period ends.',
+  ],
+  [
+    'ثبت آمار خاموش است. این انتخاب روی امکانات برنامه اثری ندارد.',
+    'Analytics is off. This does not affect app features.',
+  ],
+  ['فعال‌کردن آمار', 'Enable analytics'],
+
+  ['آمار اختیاری استفاده', 'Optional usage analytics'],
+  [
+    'با اجازهٔ تو، بازدید صفحه و شروع ثبت‌نام را با یک شناسهٔ تصادفی و منبع کمپین ثبت می‌کنیم. ایمیل، رمز و محتوای کارها یا سلامت ارسال نمی‌شوند. داده‌ها پس از ۹۰ روز حذف می‌شوند.',
+    'With your permission, we record page visits and registration starts using a random ID and campaign source. We do not send your email, password, task content or health details. Records are removed after 90 days.',
+  ],
+  [
+    'اجازه داده‌ای. خاموش‌کردن، ثبت‌های بعدی را متوقف می‌کند؛ داده‌های قبلی تا پایان دورهٔ نگهداری باقی می‌مانند.',
+    'You have opted in. Turning this off stops future records; existing records remain until the retention period ends.',
+  ],
+  [
+    'بدون اجازهٔ تو آماری ثبت نمی‌شود. رد کردن روی امکانات برنامه اثری ندارد.',
+    'No analytics is recorded without your permission. Declining does not affect app features.',
+  ],
+  ['ثبت نشود', 'Do not record'],
+  ['اجازه می‌دهم', 'Allow analytics'],
+
+  ['چطور شروع کنم؟', 'How do I get started?'],
+  [
+    'لازم نیست همه‌چیز را یک‌باره تغییر بدهی. فقط یک کار کوچک را شروع کن.',
+    'You do not have to change everything at once. Start with one small action.',
+  ],
+  ['قدم اول', 'Step one'],
+  ['قدم دوم', 'Step two'],
+  ['قدم سوم', 'Step three'],
+  ['حسابت را بساز', 'Create your account'],
+  [
+    'با ایمیل و رمز عبور ثبت‌نام کن. اگر حساب داری، وارد شو.',
+    'Sign up with your email and a password, or sign in to your existing account.',
+  ],
+  ['از نیاز امروزت شروع کن', 'Choose what you need today'],
+  [
+    'برنامه‌ریز، انگلیسی یا سلامت را باز کن؛ می‌توانی بعداً سراغ بخش‌های دیگر بروی.',
+    'Open Planner, English or Health. You can explore the other areas later.',
+  ],
+  ['اولین قدمت را ثبت کن', 'Take your first step'],
+  [
+    'یک کار بساز، چند کارت مرور کن یا یک وعده غذایی ثبت کن. همین یک قدم برای شروع کافی است.',
+    'Create a task, review a few cards or log a meal. One action is enough to get started.',
+  ],
+  [
+    'با فلش‌کارت، مرور زمان‌بندی‌شده و متن‌خوانی، انگلیسی را هر روز تمرین کنید.',
+    'Practice English every day with flashcards, scheduled reviews and reading.',
+  ],
+  ['ساخت مجموعه و فلش‌کارت‌های شخصی', 'Create your own decks and flashcards'],
+  [
+    'متن‌خوانی و تمرین نوشتن، شنیدن و تلفظ',
+    'Reading, writing, listening and pronunciation practice',
+  ],
+  ['نماد اعتماد الکترونیکی', 'Electronic trust seal'],
+  ['نماد اعتماد الکترونیکی Poshtetgarm', 'Poshtetgarm electronic trust seal'],
+  [
+    'مشاهده اعتبار اینماد (در زبانه جدید)',
+    'Verify the Enamad trust seal (opens in a new tab)',
+  ],
   ['مروری باقی نمانده', 'There are no reviews left'],
   ['ثبت وعده غذایی', 'Meal registration'],
   ['وعده‌ای ثبت نشده', 'No promise registered'],
@@ -2749,6 +2856,18 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   [
     'رژیم‌های آماده یا برنامه غذایی هفتگی با دستور پخت',
     'Prepared diets or weekly meal plan with recipes',
+  ],
+  ['برنامه روزانه، زبان و سلامت؛', 'Daily planning, English and health;'],
+  ['همه در یک جا.', 'all in one place.'],
+  [
+    'کارها و عادت‌هایت را دنبال کن، انگلیسی مرور کن و وعده‌ها و تمرین‌هایت را ثبت کن. از همان بخشی شروع کن که امروز به آن نیاز داری.',
+    'Keep track of tasks and habits, review English, and log meals and workouts. Start with what you need today.',
+  ],
+  ['ساخت حساب رایگان', 'Create a free account'],
+  ['حساب داری؟ وارد شو', 'Already have an account? Sign in'],
+  [
+    'فارسی و انگلیسی، روی موبایل و کامپیوتر',
+    'Persian and English, on mobile and desktop',
   ],
   ['یک فضای شخصی، برای زندگی روزمره', 'A personal space, for everyday life'],
   ['روزهای شلوغ.', 'busy days'],

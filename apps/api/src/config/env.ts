@@ -10,6 +10,11 @@ export const envSchema = z.object({
   VAPID_PRIVATE_KEY: z.string().optional(),
   VAPID_SUBJECT: z.string().optional(),
   API_HOST: z.string().optional(),
+  ZIBAL_MERCHANT: z.string().optional(),
+  ZIBAL_SANDBOX: z.enum(['true', 'false']).default('false'),
+  ZIBAL_CALLBACK_URL: z.url().optional(),
+  // First-party acquisition analytics, enabled without an end-user control.
+  GROWTH_ANALYTICS_ENABLED: z.enum(['true', 'false']).default('true'),
   DATABASE_URL: z.url(),
   JWT_SECRET: z.string().min(32),
 

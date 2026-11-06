@@ -1,4 +1,12 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+  OnInit,
+} from '@angular/core';
 import {
   form,
   FormField,
@@ -22,6 +30,8 @@ import {
 import { loginSchema } from '@all-in-one/shared/schemas';
 import { apiErrorMessage } from './auth.guards';
 import { AuthStore } from './auth.store';
+import { GrowthAnalytics } from '../growth-analytics';
+import { safeAuthRedirect } from './safe-redirect';
 
 /**
  * Login (and optional sign-up) page. Route it at `/login` with `guestGuard`;
@@ -151,7 +161,8 @@ import { AuthStore } from './auth.store';
     </div>
   `,
 })
-export class LoginPage {
+export class LoginPage implements OnInit {
+  protected readonly analytics = inject(GrowthAnalytics);
   private readonly notifications = inject(AioNotifications);
 
   // Route data binds these (withComponentInputBinding sets undefined when absent).
@@ -175,8 +186,26 @@ export class LoginPage {
   });
 
   constructor() {
+    effect(() => {
+      if (
+        this.mode() === 'register' &&
+        this.canRegister() &&
+        this.analytics.ready() &&
+        this.analytics.choice() === 'granted'
+      )
+        void this.analytics.track('signup_started');
+    });
     if (this.route.snapshot.queryParamMap.has('denied')) {
       this.notifications.error('این حساب به این بخش دسترسی ندارد.');
+    }
+  }
+
+  ngOnInit(): void {
+    if (
+      this.canRegister() &&
+      this.route.snapshot.queryParamMap.get('mode') === 'register'
+    ) {
+      this.mode.set('register');
     }
   }
 
@@ -202,10 +231,8 @@ export class LoginPage {
             return;
           }
         }
-        const redirect =
-          this.route.snapshot.queryParamMap.get('redirect') ?? '/';
         await this.router.navigateByUrl(
-          redirect.startsWith('/') ? redirect : '/',
+          safeAuthRedirect(this.route.snapshot.queryParamMap.get('redirect')),
         );
       } catch (error) {
         // 403 on login: the account exists but its email is not confirmed yet.
