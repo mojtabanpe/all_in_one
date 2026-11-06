@@ -31,6 +31,7 @@ import {
   verbatim,
 } from '@all-in-one/ui';
 import { API_BASE_URL, apiErrorMessage } from '@all-in-one/web/shared';
+import { BillingAccountPanel } from './billing-account';
 import { BillingOrders } from './billing-orders';
 
 interface PlanModel {
@@ -55,6 +56,7 @@ const EMPTY: PlanModel = {
 @Component({
   selector: 'admin-billing-plans',
   imports: [
+    BillingAccountPanel,
     BillingOrders,
     AioAsyncButton,
     AioBadge,
@@ -244,6 +246,8 @@ const EMPTY: PlanModel = {
           }
         </div>
       </section>
+
+      <admin-billing-account class="max-w-2xl" />
 
       <admin-billing-orders />
     </div>

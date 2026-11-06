@@ -39,6 +39,8 @@ model User {
   mcpKeys            McpKey[]
   billingOrders       BillingOrder[]
   billingSubscription BillingSubscription?
+  billingAdjustments  BillingAdjustment[] @relation("BillingAdjustmentUser")
+  billingAdjustmentsMade BillingAdjustment[] @relation("BillingAdjustmentAdmin")
 
   // Applets (each applet's models live in its own schema file)
   plannerTasks          PlannerTask[]          @relation("PlannerTaskCreator")

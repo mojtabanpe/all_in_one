@@ -18,9 +18,13 @@ import {
   type AuthUser,
 } from '@all-in-one/api/auth';
 import {
+  billingAccountQuerySchema,
+  billingAdjustmentSchema,
   billingAdminOrdersQuerySchema,
   billingCheckoutSchema,
   billingPlanInputSchema,
+  type BillingAccountQuery,
+  type BillingAdjustmentInput,
   type BillingAdminOrdersQuery,
   type BillingCheckoutInput,
   type BillingPlanInput,
@@ -79,6 +83,23 @@ export class BillingController {
     query: BillingAdminOrdersQuery,
   ) {
     return this.billing.adminOrders(query);
+  }
+
+  @Roles('ADMIN')
+  @Get('admin/account')
+  account(
+    @Query({ schema: billingAccountQuerySchema }) query: BillingAccountQuery,
+  ) {
+    return this.billing.account(query.email);
+  }
+
+  @Roles('ADMIN')
+  @Post('admin/adjustments')
+  adjust(
+    @CurrentUser() admin: AuthUser,
+    @Body({ schema: billingAdjustmentSchema }) input: BillingAdjustmentInput,
+  ) {
+    return this.billing.adjust(admin.id, input);
   }
 
   @Roles('ADMIN')

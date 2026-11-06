@@ -1,10 +1,13 @@
 import {
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { PrismaService } from '@all-in-one/api/db';
 import type {
+  BillingAccount,
+  BillingAdjustmentInput,
   BillingAdminOrderPage,
   BillingAdminOrdersQuery,
   BillingOrderSummary,
@@ -182,6 +185,93 @@ export class BillingService {
         pendingOrders,
       },
     };
+  }
+
+  /** Support view of one account: paid access, latest orders and every manual change. */
+  async account(email: string, now = new Date()): Promise<BillingAccount> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.trim().toLowerCase() },
+      select: { id: true, email: true, name: true },
+    });
+    if (!user) throw new NotFoundException('Account not found');
+    const [subscription, orders, adjustments] = await Promise.all([
+      this.subscription(user.id, now),
+      this.orders(user.id),
+      this.prisma.billingAdjustment.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+        include: { admin: { select: { email: true } } },
+      }),
+    ]);
+    return {
+      email: user.email,
+      name: user.name,
+      subscription,
+      orders,
+      adjustments: adjustments.map((row) => ({
+        id: row.id,
+        action: row.action,
+        days: row.days,
+        reason: row.reason,
+        adminEmail: row.admin.email,
+        previousUntil: row.previousUntil?.toISOString() ?? null,
+        newUntil: row.newUntil.toISOString(),
+        createdAt: row.createdAt.toISOString(),
+      })),
+    };
+  }
+
+  /**
+   * Admin change to someone's paid access: extend by days from max(now, paidUntil), or end it now. The change
+   * and its audit row commit together, under the same account lock as payment activation.
+   */
+  async adjust(
+    adminId: string,
+    input: BillingAdjustmentInput,
+    now = new Date(),
+  ): Promise<BillingAccount> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: input.email.trim().toLowerCase() },
+      select: { id: true },
+    });
+    if (!user) throw new NotFoundException('Account not found');
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT 1 FROM "users" WHERE "id" = ${user.id}::uuid FOR UPDATE`;
+      const current = await tx.billingSubscription.findUnique({
+        where: { userId: user.id },
+      });
+      const previousUntil = current?.paidUntil ?? null;
+      let newUntil: Date;
+      if (input.action === 'extend') {
+        const start =
+          previousUntil && previousUntil > now ? previousUntil : now;
+        newUntil = new Date(start.getTime() + input.days * 86_400_000);
+      } else {
+        if (!previousUntil || previousUntil <= now)
+          throw new UnprocessableEntityException(
+            'There is no active subscription to end',
+          );
+        newUntil = now;
+      }
+      await tx.billingSubscription.upsert({
+        where: { userId: user.id },
+        create: { userId: user.id, paidUntil: newUntil },
+        update: { paidUntil: newUntil },
+      });
+      await tx.billingAdjustment.create({
+        data: {
+          userId: user.id,
+          adminId,
+          action: input.action === 'extend' ? 'EXTEND' : 'END',
+          days: input.action === 'extend' ? input.days : null,
+          reason: input.reason.trim(),
+          previousUntil,
+          newUntil,
+        },
+      });
+    });
+    return this.account(input.email, now);
   }
 
   /** Creates an owned order with the plan's current price, then asks Zibal for a payment page. */

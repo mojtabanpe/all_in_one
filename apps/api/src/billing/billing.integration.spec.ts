@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import {
   BadGatewayException,
   NotFoundException,
+  UnprocessableEntityException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -9,6 +10,7 @@ import { Reflector } from '@nestjs/core';
 import { PrismaService } from '@all-in-one/api/db';
 import { IS_PUBLIC, ROLES } from '@all-in-one/api/auth';
 import {
+  billingAdjustmentSchema,
   billingCheckoutSchema,
   billingPlanInputSchema,
 } from '@all-in-one/shared/schemas';
@@ -40,6 +42,8 @@ describe('Billing rules', () => {
       billing.adminPlans,
       billing.savePlan,
       billing.adminOrders,
+      billing.account,
+      billing.adjust,
     ])
       expect(reflector.get(ROLES, handler)).toEqual(['ADMIN']);
     expect(reflector.get(IS_PUBLIC, billing.plans)).toBe(true);
@@ -60,6 +64,26 @@ describe('Billing rules', () => {
     });
     await controller.callback(['1', '2']);
     expect(settle).toHaveBeenLastCalledWith('');
+  });
+
+  it('requires a reason and whole days for a manual extension', () => {
+    const base = { email: 'a@example.invalid', reason: 'support' };
+    expect(
+      billingAdjustmentSchema.safeParse({ ...base, action: 'extend', days: 30 })
+        .success,
+    ).toBe(true);
+    expect(
+      billingAdjustmentSchema.safeParse({ ...base, action: 'end' }).success,
+    ).toBe(true);
+    for (const input of [
+      { ...base, action: 'extend' },
+      { ...base, action: 'extend', days: 0 },
+      { ...base, action: 'extend', days: 1.5 },
+      { ...base, action: 'end', reason: 'x' },
+      { ...base, action: 'end', days: 3 },
+      { ...base, action: 'pause' },
+    ])
+      expect(billingAdjustmentSchema.safeParse(input).success).toBe(false);
   });
 
   it('accepts only a plan code at checkout and whole-Toman Rial prices', () => {
@@ -134,6 +158,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
     });
     afterAll(async () => {
       if (prisma) {
+        await prisma.billingAdjustment.deleteMany({ where: { userId } });
         await prisma.billingOrder.deleteMany({ where: { userId } });
         await prisma.billingPlan.deleteMany({ where: { code } });
         await prisma.user.deleteMany({ where: { email } });
@@ -268,6 +293,60 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       expect(page.overview.activeSubscribers).toBeGreaterThanOrEqual(1);
       expect(page.overview.paidRial).toBeGreaterThanOrEqual(2 * 990_000);
       expect(page.total).toBeGreaterThanOrEqual(2);
+    });
+
+    it('extends or ends access by hand and records who, why and what changed', async () => {
+      const now = new Date();
+      const before = new Date(
+        (await service().subscription(userId)).paidUntil as string,
+      );
+      const extended = await service().adjust(
+        userId,
+        {
+          email,
+          action: 'extend',
+          days: 30,
+          reason: 'support: gateway outage',
+        },
+        now,
+      );
+      expect(extended.subscription.paidUntil).toBe(
+        new Date(before.getTime() + 30 * 86_400_000).toISOString(),
+      );
+      const ended = await service().adjust(
+        userId,
+        { email, action: 'end', reason: 'refunded' },
+        now,
+      );
+      expect(ended.subscription).toEqual({
+        paidUntil: now.toISOString(),
+        active: false,
+      });
+      await expect(
+        service().adjust(
+          userId,
+          { email, action: 'end', reason: 'again' },
+          now,
+        ),
+      ).rejects.toBeInstanceOf(UnprocessableEntityException);
+      expect(ended.adjustments.map((row) => row.action)).toEqual([
+        'END',
+        'EXTEND',
+      ]);
+      expect(ended.adjustments[0]).toMatchObject({
+        reason: 'refunded',
+        adminEmail: email,
+        previousUntil: extended.subscription.paidUntil,
+        newUntil: now.toISOString(),
+        days: null,
+      });
+      expect(ended.adjustments[1]).toMatchObject({
+        days: 30,
+        previousUntil: before.toISOString(),
+      });
+      await expect(
+        service().account('nobody@example.invalid'),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('records a failed request and refuses inactive or unknown plans', async () => {

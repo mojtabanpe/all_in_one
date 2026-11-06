@@ -52,3 +52,26 @@ model BillingSubscription {
 
   @@map("billing_subscriptions")
 }
+
+enum BillingAdjustmentAction {
+  EXTEND
+  END
+}
+
+/// Audit trail of an admin changing someone's paid access by hand. Rows are never edited or deleted.
+model BillingAdjustment {
+  id            String                  @id @default(uuid(7)) @db.Uuid
+  userId        String                  @db.Uuid
+  user          User                    @relation("BillingAdjustmentUser", fields: [userId], references: [id], onDelete: Restrict)
+  adminId       String                  @db.Uuid
+  admin         User                    @relation("BillingAdjustmentAdmin", fields: [adminId], references: [id], onDelete: Restrict)
+  action        BillingAdjustmentAction
+  days          Int?
+  reason        String                  @db.VarChar(200)
+  previousUntil DateTime?
+  newUntil      DateTime
+  createdAt     DateTime                @default(now())
+
+  @@index([userId, createdAt])
+  @@map("billing_adjustments")
+}

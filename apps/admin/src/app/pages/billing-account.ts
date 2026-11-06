@@ -1,0 +1,369 @@
+import { firstValueFrom } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Component, inject, signal } from '@angular/core';
+import {
+  email,
+  form,
+  FormField,
+  FormRoot,
+  max,
+  min,
+  minLength,
+  required,
+  submit,
+} from '@angular/forms/signals';
+import type { BillingAccount } from '@all-in-one/shared/schemas';
+import {
+  AioAsyncButton,
+  AioBadge,
+  AioCardDirectives,
+  AioConfirm,
+  AioDatePipe,
+  AioFormErrors,
+  AioFormField,
+  AioInput,
+  AioLocale,
+  AioNotifications,
+  AioNumberField,
+  AioTableDirectives,
+  AioToggleGroupDirectives,
+  AioTranslate,
+} from '@all-in-one/ui';
+import { API_BASE_URL, apiErrorMessage } from '@all-in-one/web/shared';
+
+type Action = 'extend' | 'end';
+
+/** Look up one account's paid access and change it by hand, with a recorded reason. */
+@Component({
+  selector: 'admin-billing-account',
+  imports: [
+    AioAsyncButton,
+    AioBadge,
+    AioCardDirectives,
+    AioDatePipe,
+    AioFormErrors,
+    AioFormField,
+    AioInput,
+    AioNumberField,
+    AioTableDirectives,
+    AioToggleGroupDirectives,
+    AioTranslate,
+    FormField,
+    FormRoot,
+  ],
+  template: `
+    <section aioCard aria-labelledby="account-title">
+      <div aioCardHeader>
+        <h2 aioCardTitle id="account-title">
+          {{ 'اشتراک یک کاربر' | aioTranslate }}
+        </h2>
+        <p aioCardDescription>
+          {{
+            'تمدید یا پایان دستی اشتراک، با دلیلی که در سابقه می‌ماند.'
+              | aioTranslate
+          }}
+        </p>
+      </div>
+      <div aioCardContent class="flex flex-col gap-6">
+        <form
+          class="flex flex-wrap items-end gap-3"
+          [formRoot]="findForm"
+          (submit)="$event.preventDefault(); find()"
+        >
+          <aio-form-field
+            class="min-w-0 flex-1 basis-64"
+            [label]="'ایمیل کاربر' | aioTranslate"
+            controlId="account-email"
+          >
+            <input
+              aioInput
+              id="account-email"
+              type="email"
+              dir="ltr"
+              lang="en"
+              autocomplete="off"
+              [formField]="findForm.email"
+            />
+            <aio-form-errors [errors]="findForm.email().errors()" />
+          </aio-form-field>
+          <button
+            aioAsyncButton
+            type="submit"
+            variant="outline"
+            class="min-h-11"
+            label="پیدا کردن"
+            busyLabel="در حال جستجو"
+            [busy]="finding()"
+          ></button>
+        </form>
+
+        @if (account(); as acc) {
+          <div class="flex flex-col gap-1">
+            <p class="font-medium" dir="ltr">{{ acc.email }}</p>
+            <p>
+              @if (acc.subscription.active) {
+                {{
+                  'فعال تا {0}'
+                    | aioTranslate
+                      : [
+                          acc.subscription.paidUntil
+                            | aioDate: { dateStyle: 'long' },
+                        ]
+                }}
+              } @else if (acc.subscription.paidUntil) {
+                {{
+                  'پایان‌یافته در {0}'
+                    | aioTranslate
+                      : [
+                          acc.subscription.paidUntil
+                            | aioDate: { dateStyle: 'long' },
+                        ]
+                }}
+              } @else {
+                {{ 'بدون اشتراک' | aioTranslate }}
+              }
+            </p>
+          </div>
+
+          <form
+            id="adjust-form"
+            class="grid gap-4 sm:grid-cols-2"
+            [formRoot]="adjustForm"
+            (submit)="$event.preventDefault(); adjust()"
+          >
+            <div
+              aioToggleGroup
+              type="single"
+              variant="outline"
+              class="sm:col-span-2"
+              [value]="adjustModel().action"
+              (valueChange)="setAction($event)"
+              [attr.aria-label]="'نوع تغییر' | aioTranslate"
+            >
+              <button
+                aioToggleGroupItem
+                type="button"
+                value="extend"
+                class="min-h-11 px-4"
+              >
+                {{ 'تمدید' | aioTranslate }}
+              </button>
+              <button
+                aioToggleGroupItem
+                type="button"
+                value="end"
+                class="min-h-11 px-4"
+              >
+                {{ 'پایان همین حالا' | aioTranslate }}
+              </button>
+            </div>
+            @if (adjustModel().action === 'extend') {
+              <aio-number-field
+                label="چند روز"
+                controlId="adjust-days"
+                [field]="adjustForm.days"
+                [showErrors]="true"
+              />
+            }
+            <aio-form-field
+              [class.sm:col-span-2]="adjustModel().action === 'end'"
+              [label]="'دلیل (در سابقه می‌ماند)' | aioTranslate"
+              controlId="adjust-reason"
+            >
+              <input
+                aioInput
+                id="adjust-reason"
+                [formField]="adjustForm.reason"
+              />
+              <aio-form-errors [errors]="adjustForm.reason().errors()" />
+            </aio-form-field>
+            <div class="sm:col-span-2">
+              <button
+                aioAsyncButton
+                type="submit"
+                class="min-h-11"
+                [variant]="
+                  adjustModel().action === 'end' ? 'destructive' : 'default'
+                "
+                [label]="
+                  adjustModel().action === 'end'
+                    ? 'پایان اشتراک'
+                    : 'تمدید اشتراک'
+                "
+                busyLabel="در حال ذخیره"
+                [busy]="saving()"
+                [disabled]="
+                  adjustModel().action === 'end' && !acc.subscription.active
+                "
+              ></button>
+            </div>
+          </form>
+
+          @if (acc.adjustments.length) {
+            <div class="flex flex-col gap-2">
+              <h3 class="font-semibold">
+                {{ 'سابقهٔ تغییرهای دستی' | aioTranslate }}
+              </h3>
+              <div aioTableContainer>
+                <table aioTable>
+                  <thead aioTHead>
+                    <tr aioTr>
+                      <th aioTh>{{ 'زمان' | aioTranslate }}</th>
+                      <th aioTh>{{ 'تغییر' | aioTranslate }}</th>
+                      <th aioTh>{{ 'دلیل' | aioTranslate }}</th>
+                      <th aioTh>{{ 'مدیر سیستم' | aioTranslate }}</th>
+                    </tr>
+                  </thead>
+                  <tbody aioTBody>
+                    @for (row of acc.adjustments; track row.id) {
+                      <tr aioTr>
+                        <td aioTd>
+                          {{
+                            row.createdAt
+                              | aioDate
+                                : { dateStyle: 'medium', timeStyle: 'short' }
+                          }}
+                        </td>
+                        <td aioTd>
+                          <span
+                            aioBadge
+                            [variant]="
+                              row.action === 'END' ? 'destructive' : 'secondary'
+                            "
+                            >{{
+                              (row.action === 'END'
+                                ? 'پایان دستی'
+                                : '{0} روز تمدید'
+                              ) | aioTranslate: [locale.number(row.days ?? 0)]
+                            }}</span
+                          >
+                          <span class="block text-xs text-muted-foreground">{{
+                            'تا {0}'
+                              | aioTranslate
+                                : [
+                                    row.newUntil
+                                      | aioDate: { dateStyle: 'medium' },
+                                  ]
+                          }}</span>
+                        </td>
+                        <td aioTd>{{ row.reason }}</td>
+                        <td aioTd dir="ltr" class="text-end text-xs">
+                          {{ row.adminEmail }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </section>
+  `,
+})
+export class BillingAccountPanel {
+  protected readonly locale = inject(AioLocale);
+  private readonly api = inject(API_BASE_URL);
+  private readonly http = inject(HttpClient);
+  private readonly notifications = inject(AioNotifications);
+  private readonly confirm = inject(AioConfirm);
+
+  protected readonly account = signal<BillingAccount | null>(null);
+  protected readonly finding = signal(false);
+  protected readonly saving = signal(false);
+
+  protected readonly findModel = signal({ email: '' });
+  protected readonly findForm = form(this.findModel, (path) => {
+    required(path.email, { message: 'ایمیل را وارد کن' });
+    email(path.email, { message: 'ایمیل معتبر وارد کن.' });
+  });
+
+  protected readonly adjustModel = signal<{
+    action: Action;
+    days: number;
+    reason: string;
+  }>({ action: 'extend', days: 30, reason: '' });
+  protected readonly adjustForm = form(this.adjustModel, (path) => {
+    min(path.days, 1, { message: 'بین ۱ تا ۳۶۶ روز' });
+    max(path.days, 366, { message: 'بین ۱ تا ۳۶۶ روز' });
+    required(path.reason, { message: 'دلیل را بنویس' });
+    minLength(path.reason, 3, { message: 'دلیل را بنویس' });
+  });
+
+  protected setAction(value: unknown): void {
+    if (value === 'extend' || value === 'end')
+      this.adjustModel.update((model) => ({ ...model, action: value }));
+  }
+
+  protected find(): void {
+    submit(this.findForm, async () => {
+      this.finding.set(true);
+      try {
+        this.account.set(
+          await firstValueFrom(
+            this.http.get<BillingAccount>(`${this.api}/billing/admin/account`, {
+              params: { email: this.findModel().email.trim() },
+            }),
+          ),
+        );
+      } catch (error) {
+        this.account.set(null);
+        this.notifications.error(
+          error instanceof HttpErrorResponse && error.status === 404
+            ? 'حسابی با این ایمیل نیست'
+            : 'حساب پیدا نشد',
+          error instanceof HttpErrorResponse && error.status === 404
+            ? undefined
+            : apiErrorMessage(error),
+        );
+      } finally {
+        this.finding.set(false);
+      }
+    });
+  }
+
+  protected adjust(): void {
+    const account = this.account();
+    if (!account) return;
+    submit(this.adjustForm, async () => {
+      const { action, days, reason } = this.adjustModel();
+      const ok = await this.confirm.ask(
+        action === 'end'
+          ? {
+              title: 'اشتراک همین حالا تمام شود؟',
+              description: 'دسترسی پولی این کاربر بلافاصله قطع می‌شود.',
+              confirmText: 'پایان اشتراک',
+              destructive: true,
+            }
+          : {
+              title: 'اشتراک تمدید شود؟',
+              description:
+                'روزها از پایان اشتراک فعلی، یا از امروز اگر تمام شده، اضافه می‌شوند.',
+              confirmText: 'تمدید اشتراک',
+            },
+      );
+      if (!ok) return;
+      this.saving.set(true);
+      try {
+        this.account.set(
+          await firstValueFrom(
+            this.http.post<BillingAccount>(
+              `${this.api}/billing/admin/adjustments`,
+              action === 'end'
+                ? { email: account.email, action, reason: reason.trim() }
+                : { email: account.email, action, days, reason: reason.trim() },
+            ),
+          ),
+        );
+        this.adjustModel.set({ action: 'extend', days: 30, reason: '' });
+        this.adjustForm().reset();
+        this.notifications.success('تغییر ثبت شد');
+      } catch (error) {
+        this.notifications.error('تغییر ثبت نشد', apiErrorMessage(error));
+      } finally {
+        this.saving.set(false);
+      }
+    });
+  }
+}

@@ -81,3 +81,44 @@ export interface BillingAdminOrderPage {
   total: number;
   overview: BillingAdminOverview;
 }
+
+export const billingAccountQuerySchema = z.strictObject({ email: z.email() });
+export type BillingAccountQuery = z.infer<typeof billingAccountQuerySchema>;
+
+const adjustmentReason = z
+  .string()
+  .check(z.trim(), z.minLength(3), z.maxLength(200));
+/** Admin: extend someone's paid access by a number of days, or end it now. A reason is always recorded. */
+export const billingAdjustmentSchema = z.discriminatedUnion('action', [
+  z.strictObject({
+    email: z.email(),
+    action: z.literal('extend'),
+    days: z.number().check(z.int(), z.minimum(1), z.maximum(366)),
+    reason: adjustmentReason,
+  }),
+  z.strictObject({
+    email: z.email(),
+    action: z.literal('end'),
+    reason: adjustmentReason,
+  }),
+]);
+export type BillingAdjustmentInput = z.infer<typeof billingAdjustmentSchema>;
+
+export interface BillingAdjustmentSummary {
+  id: string;
+  action: 'EXTEND' | 'END';
+  days: number | null;
+  reason: string;
+  adminEmail: string;
+  previousUntil: string | null;
+  newUntil: string;
+  createdAt: string;
+}
+
+export interface BillingAccount {
+  email: string;
+  name: string | null;
+  subscription: BillingSubscriptionState;
+  orders: BillingOrderSummary[];
+  adjustments: BillingAdjustmentSummary[];
+}
