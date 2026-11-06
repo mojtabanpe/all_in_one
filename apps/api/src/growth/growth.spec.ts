@@ -31,6 +31,7 @@ describe('Growth data boundaries', () => {
       { ...event, name: 'signup_completed' },
       { ...event, name: 'first_task_created' },
       { ...event, name: 'first_review_completed' },
+      { ...event, name: 'active_day' },
       { ...event, visitorId: 'user-email@example.com' },
       { ...event, campaign: { password: 'secret' } },
       { ...event, campaign: { utm_source: 'x'.repeat(201) } },
@@ -81,11 +82,21 @@ describe('Growth data boundaries', () => {
     const query = vi
       .fn()
       .mockResolvedValueOnce([{ name: 'landing_view', visitors: 12n }])
-      .mockResolvedValueOnce([]);
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { daily: 0n, weekly: 0n, monthly: 0n, eligible: 0n, retained: 0n },
+      ]);
     const summary = await new GrowthService({
       $queryRaw: query,
     } as never).summary();
     expect(summary).toEqual({
+      activity: {
+        dailyVisitors: 0,
+        weeklyVisitors: 0,
+        monthlyVisitors: 0,
+        eligibleSignupVisitors: 0,
+        threeDaySignupVisitors: 0,
+      },
       windowDays: 30,
       landingVisitors: 12,
       signupVisitors: 0,

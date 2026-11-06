@@ -32,6 +32,30 @@ export class GrowthService {
     });
   }
 
+  /** One content-free active-day marker, optionally with a first-action milestone. */
+  async recordActivity(
+    visitorId: string,
+    language: 'fa' | 'en',
+    milestone?: 'first_task_created' | 'first_review_completed',
+  ): Promise<void> {
+    const base = { visitorId, language, day: dayAt(new Date()) };
+    await this.prisma.growthEvent.createMany({
+      data: [
+        { ...base, name: 'active_day' },
+        ...(milestone
+          ? [
+              {
+                ...base,
+                name: milestone,
+                milestoneKey: `${visitorId}:${milestone}`,
+              },
+            ]
+          : []),
+      ],
+      skipDuplicates: true,
+    });
+  }
+
   async record(input: GrowthEventInput): Promise<void> {
     await this.prisma.growthEvent.createMany({
       data: [
@@ -86,7 +110,44 @@ export class GrowthService {
       FROM events e JOIN first_touch f ON f."visitorId" = e."visitorId"
       GROUP BY f.source, f.medium ORDER BY landing DESC, completed DESC, f.source, f.medium LIMIT 20
     `;
+    const [activity] = await this.prisma.$queryRaw<
+      {
+        daily: bigint;
+        weekly: bigint;
+        monthly: bigint;
+        eligible: bigint;
+        retained: bigint;
+      }[]
+    >`
+      WITH active AS (
+        SELECT "visitorId", day::date AS day FROM growth_events
+        WHERE name = 'active_day' AND day >= ${since} AND day <= ${until}
+      ), signups AS (
+        SELECT "visitorId", MIN(day::date) AS day FROM growth_events
+        WHERE name = 'signup_completed' AND day >= ${since} AND day <= ${until}
+        GROUP BY "visitorId"
+      ), mature AS (
+        SELECT s."visitorId", COUNT(DISTINCT a.day) AS days
+        FROM signups s LEFT JOIN active a ON a."visitorId" = s."visitorId"
+          AND a.day >= s.day AND a.day < s.day + 7
+        WHERE s.day <= ${until}::date - 7
+        GROUP BY s."visitorId"
+      )
+      SELECT
+        (SELECT COUNT(DISTINCT "visitorId") FROM active WHERE day = ${until}::date) AS daily,
+        (SELECT COUNT(DISTINCT "visitorId") FROM active WHERE day >= ${until}::date - 6) AS weekly,
+        (SELECT COUNT(DISTINCT "visitorId") FROM active) AS monthly,
+        (SELECT COUNT(*) FROM mature) AS eligible,
+        (SELECT COUNT(*) FROM mature WHERE days >= 3) AS retained
+    `;
     return {
+      activity: {
+        dailyVisitors: Number(activity.daily),
+        weeklyVisitors: Number(activity.weekly),
+        monthlyVisitors: Number(activity.monthly),
+        eligibleSignupVisitors: Number(activity.eligible),
+        threeDaySignupVisitors: Number(activity.retained),
+      },
       windowDays: WINDOW_DAYS,
       landingVisitors: count('landing_view'),
       signupVisitors: count('signup_started'),

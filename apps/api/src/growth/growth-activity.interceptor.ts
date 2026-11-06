@@ -36,7 +36,10 @@ export class GrowthActivityInterceptor implements NestInterceptor {
             /^\/api\/english\/cards\/[^/]+\/review$/.test(path)
           ? 'first_review_completed'
           : undefined;
-    if (!name || !req.user) return next.handle();
+    const healthActivity =
+      req.method === 'POST' &&
+      ['/api/health/meals', '/api/health/workouts'].includes(path);
+    if ((!name && !healthActivity) || !req.user) return next.handle();
     if (
       /(?:^|;\s*)aio_growth_(?:preference|consent)=denied(?:;|$)/.test(
         String(req.headers?.cookie ?? ''),
@@ -52,12 +55,12 @@ export class GrowthActivityInterceptor implements NestInterceptor {
     return next.handle().pipe(
       mergeMap(async (result) => {
         try {
-          await this.growth.recordMilestone(
+          await this.growth.recordActivity(
             visitorId as string,
-            name,
             String(req.headers?.['accept-language'] ?? '').startsWith('en')
               ? 'en'
               : 'fa',
+            name,
           );
         } catch {
           this.logger.warn('Growth activity event could not be recorded');

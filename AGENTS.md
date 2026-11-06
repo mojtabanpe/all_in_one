@@ -333,3 +333,7 @@ When the owner gives a new instruction, add it to this list in the same change.
 80. **Zibal payment provider (2026-11-06):** Use Zibal for payments, using the owner's Digfon project as a configuration/reference implementation. Keep the supplied merchant credential only in server secrets or ignored local environment settings; never put its value in source, documentation, logs or browser responses. The reference project is `/Users/mojtabanpe/Projects/personal/digfon-monorepo`.
 
 81. **Server Zibal credential exception (2026-11-06):** The owner explicitly permits `ssh flashcard` to set the Zibal credential in persistent server configuration if deployments preserve that configuration. Preserve file ownership/permissions and never print the credential. This is a narrow exception to directive 38 for server-secret configuration; code, local config files and built artifacts still deploy through GitHub CI/CD.
+
+82. **SMS template variables:** SMS provider templates must use percent-delimited variables such as `%code%`, `%name%`, `%minutes%`, `%plan%` and `%expiry_date%`; curly-brace placeholders are not recognized. Use this format for every submitted SMS template.
+
+83. **Pending SMS template IDs (2026-11-06):** Continue independent roadmap work while SMS templates await approval. The owner will supply approved template IDs in this order: AUTH_CODE, PASSWORD_RESET, PASSWORD_CHANGED, SUBSCRIPTION_ACTIVATED, SUBSCRIPTION_EXPIRING. Do not invent IDs or mark SMS delivery operational before configuration and verification.

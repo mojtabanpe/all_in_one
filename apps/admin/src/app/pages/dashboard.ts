@@ -81,6 +81,49 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
               </section>
             }
           </div>
+          <h2 class="mt-4 text-xl font-semibold">
+            {{ 'فعالیت و بازگشت' | aioTranslate }}
+          </h2>
+          <p class="text-sm leading-7 text-muted-foreground">
+            {{
+              'مرورگرهای یکتا، نه تعداد افراد؛ ساخت کار، مرور کارت یا ثبت وعده و ورزش موفق. روزها بر اساس تهران هستند و امروز هنوز کامل نشده است. دادهٔ گذشته بازسازی نمی‌شود.'
+                | aioTranslate
+            }}
+          </p>
+          <div class="grid gap-3 sm:grid-cols-3">
+            @for (tile of activityTiles(); track tile.label) {
+              <section aioCard size="sm">
+                <div
+                  aioCardHeading
+                  [title]="fa(tile.value)"
+                  [level]="3"
+                  [description]="tile.label | aioTranslate"
+                  titleClass="text-2xl"
+                ></div>
+              </section>
+            }
+          </div>
+          <section aioCard size="sm">
+            <div
+              aioCardHeading
+              [title]="'فعالیت در سه روز از هفتهٔ اول' | aioTranslate"
+              [level]="3"
+              [description]="
+                'ثبت‌نام‌های ۳۰ روز اخیر در همین مرورگر که هفت روز کامل از آن‌ها گذشته؛ روز ثبت‌نام هم حساب می‌شود. ثبت‌نام تازه وارد مخرج نمی‌شود.'
+                  | aioTranslate
+              "
+            ></div>
+            <div aioCardContent class="flex flex-wrap gap-6">
+              <p>
+                {{ 'گروه واجد شرایط' | aioTranslate }}:
+                {{ fa(growth.value().activity.eligibleSignupVisitors) }}
+              </p>
+              <p>
+                {{ 'رسیده به هدف' | aioTranslate }}:
+                {{ fa(growth.value().activity.threeDaySignupVisitors) }}
+              </p>
+            </div>
+          </section>
           <h3 class="mt-4 font-semibold">
             {{ 'کانال‌های جذب' | aioTranslate }}
           </h3>
@@ -209,6 +252,18 @@ export class Dashboard {
   protected readonly growth = httpResource<GrowthSummary>(
     () => `${this.api}/growth/summary`,
   );
+  protected readonly activityTiles = computed(() => {
+    const data = this.growth.hasValue()
+      ? this.growth.value().activity
+      : undefined;
+    return data
+      ? [
+          { label: 'فعال امروز', value: data.dailyVisitors },
+          { label: 'فعال در هفت روز اخیر', value: data.weeklyVisitors },
+          { label: 'فعال در سی روز اخیر', value: data.monthlyVisitors },
+        ]
+      : [];
+  });
   protected readonly growthTiles = computed(() => {
     const data = this.growth.hasValue() ? this.growth.value() : undefined;
     return data

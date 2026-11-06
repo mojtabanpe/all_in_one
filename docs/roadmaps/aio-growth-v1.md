@@ -70,6 +70,10 @@ Track landing-to-signup, signup-to-first-action, D1/D7/D30 retention, PWA instal
 - [ ] `TODO` Goal-based onboarding: planner vs English vs health; route to first successful action; track activation.
 - [ ] `TODO` First-week reminders with explicit opt-in, user controls, local timezone, rate limits and quiet hours; verify existing push implementation before changing it.
 - [ ] `TODO` Weekly progress digest, return-to-app links, cohort retention and churn dashboard.
+  - `DONE` Initial browser-based first-week metric and daily/7-day/30-day active-browser counters in the existing admin dashboard. Successful authenticated task creation, card review, meal or workout logging writes one content-free `active_day` per browser/Tehran day, alongside existing first-action milestones. Failed requests, invalid visitor IDs and legacy opt-outs are ignored; public clients cannot submit active-day events. No migration or retrospective activity reconstruction.
+  - `DONE` First-week cohort: signups within the trailing 30 Tehran calendar days, with all seven calendar days completed (signup day through day six). Count distinct active days; three or more reaches the goal. Recent signups are excluded from the denominator; later activity cannot satisfy the first-week goal. Counts describe browsers, not deduplicated people or cross-device accounts; observation starts after deployment.
+  - `DONE` Validation: PostgreSQL integration verified concurrent deduplication, exactly-seven-day maturity, exclusion of day-seven activity, no-activity cohorts, out-of-window signups and future activity. API tests with local DB passed (78 tests); full lint/test/build/typecheck passed 63/63. Bilingual admin tested at 320/390/768/1440px with populated mocked counts and delayed responses, without horizontal overflow. Real production delivery is unverified.
+  - `TODO` D1/D7/D30 return retention, cohort history, churn, digest and return-to-app links remain separate work.
 - [ ] `VERIFY` PWA install/update on Android Chrome and iOS Safari. Evidence: `apps/customer/src/app/pwa.ts`, `apps/customer/public/manifest.webmanifest`, `apps/customer/ngsw-config.json`. Test safe reload/update behavior and `/app/` deployment paths.
 - [ ] `TODO` SEO-specific landing pages for Persian daily planning, Leitner flashcards, daily English routine.
 
@@ -78,10 +82,16 @@ Track landing-to-signup, signup-to-first-action, D1/D7/D30 retention, PWA instal
 Evidence: `apps/admin/src/app/pages/dashboard.ts` already shows basic user/content stats via `/admin/stats`. Do not build a duplicate dashboard.
 
 - [ ] `IN_PROGRESS` Extend dashboard with signups, cohorts, DAU/WAU/MAU, D1/D7/D30 retention, funnel, UTM channels, conversions, paid users, MRR, refunds, failed payments, AI usage/cost, alerts.
-  - `DONE` Local first acquisition section: three real 30-day unique-visitor counters with bilingual descriptions, skeletons and error/retry behavior. Registration completion is server-created, not a browser-claimed event. Remaining commercial/retention/cohort metrics above are still TODO.
+  - `DONE` Local first acquisition section: five real 30-day unique-visitor counters with bilingual descriptions, skeletons and error/retry behavior. Registration completion is server-created, not a browser-claimed event. Initial activity/first-week cohort metrics are implemented below; commercial metrics and D1/D7/D30 retention remain TODO.
 - [ ] `TODO` Add date range, filters, export, access controls, audit logging and safe aggregated metrics.
 - [ ] `TODO` Admin subscription/customer support views (entitlement, invoices, payment status, manual adjustments with audit trail).
 - [ ] `TODO` Admin-only global AI provider settings, health checks, budgets, quotas, model/provider fallback and monitoring.
+
+## SMS templates — waiting for provider approval
+
+- [ ] `WAITING` The owner is submitting templates and will provide approved IDs in this order: `AUTH_CODE`, `PASSWORD_RESET`, `PASSWORD_CHANGED`, `SUBSCRIPTION_ACTIVATED`, `SUBSCRIPTION_EXPIRING`. No IDs are configured yet; continue independent roadmap work meanwhile.
+- Variables use percent delimiters: `%code%` numeric, 6 characters; `%minutes%` numeric, up to 2; `%plan%` text, up to 30; `%expiry_date%` text, 10 (Solar Hijri `YYYY/MM/DD`). `PASSWORD_CHANGED` has no variables. These are the submitted specifications, not an implemented OTP policy.
+- [ ] `TODO` Once approved IDs arrive, confirm provider configuration, map IDs in the order above and implement/verify the corresponding delivery flows. Current authentication still uses email/password and email verification/reset; SMS authentication and subscription notifications are not operational.
 
 ## P1 — Iranian payment gateway and Freemium
 
@@ -127,4 +137,4 @@ Evidence: `libs/web/shared/src/lib/auth/ai-settings.ts` currently allows users t
 
 P0: production landing/signup flow works, analytics funnel validated, no high-impact SEO errors, tested PWA and clear user onboarding.
 Monetization: verified gateway callbacks, paid-only AI enforced on server, provider credentials server-only, costs bounded, refunds/expiry tested, admin dashboard reflects payments.
-Last updated: 2026-11-06. Landing, registration/campaign handoff, local five-event analytics/admin counters, initial channel reporting and Zibal transport preparation implemented; baseline pre-push validation passed; email-attribution, privacy and screenshot follow-ups are included in this release. See Git history for pushed revisions; CI/CD success and production behavior remain unverified. No live Zibal payment or merchant validation performed.
+Last updated: 2026-11-06. Landing, registration/campaign handoff, local five-event analytics/admin counters, initial channel reporting, daily activity/first-week cohorts and Zibal transport preparation implemented; baseline pre-push validation passed; email-attribution, privacy and screenshot follow-ups are included in this release. See Git history for pushed revisions; CI/CD success and production behavior remain unverified. No live Zibal payment or merchant validation performed.

@@ -21,6 +21,22 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'Health screenshot with sample calorie totals and a logged meal',
   ],
   ...PRIVACY_MESSAGES,
+  ['فعالیت و بازگشت', 'Activity and return visits'],
+  [
+    'مرورگرهای یکتا، نه تعداد افراد؛ ساخت کار، مرور کارت یا ثبت وعده و ورزش موفق. روزها بر اساس تهران هستند و امروز هنوز کامل نشده است. دادهٔ گذشته بازسازی نمی‌شود.',
+    'Unique browsers, not people. Successful task creation, card review, meal or workout logging. Days use Tehran time; today is still in progress. Past activity is not reconstructed.',
+  ],
+  ['فعالیت در سه روز از هفتهٔ اول', 'Active on three days in the first week'],
+  [
+    'ثبت‌نام‌های ۳۰ روز اخیر در همین مرورگر که هفت روز کامل از آن‌ها گذشته؛ روز ثبت‌نام هم حساب می‌شود. ثبت‌نام تازه وارد مخرج نمی‌شود.',
+    'Signups in this browser within the last 30 days with seven complete days observed, including signup day. Recent signups are excluded from the denominator.',
+  ],
+  ['گروه واجد شرایط', 'Eligible cohort'],
+  ['رسیده به هدف', 'Reached the goal'],
+  ['فعال امروز', 'Active today'],
+  ['فعال در هفت روز اخیر', 'Active in the last seven days'],
+  ['فعال در سی روز اخیر', 'Active in the last 30 days'],
+
   ['حساب‌های ساخته‌شده', 'Created accounts'],
   ['منبع', 'Source'],
   ['رسانه', 'Medium'],
