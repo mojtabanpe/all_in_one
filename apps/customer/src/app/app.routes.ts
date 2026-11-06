@@ -32,6 +32,11 @@ export const appRoutes: Route[] = [
     children: [
       { path: 'account', component: AccountPage, title: 'حساب کاربری' },
       {
+        path: 'billing',
+        loadComponent: () => import('./billing/billing').then((m) => m.Billing),
+        title: 'اشتراک',
+      },
+      {
         path: '',
         loadComponent: () => import('./home/home').then((m) => m.Home),
         title: 'Poshtetgarm',

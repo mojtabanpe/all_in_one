@@ -22,6 +22,9 @@ const planFields = {
   active: true,
 } as const;
 
+/** An order that has no gateway reference after this long never reached the gateway. */
+const ABANDONED_MS = 10 * 60_000;
+
 /** Adds calendar months in UTC, clamping to the last day (Jan 31 + 1 month → Feb 28/29). */
 export function addMonths(from: Date, months: number): Date {
   const date = new Date(from);
@@ -176,6 +179,29 @@ export class BillingService {
     }
     await this.activate(order.id, refNumber);
     return 'paid';
+  }
+
+  /** The owner retries a pending order (e.g. the gateway was down when they came back). */
+  async recheck(
+    userId: string,
+    orderId: string,
+    now = new Date(),
+  ): Promise<BillingReturnStatus> {
+    const order = await this.prisma.billingOrder.findFirst({
+      where: { id: orderId, userId },
+      select: { trackId: true, status: true, createdAt: true },
+    });
+    if (!order) throw new NotFoundException('Order not found');
+    if (order.trackId) return this.settle(order.trackId);
+    if (order.status !== 'PENDING') return 'failed';
+    // Never reached the gateway. A young one may still be inside checkout, so only an old one is closed.
+    if (now.getTime() - order.createdAt.getTime() < ABANDONED_MS)
+      return 'pending';
+    await this.prisma.billingOrder.updateMany({
+      where: { id: orderId, status: 'PENDING', trackId: null },
+      data: { status: 'FAILED' },
+    });
+    return 'failed';
   }
 
   /** Marks the order paid and extends the subscription in one transaction; a repeat is a no-op. */

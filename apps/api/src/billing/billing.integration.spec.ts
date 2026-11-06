@@ -33,6 +33,7 @@ describe('Billing rules', () => {
       billing.checkout,
       billing.subscription,
       billing.orders,
+      billing.recheck,
     ])
       expect(reflector.get(IS_PUBLIC, handler)).not.toBe(true);
     for (const handler of [billing.adminPlans, billing.savePlan])
@@ -181,6 +182,16 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         new ServiceUnavailableException('down'),
       );
       expect(await service().settle(track)).toBe('pending');
+      const pending = await prisma.billingOrder.findUniqueOrThrow({
+        where: { trackId: track },
+      });
+      await expect(
+        service().recheck(randomUUID(), pending.id),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      gateway.verify.mockRejectedValueOnce(
+        new ServiceUnavailableException('down'),
+      );
+      expect(await service().recheck(userId, pending.id)).toBe('pending');
       expect(
         (
           await prisma.billingOrder.findUniqueOrThrow({
@@ -196,6 +207,26 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       expect(await service().settle('123abc')).toBe('failed');
       expect(await service().settle('1')).toBe('failed');
       expect((await service().subscription(userId)).paidUntil).toBe(before);
+    });
+
+    it('closes an order that never reached the gateway only once it is old', async () => {
+      const plan = await prisma.billingPlan.findUniqueOrThrow({
+        where: { code },
+      });
+      const order = await prisma.billingOrder.create({
+        data: { userId, planId: plan.id, months: 1, amountRial: 990_000 },
+      });
+      expect(await service().recheck(userId, order.id)).toBe('pending');
+      const later = new Date(order.createdAt.getTime() + 11 * 60_000);
+      expect(await service().recheck(userId, order.id, later)).toBe('failed');
+      expect(
+        (
+          await prisma.billingOrder.findUniqueOrThrow({
+            where: { id: order.id },
+          })
+        ).status,
+      ).toBe('FAILED');
+      expect(gateway.verify).not.toHaveBeenCalled();
     });
 
     it('records a failed request and refuses inactive or unknown plans', async () => {

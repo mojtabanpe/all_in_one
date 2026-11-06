@@ -15,6 +15,7 @@ import {
   lucideLogOut,
   lucideUserRound,
   lucidePalette,
+  lucideReceipt,
   lucideShieldCheck,
   lucideUsers,
 } from '@ng-icons/lucide';
@@ -36,6 +37,7 @@ import {
       lucideLogOut,
       lucideUserRound,
       lucidePalette,
+      lucideReceipt,
       lucideShieldCheck,
       lucideUsers,
     }),
@@ -74,6 +76,7 @@ export class Layout {
     { label: 'داشبورد', icon: 'lucideLayoutDashboard', link: '/', exact: true },
     { label: 'کاربران', icon: 'lucideUsers', link: '/users' },
     { label: 'محتوا', icon: 'lucideLibrary', link: '/content' },
+    { label: 'اشتراک', icon: 'lucideReceipt', link: '/billing' },
     { label: 'طراحی', icon: 'lucidePalette', link: '/design' },
   ];
 

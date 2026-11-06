@@ -48,6 +48,12 @@ export const appRoutes: Route[] = [
         loadComponent: () => import('./pages/content').then((m) => m.Content),
       },
       {
+        path: 'billing',
+        title: 'پلن‌های اشتراک',
+        loadComponent: () =>
+          import('./pages/billing-plans').then((m) => m.BillingPlans),
+      },
+      {
         path: 'design',
         title: 'سیستم طراحی',
         loadComponent: () =>

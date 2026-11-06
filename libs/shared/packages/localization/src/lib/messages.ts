@@ -1,5 +1,6 @@
 import { MARKETING_MESSAGES } from './marketing-messages';
 import { PRIVACY_MESSAGES } from './privacy-messages';
+import { BILLING_MESSAGES } from './billing-messages';
 /** Shared Persian/English interface and built-in catalog copy. */
 export const MESSAGES: readonly (readonly [string, string])[] = [
   ['داخل برنامه را ببین', 'Take a look inside'],
@@ -22,6 +23,7 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'Health screenshot with sample calorie totals and a logged meal',
   ],
   ...PRIVACY_MESSAGES,
+  ...BILLING_MESSAGES,
   ['عملکرد کمپین‌ها', 'Campaign performance'],
   [
     'اولین منبع ثبت‌شدهٔ هر مرورگر در ۳۰ روز اخیر، بر اساس روزهای تهران. فیلترها با مقدار کامل و دقیق تطبیق داده می‌شوند؛ خالی یعنی همه. ثبت‌نام و فعالیت بعدی همان مرورگر هم در نتیجه حساب می‌شود.',

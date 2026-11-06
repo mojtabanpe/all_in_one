@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  Param,
+  ParseUUIDPipe,
   Post,
   Put,
   Query,
@@ -51,6 +53,15 @@ export class BillingController {
     @Body({ schema: billingCheckoutSchema }) input: BillingCheckoutInput,
   ) {
     return this.billing.checkout(user.id, input.plan);
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Post('orders/:id/verify')
+  async recheck(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return { status: await this.billing.recheck(user.id, id) };
   }
 
   @Roles('ADMIN')
