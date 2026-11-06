@@ -3,6 +3,7 @@ import { GrowthAnalytics } from '@all-in-one/web/shared';
 import { RouterLink } from '@angular/router';
 import {
   AioTranslate,
+  AioLocale,
   AioButton,
   AioCardDirectives,
   AioIcon,
@@ -109,6 +110,57 @@ import { APPLETS } from './applets-data';
           }
         </div>
       </section>
+      <section
+        class="flex flex-col gap-6"
+        aria-labelledby="product-preview-title"
+      >
+        <div
+          aioSectionHeading
+          headingId="product-preview-title"
+          [title]="'داخل برنامه را ببین' | aioTranslate"
+          [description]="
+            'تصاویر واقعی برنامه با داده‌های نمایشی؛ برای دیدن جزئیات، تصویر را باز کن.'
+              | aioTranslate
+          "
+          titleClass="aio-page-title"
+          descriptionClass="mt-2 text-sm leading-7 text-muted-foreground"
+        ></div>
+        <div class="grid gap-4 lg:grid-cols-3">
+          @for (preview of previews; track preview.slug) {
+            <figure aioCard class="min-w-0">
+              <figcaption aioCardHeader>
+                <h3 aioCardTitle>{{ preview.title | aioTranslate }}</h3>
+                <p aioCardDescription>{{ 'نمونهٔ نمایشی' | aioTranslate }}</p>
+              </figcaption>
+              <div aioCardContent>
+                <a
+                  aioBtn
+                  variant="ghost"
+                  class="h-[28rem] w-full overflow-hidden p-0"
+                  [href]="previewImage(preview.slug)"
+                  target="_blank"
+                  rel="noopener"
+                  [attr.aria-label]="
+                    (preview.alt | aioTranslate) +
+                    ' — ' +
+                    ('باز کردن تصویر در زبانهٔ جدید' | aioTranslate)
+                  "
+                >
+                  <img
+                    [src]="previewImage(preview.slug)"
+                    [alt]="preview.alt | aioTranslate"
+                    width="430"
+                    height="900"
+                    loading="lazy"
+                    decoding="async"
+                    class="block h-full w-auto max-w-full object-contain"
+                  />
+                </a>
+              </div>
+            </figure>
+          }
+        </div>
+      </section>
       <section class="flex flex-col gap-5">
         <div>
           <p class="aio-eyebrow">
@@ -196,6 +248,27 @@ import { APPLETS } from './applets-data';
   `,
 })
 export class Home {
+  protected readonly locale = inject(AioLocale);
+  protected readonly previews = [
+    {
+      slug: 'planner',
+      title: 'برنامه‌ریز',
+      alt: 'نمای برنامه‌ریز با سه کار و اولویت‌های متفاوت',
+    },
+    {
+      slug: 'english',
+      title: 'انگلیسی',
+      alt: 'نمای یادگیری انگلیسی با مجموعهٔ واژه‌ها و کارت‌های آمادهٔ مرور',
+    },
+    {
+      slug: 'health',
+      title: 'سلامت',
+      alt: 'نمای سلامت با کالری و وعدهٔ غذایی ثبت‌شدهٔ نمایشی',
+    },
+  ] as const;
+  protected previewImage(slug: string): string {
+    return `/product/${slug}-${this.locale.english() ? 'en' : 'fa'}.jpg`;
+  }
   private readonly analytics = inject(GrowthAnalytics);
   constructor() {
     effect(() => {

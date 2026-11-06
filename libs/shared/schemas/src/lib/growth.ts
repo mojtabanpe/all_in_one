@@ -12,20 +12,40 @@ const campaignValue = z.string().check(
   ),
 );
 
+export const GROWTH_CAMPAIGN_KEYS = [
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  'utm_term',
+  'utm_content',
+] as const;
+export const growthCampaignSchema = z.strictObject({
+  utm_source: z.optional(campaignValue),
+  utm_medium: z.optional(campaignValue),
+  utm_campaign: z.optional(campaignValue),
+  utm_term: z.optional(campaignValue),
+  utm_content: z.optional(campaignValue),
+});
+export type GrowthCampaign = z.infer<typeof growthCampaignSchema>;
+
+/** URL handoff never forwards a token, redirect, visitor ID or arbitrary query. */
+export function extractGrowthCampaign(params: {
+  get(key: string): string | null;
+}): GrowthCampaign {
+  const campaign: GrowthCampaign = {};
+  for (const key of GROWTH_CAMPAIGN_KEYS) {
+    const parsed = campaignValue.safeParse(params.get(key));
+    if (parsed.success) campaign[key] = parsed.data;
+  }
+  return campaign;
+}
+
 /** No arbitrary properties, page URLs, referrers or user-authored content. */
 export const growthEventSchema = z.strictObject({
   visitorId: z.string().check(z.uuid()),
   name: z.enum(GROWTH_EVENTS),
   language: z.enum(['fa', 'en']),
-  campaign: z.optional(
-    z.strictObject({
-      utm_source: z.optional(campaignValue),
-      utm_medium: z.optional(campaignValue),
-      utm_campaign: z.optional(campaignValue),
-      utm_term: z.optional(campaignValue),
-      utm_content: z.optional(campaignValue),
-    }),
-  ),
+  campaign: z.optional(growthCampaignSchema),
 });
 export type GrowthEventInput = z.infer<typeof growthEventSchema>;
 /** Optional attribution only; the server decides whether registration succeeded. */

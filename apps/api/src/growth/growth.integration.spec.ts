@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@all-in-one/api/db';
 import { GrowthService } from './growth.service';
-import { AuthService } from '@all-in-one/api/auth';
+import { AuthService, MailService } from '@all-in-one/api/auth';
 
 // Explicit opt-in: normal unit tests never need a running database.
 describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
@@ -10,6 +10,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
   () => {
     const visitorId = randomUUID();
     const email = `growth-${randomUUID()}@example.invalid`;
+    const verificationEmail = `verify-${randomUUID()}@example.invalid`;
     let prisma: PrismaService;
 
     beforeAll(() => {
@@ -25,7 +26,9 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
     afterAll(async () => {
       if (prisma) {
         await prisma.growthEvent.deleteMany({ where: { visitorId } });
-        await prisma.user.deleteMany({ where: { email } });
+        await prisma.user.deleteMany({
+          where: { email: { in: [email, verificationEmail] } },
+        });
         await prisma.$disconnect();
       }
     });
@@ -128,6 +131,67 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         completedSignupVisitors: 1,
         activatedVisitors: 1,
       });
+    });
+
+    it('keeps campaign context in original/resend emails and preserves one-use token security', async () => {
+      const config = new ConfigService({
+        NODE_ENV: 'test',
+        SMTP_URL: '',
+        REQUIRE_EMAIL_VERIFICATION: 'true',
+        GROWTH_ANALYTICS_ENABLED: 'true',
+        APP_PUBLIC_URL: 'https://poshtetgarm.ir/app',
+      });
+      const mail = new MailService(config);
+      const auth = new AuthService(prisma, {} as never, mail, config);
+      const campaign = {
+        utm_source: 'newsletter',
+        utm_campaign: 'verification-flow',
+      };
+      await auth.register({
+        email: verificationEmail,
+        password: 'integration-test-password',
+        acquisition: { visitorId, language: 'en', campaign },
+      });
+      await vi.waitFor(() => expect(mail.outbox).toHaveLength(1));
+      const firstUrl = new URL(
+        mail.outbox[0].text
+          .split('\n')
+          .find((line) => line.startsWith('https://')) as string,
+      );
+      expect(firstUrl.pathname).toBe('/app/verify-email');
+      expect(firstUrl.searchParams.get('utm_source')).toBe('newsletter');
+      expect(firstUrl.searchParams.has('visitorId')).toBe(false);
+      await expect(
+        auth.login({
+          email: verificationEmail,
+          password: 'integration-test-password',
+        }),
+      ).rejects.toThrow();
+      auth.requestVerification(verificationEmail, campaign);
+      await vi.waitFor(() => expect(mail.outbox).toHaveLength(2));
+      const secondUrl = new URL(
+        mail.outbox[1].text
+          .split('\n')
+          .find((line) => line.startsWith('https://')) as string,
+      );
+      expect(secondUrl.searchParams.get('utm_campaign')).toBe(
+        'verification-flow',
+      );
+      await expect(
+        auth.verifyEmail(firstUrl.searchParams.get('token') as string),
+      ).rejects.toThrow();
+      await auth.verifyEmail(secondUrl.searchParams.get('token') as string);
+      await expect(
+        auth.verifyEmail(secondUrl.searchParams.get('token') as string),
+      ).rejects.toThrow();
+      expect(
+        (
+          await auth.login({
+            email: verificationEmail,
+            password: 'integration-test-password',
+          })
+        ).emailVerifiedAt,
+      ).not.toBeNull();
     });
   },
 );

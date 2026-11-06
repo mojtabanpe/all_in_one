@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { AioLocale } from '@all-in-one/ui';
 import {
+  extractGrowthCampaign,
   growthAttributionSchema,
   type GrowthAttribution,
   type GrowthEventInput,
@@ -75,6 +76,12 @@ export class GrowthAnalytics {
     this.refresh();
   }
 
+  campaign() {
+    return extractGrowthCampaign(
+      new URLSearchParams(this.document.location.search),
+    );
+  }
+
   context(): GrowthAttribution | undefined {
     if (!this.ready()) return;
     this.refresh();
@@ -87,25 +94,7 @@ export class GrowthAnalytics {
       this.write(VISITOR, visitorId);
       if (this.read(VISITOR) !== visitorId) return;
     }
-    const campaign: Record<string, string> = {};
-    const params = new URLSearchParams(this.document.location.search);
-    for (const key of [
-      'utm_source',
-      'utm_medium',
-      'utm_campaign',
-      'utm_term',
-      'utm_content',
-    ]) {
-      const value = params.get(key);
-      if (
-        value &&
-        value.length <= 200 &&
-        !Array.from(value).some(
-          (c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127,
-        )
-      )
-        campaign[key] = value;
-    }
+    const campaign = this.campaign();
     const event = growthAttributionSchema.safeParse({
       visitorId,
       language: this.locale.language(),

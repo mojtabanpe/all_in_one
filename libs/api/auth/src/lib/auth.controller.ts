@@ -25,6 +25,8 @@ import {
   type User,
   type VerifyEmailInput,
   verifyEmailSchema,
+  resendVerificationSchema,
+  type ResendVerificationInput,
 } from '@all-in-one/shared/schemas';
 import type { User as DbUser } from '@all-in-one/api/db';
 import { type AuthUser, CurrentUser, Public } from './auth.decorators';
@@ -70,9 +72,9 @@ export class AuthController {
   @HttpCode(202)
   @Post('resend-verification')
   resendVerification(
-    @Body({ schema: emailOnlySchema }) input: EmailOnlyInput,
+    @Body({ schema: resendVerificationSchema }) input: ResendVerificationInput,
   ): void {
-    this.auth.requestVerification(input.email);
+    this.auth.requestVerification(input.email, input.campaign);
   }
 
   @Public()

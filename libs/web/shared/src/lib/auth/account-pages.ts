@@ -1,3 +1,4 @@
+import { extractGrowthCampaign } from '@all-in-one/shared/schemas';
 import { PushSettings } from './push-settings';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -263,13 +264,18 @@ export class ResetPasswordPage {
             }
             @case ('done') {
               <p>{{ 'ایمیلت تأیید شد. حالا وارد شو.' | aioTranslate }}</p>
-              <a aioBtn size="lg" routerLink="/login">
+              <a aioBtn size="lg" routerLink="/login" [queryParams]="campaign">
                 {{ 'ورود' | aioTranslate }}
               </a>
             }
             @case ('failed') {
               <p class="text-destructive">{{ error() }}</p>
-              <a aioBtn variant="outline" routerLink="/login">
+              <a
+                aioBtn
+                variant="outline"
+                routerLink="/login"
+                [queryParams]="campaign"
+              >
                 {{ 'بازگشت به ورود و فرستادن لینک تازه' | aioTranslate }}
               </a>
             }
@@ -282,6 +288,9 @@ export class ResetPasswordPage {
 export class VerifyEmailPage implements OnInit {
   private readonly auth = inject(AuthStore);
   private readonly route = inject(ActivatedRoute);
+  protected readonly campaign = extractGrowthCampaign(
+    this.route.snapshot.queryParamMap,
+  );
   protected readonly page = PAGE;
   protected readonly state = signal<'working' | 'done' | 'failed'>('working');
   protected readonly error = signal('');

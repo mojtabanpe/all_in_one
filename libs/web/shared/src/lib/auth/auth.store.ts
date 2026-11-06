@@ -110,7 +110,10 @@ export class AuthStore {
 
   resendVerification(email: string): Promise<void> {
     return firstValueFrom(
-      this.http.post<void>(`${this.api}/auth/resend-verification`, { email }),
+      this.http.post<void>(`${this.api}/auth/resend-verification`, {
+        email,
+        campaign: this.analytics.campaign(),
+      }),
     );
   }
 

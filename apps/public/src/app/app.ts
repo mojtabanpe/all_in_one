@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 import { injectCustomerLinks } from './customer-url';
 import {
   AioAppShell,
@@ -18,7 +18,14 @@ import {
 
 /** Public site (no login): same shell, so phones get the floating bottom nav too. */
 @Component({
-  imports: [AioAppShell, AioButton, AioTranslate, AioToaster, RouterOutlet],
+  imports: [
+    AioAppShell,
+    AioButton,
+    AioTranslate,
+    AioToaster,
+    RouterOutlet,
+    RouterLink,
+  ],
   providers: [
     provideIcons({ lucideHouse, lucideInfo, lucideLayoutGrid, lucideSparkles }),
   ],
@@ -36,6 +43,14 @@ import {
       >
         <div class="flex flex-col gap-2">
           <bdi dir="ltr" class="font-semibold">Poshtetgarm</bdi>
+          <a
+            aioBtn
+            variant="link"
+            class="self-start"
+            routerLink="/privacy"
+            [queryParams]="customerLinks.campaign()"
+            >{{ 'حریم خصوصی و داده‌ها' | aioTranslate }}</a
+          >
           <p class="text-sm text-muted-foreground">
             {{ 'نماد اعتماد الکترونیکی' | aioTranslate }}
           </p>

@@ -1,6 +1,6 @@
 // zod/mini keeps browser bundles small: schemas here ship to every Angular app.
 import * as z from 'zod/mini';
-import { growthAttributionSchema } from './growth';
+import { growthAttributionSchema, growthCampaignSchema } from './growth';
 
 // Mirrors the Role enum in apps/api/prisma/schema.prisma.
 export const roleSchema = z.enum(['ADMIN', 'CUSTOMER']);
@@ -42,6 +42,11 @@ export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 /** "Forgot password" and "resend confirmation": always answered the same way. */
 export const emailOnlySchema = z.object({ email: z.email() });
 export type EmailOnlyInput = z.infer<typeof emailOnlySchema>;
+export const resendVerificationSchema = z.object({
+  email: z.email(),
+  campaign: z.optional(growthCampaignSchema),
+});
+export type ResendVerificationInput = z.infer<typeof resendVerificationSchema>;
 
 /** Single-use tokens from emailed links (43-char base64url). */
 const linkToken = z.string().check(z.regex(/^[A-Za-z0-9_-]{43}$/));

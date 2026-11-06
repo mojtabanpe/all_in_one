@@ -38,5 +38,17 @@ export const appRoutes: Route[] = [
     },
     loadComponent: () => import('./pages/about').then((m) => m.About),
   },
+  {
+    path: 'privacy',
+    title: 'حریم خصوصی و داده‌ها | Poshtetgarm',
+    resolve: {
+      seo: pageSeo(
+        '/privacy',
+        'حریم خصوصی و داده‌ها | Poshtetgarm',
+        'اطلاعات حساب، آمار استفاده، ذخیره‌سازی مرورگر و سرویس‌های بیرونی در Poshtetgarm چگونه پردازش می‌شوند.',
+      ),
+    },
+    loadComponent: () => import('./pages/privacy').then((m) => m.Privacy),
+  },
   { path: '**', redirectTo: '' },
 ];

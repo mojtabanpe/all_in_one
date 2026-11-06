@@ -1,5 +1,26 @@
+import { PRIVACY_MESSAGES } from './privacy-messages';
 /** Shared Persian/English interface and built-in catalog copy. */
 export const MESSAGES: readonly (readonly [string, string])[] = [
+  ['داخل برنامه را ببین', 'Take a look inside'],
+  [
+    'تصاویر واقعی برنامه با داده‌های نمایشی؛ برای دیدن جزئیات، تصویر را باز کن.',
+    'Actual app screenshots with sample data. Open an image to see the details.',
+  ],
+  ['نمونهٔ نمایشی', 'Sample data'],
+  ['باز کردن تصویر در زبانهٔ جدید', 'Open image in a new tab'],
+  [
+    'نمای برنامه‌ریز با سه کار و اولویت‌های متفاوت',
+    'Planner screenshot with three tasks and different priorities',
+  ],
+  [
+    'نمای یادگیری انگلیسی با مجموعهٔ واژه‌ها و کارت‌های آمادهٔ مرور',
+    'English screenshot showing a vocabulary deck and cards due for review',
+  ],
+  [
+    'نمای سلامت با کالری و وعدهٔ غذایی ثبت‌شدهٔ نمایشی',
+    'Health screenshot with sample calorie totals and a logged meal',
+  ],
+  ...PRIVACY_MESSAGES,
   ['حساب‌های ساخته‌شده', 'Created accounts'],
   ['منبع', 'Source'],
   ['رسانه', 'Medium'],

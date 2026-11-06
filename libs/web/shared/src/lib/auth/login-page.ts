@@ -27,7 +27,7 @@ import {
   AioCardHeading,
   AioNotifications,
 } from '@all-in-one/ui';
-import { loginSchema } from '@all-in-one/shared/schemas';
+import { extractGrowthCampaign, loginSchema } from '@all-in-one/shared/schemas';
 import { apiErrorMessage } from './auth.guards';
 import { AuthStore } from './auth.store';
 import { GrowthAnalytics } from '../growth-analytics';
@@ -231,9 +231,14 @@ export class LoginPage implements OnInit {
             return;
           }
         }
-        await this.router.navigateByUrl(
+        const destination = this.router.parseUrl(
           safeAuthRedirect(this.route.snapshot.queryParamMap.get('redirect')),
         );
+        destination.queryParams = {
+          ...destination.queryParams,
+          ...extractGrowthCampaign(this.route.snapshot.queryParamMap),
+        };
+        await this.router.navigateByUrl(destination);
       } catch (error) {
         // 403 on login: the account exists but its email is not confirmed yet.
         if (error instanceof HttpErrorResponse && error.status === 403)
