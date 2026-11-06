@@ -65,6 +65,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         goal: null,
         skipped: false,
         completed: false,
+        established: false,
       });
       await service.choose(ids[0], { goal: 'planner' });
       expect((await new OnboardingService(prisma).state(ids[0])).goal).toBe(
@@ -89,6 +90,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         goal: null,
         skipped: false,
         completed: false,
+        established: false,
       });
     });
     it('aggregates current customer goals with exact Tehran signup boundaries', async () => {
@@ -175,11 +177,21 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         { isolationLevel: 'RepeatableRead' },
       );
     });
+    it('treats an account with its own activity as established', async () => {
+      expect((await service.state(ids[1])).established).toBe(false);
+      await prisma.englishReviewDay.create({
+        data: { userId: ids[1], date: new Date('2026-01-01'), reviews: 1 },
+      });
+      expect((await service.state(ids[1])).established).toBe(true);
+      expect((await service.state(ids[0])).established).toBe(false);
+      await prisma.englishReviewDay.deleteMany({ where: { userId: ids[1] } });
+    });
     it('can skip or choose a fresh goal without retaining previous completion', async () => {
       expect(await service.choose(ids[0], { goal: null })).toEqual({
         goal: null,
         skipped: true,
         completed: false,
+        established: false,
       });
       await service.complete(ids[0], 'planner');
       expect((await service.state(ids[0])).completed).toBe(false);
@@ -187,6 +199,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         goal: 'english',
         skipped: false,
         completed: false,
+        established: false,
       });
       await service.complete(ids[0], 'english');
       expect((await service.state(ids[0])).completed).toBe(true);

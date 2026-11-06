@@ -11,4 +11,6 @@ export interface OnboardingState {
   goal: OnboardingGoal | null;
   skipped: boolean;
   completed: boolean;
+  /** The account already has its own tasks, cards or health logs: no first-step guide. */
+  established: boolean;
 }

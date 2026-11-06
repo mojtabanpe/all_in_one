@@ -25,6 +25,7 @@ export class OnboardingService {
       goal: goal.success ? goal.data : null,
       skipped: user.onboardingSkipped,
       completed: !!user.onboardingCompletedAt,
+      established: await this.established(userId),
     };
   }
 
@@ -41,6 +42,19 @@ export class OnboardingService {
       },
     });
     return this.state(userId);
+  }
+
+  /** Someone who already used the app (before or outside the guide) does not need a first step. */
+  private async established(userId: string): Promise<boolean> {
+    const where = { where: { userId }, select: { userId: true } };
+    const found = await Promise.all([
+      this.prisma.plannerTask.findFirst(where),
+      this.prisma.englishCard.findFirst(where),
+      this.prisma.englishReviewDay.findFirst(where),
+      this.prisma.mealLog.findFirst(where),
+      this.prisma.workoutLog.findFirst(where),
+    ]);
+    return found.some(Boolean);
   }
 
   /** Only a successful matching action completes the chosen first step. */
