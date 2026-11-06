@@ -1,10 +1,10 @@
 slug,name,equipment,level,timed,english_name,prompt_file,filename,status,public_url,storage_uri,review_notes
-body-squat,اسکات با وزن بدن,bodyweight,beginner,False,Bodyweight squat,prompts/01-body-squat.txt,body-squat--aio-coach-v1--v001.mp4,pending,,,
-reverse-lunge,لانج معکوس,bodyweight,beginner,False,Reverse lunge,prompts/02-reverse-lunge.txt,reverse-lunge--aio-coach-v1--v001.mp4,pending,,,
-wall-pushup,شنا به دیوار,bodyweight,beginner,False,Wall push-up,prompts/03-wall-pushup.txt,wall-pushup--aio-coach-v1--v001.mp4,pending,,,
-pushup,شنا روی زمین,bodyweight,intermediate,False,Floor push-up,prompts/04-pushup.txt,pushup--aio-coach-v1--v001.mp4,pending,,,
-glute-bridge,پل باسن,bodyweight,beginner,False,Glute bridge,prompts/05-glute-bridge.txt,glute-bridge--aio-coach-v1--v001.mp4,pending,,,
-bird-dog,برد داگ,bodyweight,beginner,False,Bird dog,prompts/06-bird-dog.txt,bird-dog--aio-coach-v1--v001.mp4,pending,,,
+body-squat,اسکات با وزن بدن,bodyweight,beginner,False,Bodyweight squat,prompts/01-body-squat.txt,body-squat--aio-coach-v1--v001.mp4,published,https://poshtetgarm.ir/api/exercise-videos/body-squat-ae35f560-0679-4873-86c2-ced5703ba91c.mp4,,Owner approved 2026-11-06; MCP upload verified.
+reverse-lunge,لانج معکوس,bodyweight,beginner,False,Reverse lunge,prompts/02-reverse-lunge.txt,reverse-lunge--aio-coach-v1--v001.mp4,published,https://poshtetgarm.ir/api/exercise-videos/reverse-lunge-d9b6a77c-ea7d-4e5e-a7b3-18864db8c38d.mp4,,Owner approved 2026-11-06; MCP upload verified.
+wall-pushup,شنا به دیوار,bodyweight,beginner,False,Wall push-up,prompts/03-wall-pushup.txt,wall-pushup--aio-coach-v1--v001.mp4,published,https://poshtetgarm.ir/api/exercise-videos/wall-pushup-664cab7b-7c69-4427-84d4-b142d4443438.mp4,,"Owner approved 2026-11-06. Edited descent plus reversed return; reduced range, not a full repetition. Uploaded via MCP; public download verified."
+pushup,شنا روی زمین,bodyweight,intermediate,False,Floor push-up,prompts/04-pushup.txt,pushup--aio-coach-v1--v001.mp4,published,https://poshtetgarm.ir/api/exercise-videos/pushup-e887d701-a0b6-4f92-acc3-ec26aa25e94e.mp4,,Owner approved 2026-11-06; MCP upload verified.
+glute-bridge,پل باسن,bodyweight,beginner,False,Glute bridge,prompts/05-glute-bridge.txt,glute-bridge--aio-coach-v1--v001.mp4,published,https://poshtetgarm.ir/api/exercise-videos/glute-bridge-0c523ba6-62b4-450f-8ec1-6174abe90fb3.mp4,,Owner approved 2026-11-06; MCP upload verified.
+bird-dog,برد داگ,bodyweight,beginner,False,Bird dog,prompts/06-bird-dog.txt,bird-dog--aio-coach-v1--v001.mp4,published,https://poshtetgarm.ir/api/exercise-videos/bird-dog-f4479d43-89cc-4437-89dc-686638dc7147.mp4,,"Owner approved 2026-11-06. First repetition only, opposite arm and leg; second repetition removed. Uploaded via MCP; public download verified."
 prone-w,جمع کردن کتف خوابیده W,bodyweight,beginner,False,Prone W scapular retraction,prompts/07-prone-w.txt,prone-w--aio-coach-v1--v001.mp4,pending,,,
 dead-bug,دد باگ,bodyweight,beginner,False,Dead bug,prompts/08-dead-bug.txt,dead-bug--aio-coach-v1--v001.mp4,pending,,,
 plank,پلانک روی ساعد,bodyweight,beginner,True,Forearm plank,prompts/09-plank.txt,plank--aio-coach-v1--v001.mp4,pending,,,
@@ -60,3 +60,4 @@ trx-clock-press,پرس ساعتی TRX,trx,advanced,False,TRX clock press,prompts
 trx-chest-fly,فلای سینه TRX,trx,advanced,False,TRX chest fly,prompts/59-trx-chest-fly.txt,trx-chest-fly--aio-coach-v1--v001.mp4,pending,,,
 trx-mid-row,پارویی میانی TRX,trx,intermediate,False,TRX mid row,prompts/60-trx-mid-row.txt,trx-mid-row--aio-coach-v1--v001.mp4,pending,,,
 trx-high-row,پارویی بالا TRX,trx,intermediate,False,TRX high row,prompts/61-trx-high-row.txt,trx-high-row--aio-coach-v1--v001.mp4,pending,,,
+jumping-jack,پروانه,bodyweight,beginner,True,Jumping jack,prompts/62-jumping-jack.txt,jumping-jack--aio-coach-v1--v001.mp4,published,https://poshtetgarm.ir/api/exercise-videos/jumping-jack-60df015d-4985-4589-8c97-6d650d01161b.mp4,,Owner approved 2026-11-06; MCP upload verified.

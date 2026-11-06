@@ -929,4 +929,22 @@ export const FITNESS_MESSAGES: readonly (readonly [string, string])[] = [
   ['شاواسانا (آرامش نهایی)', 'Savasana (final relaxation)'],
   ['مراحل اجرای {0}', 'Exercise steps: {0}'],
   ['روش اجرای {0}', 'How to perform {0}'],
+  ['پروانه', 'Jumping jack'],
+  [
+    'صاف بایستید و دست‌ها را کنار بدن نگه دارید.',
+    'Stand tall with your arms by your sides.',
+  ],
+  [
+    'با یک پرش کوتاه پاها را باز کنید و دست‌ها را بالای سر ببرید.',
+    'With a small jump, spread your feet and raise your arms overhead.',
+  ],
+  [
+    'نرم فرود بیایید و با پرش بعدی به حالت شروع برگردید.',
+    'Land softly, then jump back to the starting position.',
+  ],
+  ['فرود با زانوی قفل‌شده', 'Landing with locked knees'],
+  [
+    'بالا بردن سرعت با از دست دادن کنترل',
+    'Increasing speed at the expense of control',
+  ],
 ];

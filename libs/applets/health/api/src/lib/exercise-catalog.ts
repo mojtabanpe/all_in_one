@@ -4,6 +4,23 @@ import { TRX_ADDITIONAL_EXERCISES, TRX_GUIDES } from './trx-catalog';
 /** Persian catalog with self-hosted illustrations; no external API dependency. */
 const BASE_EXERCISES: Exercise[] = [
   {
+    slug: 'jumping-jack',
+    name: 'پروانه',
+    equipment: 'bodyweight',
+    muscle: 'cardio',
+    secondaryMuscles: ['legs', 'shoulders'],
+    level: 'beginner',
+    timed: true,
+    instructions: [
+      'صاف بایستید و دست‌ها را کنار بدن نگه دارید.',
+      'با یک پرش کوتاه پاها را باز کنید و دست‌ها را بالای سر ببرید.',
+      'نرم فرود بیایید و با پرش بعدی به حالت شروع برگردید.',
+    ],
+    mistakes: ['فرود با زانوی قفل‌شده', 'بالا بردن سرعت با از دست دادن کنترل'],
+    alternatives: ['march'],
+    videoUrl: null,
+  },
+  {
     slug: 'body-squat',
     name: 'اسکات با وزن بدن',
     equipment: 'bodyweight',

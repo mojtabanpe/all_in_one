@@ -12,10 +12,10 @@
       "english_name": "Bodyweight squat",
       "prompt_file": "prompts/01-body-squat.txt",
       "filename": "body-squat--aio-coach-v1--v001.mp4",
-      "status": "pending",
-      "public_url": "",
+      "status": "published",
+      "public_url": "https://poshtetgarm.ir/api/exercise-videos/body-squat-ae35f560-0679-4873-86c2-ced5703ba91c.mp4",
       "storage_uri": "",
-      "review_notes": ""
+      "review_notes": "Owner approved 2026-11-06; uploaded through MCP; public download verified."
     },
     {
       "slug": "reverse-lunge",
@@ -26,10 +26,10 @@
       "english_name": "Reverse lunge",
       "prompt_file": "prompts/02-reverse-lunge.txt",
       "filename": "reverse-lunge--aio-coach-v1--v001.mp4",
-      "status": "pending",
-      "public_url": "",
+      "status": "published",
+      "public_url": "https://poshtetgarm.ir/api/exercise-videos/reverse-lunge-d9b6a77c-ea7d-4e5e-a7b3-18864db8c38d.mp4",
       "storage_uri": "",
-      "review_notes": ""
+      "review_notes": "Owner approved 2026-11-06; uploaded through MCP; public download verified."
     },
     {
       "slug": "wall-pushup",
@@ -40,10 +40,10 @@
       "english_name": "Wall push-up",
       "prompt_file": "prompts/03-wall-pushup.txt",
       "filename": "wall-pushup--aio-coach-v1--v001.mp4",
-      "status": "pending",
-      "public_url": "",
+      "status": "published",
+      "public_url": "https://poshtetgarm.ir/api/exercise-videos/wall-pushup-664cab7b-7c69-4427-84d4-b142d4443438.mp4",
       "storage_uri": "",
-      "review_notes": ""
+      "review_notes": "Owner approved 2026-11-06. Edited descent plus reversed return; reduced range, not a full repetition. Uploaded via MCP; public download verified."
     },
     {
       "slug": "pushup",
@@ -54,10 +54,10 @@
       "english_name": "Floor push-up",
       "prompt_file": "prompts/04-pushup.txt",
       "filename": "pushup--aio-coach-v1--v001.mp4",
-      "status": "pending",
-      "public_url": "",
+      "status": "published",
+      "public_url": "https://poshtetgarm.ir/api/exercise-videos/pushup-e887d701-a0b6-4f92-acc3-ec26aa25e94e.mp4",
       "storage_uri": "",
-      "review_notes": ""
+      "review_notes": "Owner approved 2026-11-06; uploaded through MCP; public download verified."
     },
     {
       "slug": "glute-bridge",
@@ -68,10 +68,10 @@
       "english_name": "Glute bridge",
       "prompt_file": "prompts/05-glute-bridge.txt",
       "filename": "glute-bridge--aio-coach-v1--v001.mp4",
-      "status": "pending",
-      "public_url": "",
+      "status": "published",
+      "public_url": "https://poshtetgarm.ir/api/exercise-videos/glute-bridge-0c523ba6-62b4-450f-8ec1-6174abe90fb3.mp4",
       "storage_uri": "",
-      "review_notes": ""
+      "review_notes": "Owner approved 2026-11-06; uploaded through MCP; public download verified."
     },
     {
       "slug": "bird-dog",
@@ -82,10 +82,10 @@
       "english_name": "Bird dog",
       "prompt_file": "prompts/06-bird-dog.txt",
       "filename": "bird-dog--aio-coach-v1--v001.mp4",
-      "status": "pending",
-      "public_url": "",
+      "status": "published",
+      "public_url": "https://poshtetgarm.ir/api/exercise-videos/bird-dog-f4479d43-89cc-4437-89dc-686638dc7147.mp4",
       "storage_uri": "",
-      "review_notes": ""
+      "review_notes": "Owner approved 2026-11-06. First repetition only, opposite arm and leg; second repetition removed. Uploaded via MCP; public download verified."
     },
     {
       "slug": "prone-w",
@@ -856,6 +856,20 @@
       "public_url": "",
       "storage_uri": "",
       "review_notes": ""
+    },
+    {
+      "slug": "jumping-jack",
+      "name": "پروانه",
+      "equipment": "bodyweight",
+      "level": "beginner",
+      "timed": true,
+      "english_name": "Jumping jack",
+      "prompt_file": "prompts/62-jumping-jack.txt",
+      "filename": "jumping-jack--aio-coach-v1--v001.mp4",
+      "status": "published",
+      "public_url": "https://poshtetgarm.ir/api/exercise-videos/jumping-jack-60df015d-4985-4589-8c97-6d650d01161b.mp4",
+      "storage_uri": "",
+      "review_notes": "Owner approved 2026-11-06; uploaded through MCP; public download verified."
     }
   ]
 }
