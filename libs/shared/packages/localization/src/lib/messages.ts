@@ -21,6 +21,47 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'Health screenshot with sample calorie totals and a logged meal',
   ],
   ...PRIVACY_MESSAGES,
+  ['قدم اول را انتخاب کن', 'Choose your first step'],
+  [
+    'یک هدف کوچک برای شروع؛ هر سه بخش همیشه در دسترس‌اند.',
+    'Start with one small goal. All three areas remain available.',
+  ],
+  ['فعلاً بدون راهنما ادامه می‌دهم', 'Continue without the guide'],
+  [
+    'قدم اولت انجام شد. با یک قدم کوچک دیگر در روز بعد ادامه بده.',
+    'Your first step is complete. Come back for another small step tomorrow.',
+  ],
+  ['انتخاب هدف تازه', 'Choose a new goal'],
+  ['تغییر هدف', 'Change goal'],
+  ['باز کردن راهنمای شروع', 'Open the getting-started guide'],
+  ['در حال ذخیرهٔ هدف', 'Saving your goal'],
+  [
+    'انتخابت ذخیره نشد. دوباره تلاش کن.',
+    'Your choice could not be saved. Try again.',
+  ],
+  [
+    'راهنمای شروع دریافت نشد؛ می‌توانی از بخش‌های برنامه استفاده کنی.',
+    'The guide could not be loaded. You can still use every area of the app.',
+  ],
+  ['روز منظم‌تر', 'A more organized day'],
+  [
+    'در برنامه‌ریز، یک کار کوچک برای امروز بنویس و ذخیره کن.',
+    'Write and save one small task for today in the planner.',
+  ],
+  ['ساخت اولین کار', 'Create your first task'],
+  ['تمرین روزانهٔ زبان', 'Daily language practice'],
+  [
+    'یک مجموعهٔ آماده به کتابخانه اضافه کن، سپس اولین کارت را مرور کن.',
+    'Add a starter deck to your library, then review your first card.',
+  ],
+  ['رفتن به کتابخانهٔ زبان', 'Open the language library'],
+  ['ثبت عادت‌های سلامت', 'Track your health habits'],
+  [
+    'در بخش سلامت، یک وعده را با دکمهٔ ثبت کنار آن اضافه کن؛ ثبت یک ورزش هم قدم اول را کامل می‌کند.',
+    'In Health, log a meal using the button beside it. Logging a workout also completes your first step.',
+  ],
+  ['ثبت اولین فعالیت سلامت', 'Log your first health activity'],
+
   ['بازگشت در روز مشخص', 'Return on a specific day'],
   [
     'فعالیت دقیقاً در روز اول، هفتم یا سی‌ام پس از اولین ثبت‌نام ثبت‌شدهٔ مرورگر. برای هر شاخص، ۳۰ روز کاملِ بازگشت تا دیروز بررسی می‌شود؛ بنابراین گروه‌های ثبت‌نام متفاوت‌اند. امروز شمرده نمی‌شود.',

@@ -1,13 +1,18 @@
-import { httpResource } from '@angular/common/http';
-import { Component, computed, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { HttpClient, httpResource } from '@angular/common/http';
+import { Component, computed, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import type { EnglishStats } from '@all-in-one/applets/english-learning/contracts';
 import type {
   FitnessWeek,
   MealLog,
 } from '@all-in-one/applets/health/contracts';
 import type { PlannerTask } from '@all-in-one/applets/planner/contracts';
-import { toIsoDate } from '@all-in-one/shared/schemas';
+import {
+  toIsoDate,
+  type OnboardingState,
+  type OnboardingGoal,
+} from '@all-in-one/shared/schemas';
 import {
   AioTranslate,
   AioMetric,
@@ -66,6 +71,147 @@ import {
           'فضای کوچکِ پیشرفت‌های بزرگ' | aioTranslate
         }}</span>
       </header>
+      <section aioCard aria-labelledby="onboarding-heading">
+        <div aioCardHeader>
+          <h2 aioCardTitle id="onboarding-heading">
+            {{ 'قدم اول را انتخاب کن' | aioTranslate }}
+          </h2>
+          <p aioCardDescription>
+            {{
+              'یک هدف کوچک برای شروع؛ هر سه بخش همیشه در دسترس‌اند.'
+                | aioTranslate
+            }}
+          </p>
+        </div>
+        <div aioCardContent>
+          @if (onboarding.hasValue()) {
+            @if (
+              editingGoal() ||
+              (!onboarding.value().goal && !onboarding.value().skipped)
+            ) {
+              <div
+                class="grid gap-3 md:grid-cols-3"
+                [attr.aria-busy]="savingGoal()"
+              >
+                @for (goal of goals; track goal.id) {
+                  <button
+                    aioBtn
+                    variant="outline"
+                    type="button"
+                    class="h-auto min-h-28 flex-col items-start gap-2 whitespace-normal p-4 text-start"
+                    [disabled]="savingGoal()"
+                    (click)="chooseGoal(goal.id)"
+                  >
+                    <span class="flex items-center gap-2"
+                      ><aio-icon [name]="goal.icon" />{{
+                        goal.title | aioTranslate
+                      }}</span
+                    >
+                    <span
+                      class="text-sm font-normal leading-6 text-muted-foreground"
+                      >{{ goal.description | aioTranslate }}</span
+                    >
+                  </button>
+                }
+              </div>
+              <button
+                aioBtn
+                variant="ghost"
+                type="button"
+                class="mt-3 min-h-11"
+                [disabled]="savingGoal()"
+                (click)="chooseGoal(null)"
+              >
+                {{ 'فعلاً بدون راهنما ادامه می‌دهم' | aioTranslate }}
+              </button>
+            } @else if (onboarding.value().completed) {
+              <p class="leading-7">
+                {{
+                  'قدم اولت انجام شد. با یک قدم کوچک دیگر در روز بعد ادامه بده.'
+                    | aioTranslate
+                }}
+              </p>
+              <button
+                aioBtn
+                variant="ghost"
+                type="button"
+                class="mt-3 min-h-11"
+                (click)="editingGoal.set(true)"
+              >
+                {{ 'انتخاب هدف تازه' | aioTranslate }}
+              </button>
+            } @else if (selectedGoal(); as goal) {
+              <p class="font-semibold">{{ goal.title | aioTranslate }}</p>
+              <p class="mt-2 text-sm leading-7 text-muted-foreground">
+                {{ goal.description | aioTranslate }}
+              </p>
+              <div class="mt-4 flex flex-wrap gap-3">
+                <a
+                  aioBtn
+                  [routerLink]="goal.link"
+                  queryParamsHandling="preserve"
+                  >{{ goal.action | aioTranslate }}</a
+                >
+                <button
+                  aioBtn
+                  variant="outline"
+                  type="button"
+                  [disabled]="savingGoal()"
+                  (click)="editingGoal.set(true)"
+                >
+                  {{ 'تغییر هدف' | aioTranslate }}
+                </button>
+                <button
+                  aioBtn
+                  variant="ghost"
+                  type="button"
+                  [disabled]="savingGoal()"
+                  (click)="chooseGoal(null)"
+                >
+                  {{ 'فعلاً بدون راهنما ادامه می‌دهم' | aioTranslate }}
+                </button>
+              </div>
+            } @else {
+              <button
+                aioBtn
+                variant="outline"
+                type="button"
+                (click)="editingGoal.set(true)"
+              >
+                {{ 'باز کردن راهنمای شروع' | aioTranslate }}
+              </button>
+            }
+            @if (savingGoal()) {
+              <p class="mt-3 text-sm" role="status">
+                {{ 'در حال ذخیرهٔ هدف' | aioTranslate }}
+              </p>
+            }
+            @if (goalError()) {
+              <p class="mt-3 text-sm text-destructive" role="alert">
+                {{ 'انتخابت ذخیره نشد. دوباره تلاش کن.' | aioTranslate }}
+              </p>
+            }
+          } @else if (onboarding.error()) {
+            <p role="alert">
+              {{
+                'راهنمای شروع دریافت نشد؛ می‌توانی از بخش‌های برنامه استفاده کنی.'
+                  | aioTranslate
+              }}
+            </p>
+            <button
+              aioBtn
+              variant="outline"
+              type="button"
+              class="mt-3"
+              (click)="onboarding.reload()"
+            >
+              {{ 'تلاش دوباره' | aioTranslate }}
+            </button>
+          } @else {
+            <div aioSkeletonRows [count]="1" itemClass="h-40 rounded-xl"></div>
+          }
+        </div>
+      </section>
       <section
         class="aio-hero grid items-center gap-8 md:grid-cols-[1.4fr_1fr]"
         aria-labelledby="today-heading"
@@ -243,6 +389,71 @@ export class Home {
 
   private readonly api = inject(API_BASE_URL);
   private readonly auth = inject(AuthStore);
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  protected readonly onboarding = httpResource<OnboardingState>(
+    () => `${this.api}/onboarding`,
+  );
+  protected readonly editingGoal = signal(false);
+  protected readonly savingGoal = signal(false);
+  protected readonly goalError = signal(false);
+  protected readonly goals = [
+    {
+      id: 'planner',
+      title: 'روز منظم‌تر',
+      description: 'در برنامه‌ریز، یک کار کوچک برای امروز بنویس و ذخیره کن.',
+      action: 'ساخت اولین کار',
+      icon: 'lucideCalendarCheck',
+      link: '/planner',
+    },
+    {
+      id: 'english',
+      title: 'تمرین روزانهٔ زبان',
+      description:
+        'یک مجموعهٔ آماده به کتابخانه اضافه کن، سپس اولین کارت را مرور کن.',
+      action: 'رفتن به کتابخانهٔ زبان',
+      icon: 'lucideLanguages',
+      link: '/english',
+    },
+    {
+      id: 'health',
+      title: 'ثبت عادت‌های سلامت',
+      description:
+        'در بخش سلامت، یک وعده را با دکمهٔ ثبت کنار آن اضافه کن؛ ثبت یک ورزش هم قدم اول را کامل می‌کند.',
+      action: 'ثبت اولین فعالیت سلامت',
+      icon: 'lucideSalad',
+      link: '/health',
+    },
+  ] as const;
+  protected readonly selectedGoal = computed(() =>
+    this.goals.find(
+      (goal) =>
+        this.onboarding.hasValue() && goal.id === this.onboarding.value().goal,
+    ),
+  );
+
+  protected async chooseGoal(goal: OnboardingGoal | null): Promise<void> {
+    if (this.savingGoal()) return;
+    this.savingGoal.set(true);
+    this.goalError.set(false);
+    try {
+      const state = await firstValueFrom(
+        this.http.put<OnboardingState>(`${this.api}/onboarding`, { goal }),
+      );
+      this.onboarding.set(state);
+      this.editingGoal.set(false);
+    } catch {
+      this.goalError.set(true);
+      return;
+    } finally {
+      this.savingGoal.set(false);
+    }
+    const selected = this.goals.find((item) => item.id === goal);
+    if (selected)
+      await this.router.navigate([selected.link], {
+        queryParamsHandling: 'preserve',
+      });
+  }
   private readonly today = toIsoDate(new Date());
   protected readonly todayLabel = computed(() =>
     this.locale.date(this.today, {

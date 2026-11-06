@@ -7,11 +7,14 @@ describe('Successful activity observer', () => {
     path = '/api/planner/tasks',
     user: unknown = { id: 'user' },
     cookie = `aio_growth_visitor=${visitor}`,
+    enabled = true,
   ) {
+    const complete = vi.fn().mockResolvedValue(undefined);
     const recordActivity = vi.fn().mockResolvedValue(undefined);
     const interceptor = new GrowthActivityInterceptor(
       { recordActivity } as never,
-      { get: () => 'true' } as never,
+      { get: () => (enabled ? 'true' : 'false') } as never,
+      { complete } as never,
     );
     const context = {
       getType: () => 'http',
@@ -26,6 +29,7 @@ describe('Successful activity observer', () => {
     } as never;
     return {
       recordActivity,
+      complete,
       run: (handler = { handle: () => of({ id: 'created' }) }) =>
         firstValueFrom(interceptor.intercept(context, handler)),
     };
@@ -54,6 +58,7 @@ describe('Successful activity observer', () => {
       }),
     ).rejects.toThrow('action failed');
     expect(failed.recordActivity).not.toHaveBeenCalled();
+    expect(failed.complete).not.toHaveBeenCalled();
   });
   it('records a daily marker for successful health logs without their content', async () => {
     for (const path of ['/api/health/meals', '/api/health/workouts']) {
@@ -80,6 +85,28 @@ describe('Successful activity observer', () => {
       await fixture.run();
       expect(fixture.recordActivity).not.toHaveBeenCalled();
     }
+  });
+  it('completes account onboarding independently of browser analytics and opt-outs', async () => {
+    const fixture = setup(
+      '/api/planner/tasks',
+      { id: 'user' },
+      'aio_growth_preference=denied',
+    );
+    await fixture.run();
+    expect(fixture.complete).toHaveBeenCalledWith('user', 'planner');
+    expect(fixture.recordActivity).not.toHaveBeenCalled();
+  });
+  it('keeps onboarding operational when analytics is disabled', async () => {
+    const fixture = setup('/api/health/meals', { id: 'user' }, '', false);
+    await fixture.run();
+    expect(fixture.complete).toHaveBeenCalledWith('user', 'health');
+    expect(fixture.recordActivity).not.toHaveBeenCalled();
+  });
+  it('keeps the activity and metrics successful if onboarding persistence fails', async () => {
+    const fixture = setup();
+    fixture.complete.mockRejectedValue(new Error('unavailable'));
+    expect(await fixture.run()).toEqual({ id: 'created' });
+    expect(fixture.recordActivity).toHaveBeenCalled();
   });
   it('does not fail the successful action if analytics is unavailable', async () => {
     const { run, recordActivity } = setup();

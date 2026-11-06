@@ -7,3 +7,4 @@ export * from './lib/ai';
 export * from './lib/assistant';
 export * from './lib/push';
 export * from './lib/growth';
+export * from './lib/onboarding';

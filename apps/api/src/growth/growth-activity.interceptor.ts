@@ -1,3 +1,4 @@
+import { OnboardingService } from '../app/onboarding.service';
 import {
   CallHandler,
   ExecutionContext,
@@ -17,14 +18,11 @@ export class GrowthActivityInterceptor implements NestInterceptor {
   constructor(
     private readonly growth: GrowthService,
     private readonly config: ConfigService,
+    private readonly onboarding: OnboardingService,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler) {
-    if (
-      context.getType() !== 'http' ||
-      this.config.get<string>('GROWTH_ANALYTICS_ENABLED') !== 'true'
-    )
-      return next.handle();
+    if (context.getType() !== 'http') return next.handle();
     const req = context.switchToHttp().getRequest();
     const path = (req.originalUrl ?? req.url ?? '')
       .split('?')[0]
@@ -40,28 +38,40 @@ export class GrowthActivityInterceptor implements NestInterceptor {
       req.method === 'POST' &&
       ['/api/health/meals', '/api/health/workouts'].includes(path);
     if ((!name && !healthActivity) || !req.user) return next.handle();
-    if (
-      /(?:^|;\s*)aio_growth_(?:preference|consent)=denied(?:;|$)/.test(
+    const analyticsEnabled =
+      this.config.get<string>('GROWTH_ANALYTICS_ENABLED') === 'true' &&
+      !/(?:^|;\s*)aio_growth_(?:preference|consent)=denied(?:;|$)/.test(
         String(req.headers?.cookie ?? ''),
-      )
-    )
-      return next.handle();
+      );
     const cookie = String(req.headers?.cookie ?? '')
       .split(';')
       .map((value) => value.trim())
       .find((value) => value.startsWith('aio_growth_visitor='));
     const visitorId = cookie?.slice('aio_growth_visitor='.length);
-    if (!z.uuid().safeParse(visitorId).success) return next.handle();
+    const track = analyticsEnabled && z.uuid().safeParse(visitorId).success;
     return next.handle().pipe(
       mergeMap(async (result) => {
         try {
-          await this.growth.recordActivity(
-            visitorId as string,
-            String(req.headers?.['accept-language'] ?? '').startsWith('en')
-              ? 'en'
-              : 'fa',
-            name,
+          await this.onboarding.complete(
+            req.user.id,
+            name === 'first_task_created'
+              ? 'planner'
+              : name === 'first_review_completed'
+                ? 'english'
+                : 'health',
           );
+        } catch {
+          this.logger.warn('First-action progress could not be recorded');
+        }
+        try {
+          if (track)
+            await this.growth.recordActivity(
+              visitorId as string,
+              String(req.headers?.['accept-language'] ?? '').startsWith('en')
+                ? 'en'
+                : 'fa',
+              name,
+            );
         } catch {
           this.logger.warn('Growth activity event could not be recorded');
         }

@@ -1,3 +1,5 @@
+import { OnboardingService } from '../app/onboarding.service';
+import { observeFirstActions } from './onboarding-tools';
 import * as z from 'zod';
 import { ExerciseVideoUploadService } from './exercise-video-upload.service';
 import { reviewReminderSchema } from '@all-in-one/shared/schemas';
@@ -59,9 +61,11 @@ export class ToolsService {
     private readonly healthAi: HealthAiService,
     private readonly body: BodyService,
     private readonly videoUpload: ExerciseVideoUploadService,
+    private readonly onboarding: OnboardingService,
   ) {}
 
   register(sink: ToolSink): void {
+    sink = observeFirstActions(sink, this.onboarding);
     sink.tool(
       'push_status',
       {

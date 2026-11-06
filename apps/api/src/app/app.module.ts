@@ -1,3 +1,4 @@
+import { OnboardingController } from './onboarding.controller';
 import { PushModule } from '../push/push.module';
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
@@ -20,6 +21,7 @@ import { GrowthController } from '../growth/growth.controller';
 import { GrowthService } from '../growth/growth.service';
 import { GrowthRetention } from '../growth/growth-retention';
 import { GrowthActivityInterceptor } from '../growth/growth-activity.interceptor';
+import { OnboardingService } from './onboarding.service';
 
 @Module({
   imports: [
@@ -42,6 +44,7 @@ import { GrowthActivityInterceptor } from '../growth/growth-activity.interceptor
     HealthController,
     AdminController,
     GrowthController,
+    OnboardingController,
   ],
   providers: [
     AppService,
@@ -49,6 +52,7 @@ import { GrowthActivityInterceptor } from '../growth/growth-activity.interceptor
     GrowthService,
     GrowthRetention,
     { provide: APP_INTERCEPTOR, useClass: GrowthActivityInterceptor },
+    OnboardingService,
   ],
 })
 export class AppModule {}
