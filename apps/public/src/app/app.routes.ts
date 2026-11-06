@@ -1,3 +1,6 @@
+import { inject } from '@angular/core';
+import { AioLocale } from '@all-in-one/ui';
+import { GOAL_LANDINGS } from './pages/goal-landing-data';
 import type { Route } from '@angular/router';
 import { pageSeo } from './seo';
 
@@ -50,5 +53,15 @@ export const appRoutes: Route[] = [
     },
     loadComponent: () => import('./pages/privacy').then((m) => m.Privacy),
   },
+  ...GOAL_LANDINGS.map((guide) => ({
+    path: guide.slug,
+    title: () => inject(AioLocale).text(guide.seoTitle),
+    data: { guide },
+    resolve: {
+      seo: pageSeo(`/${guide.slug}`, guide.seoTitle, guide.description),
+    },
+    loadComponent: () =>
+      import('./pages/goal-landing').then((m) => m.GoalLanding),
+  })),
   { path: '**', redirectTo: '' },
 ];

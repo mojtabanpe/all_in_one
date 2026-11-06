@@ -1,3 +1,4 @@
+import { MARKETING_MESSAGES } from './marketing-messages';
 import { PRIVACY_MESSAGES } from './privacy-messages';
 /** Shared Persian/English interface and built-in catalog copy. */
 export const MESSAGES: readonly (readonly [string, string])[] = [
@@ -21,6 +22,7 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'Health screenshot with sample calorie totals and a logged meal',
   ],
   ...PRIVACY_MESSAGES,
+  ...MARKETING_MESSAGES,
   ['شروع کار بر اساس هدف', 'Getting started by goal'],
   [
     'وضعیت فعلی حساب‌های مشتری ساخته‌شده در ۳۰ روز اخیر بر اساس روزهای تهران؛ شامل حساب‌های منتظر تأیید ایمیل. انتخاب دوبارهٔ هدف جای انتخاب قبلی را می‌گیرد و تکمیل قدم اول از نو سنجیده می‌شود. این گزارش، سابقهٔ تغییر هدف یا نرخ تکمیل در مهلت ثابت نیست.',
