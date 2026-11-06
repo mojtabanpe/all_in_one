@@ -82,6 +82,71 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
             }
           </div>
           <h2 class="mt-4 text-xl font-semibold">
+            {{ 'شروع کار بر اساس هدف' | aioTranslate }}
+          </h2>
+          <p class="text-sm leading-7 text-muted-foreground">
+            {{
+              'وضعیت فعلی حساب‌های مشتری ساخته‌شده در ۳۰ روز اخیر بر اساس روزهای تهران؛ شامل حساب‌های منتظر تأیید ایمیل. انتخاب دوبارهٔ هدف جای انتخاب قبلی را می‌گیرد و تکمیل قدم اول از نو سنجیده می‌شود. این گزارش، سابقهٔ تغییر هدف یا نرخ تکمیل در مهلت ثابت نیست.'
+                | aioTranslate
+            }}
+          </p>
+          <div class="grid gap-3 sm:grid-cols-3">
+            @for (tile of onboardingTiles(); track tile.label) {
+              <section aioCard size="sm">
+                <div
+                  aioCardHeading
+                  [title]="fa(tile.value)"
+                  [level]="3"
+                  [description]="tile.label | aioTranslate"
+                  titleClass="text-2xl"
+                ></div>
+              </section>
+            }
+          </div>
+          <div
+            aioTableContainer
+            class="max-w-full overflow-x-auto"
+            tabindex="0"
+            [attr.aria-label]="'شروع کار بر اساس هدف' | aioTranslate"
+          >
+            <table aioTable>
+              <caption aioCaption>
+                {{
+                  'قدم اول فقط پس از فعالیت موفق مرتبط با هدف کامل می‌شود. باز کردن صفحه کافی نیست. همهٔ اعداد این بخش بر اساس حساب هستند.'
+                    | aioTranslate
+                }}
+              </caption>
+              <thead aioTHead>
+                <tr aioTr>
+                  <th aioTh scope="col">
+                    {{ 'هدف انتخاب‌شده' | aioTranslate }}
+                  </th>
+                  <th aioTh scope="col">
+                    {{ 'انتخاب‌کنندگان' | aioTranslate }}
+                  </th>
+                  <th aioTh scope="col">{{ 'قدم اول کامل' | aioTranslate }}</th>
+                  <th aioTh scope="col">
+                    {{ 'در انتظار قدم اول' | aioTranslate }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody aioTBody>
+                @for (row of growth.value().onboarding.goals; track row.goal) {
+                  <tr aioTr>
+                    <th aioTh scope="row">
+                      {{ goalLabels[row.goal] | aioTranslate }}
+                    </th>
+                    <td aioTd>{{ fa(row.selectedAccounts) }}</td>
+                    <td aioTd>{{ fa(row.completedAccounts) }}</td>
+                    <td aioTd>
+                      {{ fa(row.selectedAccounts - row.completedAccounts) }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <h2 class="mt-4 text-xl font-semibold">
             {{ 'فعالیت و بازگشت' | aioTranslate }}
           </h2>
           <p class="text-sm leading-7 text-muted-foreground">
@@ -312,6 +377,26 @@ export class Dashboard {
   protected readonly growth = httpResource<GrowthSummary>(
     () => `${this.api}/growth/summary`,
   );
+  protected readonly goalLabels = {
+    planner: 'برنامه‌ریز',
+    english: 'زبان',
+    health: 'سلامت',
+  };
+  protected readonly onboardingTiles = computed(() => {
+    const data = this.growth.hasValue()
+      ? this.growth.value().onboarding
+      : undefined;
+    return data
+      ? [
+          { label: 'حساب‌های مشتری تازه', value: data.accounts },
+          {
+            label: 'هنوز هدف انتخاب نکرده‌اند',
+            value: data.unselectedAccounts,
+          },
+          { label: 'راهنما را رد کرده‌اند', value: data.skippedAccounts },
+        ]
+      : [];
+  });
   protected readonly activityTiles = computed(() => {
     const data = this.growth.hasValue()
       ? this.growth.value().activity

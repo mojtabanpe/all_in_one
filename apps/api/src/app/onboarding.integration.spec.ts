@@ -1,3 +1,4 @@
+import { GrowthService } from '../growth/growth.service';
 import { randomUUID } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
@@ -89,6 +90,90 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         skipped: false,
         completed: false,
       });
+    });
+    it('aggregates current customer goals with exact Tehran signup boundaries', async () => {
+      await prisma.$transaction(
+        async (tx) => {
+          const growth = new GrowthService(tx as never);
+          const before = (await growth.summary()).onboarding;
+          const day = (date: Date) =>
+            date.toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' });
+          const start = new Date(
+            `${day(new Date(Date.now() - 29 * 86_400_000))}T00:00:00+03:30`,
+          );
+          const nextDay = new Date(
+            new Date(`${day(new Date())}T00:00:00+03:30`).getTime() +
+              86_400_000,
+          );
+          const samples = [
+            { onboardingGoal: 'planner', onboardingCompletedAt: new Date() },
+            { onboardingGoal: 'english' },
+            { onboardingGoal: 'health', onboardingCompletedAt: new Date() },
+            {},
+            { onboardingSkipped: true },
+            {
+              role: 'ADMIN' as const,
+              onboardingGoal: 'planner',
+              onboardingCompletedAt: new Date(),
+            },
+            {
+              createdAt: new Date(start.getTime() - 1),
+              onboardingGoal: 'planner',
+            },
+            { createdAt: start, onboardingGoal: 'planner' },
+            { createdAt: nextDay, onboardingGoal: 'planner' },
+          ];
+          const fixtureEmails: string[] = [];
+          let plannerId = '';
+          for (const [index, data] of samples.entries()) {
+            const email = `goal-report-${randomUUID()}@example.invalid`;
+            fixtureEmails.push(email);
+            const user = await tx.user.create({
+              data: { email, passwordHash: 'synthetic-fixture', ...data },
+            });
+            if (index === 0) plannerId = user.id;
+          }
+          const after = (await growth.summary()).onboarding;
+          expect(after.accounts).toBe(before.accounts + 6);
+          expect(after.unselectedAccounts).toBe(before.unselectedAccounts + 1);
+          expect(after.skippedAccounts).toBe(before.skippedAccounts + 1);
+          for (const goal of after.goals) {
+            const baseline = before.goals.find(
+              (row) => row.goal === goal.goal,
+            )!;
+            expect(goal.selectedAccounts).toBe(
+              baseline.selectedAccounts + (goal.goal === 'planner' ? 2 : 1),
+            );
+            expect(goal.completedAccounts).toBe(
+              baseline.completedAccounts + (goal.goal === 'english' ? 0 : 1),
+            );
+          }
+          // Changing a goal moves the same account and resets completion.
+          await new OnboardingService(tx as never).choose(plannerId, {
+            goal: 'health',
+          });
+          const changed = (await growth.summary()).onboarding;
+          expect(changed.accounts).toBe(after.accounts);
+          expect(
+            changed.goals.find((row) => row.goal === 'planner')!
+              .selectedAccounts,
+          ).toBe(after.goals[0].selectedAccounts - 1);
+          expect(
+            changed.goals.find((row) => row.goal === 'planner')!
+              .completedAccounts,
+          ).toBe(after.goals[0].completedAccounts - 1);
+          expect(
+            changed.goals.find((row) => row.goal === 'health')!
+              .selectedAccounts,
+          ).toBe(after.goals[2].selectedAccounts + 1);
+          expect(
+            changed.goals.find((row) => row.goal === 'health')!
+              .completedAccounts,
+          ).toBe(after.goals[2].completedAccounts);
+          await tx.user.deleteMany({ where: { email: { in: fixtureEmails } } });
+        },
+        { isolationLevel: 'RepeatableRead' },
+      );
     });
     it('can skip or choose a fresh goal without retaining previous completion', async () => {
       expect(await service.choose(ids[0], { goal: null })).toEqual({

@@ -164,7 +164,45 @@ export class GrowthService {
         AND a.name = 'active_day' AND a.day = (s.day + d.day)::text
       GROUP BY d.day ORDER BY d.day
     `;
+    // Account totals stay aggregated and separate from pseudonymous browser events.
+    const onboarding = await this.prisma.$queryRaw<
+      {
+        bucket: string;
+        accounts: bigint;
+        completed: bigint;
+      }[]
+    >`
+      SELECT CASE
+        WHEN "onboardingSkipped" THEN 'skipped'
+        WHEN "onboardingGoal" IN ('planner', 'english', 'health') THEN "onboardingGoal"
+        ELSE 'unselected' END AS bucket,
+        COUNT(*) AS accounts,
+        COUNT(*) FILTER (WHERE "onboardingCompletedAt" IS NOT NULL
+          AND NOT "onboardingSkipped" AND "onboardingGoal" IN ('planner', 'english', 'health')) AS completed
+      FROM users
+      WHERE role = 'CUSTOMER'
+        AND "createdAt" >= ((${since}::date::timestamp AT TIME ZONE 'Asia/Tehran') AT TIME ZONE 'UTC')
+        AND "createdAt" < (((${until}::date + 1)::timestamp AT TIME ZONE 'Asia/Tehran') AT TIME ZONE 'UTC')
+      GROUP BY bucket
+    `;
+    const bucketCount = (bucket: string) =>
+      Number(onboarding.find((row) => row.bucket === bucket)?.accounts ?? 0);
     return {
+      onboarding: {
+        accounts: onboarding.reduce(
+          (sum, row) => sum + Number(row.accounts),
+          0,
+        ),
+        skippedAccounts: bucketCount('skipped'),
+        unselectedAccounts: bucketCount('unselected'),
+        goals: (['planner', 'english', 'health'] as const).map((goal) => ({
+          goal,
+          selectedAccounts: bucketCount(goal),
+          completedAccounts: Number(
+            onboarding.find((row) => row.bucket === goal)?.completed ?? 0,
+          ),
+        })),
+      },
       retention: retention.map((row) => ({
         day: row.day,
         eligibleVisitors: Number(row.eligible),

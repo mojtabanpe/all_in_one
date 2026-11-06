@@ -21,6 +21,23 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'Health screenshot with sample calorie totals and a logged meal',
   ],
   ...PRIVACY_MESSAGES,
+  ['شروع کار بر اساس هدف', 'Getting started by goal'],
+  [
+    'وضعیت فعلی حساب‌های مشتری ساخته‌شده در ۳۰ روز اخیر بر اساس روزهای تهران؛ شامل حساب‌های منتظر تأیید ایمیل. انتخاب دوبارهٔ هدف جای انتخاب قبلی را می‌گیرد و تکمیل قدم اول از نو سنجیده می‌شود. این گزارش، سابقهٔ تغییر هدف یا نرخ تکمیل در مهلت ثابت نیست.',
+    'Current state of customer accounts created in the last 30 Tehran calendar days, including accounts awaiting email verification. Choosing a goal again replaces the previous choice and resets first-step completion. This report does not show goal history or completion within a fixed deadline.',
+  ],
+  [
+    'قدم اول فقط پس از فعالیت موفق مرتبط با هدف کامل می‌شود. باز کردن صفحه کافی نیست. همهٔ اعداد این بخش بر اساس حساب هستند.',
+    'A first step requires a successful activity matching the goal. Opening a page is not enough. All figures in this section count accounts.',
+  ],
+  ['هدف انتخاب‌شده', 'Selected goal'],
+  ['انتخاب‌کنندگان', 'Selected'],
+  ['قدم اول کامل', 'First step completed'],
+  ['در انتظار قدم اول', 'Awaiting first step'],
+  ['حساب‌های مشتری تازه', 'New customer accounts'],
+  ['هنوز هدف انتخاب نکرده‌اند', 'No goal selected yet'],
+  ['راهنما را رد کرده‌اند', 'Skipped the guide'],
+
   ['قدم اول را انتخاب کن', 'Choose your first step'],
   [
     'یک هدف کوچک برای شروع؛ هر سه بخش همیشه در دسترس‌اند.',

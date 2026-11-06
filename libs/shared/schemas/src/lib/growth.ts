@@ -1,3 +1,4 @@
+import type { OnboardingGoal } from './onboarding';
 import * as z from 'zod/mini';
 
 export const GROWTH_EVENTS = ['landing_view', 'signup_started'] as const;
@@ -54,6 +55,16 @@ export const growthAttributionSchema = z.omit(growthEventSchema, {
 });
 export type GrowthAttribution = z.infer<typeof growthAttributionSchema>;
 export interface GrowthSummary {
+  onboarding: {
+    accounts: number;
+    skippedAccounts: number;
+    unselectedAccounts: number;
+    goals: {
+      goal: OnboardingGoal;
+      selectedAccounts: number;
+      completedAccounts: number;
+    }[];
+  };
   retention: {
     day: number;
     eligibleVisitors: number;
