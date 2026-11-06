@@ -50,3 +50,34 @@ export interface BillingOrderSummary {
 
 /** Where the callback sends the browser back to: `/billing?payment=…`. */
 export type BillingReturnStatus = 'paid' | 'failed' | 'pending';
+
+export const billingAdminOrdersQuerySchema = z.strictObject({
+  status: z.optional(z.enum(['PENDING', 'PAID', 'FAILED'])),
+  page: z.optional(
+    z.coerce.number().check(z.int(), z.minimum(1), z.maximum(10_000)),
+  ),
+});
+export type BillingAdminOrdersQuery = z.infer<
+  typeof billingAdminOrdersQuerySchema
+>;
+
+export interface BillingAdminOrder extends BillingOrderSummary {
+  email: string;
+  trackId: string | null;
+}
+
+export interface BillingAdminOverview {
+  /** Accounts whose paid access has not ended. */
+  activeSubscribers: number;
+  /** Last 30 days. */
+  paidOrders: number;
+  paidRial: number;
+  failedOrders: number;
+  pendingOrders: number;
+}
+
+export interface BillingAdminOrderPage {
+  orders: BillingAdminOrder[];
+  total: number;
+  overview: BillingAdminOverview;
+}

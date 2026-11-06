@@ -108,7 +108,9 @@ Evidence: `apps/admin/src/app/pages/dashboard.ts` already shows basic user/conte
 - [ ] `IN_PROGRESS` Extend dashboard with signups, cohorts, DAU/WAU/MAU, D1/D7/D30 retention, funnel, UTM channels, conversions, paid users, MRR, refunds, failed payments, AI usage/cost, alerts.
   - `DONE` Local first acquisition section: five real 30-day unique-visitor counters with bilingual descriptions, skeletons and error/retry behavior. Registration completion is server-created, not a browser-claimed event. Initial activity/first-week and D1/D7/D30 return metrics are implemented; commercial metrics and historical cohort breakdown remain TODO.
 - [ ] `TODO` Add date range, filters, export, access controls, audit logging and safe aggregated metrics.
-- [ ] `TODO` Admin subscription/customer support views (entitlement, invoices, payment status, manual adjustments with audit trail).
+- [ ] `IN_PROGRESS` Admin subscription/customer support views (entitlement, invoices, payment status, manual adjustments with audit trail).
+  - `DONE` (local) Payments on `/admin/billing`: active subscribers, paid revenue (Toman), failed payments in the last 30 days and pending orders; every order newest first, 50 a page, filter by status, with the buyer's email, amount/months, status, time, bank reference and Zibal trackId. `GET /api/billing/admin/orders` is admin-only with a strict query schema. Evidence: DB test (emails, statuses, 30-day overview); local browser with a disposable admin and three sample orders (metrics 1 / 99,000 / 1 / 1, «ناموفق» filter showed only the failed order, no page overflow); test data removed. admin/api/localization/shared-schemas lint/test/typecheck/build passed.
+  - `TODO` Per-user entitlement view and manual adjustments (extend/end a subscription) with an audit trail; refunds.
 - [ ] `TODO` Admin-only global AI provider settings, health checks, budgets, quotas, model/provider fallback and monitoring.
 
 ## SMS templates — waiting for provider approval

@@ -36,7 +36,11 @@ describe('Billing rules', () => {
       billing.recheck,
     ])
       expect(reflector.get(IS_PUBLIC, handler)).not.toBe(true);
-    for (const handler of [billing.adminPlans, billing.savePlan])
+    for (const handler of [
+      billing.adminPlans,
+      billing.savePlan,
+      billing.adminOrders,
+    ])
       expect(reflector.get(ROLES, handler)).toEqual(['ADMIN']);
     expect(reflector.get(IS_PUBLIC, billing.plans)).toBe(true);
     expect(
@@ -253,6 +257,17 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
           })
         ).status,
       ).toBe('FAILED');
+    });
+
+    it('lists orders for support with emails and a 30-day overview', async () => {
+      const page = await service().adminOrders({ status: 'PAID' });
+      const mine = page.orders.filter((order) => order.email === email);
+      expect(mine.length).toBe(2);
+      expect(mine.every((order) => order.status === 'PAID')).toBe(true);
+      expect(mine[0].trackId).toMatch(/^\d+$/);
+      expect(page.overview.activeSubscribers).toBeGreaterThanOrEqual(1);
+      expect(page.overview.paidRial).toBeGreaterThanOrEqual(2 * 990_000);
+      expect(page.total).toBeGreaterThanOrEqual(2);
     });
 
     it('records a failed request and refuses inactive or unknown plans', async () => {

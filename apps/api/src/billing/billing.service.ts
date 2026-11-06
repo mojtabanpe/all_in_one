@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@all-in-one/api/db';
 import type {
+  BillingAdminOrderPage,
+  BillingAdminOrdersQuery,
   BillingOrderSummary,
   BillingPlan,
   BillingPlanInput,
@@ -119,6 +121,67 @@ export class BillingService {
       createdAt: createdAt.toISOString(),
       paidAt: paidAt?.toISOString() ?? null,
     }));
+  }
+
+  /** Support view: every order, newest first, 50 a page, with the last 30 days at a glance. */
+  async adminOrders(
+    query: BillingAdminOrdersQuery,
+    now = new Date(),
+  ): Promise<BillingAdminOrderPage> {
+    const where = query.status ? { status: query.status } : {};
+    const since = new Date(now.getTime() - 30 * 86_400_000);
+    const recent = { createdAt: { gte: since } };
+    const [rows, total, activeSubscribers, paid, failedOrders, pendingOrders] =
+      await Promise.all([
+        this.prisma.billingOrder.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          skip: ((query.page ?? 1) - 1) * 50,
+          take: 50,
+          select: {
+            id: true,
+            months: true,
+            amountRial: true,
+            status: true,
+            refNumber: true,
+            trackId: true,
+            createdAt: true,
+            paidAt: true,
+            plan: { select: { code: true } },
+            user: { select: { email: true } },
+          },
+        }),
+        this.prisma.billingOrder.count({ where }),
+        this.prisma.billingSubscription.count({
+          where: { paidUntil: { gt: now } },
+        }),
+        this.prisma.billingOrder.aggregate({
+          where: { status: 'PAID', paidAt: { gte: since } },
+          _count: true,
+          _sum: { amountRial: true },
+        }),
+        this.prisma.billingOrder.count({
+          where: { status: 'FAILED', ...recent },
+        }),
+        this.prisma.billingOrder.count({ where: { status: 'PENDING' } }),
+      ]);
+    return {
+      orders: rows.map(({ plan, user, createdAt, paidAt, ...row }) => ({
+        ...row,
+        plan: plan.code,
+        email: user.email,
+        createdAt: createdAt.toISOString(),
+        paidAt: paidAt?.toISOString() ?? null,
+      })),
+      total,
+      overview: {
+        activeSubscribers,
+        paidOrders: paid._count,
+        paidRial: paid._sum.amountRial ?? 0,
+        failedOrders,
+        pendingOrders,
+      },
+    };
   }
 
   /** Creates an owned order with the plan's current price, then asks Zibal for a payment page. */

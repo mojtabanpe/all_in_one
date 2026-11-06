@@ -18,8 +18,10 @@ import {
   type AuthUser,
 } from '@all-in-one/api/auth';
 import {
+  billingAdminOrdersQuerySchema,
   billingCheckoutSchema,
   billingPlanInputSchema,
+  type BillingAdminOrdersQuery,
   type BillingCheckoutInput,
   type BillingPlanInput,
 } from '@all-in-one/shared/schemas';
@@ -68,6 +70,15 @@ export class BillingController {
   @Get('admin/plans')
   adminPlans() {
     return this.billing.adminPlans();
+  }
+
+  @Roles('ADMIN')
+  @Get('admin/orders')
+  adminOrders(
+    @Query({ schema: billingAdminOrdersQuerySchema })
+    query: BillingAdminOrdersQuery,
+  ) {
+    return this.billing.adminOrders(query);
   }
 
   @Roles('ADMIN')

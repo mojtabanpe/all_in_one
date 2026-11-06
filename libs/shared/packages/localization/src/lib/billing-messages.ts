@@ -86,6 +86,18 @@ export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
   ],
   ['پلن ذخیره شد', 'Plan saved'],
   ['پلن ذخیره نشد', 'Plan not saved'],
+  // Admin payments
+  ['فیلتر وضعیت', 'Filter by status'],
+  ['کاربر', 'User'],
+  ['مبلغ', 'Amount'],
+  ['زمان', 'Time'],
+  ['شمارهٔ پیگیری', 'Reference'],
+  ['پرداختی با این وضعیت نیست.', 'No payments with this status.'],
+  ['پرداخت‌ها دریافت نشدند.', 'Could not load the payments.'],
+  ['مشترک فعال', 'Active subscribers'],
+  ['درآمد ۳۰ روز (تومان)', 'Revenue, 30 days (toman)'],
+  ['پرداخت ناموفق در ۳۰ روز', 'Failed payments, 30 days'],
+  ['زیبال {0}', 'Zibal {0}'],
   // Server errors (English from the api, shown in Persian)
   ['این پلن در دسترس نیست.', 'Plan is not available'],
   ['سفارش پیدا نشد.', 'Order not found'],
