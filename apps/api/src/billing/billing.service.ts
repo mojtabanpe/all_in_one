@@ -24,6 +24,10 @@ const planFields = {
 
 /** An order that has no gateway reference after this long never reached the gateway. */
 const ABANDONED_MS = 10 * 60_000;
+/** Long enough for someone still on the gateway page to finish paying. */
+const RECONCILE_AFTER_MS = 30 * 60_000;
+const RECONCILE_WITHIN_MS = 7 * 86_400_000;
+const RECONCILE_BATCH = 20;
 
 /** Adds calendar months in UTC, clamping to the last day (Jan 31 + 1 month → Feb 28/29). */
 export function addMonths(from: Date, months: number): Date {
@@ -202,6 +206,28 @@ export class BillingService {
       data: { status: 'FAILED' },
     });
     return 'failed';
+  }
+
+  /**
+   * Settles orders the browser never brought back (closed tab, failed redirect): every pending order older
+   * than RECONCILE_AFTER_MS is verified with Zibal, oldest first, a bounded batch per sweep.
+   */
+  async reconcile(now = new Date()): Promise<number> {
+    const stale = await this.prisma.billingOrder.findMany({
+      where: {
+        status: 'PENDING',
+        createdAt: {
+          lt: new Date(now.getTime() - RECONCILE_AFTER_MS),
+          // Older ones are left for an admin, so they never starve newer orders out of the batch.
+          gt: new Date(now.getTime() - RECONCILE_WITHIN_MS),
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+      take: RECONCILE_BATCH,
+      select: { id: true, userId: true },
+    });
+    for (const order of stale) await this.recheck(order.userId, order.id, now);
+    return stale.length;
   }
 
   /** Marks the order paid and extends the subscription in one transaction; a repeat is a no-op. */

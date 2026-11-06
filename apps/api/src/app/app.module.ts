@@ -27,6 +27,7 @@ import {
   PaymentsController,
 } from '../billing/billing.controller';
 import { BillingService } from '../billing/billing.service';
+import { BillingReconciler } from '../billing/billing-reconciler';
 import { ZibalGateway } from '../billing/zibal.gateway';
 
 @Module({
@@ -63,6 +64,7 @@ import { ZibalGateway } from '../billing/zibal.gateway';
     OnboardingService,
     ZibalGateway,
     BillingService,
+    BillingReconciler,
   ],
 })
 export class AppModule {}

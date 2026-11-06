@@ -2,7 +2,7 @@ import { inject } from '@angular/core';
 import { AioLocale } from '@all-in-one/ui';
 import { GOAL_LANDINGS } from './pages/goal-landing-data';
 import type { Route } from '@angular/router';
-import { pageSeo } from './seo';
+import { faqStructuredData, pageSeo, SITE_STRUCTURED_DATA } from './seo';
 
 export const appRoutes: Route[] = [
   {
@@ -13,6 +13,7 @@ export const appRoutes: Route[] = [
         '/',
         'Poshtetgarm | برنامه‌ریزی روزانه، زبان و سلامت',
         'برنامه روزانه، مرور زبان انگلیسی و پیگیری سلامت را با Poshtetgarm در یک جا دنبال کنید؛ روی موبایل و کامپیوتر.',
+        SITE_STRUCTURED_DATA,
       ),
     },
     loadComponent: () => import('./pages/home').then((m) => m.Home),
@@ -58,7 +59,12 @@ export const appRoutes: Route[] = [
     title: () => inject(AioLocale).text(guide.seoTitle),
     data: { guide },
     resolve: {
-      seo: pageSeo(`/${guide.slug}`, guide.seoTitle, guide.description),
+      seo: pageSeo(
+        `/${guide.slug}`,
+        guide.seoTitle,
+        guide.description,
+        faqStructuredData(guide.questions),
+      ),
     },
     loadComponent: () =>
       import('./pages/goal-landing').then((m) => m.GoalLanding),

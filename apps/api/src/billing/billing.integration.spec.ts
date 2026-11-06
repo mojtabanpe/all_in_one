@@ -229,6 +229,32 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       expect(gateway.verify).not.toHaveBeenCalled();
     });
 
+    it('reconciles only pending orders older than half an hour', async () => {
+      const fresh = trackOf(
+        (await service().checkout(userId, code)).paymentUrl,
+      );
+      gateway.verify.mockClear();
+      const order = await prisma.billingOrder.findUniqueOrThrow({
+        where: { trackId: fresh },
+      });
+      // Earlier tests left no pending order with a trackId, so only this one can be swept.
+      expect(
+        await service().reconcile(new Date(order.createdAt.getTime() + 60_000)),
+      ).toBe(0);
+      expect(gateway.verify).not.toHaveBeenCalled();
+      const later = new Date(order.createdAt.getTime() + 31 * 60_000);
+      gateway.verify.mockRejectedValueOnce(new BadGatewayException('unpaid'));
+      expect(await service().reconcile(later)).toBeGreaterThan(0);
+      expect(gateway.verify).toHaveBeenCalledWith(fresh, 990_000, order.id);
+      expect(
+        (
+          await prisma.billingOrder.findUniqueOrThrow({
+            where: { id: order.id },
+          })
+        ).status,
+      ).toBe('FAILED');
+    });
+
     it('records a failed request and refuses inactive or unknown plans', async () => {
       gateway.request.mockRejectedValueOnce(
         new ServiceUnavailableException('down'),
