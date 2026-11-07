@@ -409,4 +409,59 @@ export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
   ['مشترک تازه در ۳۰ روز', 'New subscribers in 30 days'],
   ['تمدید در ۳۰ روز', 'Renewals in 30 days'],
   ['اشتراک تمام‌شده در ۳۰ روز', 'Ended in 30 days'],
+  ['پایداری و هشدارها', 'Reliability and alerts'],
+  [
+    'اگر سرویس اصلی قطع، شلوغ یا کلیدش نامعتبر باشد، درخواست یک بار به سرویس جایگزین می‌رود. هر کاربر حداکثر {0} درخواست هم‌زمان دارد.',
+    'If the main service is down, overloaded or rejects its key, the request goes once to the fallback service. Each user can have at most {0} requests at once.',
+  ],
+  ['هشداری نیست.', 'No alerts.'],
+  ['وضعیت سرویس‌ها', 'Service status'],
+  ['سرویس', 'Service'],
+  ['یک ساعت اخیر', 'Last hour'],
+  ['۲۴ ساعت اخیر', 'Last 24 hours'],
+  ['آخرین خطا', 'Last error'],
+  [
+    'از راه‌اندازی سرور در {0}؛ با هر انتشار از صفر شروع می‌شود. هزینهٔ امروز: {1}',
+    "Since the server started on {0}; resets with every release. Today's cost: {1}",
+  ],
+  ['وضعیت سرویس‌ها دریافت نشد.', 'Could not load service status.'],
+  ['جایگزین {0}', '{0} fallback'],
+  ['بدون جایگزین', 'No fallback'],
+  [
+    'جایگزین از «تنظیمات ذخیره‌شده» همان سرویس انتخاب می‌شود. اگر تنظیمی نیست، اول آن را با «ذخیره در فهرست» ذخیره کن.',
+    "The fallback is picked from that service's saved setups. If there is none, save one first with «Save to list».",
+  ],
+  [
+    'سقف هزینهٔ روزانه برای هشدار (دلار، ۰ = بدون هشدار)',
+    'Daily cost alert threshold (USD, 0 = no alert)',
+  ],
+  ['ذخیرهٔ جایگزین‌ها و سقف هزینه', 'Save fallbacks and budget'],
+  [
+    '{0} درخواست، {1} خطا، {2} با جایگزین',
+    '{0} requests, {1} errors, {2} via fallback',
+  ],
+  [
+    '{0}: {1} خطا از {2} درخواست در یک ساعت اخیر.',
+    '{0}: {1} errors out of {2} requests in the last hour.',
+  ],
+  [
+    '{0}: سرویس اصلی خطا می‌دهد و {1} درخواست در یک ساعت اخیر به جایگزین رفت.',
+    '{0}: the main service is failing; {1} requests went to the fallback in the last hour.',
+  ],
+  [
+    'هزینهٔ امروز ({0}) از سقف روزانه ({1}) گذشته است.',
+    "Today's cost ({0}) is over the daily budget ({1}).",
+  ],
+  [
+    'هزینهٔ امروز ({0}) به ۸۰٪ سقف روزانه ({1}) رسیده است.',
+    "Today's cost ({0}) has reached 80% of the daily budget ({1}).",
+  ],
+  [
+    'سرویس جایگزین باید یکی از تنظیمات ذخیره‌شدهٔ همان سرویس باشد.',
+    'The fallback must be a saved setup of the same service.',
+  ],
+  [
+    'چند درخواست هوش مصنوعی هم‌زمان در جریان است. چند لحظه بعد دوباره امتحان کن.',
+    'Several AI requests are already running. Try again in a moment.',
+  ],
 ];

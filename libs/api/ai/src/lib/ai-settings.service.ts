@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService, type UserAiSettings } from '@all-in-one/api/db';
 import { SecretBox } from './secret-box';
@@ -35,6 +39,9 @@ type ManagedSettings = Partial<UserAiSettings> & {
   scopeProxy?: string | null;
   quotas?: AiQuotas;
   prices?: AiPrices;
+  /** Preset id used when the service fails, per service. */
+  fallbacks?: Partial<Record<AiKind, string | null>>;
+  dailyBudgetUsd?: number;
 };
 
 /** The scope check as the server uses it (Jev key opened). */
@@ -165,6 +172,57 @@ export class AiSettingsService {
     };
   }
 
+  /** The daily cost alert threshold in dollars (0 = none). */
+  async dailyBudgetUsd(): Promise<number> {
+    return (await this.row())?.dailyBudgetUsd ?? 0;
+  }
+
+  /** Chosen fallback presets that still exist for their service. */
+  private async fallbackIds(
+    r?: ManagedSettings,
+  ): Promise<Record<AiKind, string | null>> {
+    const chosen = r?.fallbacks ?? {};
+    const ids = Object.values(chosen).filter((id): id is string => !!id);
+    const rows = ids.length
+      ? await this.prisma.managedAiPreset.findMany({
+          where: { id: { in: ids } },
+          select: { id: true, kind: true },
+        })
+      : [];
+    const valid = (kind: AiKind) =>
+      rows.find((row) => row.id === chosen[kind] && row.kind === kind)?.id ??
+      null;
+    return { chat: valid('chat'), tts: valid('tts'), stt: valid('stt') };
+  }
+
+  /** The fallback service for `kind`, built from its saved setup (key opened), or null. */
+  async fallbackTarget(kind: AiKind): Promise<AiTarget | null> {
+    const id = (await this.fallbackIds(await this.row()))[kind];
+    if (!id) return null;
+    const p = await this.prisma.managedAiPreset.findUnique({ where: { id } });
+    if (!p) return null;
+    return this.imported(
+      {
+        [`${kind}Url`]: p.url,
+        [`${kind}Model`]: p.model,
+        [`${kind}Key`]: p.key,
+        [`${kind}ProxyOn`]: !!p.proxy,
+        [`${kind}Proxy`]: p.proxy,
+        [`${kind}Eleven`]: p.elevenlabs,
+        [`${kind}Deepgram`]: p.deepgram,
+      } as Partial<UserAiSettings>,
+      kind,
+    );
+  }
+
+  /** The second voice of a text-to-speech fallback (its own, or its first voice). */
+  async fallbackVoice2(): Promise<string | null> {
+    const id = (await this.fallbackIds(await this.row())).tts;
+    if (!id) return null;
+    const p = await this.prisma.managedAiPreset.findUnique({ where: { id } });
+    return p ? p.model2 || null : null;
+  }
+
   async view(): Promise<AiSettings> {
     const r = await this.row();
     return {
@@ -192,6 +250,8 @@ export class AiSettingsService {
       scope: await this.scope(),
       quotas: r?.quotas ?? DEFAULT_AI_QUOTAS,
       prices: { ...DEFAULT_AI_PRICES, ...r?.prices },
+      fallbacks: await this.fallbackIds(r),
+      dailyBudgetUsd: r?.dailyBudgetUsd ?? 0,
       savedModels: {
         chat: remember(r?.chatModels ?? [], [r?.chatModel]),
         tts: remember(r?.ttsModels ?? [], [r?.ttsModel, r?.ttsModel2]),
@@ -334,6 +394,26 @@ export class AiSettingsService {
     const data: Omit<ManagedSettings, 'userId' | 'updatedAt'> = {};
     if (input.quotas) data.quotas = input.quotas;
     if (input.prices) data.prices = input.prices;
+    if (input.dailyBudgetUsd !== undefined)
+      data.dailyBudgetUsd = input.dailyBudgetUsd;
+    if (input.fallbacks) {
+      const ids = Object.values(input.fallbacks).filter(
+        (id): id is string => !!id,
+      );
+      const rows = await this.prisma.managedAiPreset.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, kind: true },
+      });
+      for (const [kind, id] of Object.entries(input.fallbacks))
+        if (id && !rows.some((row) => row.id === id && row.kind === kind))
+          throw new BadRequestException(
+            'سرویس جایگزین باید یکی از تنظیمات ذخیره‌شدهٔ همان سرویس باشد.',
+          );
+      data.fallbacks = {
+        ...(await this.row())?.fallbacks,
+        ...input.fallbacks,
+      };
+    }
     const scope = input.scope;
     if (scope?.on !== undefined) data.scopeOn = scope.on;
     if (scope?.provider !== undefined) data.scopeProvider = scope.provider;

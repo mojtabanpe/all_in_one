@@ -19,8 +19,11 @@ import type {
   AiUsageOverview,
   AiPrices,
   AiCostReport,
+  AiHealthReport,
+  AiAlert,
 } from '@all-in-one/shared/schemas';
 import {
+  AI_USER_CONCURRENCY,
   DEFAULT_AI_PROXY,
   DEFAULT_AI_QUOTAS,
   DEFAULT_AI_PRICES,
@@ -461,6 +464,178 @@ const SERVICES: {
         }
       </div>
     </section>
+    @if (settings.hasValue()) {
+      <section aioCard class="mt-6" aria-labelledby="ai-health-heading">
+        <div aioCardHeader>
+          <h2 aioCardTitle id="ai-health-heading">
+            {{ 'پایداری و هشدارها' | aioTranslate }}
+          </h2>
+          <p aioCardDescription>
+            {{
+              'اگر سرویس اصلی قطع، شلوغ یا کلیدش نامعتبر باشد، درخواست یک بار به سرویس جایگزین می‌رود. هر کاربر حداکثر {0} درخواست هم‌زمان دارد.'
+                | aioTranslate: [locale.number(concurrency)]
+            }}
+          </p>
+        </div>
+        <div aioCardContent class="flex flex-col gap-5">
+          @if (health.hasValue()) {
+            @let h = health.value();
+            @if (h.alerts.length) {
+              <ul
+                class="border-destructive/40 bg-destructive/5 flex flex-col gap-1 rounded-xl border p-3 text-sm"
+                role="alert"
+              >
+                @for (alert of h.alerts; track $index) {
+                  <li>{{ alertText(alert) }}</li>
+                }
+              </ul>
+            } @else {
+              <p class="text-sm" role="status">
+                {{ 'هشداری نیست.' | aioTranslate }}
+              </p>
+            }
+            <div
+              aioTableContainer
+              class="max-w-full overflow-x-auto"
+              tabindex="0"
+              [attr.aria-label]="'وضعیت سرویس‌ها' | aioTranslate"
+            >
+              <table aioTable>
+                <thead aioTHead>
+                  <tr aioTr>
+                    <th aioTh scope="col">{{ 'سرویس' | aioTranslate }}</th>
+                    <th aioTh scope="col">
+                      {{ 'یک ساعت اخیر' | aioTranslate }}
+                    </th>
+                    <th aioTh scope="col">
+                      {{ '۲۴ ساعت اخیر' | aioTranslate }}
+                    </th>
+                    <th aioTh scope="col">
+                      {{ 'آخرین خطا' | aioTranslate }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody aioTBody>
+                  @for (kind of quotaKinds; track kind.id) {
+                    <tr aioTr>
+                      <th aioTh scope="row">
+                        {{ serviceNames[kind.id] | aioTranslate }}
+                      </th>
+                      <td aioTd>{{ healthText(h.hour[kind.id]) }}</td>
+                      <td aioTd>{{ healthText(h.day[kind.id]) }}</td>
+                      <td aioTd class="text-xs">
+                        @if (h.lastError[kind.id]; as error) {
+                          <bdi dir="ltr">{{ error.message }}</bdi>
+                          <span class="text-muted-foreground block">{{
+                            locale.date(error.at, {
+                              dateStyle: 'short',
+                              timeStyle: 'short',
+                            })
+                          }}</span>
+                        } @else {
+                          —
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <p class="text-muted-foreground text-xs">
+              {{
+                'از راه‌اندازی سرور در {0}؛ با هر انتشار از صفر شروع می‌شود. هزینهٔ امروز: {1}'
+                  | aioTranslate
+                    : [
+                        locale.date(h.since, {
+                          dateStyle: 'medium',
+                          timeStyle: 'short',
+                        }),
+                        money(h.todayUsd),
+                      ]
+              }}
+            </p>
+          } @else if (health.error()) {
+            <p role="alert" class="text-sm">
+              {{ 'وضعیت سرویس‌ها دریافت نشد.' | aioTranslate }}
+            </p>
+          } @else {
+            <div aioSkeletonRows [count]="2" itemClass="h-10 rounded-lg"></div>
+          }
+          <form
+            class="flex flex-col gap-4"
+            (submit)="$event.preventDefault(); saveResilience()"
+          >
+            <div class="grid gap-3 sm:grid-cols-3">
+              @for (kind of quotaKinds; track kind.id) {
+                <aio-form-field
+                  [label]="
+                    'جایگزین {0}'
+                      | aioTranslate: [serviceNames[kind.id] | aioTranslate]
+                  "
+                  [controlId]="'fallback-' + kind.id"
+                >
+                  <aio-native-select
+                    [attr.lang]="fallbackDraft()[kind.id] ? 'en' : null"
+                    [selectId]="'fallback-' + kind.id"
+                    [value]="fallbackDraft()[kind.id] ?? ''"
+                    (valueChange)="setFallback(kind.id, $any($event))"
+                  >
+                    <option aioNativeSelectOption value="">
+                      {{ 'بدون جایگزین' | aioTranslate }}
+                    </option>
+                    @for (preset of presetsOf(kind.id); track preset.id) {
+                      <option
+                        aioNativeSelectOption
+                        lang="en"
+                        [value]="preset.id"
+                      >
+                        {{ presetLabel(preset) }}
+                      </option>
+                    }
+                  </aio-native-select>
+                </aio-form-field>
+              }
+            </div>
+            <p class="text-muted-foreground -mt-2 text-xs">
+              {{
+                'جایگزین از «تنظیمات ذخیره‌شده» همان سرویس انتخاب می‌شود. اگر تنظیمی نیست، اول آن را با «ذخیره در فهرست» ذخیره کن.'
+                  | aioTranslate
+              }}
+            </p>
+            <aio-form-field
+              class="sm:max-w-xs"
+              [label]="
+                'سقف هزینهٔ روزانه برای هشدار (دلار، ۰ = بدون هشدار)'
+                  | aioTranslate
+              "
+              controlId="ai-daily-budget"
+            >
+              <input
+                aioInput
+                id="ai-daily-budget"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="any"
+                dir="ltr"
+                lang="en"
+                [value]="budgetDraft()"
+                (input)="
+                  budgetDraft.set(budgetValue($any($event.target).value))
+                "
+              />
+            </aio-form-field>
+            <button
+              aioAsyncButton
+              type="submit"
+              class="min-h-11 self-start"
+              [busy]="savingResilience()"
+              [label]="'ذخیرهٔ جایگزین‌ها و سقف هزینه' | aioTranslate"
+            ></button>
+          </form>
+        </div>
+      </section>
+    }
     @if (settings.hasValue()) {
       @let sc = scope();
       <section aioCard class="mt-6" aria-labelledby="ai-scope-heading">
@@ -917,6 +1092,114 @@ export class AiSettingsPage {
       : DEFAULT_AI_PRICES),
   }));
   protected readonly savingPrices = signal(false);
+  protected readonly concurrency = AI_USER_CONCURRENCY;
+  protected readonly serviceNames: Record<AiKind, string> = {
+    chat: 'گفتگو',
+    tts: 'متن به گفتار',
+    stt: 'گفتار به متن',
+  };
+  protected readonly health = httpResource<AiHealthReport>(
+    () => `${this.base}/health`,
+  );
+  protected readonly fallbackDraft = linkedSignal<
+    Record<AiKind, string | null>
+  >(() =>
+    this.settings.hasValue()
+      ? { ...this.settings.value().fallbacks }
+      : { chat: null, tts: null, stt: null },
+  );
+  protected readonly budgetDraft = linkedSignal(() =>
+    this.settings.hasValue() ? this.settings.value().dailyBudgetUsd : 0,
+  );
+  protected readonly savingResilience = signal(false);
+
+  /** «model — host» (technical names stay as written). */
+  protected presetLabel(preset: AiPresetView): string {
+    let host = preset.url;
+    try {
+      host = new URL(preset.url).host;
+    } catch {
+      /* A provider default (empty url) keeps the raw value. */
+    }
+    const provider = preset.elevenlabs
+      ? 'ElevenLabs'
+      : preset.deepgram
+        ? 'Deepgram'
+        : host;
+    return `${preset.model}${provider ? ` — ${provider}` : ''}${preset.active ? ' ✓' : ''}`;
+  }
+
+  protected setFallback(kind: AiKind, id: string) {
+    this.fallbackDraft.update((all) => ({ ...all, [kind]: id || null }));
+  }
+
+  protected budgetValue(value: string): number {
+    return Math.min(100_000, Math.max(0, Number(value) || 0));
+  }
+
+  protected healthText(health: {
+    calls: number;
+    failed: number;
+    fellBack: number;
+  }): string {
+    return this.locale.text('{0} درخواست، {1} خطا، {2} با جایگزین', [
+      this.locale.number(health.calls),
+      this.locale.number(health.failed),
+      this.locale.number(health.fellBack),
+    ]);
+  }
+
+  protected alertText(alert: AiAlert): string {
+    switch (alert.kind) {
+      case 'errors':
+        return this.locale.text(
+          '{0}: {1} خطا از {2} درخواست در یک ساعت اخیر.',
+          [
+            this.locale.text(this.serviceNames[alert.service]),
+            this.locale.number(alert.failed),
+            this.locale.number(alert.calls),
+          ],
+        );
+      case 'fallback':
+        return this.locale.text(
+          '{0}: سرویس اصلی خطا می‌دهد و {1} درخواست در یک ساعت اخیر به جایگزین رفت.',
+          [
+            this.locale.text(this.serviceNames[alert.service]),
+            this.locale.number(alert.fellBack),
+          ],
+        );
+      case 'budget':
+        return this.locale.text(
+          'هزینهٔ امروز ({0}) از سقف روزانه ({1}) گذشته است.',
+          [this.money(alert.todayUsd), this.money(alert.budgetUsd)],
+        );
+      case 'budget-near':
+        return this.locale.text(
+          'هزینهٔ امروز ({0}) به ۸۰٪ سقف روزانه ({1}) رسیده است.',
+          [this.money(alert.todayUsd), this.money(alert.budgetUsd)],
+        );
+    }
+  }
+
+  protected async saveResilience() {
+    this.savingResilience.set(true);
+    try {
+      this.settings.set(
+        await firstValueFrom(
+          this.http.put<AiSettings>(this.base, {
+            fallbacks: this.fallbackDraft(),
+            dailyBudgetUsd: this.budgetDraft(),
+          } satisfies UpdateAiSettingsInput),
+        ),
+      );
+      this.health.reload();
+      this.notifications.success('ذخیره شد');
+    } catch (error) {
+      this.notifications.error(apiErrorMessage(error));
+    } finally {
+      this.savingResilience.set(false);
+    }
+  }
   protected readonly costs = httpResource<AiCostReport>(
     () => `${this.base}/costs`,
   );

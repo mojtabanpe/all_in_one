@@ -9,10 +9,11 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type {
-  AiKind,
-  AiTestResult,
-  BillingAccessState,
+import {
+  AI_USER_CONCURRENCY,
+  type AiKind,
+  type AiTestResult,
+  type BillingAccessState,
 } from '@all-in-one/shared/schemas';
 import { fetch, FormData } from 'undici';
 import {
@@ -22,6 +23,9 @@ import {
 } from './ai-settings.service';
 import { assertPublicUrl, guardedAgent, proxyAgent } from './net-guard';
 import { AiUsageService } from './ai-usage.service';
+import { AiHealthService } from './ai-health.service';
+
+type HttpResponse = Awaited<ReturnType<typeof fetch>>;
 
 export interface ToolCall {
   id: string;
@@ -82,7 +86,91 @@ export class AiGateway {
     private readonly config: ConfigService,
     @Inject(AI_ACCESS) private readonly access: AiAccess,
     @Optional() private readonly usage?: AiUsageService,
+    @Optional() private readonly health?: AiHealthService,
   ) {}
+
+  /** Requests running per account (AI_USER_CONCURRENCY). */
+  private readonly running = new Map<string, number>();
+
+  /** Runs `work` in one of the account's AI slots; a fifth request at once is refused with 429. */
+  private async slot<T>(userId: AiCaller, work: () => Promise<T>): Promise<T> {
+    if (userId === OPERATOR_TEST) return work();
+    const count = this.running.get(userId) ?? 0;
+    if (count >= AI_USER_CONCURRENCY)
+      throw new HttpException(
+        {
+          code: 'AI_BUSY',
+          message:
+            'چند درخواست هوش مصنوعی هم‌زمان در جریان است. چند لحظه بعد دوباره امتحان کن.',
+        },
+        429,
+      );
+    this.running.set(userId, count + 1);
+    try {
+      return await work();
+    } finally {
+      const left = (this.running.get(userId) ?? 1) - 1;
+      if (left > 0) this.running.set(userId, left);
+      else this.running.delete(userId);
+    }
+  }
+
+  /**
+   * Sends to the main service; when it is unreachable, overloaded or refuses our setup (see `shouldFallBack`),
+   * sends once more to the admin's fallback setup for that service. Records the outcome for monitoring.
+   * The operator's connection test always uses the main service only.
+   */
+  private async withFallback(
+    userId: AiCaller,
+    kind: AiKind,
+    primary: AiTarget,
+    send: (target: AiTarget) => Promise<HttpResponse>,
+  ): Promise<{ response: HttpResponse; target: AiTarget }> {
+    const testing = userId === OPERATOR_TEST;
+    let response: HttpResponse | null = null;
+    let failure: unknown = null;
+    try {
+      response = await send(primary);
+      if (response.ok || testing || !shouldFallBack(response.status)) {
+        if (!testing)
+          this.health?.record(kind, {
+            ok: response.ok,
+            fellBack: false,
+            ...(response.ok ? {} : { error: `HTTP ${response.status}` }),
+          });
+        return { response, target: primary };
+      }
+    } catch (error) {
+      if (testing) throw error;
+      failure = error;
+    }
+    const fallback = await this.settings.fallbackTarget(kind);
+    const reason = response ? `HTTP ${response.status}` : 'unreachable';
+    if (!fallback) {
+      this.health?.record(kind, { ok: false, fellBack: false, error: reason });
+      if (response) return { response, target: primary };
+      throw failure;
+    }
+    await response?.body?.cancel().catch(() => undefined);
+    try {
+      const second = await send(fallback);
+      this.health?.record(kind, {
+        ok: second.ok,
+        fellBack: true,
+        error: second.ok
+          ? `${reason} (fallback answered)`
+          : `${reason}; fallback HTTP ${second.status}`,
+      });
+      return { response: second, target: fallback };
+    } catch (error) {
+      this.health?.record(kind, {
+        ok: false,
+        fellBack: true,
+        error: `${reason}; fallback unreachable`,
+      });
+      throw error;
+    }
+  }
 
   /** Daily quota (AiUsageService): refuse when used up; the operator's own tests are never limited. */
   private async allow(
@@ -183,29 +271,45 @@ export class AiGateway {
     messages: ChatMessage[],
     options: ChatOptions = {},
   ) {
-    const target = await this.target(userId, 'chat');
-    if (options.meter !== false) await this.allow(userId, target.tier, 'chat');
-    const response = await this.request(target, {
-      json: true,
-      timeout: options.timeout ?? 60_000,
-      body: JSON.stringify({
-        model: options.model || target.model,
-        stream: false,
-        temperature: options.temperature ?? 0.7,
-        messages: requestLanguage.getStore()
-          ? [
-              ...messages,
-              {
-                role: 'system',
-                content: `The user selected ${requestLanguage.getStore() === 'en' ? 'English (Latin digits)' : 'Persian (Persian digits)'} as their app language. Use this language for interface feedback, explanations, health plans, recipes and instructions, even if the app's older prompt uses another language. Preserve JSON keys, enum values, identifiers, user-provided names and any English words or sentences that are explicitly the subject of a language-learning exercise. Do not add fields to the requested JSON schema.`,
-              },
-            ]
-          : messages,
-        ...(options.tools?.length
-          ? { tools: options.tools, tool_choice: 'auto' }
-          : {}),
-      }),
-    });
+    return this.slot(userId, () => this.chatNow(userId, messages, options));
+  }
+
+  private async chatNow(
+    userId: AiCaller,
+    messages: ChatMessage[],
+    options: ChatOptions,
+  ) {
+    const primary = await this.target(userId, 'chat');
+    if (options.meter !== false) await this.allow(userId, primary.tier, 'chat');
+    const { response } = await this.withFallback(
+      userId,
+      'chat',
+      primary,
+      (target) =>
+        this.request(target, {
+          json: true,
+          timeout: options.timeout ?? 60_000,
+          body: JSON.stringify({
+            // Another model on the main service (the scope check's) does not exist on the fallback.
+            model: (target === primary && options.model) || target.model,
+            stream: false,
+            temperature: options.temperature ?? 0.7,
+            messages: requestLanguage.getStore()
+              ? [
+                  ...messages,
+                  {
+                    role: 'system',
+                    content: `The user selected ${requestLanguage.getStore() === 'en' ? 'English (Latin digits)' : 'Persian (Persian digits)'} as their app language. Use this language for interface feedback, explanations, health plans, recipes and instructions, even if the app's older prompt uses another language. Preserve JSON keys, enum values, identifiers, user-provided names and any English words or sentences that are explicitly the subject of a language-learning exercise. Do not add fields to the requested JSON schema.`,
+                  },
+                ]
+              : messages,
+            ...(options.tools?.length
+              ? { tools: options.tools, tool_choice: 'auto' }
+              : {}),
+          }),
+        }),
+    );
+    const target = primary;
     if (!response.ok) return this.fail(response, 'سرویس گفتگو');
     const body = (await response.json()) as {
       choices?: { message?: { content?: unknown; tool_calls?: ToolCall[] } }[];
@@ -259,12 +363,7 @@ export class AiGateway {
     const target = await this.target(userId, 'tts');
     const model = voice === 'secondary' ? target.model2 : target.model;
     return {
-      endpoint:
-        target.provider === 'elevenlabs'
-          ? `${target.endpoint}/v1/text-to-speech/${encodeURIComponent(model)}?output_format=mp3_44100_128`
-          : target.provider === 'deepgram'
-            ? `${target.endpoint}/v1/speak?model=${encodeURIComponent(model)}`
-            : target.endpoint,
+      endpoint: speechEndpoint(target, model),
       model,
       key: target.key,
       proxy: target.proxy,
@@ -278,33 +377,64 @@ export class AiGateway {
     text: string,
     voice: 'primary' | 'secondary',
   ): Promise<{ audio: Buffer; contentType: string }> {
+    return this.slot(userId, () => this.speechNow(userId, text, voice));
+  }
+
+  private async speechNow(
+    userId: AiCaller,
+    text: string,
+    voice: 'primary' | 'secondary',
+  ): Promise<{ audio: Buffer; contentType: string }> {
     const target = await this.speechTarget(userId, voice);
     await this.allow(userId, target.tier, 'tts', text.length);
-    const body = JSON.stringify(
-      target.provider === 'elevenlabs'
-        ? { text, model_id: ELEVEN_DEFAULTS.ttsModel }
-        : target.provider === 'deepgram'
-          ? { text }
-          : { model: target.model, input: text },
+    const fallbackVoice2 =
+      voice === 'secondary' ? await this.settings.fallbackVoice2() : null;
+    const { response } = await this.withFallback(
+      userId,
+      'tts',
+      target,
+      async (service) => {
+        // The main service arrives with its voice's endpoint already built; a fallback gets its own.
+        const model =
+          service === target
+            ? target.model
+            : (voice === 'secondary' && fallbackVoice2) || service.model;
+        const call = {
+          ...service,
+          model,
+          endpoint:
+            service === target
+              ? target.endpoint
+              : speechEndpoint(service, model),
+        };
+        const body = JSON.stringify(
+          call.provider === 'elevenlabs'
+            ? { text, model_id: ELEVEN_DEFAULTS.ttsModel }
+            : call.provider === 'deepgram'
+              ? { text }
+              : { model: call.model, input: text },
+        );
+        // Speech services fail now and then (429, 5xx, a dropped proxy connection): try again.
+        let response: HttpResponse | null = null;
+        for (let attempt = 1; ; attempt++) {
+          try {
+            response = await this.request(call, {
+              json: true,
+              timeout: 30_000,
+              body,
+            });
+          } catch (error) {
+            if (attempt >= SPEECH_ATTEMPTS) throw error;
+            await sleep(retryDelay(attempt));
+            continue;
+          }
+          if (!isRetryable(response.status) || attempt >= SPEECH_ATTEMPTS)
+            return response;
+          await response.body?.cancel().catch(() => undefined);
+          await sleep(retryDelay(attempt, response.headers.get('retry-after')));
+        }
+      },
     );
-    // Speech services fail now and then (429, 5xx, a dropped proxy connection): try again.
-    let response: Awaited<ReturnType<typeof fetch>> | null = null;
-    for (let attempt = 1; ; attempt++) {
-      try {
-        response = await this.request(target, {
-          json: true,
-          timeout: 30_000,
-          body,
-        });
-      } catch (error) {
-        if (attempt >= SPEECH_ATTEMPTS) throw error;
-        await sleep(retryDelay(attempt));
-        continue;
-      }
-      if (!isRetryable(response.status) || attempt >= SPEECH_ATTEMPTS) break;
-      await response.body?.cancel().catch(() => undefined);
-      await sleep(retryDelay(attempt, response.headers.get('retry-after')));
-    }
     if (!response.ok) return this.fail(response, 'سرویس متن به گفتار');
     const contentType = response.headers.get('content-type') ?? '';
     if (!/^(audio\/|application\/octet-stream)/i.test(contentType))
@@ -323,6 +453,16 @@ export class AiGateway {
     audio: unknown,
     contentType: string,
   ): Promise<string> {
+    return this.slot(userId, () =>
+      this.transcribeNow(userId, audio, contentType),
+    );
+  }
+
+  private async transcribeNow(
+    userId: AiCaller,
+    audio: unknown,
+    contentType: string,
+  ): Promise<string> {
     if (!Buffer.isBuffer(audio) || !audio.length)
       throw new BadRequestException('اول صدا را ضبط کن.');
     if (audio.length > MAX_RECORDING_BYTES)
@@ -333,11 +473,18 @@ export class AiGateway {
       throw new BadRequestException('این قالب صدا پشتیبانی نمی‌شود.');
     const managed = await this.target(userId, 'stt');
     await this.allow(userId, managed.tier, 'stt');
-    const target = sttTarget(managed);
-    const response = await this.request(target, {
-      ...sttBody(target, audio, mime, `speech.${extension}`),
-      timeout: 90_000,
-    });
+    const { response } = await this.withFallback(
+      userId,
+      'stt',
+      managed,
+      (service) => {
+        const target = sttTarget(service);
+        return this.request(target, {
+          ...sttBody(target, audio, mime, `speech.${extension}`),
+          timeout: 90_000,
+        });
+      },
+    );
     if (!response.ok) return this.fail(response, 'سرویس گفتار به متن');
     const text = transcriptOf(await response.json());
     await this.meter(userId, 'stt', 1, managed.tier);
@@ -397,6 +544,24 @@ function silentWav(): Buffer {
 }
 
 const SPEECH_ATTEMPTS = 3;
+
+/**
+ * Worth the fallback: what a retry would help (timeouts, rate limits, 5xx) and a main service that refuses our
+ * own setup (bad key, unpaid account, wrong url). Not request errors (400, 413, 422): the fallback would refuse
+ * the same input.
+ */
+export function shouldFallBack(status: number): boolean {
+  return isRetryable(status) || [401, 402, 403, 404].includes(status);
+}
+
+/** The url a voice is spoken at: ElevenLabs and Deepgram put the voice in the path or query. */
+function speechEndpoint(target: AiTarget, model: string): string {
+  if (target.provider === 'elevenlabs')
+    return `${target.endpoint}/v1/text-to-speech/${encodeURIComponent(model)}?output_format=mp3_44100_128`;
+  if (target.provider === 'deepgram')
+    return `${target.endpoint}/v1/speak?model=${encodeURIComponent(model)}`;
+  return target.endpoint;
+}
 
 /** Rate limits and server-side failures are worth a second try; other 4xx are not. */
 export function isRetryable(status: number): boolean {

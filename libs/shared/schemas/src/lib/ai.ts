@@ -40,6 +40,38 @@ export interface AiSettings {
   quotas: AiQuotas;
   /** What the services cost us (DEFAULT_AI_PRICES until saved). */
   prices: AiPrices;
+  /** Saved setup used when a service fails or is overloaded (a preset id of the same service), per service. */
+  fallbacks: Record<AiKind, string | null>;
+  /** Alert when today's estimated AI cost reaches this many dollars (0 = no budget alert). */
+  dailyBudgetUsd: number;
+}
+
+/** Most AI requests one account may have running at once (read-aloud fetches two clips). */
+export const AI_USER_CONCURRENCY = 4;
+
+/** One service's outcomes in a window: `failed` = the user got an error (after any fallback). */
+export interface AiServiceHealth {
+  calls: number;
+  failed: number;
+  /** Requests the fallback answered (or tried to) after the main service failed. */
+  fellBack: number;
+}
+
+export type AiAlert =
+  | { kind: 'errors'; service: AiKind; failed: number; calls: number }
+  | { kind: 'fallback'; service: AiKind; fellBack: number }
+  | { kind: 'budget'; todayUsd: number; budgetUsd: number }
+  | { kind: 'budget-near'; todayUsd: number; budgetUsd: number };
+
+/** Since the api last started: outcomes per service in the last hour and 24 hours, plus alerts. */
+export interface AiHealthReport {
+  since: string;
+  hour: Record<AiKind, AiServiceHealth>;
+  day: Record<AiKind, AiServiceHealth>;
+  /** Last error per service (status and a short provider-free message), if any in 24 hours. */
+  lastError: Record<AiKind, { at: string; message: string } | null>;
+  todayUsd: number;
+  alerts: AiAlert[];
 }
 
 /**
@@ -239,6 +271,14 @@ export const updateAiSettingsSchema = z.partial(
     stt: service,
     quotas: aiQuotasSchema,
     prices: aiPricesSchema,
+    fallbacks: z.partial(
+      z.object({
+        chat: z.nullable(z.uuid()),
+        tts: z.nullable(z.uuid()),
+        stt: z.nullable(z.uuid()),
+      }),
+    ),
+    dailyBudgetUsd: z.number().check(z.minimum(0), z.maximum(100_000)),
     scope: z.partial(
       z.object({
         on: z.boolean(),

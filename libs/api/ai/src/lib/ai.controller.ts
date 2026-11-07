@@ -25,6 +25,7 @@ import {
 import { AiSettingsService } from './ai-settings.service';
 import { AiScopeGuard } from './ai-scope';
 import { AiUsageService } from './ai-usage.service';
+import { AiHealthService } from './ai-health.service';
 import { AI_ACCESS, AiGateway, type AiAccess } from './ai-gateway.service';
 
 /** The signed-in user's AI services (profile page). Keys are write-only. */
@@ -36,7 +37,18 @@ export class AiAdminController {
     private readonly gateway: AiGateway,
     private readonly scope: AiScopeGuard,
     private readonly usage: AiUsageService,
+    private readonly health: AiHealthService,
   ) {}
+
+  /** Errors, fallback use and the daily budget, with alerts (since the api started). */
+  @Get('health')
+  async healthReport() {
+    const [costs, dailyBudgetUsd] = await Promise.all([
+      this.usage.costs(1),
+      this.settings.dailyBudgetUsd(),
+    ]);
+    return this.health.report({ todayUsd: costs.totalUsd, dailyBudgetUsd });
+  }
 
   /** Today's AI use of all accounts, per service. */
   @Get('usage')

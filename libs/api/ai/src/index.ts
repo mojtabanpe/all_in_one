@@ -8,3 +8,4 @@ export * from './lib/ai-scope';
 export * from './lib/scope-classifier';
 export * from './lib/ai-usage.service';
 export * from './lib/request-language';
+export * from './lib/ai-health.service';
