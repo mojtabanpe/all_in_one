@@ -5,12 +5,15 @@ Use the attached approved reference images of AIO Coach v1 as the identity sourc
 
 Use a clean light-gray studio, matte floor, soft even lighting and a subtle ground shadow. Fixed camera, entire body and all working equipment visible with generous margins. No cuts, zooms, camera orbit, dramatic effects, music, speech, captions, anatomy overlays or text. Prioritize accurate exercise mechanics and clear joint positions. Natural spinal curves are allowed; neutral spine does not mean a permanently vertical torso. No extra limbs, sliding feet, impossible joints, body morphing, floating weights or discontinuous equipment. Target 8 seconds, landscape 16:9, 1080p when supported; if the available generator cannot deliver these settings, report actual settings rather than claiming compliance. Export MP4 when supported; retain the original output.
 
-CAMERA: elevated three-quarter side.
+CAMERA: fixed elevated three-quarter side view from the character's left, looking slightly down at the torso, so both arms and both legs stay separately visible and the near and far limbs never hide each other.
 
-ACTION: Lie supine with arms vertical and hips and knees bent to 90 degrees. Slowly extend the right arm overhead and left leg away, stopping before the lower back arches. Return and alternate. Keep ribs and pelvis stable.
+ACTION: Start lying on the back, lower back gently resting on the floor, both arms pointing straight up above the shoulders, hips and knees bent to 90 degrees with shins parallel to the floor. Exactly ONE arm and the OPPOSITE leg move at a time; the other arm stays pointing straight up and the other leg stays bent at 90 degrees.
+Side 1: slowly lower the RIGHT arm back overhead toward the floor while the LEFT leg straightens and lowers toward the floor, stopping before the lower back arches. Pause briefly, then return both to the start position.
+Side 2: slowly lower the LEFT arm back overhead while the RIGHT leg straightens and lowers, stop before the lower back arches, pause, then return to the start position.
+Never move both arms together and never move both legs together. Never move an arm and the leg on the same side together. Keep head, ribs and pelvis still on the floor; no crunch, no rocking, no twisting.
 
-TIMING: Show one or two complete slow repetitions. If alternating sides are requested, show one repetition per side. If a single side is specified, do not rush to switch sides.
+TIMING: Show exactly two slow repetitions in one continuous shot, Side 1 then Side 2 (about 4 seconds each), with a clear start pose, a brief pause at full reach, and a return to the same start pose at the end so the clip loops cleanly.
 
 EQUIPMENT: Show only the equipment needed for this exercise, with mechanically coherent support, contact points and load paths. Use light demonstration loads where applicable.
 
-Save the delivered clip as dead-bug--aio-coach-v1--v001.mp4 if file saving is available. If persistent character-reference conditioning is unavailable, say so; do not promise identical identity from text alone. Do not upload or claim a public URL as part of video generation; publication is a separate step after the clip passes review.
+Save the delivered clip as dead-bug--aio-coach-v1--v002.mp4 if file saving is available. If persistent character-reference conditioning is unavailable, say so; do not promise identical identity from text alone. Do not upload or claim a public URL as part of video generation; publication is a separate step after the clip passes review.

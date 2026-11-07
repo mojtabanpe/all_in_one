@@ -2,7 +2,7 @@
 
 **Purpose:** produce, medically/biomechanically review, upload, connect and verify exercise demonstration videos in Poshtetgarm.  
 **Status:** IN_PROGRESS — 8 of 62 clips published (tracker), in-app inline playback added 2026-11-07; next clip to
-generate is `dead-bug` (08). Production playback of the newest build still needs a check from a network that reaches
+generate is `dead-bug` v002 (08, both sides; v001 rejected). Production playback of the newest build still needs a check from a network that reaches
 poshtetgarm.ir.
 
 ## Summary (2026-11-07)
@@ -37,7 +37,7 @@ poshtetgarm.ir.
 - [ ] `VERIFY` Anonymous playback on production phone/PWA after this deploy (status 200, `video/mp4`, range requests,
       plays inline in the installed PWA). Not reachable from the cloud agent's network.
 - [ ] `TODO` `prone-w` v3 to replace the interim v2 (prompt 07 already updated).
-- [ ] `TODO` Next clips in order: 08 `dead-bug`, 09 `plank`, 10 `wall-slide`, 11 `march`, then the TRX batch (12–18).
+- [ ] `TODO` Next clips in order: 08 `dead-bug` v002 (v001 rejected 2026-11-07), 09 `plank`, 10 `wall-slide`, 11 `march`, then the TRX batch (12–18).
       Per clip: owner generates → agent/owner review (tracker `generated` → `reviewed`) → MCP upload → `published` with URL.
 
 ## Historical handoff — NOT verified as uploaded
@@ -48,8 +48,9 @@ Prior conversations mention video review/approval for Squat, Push-up, Glute Brid
 
 1. After deploy, open an exercise with a clip (e.g. «اسکات با وزن بدن») on a phone and in the PWA; confirm inline playback
    and record it here.
-2. Owner: generate `dead-bug` (prompt `docs/exercise-video-kit/prompts/08-dead-bug.txt`, attach the reference images).
-   Review: opposite arm and leg on both sides, ribs and pelvis stay still. Then upload through the MCP tool.
+2. Owner: generate `dead-bug` v002 with the rewritten prompt 08 (both sides, one arm + opposite leg at a time), attach
+   the reference images. v001 was rejected 2026-11-07 (both arms moved together in rep 1; one side only). Then upload
+   through the MCP tool.
 3. Owner: generate `prone-w` v3 and replace the interim clip.
 
 Last updated: 2026-11-07.
