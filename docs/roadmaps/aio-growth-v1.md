@@ -81,7 +81,7 @@ Owns `apps/api/src/billing`, `libs/api/ai`, `apps/api/src/admin` AI/billing part
 | C3  | Paywall entry points: account/navigation link to `/app/billing`, upgrade calls on locked AI actions (works with no plans: shows the trial/earned state) | DONE (Claude, see paywall UI item)      |
 | C4  | Commercial metrics endpoint + admin cards: paid users, MRR (Toman), failed payments, refunds                                                            | DONE (Claude, see admin dashboard item) |
 | C5  | AI provider fallback (second preset per service), error-rate/budget alerts in `/admin/ai`, per-user concurrency limit                                   | DONE (Claude, see managed AI section)   |
-| C6  | Faraz SMS client, phone verification and the five template flows behind an env switch, tested with a mocked provider (real delivery waits for O4)       | TODO                                    |
+| C6  | Faraz SMS client, phone verification and the five template flows behind an env switch, tested with a mocked provider (real delivery waits for O4)       | IN_PROGRESS (Claude)                    |
 | C7  | Per-model AI price history, so cost reports keep old prices after a model change                                                                        | TODO                                    |
 
 ### ChatGPT (Codex) lane: acquisition, activation and retention
