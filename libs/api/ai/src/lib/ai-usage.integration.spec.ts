@@ -32,7 +32,9 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
           stt: 0.006,
           usdToToman: 100_000,
         }),
+        currentModels: async () => models,
       } as unknown as AiSettingsService);
+    let models = { chat: 'gpt-4o-mini', tts: 'tts-1', stt: 'whisper-1' };
     const now = new Date('2026-11-07T10:00:00Z');
 
     beforeAll(async () => {
@@ -159,6 +161,66 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         expect(trial?.usd).toBeCloseTo(1.8);
       } finally {
         await prisma.user.delete({ where: { id: other.id } });
+      }
+    });
+
+    it('prices each day with the version in effect then, so a later price or model change keeps past costs', async () => {
+      const at = (day: string) => new Date(`${day}T08:00:00Z`);
+      const price = (chatInput: number) => ({
+        chatInput,
+        chatOutput: 0,
+        tts: 0,
+        stt: 0,
+        usdToToman: 0,
+      });
+      const days = ['2031-03-01', '2031-03-10'];
+      try {
+        await prisma.aiPriceVersion.createMany({
+          data: [
+            {
+              day: new Date(days[0]),
+              prices: price(1),
+              models: { chat: 'old-model', tts: 'tts-1', stt: 'whisper-1' },
+            },
+            {
+              day: new Date(days[1]),
+              prices: price(10),
+              models: { chat: 'gpt-4o-mini', tts: 'tts-1', stt: 'whisper-1' },
+            },
+          ],
+        });
+        // 1M input tokens before the first version, on it, between and after the change.
+        for (const day of [
+          '2031-02-25',
+          '2031-03-01',
+          '2031-03-05',
+          '2031-03-12',
+        ])
+          await service().record(
+            userId,
+            'chat',
+            1_000_000,
+            { tier: 'paid' },
+            at(day),
+          );
+        const report = await service().costs(30, at('2031-03-20'));
+        // $1 (before: first version) + $1 + $1 + $10.
+        expect(report.kinds.chat.usd).toBeCloseTo(13);
+        expect(report.priceHistory.map((v) => v.day)).toEqual([
+          '2031-03-10',
+          '2031-03-01',
+        ]);
+        expect(report.priceHistory[1].models.chat).toBe('old-model');
+        expect(report.unpricedModels).toEqual([]);
+        models = { ...models, chat: 'newer-model' };
+        expect(
+          (await service().costs(30, at('2031-03-20'))).unpricedModels,
+        ).toEqual(['chat']);
+      } finally {
+        models = { chat: 'gpt-4o-mini', tts: 'tts-1', stt: 'whisper-1' };
+        await prisma.aiPriceVersion.deleteMany({
+          where: { day: { in: days.map((day) => new Date(day)) } },
+        });
       }
     });
   },

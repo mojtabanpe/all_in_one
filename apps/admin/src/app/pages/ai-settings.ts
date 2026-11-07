@@ -978,6 +978,17 @@ const SERVICES: {
                 }}
               </p>
             }
+            @if (report.unpricedModels.length) {
+              <p
+                class="border-destructive/40 bg-destructive/5 rounded-xl border p-3 text-sm"
+                role="status"
+              >
+                {{
+                  'مدل {0} بعد از آخرین ذخیرهٔ قیمت عوض شده است. قیمت مدل تازه را وارد و ذخیره کن تا هزینه‌ها درست بمانند.'
+                    | aioTranslate: [unpricedNames(report.unpricedModels)]
+                }}
+              </p>
+            }
             <p class="text-sm font-semibold">
               {{
                 'هزینهٔ ۳۰ روز اخیر: {0}'
@@ -996,6 +1007,72 @@ const SERVICES: {
                 </li>
               }
             </ul>
+            @if (report.priceHistory.length) {
+              <div
+                aioTableContainer
+                class="max-w-full overflow-x-auto"
+                tabindex="0"
+                [attr.aria-label]="'سابقهٔ قیمت‌ها' | aioTranslate"
+              >
+                <table aioTable>
+                  <caption
+                    class="text-muted-foreground mb-2 text-start text-xs"
+                  >
+                    {{
+                      'هزینهٔ هر روز با قیمت‌هایی حساب می‌شود که از آن روز ذخیره شده بود.'
+                        | aioTranslate
+                    }}
+                  </caption>
+                  <thead aioTHead>
+                    <tr aioTr>
+                      <th aioTh scope="col">{{ 'از روز' | aioTranslate }}</th>
+                      <th aioTh scope="col">
+                        {{ 'مدل گفتگو' | aioTranslate }}
+                      </th>
+                      <th aioTh scope="col">
+                        {{ 'ورودی / خروجی' | aioTranslate }}
+                      </th>
+                      <th aioTh scope="col">
+                        {{ 'متن به گفتار' | aioTranslate }}
+                      </th>
+                      <th aioTh scope="col">
+                        {{ 'گفتار به متن' | aioTranslate }}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody aioTBody>
+                    @for (version of report.priceHistory; track version.day) {
+                      <tr aioTr>
+                        <th aioTh scope="row">
+                          {{
+                            locale.date(version.day, { dateStyle: 'medium' })
+                          }}
+                        </th>
+                        <td aioTd dir="ltr" lang="en" class="text-start">
+                          {{ version.models.chat || '—' }}
+                        </td>
+                        <td aioTd dir="ltr" lang="en" class="text-start">
+                          {{ version.prices.chatInput }} /
+                          {{ version.prices.chatOutput }}
+                        </td>
+                        <td aioTd dir="ltr" lang="en" class="text-start">
+                          {{ version.prices.tts }}
+                          <span class="text-muted-foreground block text-xs">{{
+                            version.models.tts
+                          }}</span>
+                        </td>
+                        <td aioTd dir="ltr" lang="en" class="text-start">
+                          {{ version.prices.stt }}
+                          <span class="text-muted-foreground block text-xs">{{
+                            version.models.stt
+                          }}</span>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
             @if (report.tiers.length) {
               <div
                 aioTableContainer
@@ -1215,6 +1292,13 @@ export class AiSettingsPage {
     return rate
       ? `${dollars} (${this.locale.number(Math.round(usd * rate))} ${this.locale.text('تومان')})`
       : dollars;
+  }
+
+  /** «گفتگو و متن به گفتار» for the services whose model changed since the last prices. */
+  protected unpricedNames(kinds: AiKind[]): string {
+    return kinds
+      .map((kind) => this.locale.text(this.serviceNames[kind]))
+      .join(this.locale.english() ? ', ' : '، ');
   }
 
   protected setPrice(field: keyof AiPrices, value: string) {

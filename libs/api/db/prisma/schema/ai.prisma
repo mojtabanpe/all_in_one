@@ -104,3 +104,15 @@ model AiUsageDay {
   @@map("ai_usage_days")
 }
 
+
+/// The admin's AI prices from a Tehran day on (the last save of a day wins), with the model names in use then.
+/// Cost reports price each day of use with the version in effect that day, so a later model or price change
+/// never rewrites past costs.
+model AiPriceVersion {
+  day       DateTime @id @db.Date
+  prices    Json
+  models    Json
+  createdAt DateTime @default(now())
+
+  @@map("ai_price_versions")
+}

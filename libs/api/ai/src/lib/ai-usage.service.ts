@@ -5,6 +5,9 @@ import {
   aiCostUsd,
   type AiCostReport,
   type AiKind,
+  type AiPrices,
+  type AiPriceVersionView,
+  DEFAULT_AI_PRICES,
   type AiUsageOverview,
   type AiUsageView,
   type BillingAccessState,
@@ -110,17 +113,42 @@ export class AiUsageService {
   }
 
   /**
-   * What AI cost over the last `days` Tehran days (today included) at the admin's current prices, per service
-   * and per access tier, with the cost per account per 30 days (the figure plan prices must cover). Costs are
-   * estimates: chat tokens come from the service's own usage report, or a length estimate when it gives none.
+   * What AI cost over the last `days` Tehran days (today included), per service and per access tier, with the
+   * cost per account per 30 days (the figure plan prices must cover). Each day is priced with the price version
+   * in effect that day (days before the first version use the first one; with no version, the current prices).
+   * Costs are estimates: chat tokens come from the service's own usage report, or a length estimate.
    */
   async costs(days = 30, now = new Date()): Promise<AiCostReport> {
     const to = usageDay(now);
     const from = usageDay(new Date(now.getTime() - (days - 1) * 86_400_000));
-    const prices = await this.settings.prices();
+    const [current, versions, models] = await Promise.all([
+      this.settings.prices(),
+      this.prisma.aiPriceVersion.findMany({ orderBy: { day: 'asc' } }),
+      this.settings.currentModels(),
+    ]);
+    const history: AiPriceVersionView[] = versions.map((version) => ({
+      day: version.day.toISOString().slice(0, 10),
+      prices: {
+        ...DEFAULT_AI_PRICES,
+        ...(version.prices as Partial<AiPrices>),
+      },
+      models: version.models as Record<AiKind, string>,
+    }));
+    /** The version in effect on `day` (YYYY-MM-DD). */
+    const pricesOn = (day: string): AiPrices => {
+      let found = history[0]?.prices ?? current;
+      for (const version of history) {
+        if (version.day > day) break;
+        found = version.prices;
+      }
+      return found;
+    };
+    const latest = history.at(-1);
+    const prices = latest?.prices ?? current;
     const rows = await this.prisma.$queryRaw<
       {
         userId: string;
+        day: string;
         kind: AiKind;
         tier: string | null;
         calls: bigint;
@@ -128,10 +156,10 @@ export class AiUsageService {
         output: bigint;
       }[]
     >`
-      SELECT "userId"::text AS "userId", kind, tier,
+      SELECT "userId"::text AS "userId", to_char(day, 'YYYY-MM-DD') AS day, kind, tier,
         SUM(calls) AS calls, SUM(units) AS units, SUM("outputUnits") AS output
       FROM ai_usage_days WHERE day BETWEEN ${from}::date AND ${to}::date
-      GROUP BY "userId", kind, tier
+      GROUP BY "userId", day, kind, tier
     `;
     const kinds = Object.fromEntries(
       AI_KINDS.map((kind) => [kind, { calls: 0, units: 0, usd: 0 }]),
@@ -139,7 +167,12 @@ export class AiUsageService {
     const tiers = new Map<string, { users: Set<string>; usd: number }>();
     for (const row of rows) {
       const units = Number(row.units);
-      const usd = aiCostUsd(prices, row.kind, units, Number(row.output));
+      const usd = aiCostUsd(
+        pricesOn(row.day),
+        row.kind,
+        units,
+        Number(row.output),
+      );
       kinds[row.kind].calls += Number(row.calls);
       kinds[row.kind].units += units;
       kinds[row.kind].usd += usd;
@@ -153,6 +186,12 @@ export class AiUsageService {
     }
     const order = ['paid', 'trial', 'earned', 'staff', 'unknown'];
     return {
+      priceHistory: history.slice(-12).reverse(),
+      unpricedModels: latest
+        ? AI_KINDS.filter(
+            (kind) => models[kind] && models[kind] !== latest.models[kind],
+          )
+        : [],
       days,
       from,
       to,

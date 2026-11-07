@@ -4,7 +4,11 @@ import type { PrismaService } from '@all-in-one/api/db';
 import { AI_USER_CONCURRENCY } from '@all-in-one/shared/schemas';
 import { AiGateway, shouldFallBack } from './ai-gateway.service';
 import { AiHealthService } from './ai-health.service';
-import { AiSettingsService, type AiTarget } from './ai-settings.service';
+import {
+  AiSettingsService,
+  tehranDay,
+  type AiTarget,
+} from './ai-settings.service';
 import { SecretBox } from './secret-box';
 
 const SECRET = 'r'.repeat(40);
@@ -273,8 +277,9 @@ describe('AI health alerts', () => {
   });
 });
 
-describe('fallback settings', () => {
+describe('fallback and price settings', () => {
   const box = new SecretBox(SECRET);
+  const priceUpsert = vi.fn().mockResolvedValue({});
   function settingsWith(stored: object, presets: object[]) {
     const prisma = {
       managedAiConfiguration: {
@@ -293,6 +298,7 @@ describe('fallback settings', () => {
         ),
       },
       $executeRaw: vi.fn().mockResolvedValue(1),
+      aiPriceVersion: { upsert: priceUpsert },
     } as unknown as PrismaService;
     return new AiSettingsService(
       new ConfigService({ JWT_SECRET: SECRET }),
@@ -332,6 +338,29 @@ describe('fallback settings', () => {
       [],
     );
     expect(await settings.fallbackTarget('chat')).toBeNull();
+  });
+
+  it('saves prices as the version for today (Tehran) with the models in use', async () => {
+    const settings = settingsWith(primaryRow, []);
+    vi.spyOn(settings, 'view').mockResolvedValue({} as never);
+    const prices = {
+      chatInput: 0.15,
+      chatOutput: 0.6,
+      tts: 15,
+      stt: 0.006,
+      usdToToman: 100_000,
+    };
+    priceUpsert.mockClear();
+    await settings.update({ quotas: undefined });
+    expect(priceUpsert).not.toHaveBeenCalled();
+    await settings.update({ prices });
+    const call = priceUpsert.mock.calls[0][0];
+    expect(call.where.day.toISOString().slice(0, 10)).toBe(tehranDay());
+    expect(call.create).toEqual({
+      day: call.where.day,
+      prices,
+      models: { chat: 'main-chat', tts: 'main-voice', stt: 'main-stt' },
+    });
   });
 
   it('accepts only a saved setup of the same service', async () => {

@@ -464,4 +464,16 @@ export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
     'چند درخواست هوش مصنوعی هم‌زمان در جریان است. چند لحظه بعد دوباره امتحان کن.',
     'Several AI requests are already running. Try again in a moment.',
   ],
+  [
+    'مدل {0} بعد از آخرین ذخیرهٔ قیمت عوض شده است. قیمت مدل تازه را وارد و ذخیره کن تا هزینه‌ها درست بمانند.',
+    'The {0} model changed after the prices were last saved. Enter and save the new model’s prices to keep costs right.',
+  ],
+  ['سابقهٔ قیمت‌ها', 'Price history'],
+  [
+    'هزینهٔ هر روز با قیمت‌هایی حساب می‌شود که از آن روز ذخیره شده بود.',
+    'Each day is priced with the prices saved for it.',
+  ],
+  ['از روز', 'From'],
+  ['مدل گفتگو', 'Chat model'],
+  ['ورودی / خروجی', 'Input / output'],
 ];

@@ -206,8 +206,19 @@ export function aiCostUsd(
   return units * prices.stt;
 }
 
+/** Prices in effect from `day` (Tehran), with the model names in use when they were saved. */
+export interface AiPriceVersionView {
+  day: string;
+  prices: AiPrices;
+  models: Record<AiKind, string>;
+}
+
 /** AI cost over the last `days` Tehran days (today included), per service and per access tier. */
 export interface AiCostReport {
+  /** Saved price versions, newest first (at most 12); each day of use is priced with the one in effect then. */
+  priceHistory: AiPriceVersionView[];
+  /** Services whose current model differs from the one the latest prices were saved for. */
+  unpricedModels: AiKind[];
   days: number;
   from: string;
   to: string;

@@ -27,6 +27,16 @@ import {
   TYPESAFE_URL,
 } from '@all-in-one/shared/schemas';
 
+/** A Tehran calendar day as YYYY-MM-DD. */
+export function tehranDay(now = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Tehran',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+}
+
 /** The stored managed configuration: the old per-user columns plus the scope check. */
 type ManagedSettings = Partial<UserAiSettings> & {
   scopeOn?: boolean;
@@ -485,7 +495,29 @@ export class AiSettingsService {
       ON CONFLICT (id) DO UPDATE
       SET settings = managed_ai_configuration.settings || EXCLUDED.settings
     `;
+    if (input.prices) await this.recordPrices(input.prices);
     return this.view();
+  }
+
+  /** The model name each service uses now ('' when not set). */
+  async currentModels(): Promise<Record<AiKind, string>> {
+    const targets = await this.targets();
+    return {
+      chat: targets.chat?.model ?? '',
+      tts: targets.tts?.model ?? '',
+      stt: targets.stt?.model ?? '',
+    };
+  }
+
+  /** Saved prices become the version for today (Tehran), replacing an earlier save the same day. */
+  private async recordPrices(prices: AiPrices, now = new Date()) {
+    const day = new Date(tehranDay(now));
+    const models = await this.currentModels();
+    await this.prisma.aiPriceVersion.upsert({
+      where: { day },
+      create: { day, prices: { ...prices }, models },
+      update: { prices: { ...prices }, models, createdAt: now },
+    });
   }
 
   async status(): Promise<AiStatus> {
