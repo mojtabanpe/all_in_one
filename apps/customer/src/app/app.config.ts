@@ -17,7 +17,10 @@ import {
   withInMemoryScrolling,
 } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
-import { authInterceptor } from '@all-in-one/web/shared';
+import {
+  authInterceptor,
+  restartRetryInterceptor,
+} from '@all-in-one/web/shared';
 import { aiPaywallInterceptor } from './billing/ai-paywall';
 import { appRoutes } from './app.routes';
 import { onboardingFeedbackInterceptor } from './onboarding-feedback';
@@ -38,6 +41,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withFetch(),
       withInterceptors([
+        restartRetryInterceptor,
         authInterceptor,
         aiPaywallInterceptor,
         onboardingFeedbackInterceptor,

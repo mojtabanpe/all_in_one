@@ -1,14 +1,19 @@
 # poshtetgarm.ir: api, SSR site and nginx (host network, loopback only), Postgres and Redis.
 # The host's nginx terminates TLS and forwards everything to 127.0.0.1:4320 (deploy/nginx.conf).
-#   RELEASE=<git sha> docker compose -f deploy/compose.yml --env-file /opt/all-in-one/shared/compose.env up -d
+#   Started by deploy/release.sh <git sha> (blue/green); do not run `up -d` for every service by hand.
 name: all-in-one
 services:
-  api:
-    image: all-in-one-api:${RELEASE:?Set RELEASE to a tested Git commit}
+  # Blue/green: deploy/release.sh starts the new release in the idle colour (a or b) next to the live one,
+  # waits until it is healthy, then stops the old colour. The web nginx sends each request to whichever colour
+  # answers, so a release never leaves the api or the site without a running server. Ports: a = 4321/4322,
+  # b = 4331/4332. Migrations run when the new api starts, while the old one still serves: keep them additive
+  # (expand first, remove old columns in a later release).
+  api-a: &api
+    image: all-in-one-api:${RELEASE_A:-none}
     network_mode: host
     restart: unless-stopped
     env_file: ${AIO_ENV_FILE:-/opt/all-in-one/shared/.env}
-    environment:
+    environment: &api-env
       NODE_ENV: production
       API_HOST: 127.0.0.1
       API_PORT: 4321
@@ -30,9 +35,18 @@ services:
       - exercise-videos:/app/data/exercise-videos
     tmpfs: [/tmp]
     security_opt: [no-new-privileges:true]
+    # SIGTERM lets requests in flight (AI calls take up to a minute or two) finish before the old colour stops.
+    stop_grace_period: 90s
 
-  public:
-    image: all-in-one-public:${RELEASE}
+  api-b:
+    <<: *api
+    image: all-in-one-api:${RELEASE_B:-none}
+    environment:
+      <<: *api-env
+      API_PORT: 4331
+
+  public-a: &public
+    image: all-in-one-public:${RELEASE_A:-none}
     network_mode: host
     restart: unless-stopped
     environment:
@@ -43,12 +57,21 @@ services:
     read_only: true
     tmpfs: [/tmp]
     security_opt: [no-new-privileges:true]
+    stop_grace_period: 30s
+
+  public-b:
+    <<: *public
+    image: all-in-one-public:${RELEASE_B:-none}
+    environment:
+      NODE_ENV: production
+      HOST: 127.0.0.1
+      PORT: 4332
+      NG_ALLOWED_HOSTS: ${APP_DOMAIN}
 
   web:
-    image: all-in-one-web:${RELEASE}
+    image: all-in-one-web:${RELEASE:-none}
     network_mode: host
     restart: unless-stopped
-    depends_on: [api, public]
     tmpfs: [/var/cache/nginx, /var/run, /tmp]
     security_opt: [no-new-privileges:true]
 

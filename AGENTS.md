@@ -89,6 +89,9 @@
 - Production layout (`deploy/`, guide `deploy/README.fa.md`): one domain; `/` public SSR, `/app/` customer (PWA,
   `baseHref /app/`), `/admin/`, `/api/` + OAuth paths. Images come from `deploy/images.dockerfile` (not named
   `Dockerfile`: the `@nx/docker` plugin would infer a project from it). Servers listen on loopback (`API_HOST`, `HOST`).
+  Releases are blue/green (`deploy/release.sh`): the new api/site start in the idle colour (a: 4321/4322, b: 4331/4332)
+  next to the live one and the old colour stops only after the new one is healthy, so migrations run while the old
+  release still serves: keep them additive (drop or rename a column the old release reads in a later release).
 - Billing (`apps/api/src/billing`, schema `billing.prisma`): amounts are Rial (Zibal's unit), shown as Toman; plans are
   admin-managed in `/admin/billing` and nothing is seeded. Only a server-side Zibal verify of an owned order activates,
   once, under a per-account row lock (`activate`/`adjust`); manual changes always write a `billing_adjustments` row.

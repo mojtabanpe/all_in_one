@@ -9,7 +9,10 @@ import {
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
-import { authInterceptor } from '@all-in-one/web/shared';
+import {
+  authInterceptor,
+  restartRetryInterceptor,
+} from '@all-in-one/web/shared';
 import { appRoutes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -17,6 +20,9 @@ export const appConfig: ApplicationConfig = {
     provideAioLocale(),
     provideBrowserGlobalErrorListeners(),
     provideRouter(appRoutes, withComponentInputBinding()),
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([restartRetryInterceptor, authInterceptor]),
+    ),
   ],
 };
