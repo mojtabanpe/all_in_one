@@ -74,8 +74,8 @@ Owns `apps/api/src/billing`, `libs/api/ai`, `apps/api/src/admin` AI/billing part
 | ID  | Task                                                                                                                                                    | Status                                |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
 | C1  | Payment test matrix with a mocked Zibal: success, cancel, timeout, duplicate callback, amount mismatch, renewal/expiry, provider outage                 | DONE (Claude, see payment tests item) |
-| C2  | Refunds: admin action with audit row and access end; Zibal refund call if the merchant supports it, otherwise a recorded manual refund                  | TODO                                  |
-| C3  | Paywall entry points: account/navigation link to `/app/billing`, upgrade calls on locked AI actions (works with no plans: shows the trial/earned state) | TODO                                  |
+| C2  | Refunds: admin action with audit row and access end; Zibal refund call if the merchant supports it, otherwise a recorded manual refund                  | DONE (Claude, see refunds item)       |
+| C3  | Paywall entry points: account/navigation link to `/app/billing`, upgrade calls on locked AI actions (works with no plans: shows the trial/earned state) | IN_PROGRESS (Claude)                  |
 | C4  | Commercial metrics endpoint + admin cards: paid users, MRR (Toman), failed payments, refunds                                                            | TODO                                  |
 | C5  | AI provider fallback (second preset per service), error-rate/budget alerts in `/admin/ai`, per-user concurrency limit                                   | TODO                                  |
 | C6  | Faraz SMS client, phone verification and the five template flows behind an env switch, tested with a mocked provider (real delivery waits for O4)       | TODO                                  |
