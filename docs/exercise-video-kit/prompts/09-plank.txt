@@ -5,11 +5,11 @@ Use the attached approved reference images of AIO Coach v1 as the identity sourc
 
 Use a clean light-gray studio, matte floor, soft even lighting and a subtle ground shadow. Fixed camera, entire body and all working equipment visible with generous margins. No cuts, zooms, camera orbit, dramatic effects, music, speech, captions, anatomy overlays or text. Prioritize accurate exercise mechanics and clear joint positions. Natural spinal curves are allowed; neutral spine does not mean a permanently vertical torso. No extra limbs, sliding feet, impossible joints, body morphing, floating weights or discontinuous equipment. Target 8 seconds, landscape 16:9, 1080p when supported; if the available generator cannot deliver these settings, report actual settings rather than claiming compliance. Export MP4 when supported; retain the original output.
 
-CAMERA: side.
+CAMERA: fixed true side view at hip height, from the character's left, so the straight line from shoulder through hip to ankle, the elbow under the shoulder and the toes on the floor are clearly visible.
 
-ACTION: Begin already in a forearm plank, elbows under shoulders, toes grounded. Hold a straight shoulder-hip-ankle alignment with natural spinal curves and subtle breathing. No hip sag, piking or neck extension.
+ACTION: The clip starts and ends in the same forearm plank; no getting into or out of the position. Forearms flat on the floor and parallel, elbows directly under the shoulders, hands relaxed (not clasped), legs straight, feet hip-width apart, weight on the toes. Head in line with the spine, eyes looking at the floor just ahead of the hands. Keep one straight line from shoulders through hips to ankles with natural spinal curves: hips never sag toward the floor and never pike up. The body stays still the whole time; the only motion is calm, visible breathing in the ribcage and abdomen. No shaking, no rocking forward or back, no knees touching the floor, no sliding elbows or feet.
 
-TIMING: Show a gentle entry, a stable hold with subtle breathing, and a controlled release. This short demonstration does not prescribe the full training hold duration.
+TIMING: One continuous stable hold for the whole clip, with the first and last frames in the same pose so the clip loops cleanly. This short demonstration does not prescribe the full training hold duration.
 
 EQUIPMENT: Show only the equipment needed for this exercise, with mechanically coherent support, contact points and load paths. Use light demonstration loads where applicable.
 

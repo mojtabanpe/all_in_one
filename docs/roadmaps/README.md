@@ -5,10 +5,10 @@ Updated: 2026-11-07.
 
 ## Stable roadmap names and commands
 
-| ID                | Persian name         | File                                 | State                                                                                                                                      |
-| ----------------- | -------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| **AIO Growth v1** | رودمپ مارکتینگ       | [aio-growth-v1.md](aio-growth-v1.md) | In progress: acquisition/SEO, billing, managed AI, quotas, cost reporting and channel churn on production; payments await plans and prices |
-| **AIO Coach v1**  | رودمپ ویدئوهای تمرین | [aio-coach-v1.md](aio-coach-v1.md)   | In progress: 8/62 clips published, inline playback in app; next clip `dead-bug` v002, production playback recheck                          |
+| ID                | Persian name         | File                                 | State                                                                                                                                           |
+| ----------------- | -------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AIO Growth v1** | رودمپ مارکتینگ       | [aio-growth-v1.md](aio-growth-v1.md) | In progress: acquisition/SEO, billing, managed AI, quotas, cost reporting and channel churn on production; payments await plans and prices      |
+| **AIO Coach v1**  | رودمپ ویدئوهای تمرین | [aio-coach-v1.md](aio-coach-v1.md)   | In progress: 8/62 clips published, inline playback in app; `dead-bug` approved (upload pending), next clip `plank`, production playback recheck |
 
 To resume in any Claude (Claude Code) or ChatGPT/Codex session: **«رودمپ مارکتینگ رو پیش ببر»** or **«رودمپ ویدئوهای تمرین رو پیش ببر»**. The agent should read this index and the linked roadmap from `master`, verify current repo/deployment state, carry out the next authorized task, then update the roadmap status and evidence. Never infer completed deployment from a merged commit.
 
