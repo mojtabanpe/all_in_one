@@ -14,3 +14,27 @@ model GrowthEvent {
   @@index([day, name])
   @@map("growth_events")
 }
+
+enum GrowthAdminReport {
+  SUMMARY
+  CAMPAIGNS
+  RETENTION
+  CHURN
+}
+
+enum GrowthReportAction {
+  VIEW
+  EXPORT
+}
+
+/// Admin activity only. Actor IDs remain available if an admin account is deleted.
+model GrowthReportAudit {
+  id        String             @id @default(uuid(7)) @db.Uuid
+  actorId   String             @db.Uuid
+  report    GrowthAdminReport
+  action    GrowthReportAction
+  createdAt DateTime           @default(now())
+
+  @@index([createdAt, id])
+  @@map("growth_report_audit")
+}

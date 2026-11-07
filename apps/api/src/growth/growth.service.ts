@@ -9,6 +9,8 @@ import type {
   GrowthRetentionFilter,
   GrowthChurnMetrics,
   GrowthChurnReport,
+  GrowthMonitoring,
+  GrowthReportAuditEntry,
 } from '@all-in-one/shared/schemas';
 import { GROWTH_CHURN_DAYS } from '@all-in-one/shared/schemas';
 
@@ -321,6 +323,67 @@ export class GrowthService {
           medium: row.medium ?? 'unknown',
           ...metrics(row),
         })),
+    };
+  }
+
+  async auditReport(
+    actorId: string,
+    report: GrowthReportAuditEntry['report'],
+    action: GrowthReportAuditEntry['action'],
+  ): Promise<void> {
+    await this.prisma.growthReportAudit.create({
+      data: { actorId, report, action },
+    });
+  }
+
+  async monitoring(now = new Date()): Promise<GrowthMonitoring> {
+    const daysAgo = (days: number) =>
+      dayAt(new Date(now.getTime() - days * 86_400_000));
+    const windows = [
+      { from: daysAgo(7), to: daysAgo(1) },
+      { from: daysAgo(14), to: daysAgo(8) },
+    ];
+    const [counts, audit] = await Promise.all([
+      this.prisma.$queryRaw<
+        { position: number; signups: bigint; activations: bigint }[]
+      >`
+        WITH weeks AS (
+          SELECT * FROM (VALUES
+            (0, ${windows[0].from}::text, ${windows[0].to}::text),
+            (1, ${windows[1].from}::text, ${windows[1].to}::text)
+          ) AS bounds(position, start_day, end_day)
+        ), events AS (
+          SELECT e.day, e.name, e."visitorId"
+          FROM growth_events e
+          WHERE e.day BETWEEN ${windows[1].from} AND ${windows[0].to}
+            AND e.name IN ('signup_completed', 'first_task_created', 'first_review_completed')
+            AND NOT EXISTS (
+              SELECT 1 FROM growth_events qa
+              WHERE qa."visitorId" = e."visitorId" AND qa.day <= ${daysAgo(1)}
+                AND LOWER(qa.campaign->>'utm_source') IN ('qa', 'test', 'roadmap_check')
+            )
+        )
+        SELECT w.position,
+          COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'signup_completed') AS signups,
+          COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name IN ('first_task_created', 'first_review_completed')) AS activations
+        FROM weeks w LEFT JOIN events e ON e.day BETWEEN w.start_day AND w.end_day
+        GROUP BY w.position ORDER BY w.position
+      `,
+      this.prisma.growthReportAudit.findMany({
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: 20,
+      }),
+    ]);
+    return {
+      weeks: windows.map((window, position) => ({
+        ...window,
+        signups: Number(counts[position]?.signups ?? 0),
+        activations: Number(counts[position]?.activations ?? 0),
+      })),
+      audit: audit.map((row) => ({
+        ...row,
+        createdAt: row.createdAt.toISOString(),
+      })),
     };
   }
 

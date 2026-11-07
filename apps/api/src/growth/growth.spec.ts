@@ -23,8 +23,8 @@ describe('Growth data boundaries', () => {
       { get: () => 'false' } as never,
     );
     await expect(controller.record(event)).rejects.toThrow();
-    expect(() => controller.summary()).toThrow();
-    expect(() => controller.campaigns({})).toThrow();
+    expect(() => controller.summary({} as never)).toThrow();
+    expect(() => controller.campaigns({} as never, {})).toThrow();
     expect(record).not.toHaveBeenCalled();
     expect(summary).not.toHaveBeenCalled();
     expect(campaigns).not.toHaveBeenCalled();

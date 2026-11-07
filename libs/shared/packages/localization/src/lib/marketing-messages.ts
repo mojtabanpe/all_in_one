@@ -278,4 +278,41 @@ export const MARKETING_MESSAGES: readonly (readonly [string, string])[] = [
     'بله. در جزئیات عادت می‌توانی ساعت یادآوری را برای روزهای برنامه‌ریزی‌شده مشخص کنی. برای دریافت آن، اعلان‌ها را روی دستگاهت فعال کن.',
     'Yes. In the habit details, set a reminder time for your scheduled days. Enable notifications on your device to receive it.',
   ],
+  ['پایش هفتگی رشد', 'Weekly growth monitoring'],
+  ['به‌روزرسانی پایش رشد', 'Refresh growth monitoring'],
+  [
+    'دو بازهٔ هفت‌روزهٔ کامل تهران تا دیروز. فعال‌سازی یعنی ثبت اولین کار یا اولین مرور کارت.',
+    'Two complete seven-day periods in Tehran ending yesterday. Activation means a first task or a first card review.',
+  ],
+  ['بازهٔ هفت‌روزه', 'Seven-day period'],
+  [
+    'تعداد ثبت‌نام‌ها نسبت به هفت روز قبل کمتر شده است.',
+    'Signups fell compared with the previous seven days.',
+  ],
+  [
+    'تعداد فعال‌سازی‌ها نسبت به هفت روز قبل کمتر شده است.',
+    'Activations fell compared with the previous seven days.',
+  ],
+  ['فعالیت اخیر گزارش‌ها', 'Recent report activity'],
+  ['شناسهٔ مدیر', 'Admin ID'],
+  ['حساب‌های ساخته‌شده', 'Accounts created'],
+  ['فعال‌سازی', 'Activations'],
+  ['گزارش', 'Report'],
+  ['نوع فعالیت', 'Activity'],
+  ['درخواست خروجی CSV', 'CSV export requested'],
+  ['بازدید گزارش', 'Report viewed'],
+  ['خلاصهٔ جذب', 'Acquisition summary'],
+  ['بازگشت هفتگی', 'Weekly retention'],
+  [
+    'هنوز فعالیتی برای گزارش‌ها ثبت نشده است.',
+    'No report activity has been recorded yet.',
+  ],
+  [
+    'داده‌های پایش رشد در دسترس نیست.',
+    'Growth monitoring data is unavailable.',
+  ],
+  [
+    'خروجی گزارش ثبت نشد. دوباره تلاش کن.',
+    'Unable to log the report export. Try again.',
+  ],
 ];

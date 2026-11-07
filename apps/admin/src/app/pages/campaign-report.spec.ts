@@ -75,6 +75,15 @@ describe('Campaign report CSV', () => {
       expect(download).toBeDefined();
       vi.useFakeTimers();
       download?.click();
+      expect(createObjectURL).not.toHaveBeenCalled();
+      http
+        .expectOne(
+          (request) =>
+            request.method === 'POST' &&
+            request.url.endsWith('/growth/campaigns/export-audit'),
+        )
+        .flush(null, { status: 204, statusText: 'No Content' });
+      await Promise.resolve();
       vi.runOnlyPendingTimers();
       vi.useRealTimers();
       expect(createObjectURL).toHaveBeenCalledOnce();

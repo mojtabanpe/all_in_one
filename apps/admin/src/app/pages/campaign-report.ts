@@ -1,5 +1,6 @@
-import { httpResource } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { HttpClient, httpResource } from '@angular/common/http';
+import { Component, computed, inject, output, signal } from '@angular/core';
 import { form, FormField, maxLength } from '@angular/forms/signals';
 import {
   GROWTH_CAMPAIGN_WINDOWS,
@@ -20,6 +21,7 @@ import {
   AioLocale,
   AioNativeSelect,
   AioNativeSelectOption,
+  AioNotifications,
   AioSkeletonRows,
   AioTableDirectives,
   AioTranslate,
@@ -215,6 +217,7 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
             aioBtn
             type="button"
             variant="outline"
+            [disabled]="exporting()"
             (click)="downloadCsv()"
           >
             {{ 'دانلود گزارش کمپین‌ها (CSV)' | aioTranslate }}
@@ -322,6 +325,10 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
 export class CampaignReport {
   protected readonly locale = inject(AioLocale);
   private readonly api = inject(API_BASE_URL);
+  private readonly http = inject(HttpClient);
+  private readonly notifications = inject(AioNotifications);
+  protected readonly exporting = signal(false);
+  readonly exported = output<void>();
   protected readonly model = signal({
     days: '30',
     from: '',
@@ -415,8 +422,9 @@ export class CampaignReport {
       : '—';
   }
 
-  protected downloadCsv(): void {
-    if (this.report.isLoading() || !this.report.hasValue()) return;
+  protected async downloadCsv(): Promise<void> {
+    if (this.exporting() || this.report.isLoading() || !this.report.hasValue())
+      return;
     const { rows, totals, from, to } = this.report.value();
     const { source, medium, campaign } = this.filters();
 
@@ -463,6 +471,17 @@ export class CampaignReport {
     const csv = [header, ...records]
       .map((record) => record.map(csvCell).join(','))
       .join('\r\n');
+    this.exporting.set(true);
+    try {
+      await firstValueFrom(
+        this.http.post<void>(`${this.api}/growth/campaigns/export-audit`, null),
+      );
+    } catch {
+      this.notifications.error('خروجی گزارش ثبت نشد. دوباره تلاش کن.');
+      return;
+    } finally {
+      this.exporting.set(false);
+    }
     const url = URL.createObjectURL(
       new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' }),
     );
@@ -470,6 +489,7 @@ export class CampaignReport {
     link.href = url;
     link.download = `campaign-report-${from}_${to}.csv`;
     link.click();
+    this.exported.emit();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   protected setDays(days: string): void {

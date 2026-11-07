@@ -6,6 +6,7 @@ import type {
   GrowthRetentionCohort,
   GrowthChurnReport,
   GrowthSummary,
+  GrowthMonitoring,
 } from '@all-in-one/shared/schemas';
 import {
   AioTranslate,
@@ -608,7 +609,137 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
           }
         </div>
       </section>
-      <admin-campaign-report />
+      <admin-campaign-report (exported)="monitoring.reload()" />
+      <section aioCard aria-labelledby="growth-monitoring-heading">
+        <div aioCardHeader>
+          <h2 id="growth-monitoring-heading" aioCardTitle>
+            {{ 'پایش هفتگی رشد' | aioTranslate }}
+          </h2>
+          <p aioCardDescription>
+            {{
+              'دو بازهٔ هفت‌روزهٔ کامل تهران تا دیروز. فعال‌سازی یعنی ثبت اولین کار یا اولین مرور کارت.'
+                | aioTranslate
+            }}
+          </p>
+        </div>
+        <div aioCardContent class="flex min-w-0 flex-col gap-4">
+          <button
+            aioBtn
+            variant="outline"
+            type="button"
+            class="min-h-11 self-start"
+            [disabled]="monitoring.isLoading()"
+            (click)="monitoring.reload()"
+          >
+            {{ 'به‌روزرسانی پایش رشد' | aioTranslate }}
+          </button>
+          @if (monitoring.hasValue()) {
+            @for (alert of growthAlerts(); track alert) {
+              <p
+                class="rounded-lg border border-warning bg-warning/15 p-3 text-sm"
+              >
+                {{ alert | aioTranslate }}
+              </p>
+            }
+            <div
+              aioTableContainer
+              class="max-w-full overflow-x-auto"
+              tabindex="0"
+              [attr.aria-label]="'پایش هفتگی رشد' | aioTranslate"
+            >
+              <table aioTable>
+                <thead aioTHead>
+                  <tr aioTr>
+                    <th aioTh scope="col">
+                      {{ 'بازهٔ هفت‌روزه' | aioTranslate }}
+                    </th>
+                    <th aioTh scope="col">
+                      {{ 'حساب‌های ساخته‌شده' | aioTranslate }}
+                    </th>
+                    <th aioTh scope="col">{{ 'فعال‌سازی' | aioTranslate }}</th>
+                  </tr>
+                </thead>
+                <tbody aioTBody>
+                  @for (week of monitoring.value().weeks; track week.from) {
+                    <tr aioTr>
+                      <th aioTh scope="row">
+                        {{
+                          '{0} تا {1}'
+                            | aioTranslate
+                              : [locale.date(week.from), locale.date(week.to)]
+                        }}
+                      </th>
+                      <td aioTd>{{ fa(week.signups) }}</td>
+                      <td aioTd>{{ fa(week.activations) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <h3 class="font-semibold">
+              {{ 'فعالیت اخیر گزارش‌ها' | aioTranslate }}
+            </h3>
+            @if (monitoring.value().audit.length) {
+              <div
+                aioTableContainer
+                class="max-w-full overflow-x-auto"
+                tabindex="0"
+                [attr.aria-label]="'فعالیت اخیر گزارش‌ها' | aioTranslate"
+              >
+                <table aioTable>
+                  <thead aioTHead>
+                    <tr aioTr>
+                      <th aioTh scope="col">{{ 'زمان' | aioTranslate }}</th>
+                      <th aioTh scope="col">{{ 'گزارش' | aioTranslate }}</th>
+                      <th aioTh scope="col">
+                        {{ 'نوع فعالیت' | aioTranslate }}
+                      </th>
+                      <th aioTh scope="col">
+                        {{ 'شناسهٔ مدیر' | aioTranslate }}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody aioTBody>
+                    @for (entry of monitoring.value().audit; track entry.id) {
+                      <tr aioTr>
+                        <td aioTd>
+                          {{ locale.date(entry.createdAt, auditDateOptions) }}
+                        </td>
+                        <td aioTd>
+                          {{ auditReportLabels[entry.report] | aioTranslate }}
+                        </td>
+                        <td aioTd>
+                          {{
+                            (entry.action === 'EXPORT'
+                              ? 'درخواست خروجی CSV'
+                              : 'بازدید گزارش'
+                            ) | aioTranslate
+                          }}
+                        </td>
+                        <td aioTd>
+                          <bdi class="font-mono text-xs">{{
+                            entry.actorId
+                          }}</bdi>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p class="text-sm text-muted-foreground">
+                {{ 'هنوز فعالیتی برای گزارش‌ها ثبت نشده است.' | aioTranslate }}
+              </p>
+            }
+          } @else if (monitoring.error()) {
+            <p class="text-sm text-muted-foreground" role="status">
+              {{ 'داده‌های پایش رشد در دسترس نیست.' | aioTranslate }}
+            </p>
+          } @else {
+            <div aioSkeletonRows [count]="3" itemClass="h-12 rounded-xl"></div>
+          }
+        </div>
+      </section>
       <web-api-status />
     </div>
   `,
@@ -661,6 +792,32 @@ export class Dashboard {
   protected readonly growth = httpResource<GrowthSummary>(
     () => `${this.api}/growth/summary`,
   );
+  protected readonly monitoring = httpResource<GrowthMonitoring>(
+    () => `${this.api}/growth/monitoring`,
+  );
+  protected readonly growthAlerts = computed(() => {
+    if (!this.monitoring.hasValue()) return [];
+    const [current, previous] = this.monitoring.value().weeks;
+    if (!current || !previous) return [];
+    const alerts: string[] = [];
+    if (current.signups < previous.signups)
+      alerts.push('تعداد ثبت‌نام‌ها نسبت به هفت روز قبل کمتر شده است.');
+    if (current.activations < previous.activations)
+      alerts.push('تعداد فعال‌سازی‌ها نسبت به هفت روز قبل کمتر شده است.');
+    return alerts;
+  });
+  protected readonly auditDateOptions = {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  } satisfies Intl.DateTimeFormatOptions;
+  protected readonly auditReportLabels = {
+    SUMMARY: 'خلاصهٔ جذب',
+    CAMPAIGNS: 'عملکرد کمپین‌ها',
+    RETENTION: 'بازگشت هفتگی',
+    CHURN: 'ریزش کاربران به تفکیک کانال',
+  };
   protected readonly goalLabels = {
     planner: 'برنامه‌ریز',
     english: 'زبان',

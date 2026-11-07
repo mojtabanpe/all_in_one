@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@all-in-one/api/db';
+import { GrowthController } from './growth.controller';
 import { GrowthService } from './growth.service';
 import { AuthService, MailService } from '@all-in-one/api/auth';
 
@@ -31,6 +32,61 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         });
         await prisma.$disconnect();
       }
+    });
+
+    it('audits admin report activity and compares full Tehran weeks without QA traffic', async () => {
+      const actorId = randomUUID();
+      const [visitor, qa] = [randomUUID(), randomUUID()];
+      await prisma.$transaction(async (tx) => {
+        const service = new GrowthService(tx as never);
+        const controller = new GrowthController(
+          service,
+          new ConfigService({ GROWTH_ANALYTICS_ENABLED: 'true' }),
+        );
+        const admin = { id: actorId } as never;
+        await controller.summary(admin);
+        await controller.auditCampaignExport(admin);
+        await tx.growthEvent.createMany({
+          data: [
+            { visitorId: visitor, name: 'signup_completed', day: '2031-01-01' },
+            {
+              visitorId: visitor,
+              name: 'first_task_created',
+              day: '2031-01-08',
+            },
+            {
+              visitorId: visitor,
+              name: 'first_review_completed',
+              day: '2031-01-14',
+            },
+            { visitorId: visitor, name: 'signup_completed', day: '2031-01-15' },
+            {
+              visitorId: qa,
+              name: 'landing_view',
+              day: '2030-12-31',
+              campaign: { utm_source: 'QA' },
+            },
+            { visitorId: qa, name: 'signup_completed', day: '2031-01-08' },
+          ].map((event) => ({ ...event, language: 'fa' })),
+        });
+        const report = await service.monitoring(
+          new Date('2031-01-14T20:30:00Z'),
+        );
+        expect(report.weeks).toEqual([
+          { from: '2031-01-08', to: '2031-01-14', signups: 0, activations: 1 },
+          { from: '2031-01-01', to: '2031-01-07', signups: 1, activations: 0 },
+        ]);
+        expect(
+          report.audit.filter((entry) => entry.actorId === actorId),
+        ).toEqual([
+          expect.objectContaining({ action: 'EXPORT', report: 'CAMPAIGNS' }),
+          expect.objectContaining({ action: 'VIEW', report: 'SUMMARY' }),
+        ]);
+        await tx.growthEvent.deleteMany({
+          where: { visitorId: { in: [visitor, qa] } },
+        });
+        await tx.growthReportAudit.deleteMany({ where: { actorId } });
+      });
     });
 
     it('deduplicates concurrent retries and returns distinct PostgreSQL visitor counts', async () => {

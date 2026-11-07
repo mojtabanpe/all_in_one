@@ -193,3 +193,21 @@ export interface GrowthRetentionCohort {
     returned: number;
   }[];
 }
+
+export interface GrowthReportAuditEntry {
+  id: string;
+  actorId: string;
+  report: 'SUMMARY' | 'CAMPAIGNS' | 'RETENTION' | 'CHURN';
+  action: 'VIEW' | 'EXPORT';
+  createdAt: string;
+}
+
+export interface GrowthMonitoring {
+  weeks: {
+    from: string;
+    to: string;
+    signups: number;
+    activations: number;
+  }[];
+  audit: GrowthReportAuditEntry[];
+}
