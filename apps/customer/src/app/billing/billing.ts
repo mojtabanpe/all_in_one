@@ -129,6 +129,10 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
                       : [state.paidUntil | aioDate: { dateStyle: 'long' }]
                 }}
               </p>
+            } @else if (state.tier === 'staff') {
+              <p class="text-lg font-semibold">
+                {{ 'حساب مدیر است؛ هوش مصنوعی همیشه فعال است.' | aioTranslate }}
+              </p>
             } @else if (state.tier === 'trial' || state.tier === 'earned') {
               <p class="text-lg font-semibold">
                 {{

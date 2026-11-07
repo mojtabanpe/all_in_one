@@ -17,6 +17,9 @@ import {
   TemplateRef,
 } from '@angular/core';
 import { HlmButton } from '@spartan-ng/helm/button';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
+import { AioIcon } from './icon';
 import { HlmDialogImports } from '@spartan-ng/helm/dialog';
 import { HlmDrawerImports } from '@spartan-ng/helm/drawer';
 import { injectIsMobile } from './media';
@@ -76,7 +79,9 @@ class AioBottomSheetMotion {
     NgTemplateOutlet,
     AioBottomSheetMotion,
     AioTranslate,
+    AioIcon,
   ],
+  providers: [provideIcons({ lucideX })],
   template: `
     @if (isMobile()) {
       <hlm-drawer
@@ -94,28 +99,37 @@ class AioBottomSheetMotion {
             contentClass()
           "
         >
-          <hlm-drawer-header class="relative min-w-0 shrink-0 pe-24 text-start">
-            <h2 hlmDrawerTitle class="min-w-0 break-words">
-              {{ title() }}
-            </h2>
-            @if (description()) {
-              <p hlmDrawerDescription class="min-w-0 break-words">
-                {{ description() }}
-              </p>
-            }
+          <!-- Title and close share one row: title on the start side, a 44px round close on the end side. -->
+          <hlm-drawer-header
+            class="min-w-0 shrink-0 flex-row items-start gap-2 px-4 pt-2 pb-1 group-data-[vaul-drawer-direction=bottom]/drawer-content:text-start"
+          >
+            <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+              <h2
+                hlmDrawerTitle
+                class="min-w-0 break-words py-2 text-lg leading-7 font-semibold"
+              >
+                {{ title() }}
+              </h2>
+              @if (description()) {
+                <p hlmDrawerDescription class="min-w-0 break-words">
+                  {{ description() }}
+                </p>
+              }
+            </div>
             <button
               hlmBtn
               hlmDrawerClose
               variant="ghost"
-              class="absolute end-4 top-2 min-h-11 min-w-11"
+              size="icon"
+              class="text-muted-foreground -me-2 size-11 shrink-0 rounded-full"
               [attr.aria-label]="closeText() | aioTranslate"
             >
-              {{ closeText() | aioTranslate }}
+              <aio-icon name="lucideX" />
             </button>
           </hlm-drawer-header>
           @if (body(); as b) {
             <div
-              class="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-4 pb-4"
+              class="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain px-4 pb-2 leading-relaxed"
               data-slot="dialog-body"
               tabindex="0"
               role="region"
@@ -125,7 +139,8 @@ class AioBottomSheetMotion {
             </div>
           }
           @if (footer(); as f) {
-            <hlm-drawer-footer class="shrink-0">
+            <!-- Actions are written cancel-first (desktop order); on a phone the main action sits on top. -->
+            <hlm-drawer-footer class="shrink-0 flex-col-reverse pt-2">
               <ng-container [ngTemplateOutlet]="f.template" />
             </hlm-drawer-footer>
           }

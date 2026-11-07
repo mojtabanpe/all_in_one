@@ -52,6 +52,14 @@ export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
   ['دورهٔ آزمایشی تا {0} فعال است.', 'Your trial is active until {0}.'],
   ['هدیهٔ هوش مصنوعی تا {0} فعال است.', 'Your AI reward is active until {0}.'],
   ['دسترسی به هوش مصنوعی', 'AI access'],
+  [
+    'حساب مدیر است؛ هوش مصنوعی همیشه فعال است.',
+    'This is an admin account; AI is always on.',
+  ],
+  [
+    'با عضویت در تلگرام یا اینستاگرام Poshtetgarm، برای هر کدام یک هفته هوش مصنوعی هدیه بگیر.',
+    'Join Poshtetgarm on Telegram or Instagram and get a free week of AI for each.',
+  ],
   ['مدیریت هوش مصنوعی', 'Manage AI'],
   ['در حال دریافت تنظیمات هوش مصنوعی', 'Loading AI settings'],
   [

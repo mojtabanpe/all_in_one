@@ -15,7 +15,7 @@ import {
   billingPlanInputSchema,
 } from '@all-in-one/shared/schemas';
 import { BillingController, PaymentsController } from './billing.controller';
-import { addMonths, BillingService } from './billing.service';
+import { addMonths, BillingService, TRIAL_LAUNCH } from './billing.service';
 import type { ZibalGateway } from './zibal.gateway';
 
 describe('Billing rules', () => {
@@ -306,7 +306,37 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       }
     });
 
-    it('hides disabled offers and accepts one request after the trial and recent activity', async () => {
+    it('gives accounts confirmed before launch a week from launch and admins AI without a plan', async () => {
+      const now = new Date('2026-11-08T12:00:00.000Z');
+      const customer = await prisma.user.create({
+        data: {
+          email: `early-${randomUUID()}@example.test`,
+          passwordHash: 'fixture',
+          emailVerifiedAt: new Date('2026-09-01T12:00:00.000Z'),
+        },
+      });
+      const admin = await prisma.user.create({
+        data: {
+          email: `staff-${randomUUID()}@example.test`,
+          passwordHash: 'fixture',
+          role: 'ADMIN',
+        },
+      });
+      try {
+        const end = new Date(TRIAL_LAUNCH.getTime() + 7 * 86_400_000);
+        expect(await service().access(customer.id, now)).toMatchObject({
+          tier: 'trial',
+          trialUntil: end.toISOString(),
+        });
+        expect((await service().access(customer.id, end)).tier).toBe('free');
+        expect((await service().access(admin.id, now)).tier).toBe('staff');
+      } finally {
+        await prisma.user.delete({ where: { id: customer.id } });
+        await prisma.user.delete({ where: { id: admin.id } });
+      }
+    });
+
+    it('hides disabled offers and accepts one request from any confirmed customer', async () => {
       const now = new Date('2026-11-07T12:00:00.000Z');
       const customer = await prisma.user.create({
         data: {
@@ -333,17 +363,11 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       };
       try {
         expect(await service().rewardOffers(customer.id, now)).toEqual([]);
-        expect(await offers.rewardOffers(customer.id, now)).toEqual([]);
         await expect(
-          offers.requestReward(customer.id, input, now),
+          offers.requestReward(admin.id, input, now),
         ).rejects.toMatchObject({ status: 403 });
-        await prisma.englishReviewDay.create({
-          data: {
-            userId: customer.id,
-            date: new Date('2026-11-06'),
-            reviews: 1,
-          },
-        });
+        // Still inside the trial and without any activity: the offer is already open.
+        expect((await offers.access(customer.id, now)).tier).toBe('trial');
         expect(await offers.rewardOffers(customer.id, now)).toEqual([
           {
             campaign: 'TELEGRAM_JOIN',

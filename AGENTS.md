@@ -507,3 +507,15 @@ origin master` and read the index and the roadmap; after work, update its status
      `<a target="_blank">`, so a YouTube link opens the YouTube app on phones) and a remove button, plus a field to
      add more (a link without a scheme gets `https://`). MCP/assistant: `links` on create_task, update_task and the
      batch tools; series pass them to their occurrences.
+
+## Trial for everyone and social weeks (2026-11-07)
+
+108. **Every customer gets the week, each join adds a week** (owner, after seeing the AI paywall on a new account:
+     «قرار بود کاربری که تازه ثبت‌نام می‌کنه یک هفته بتونه از پلن استفاده کنه و اگه توی تلگرام و اینستا هم جوین شد
+     هر کدوم یه هفته به سابسکریپشنش اضافه کنه»). The trial runs 7 days from email confirmation, but never starts
+     before the launch day (`TRIAL_LAUNCH`, 2026-11-07 Tehran), so accounts confirmed earlier also get a week.
+     The Telegram and Instagram offers are open to every confirmed customer from signup (no wait for the trial to end,
+     no activity requirement); each verified join adds one week once, queued after the trial, paid time and earlier
+     rewards. Membership is still verified by support before the week is granted, and the offers stay off
+     (`BILLING_TELEGRAM_OFFER_ENABLED`, `BILLING_INSTAGRAM_OFFER_ENABLED`) until the official pages exist. Admin
+     accounts always have AI (`tier: 'staff'`). This refines directive 85.

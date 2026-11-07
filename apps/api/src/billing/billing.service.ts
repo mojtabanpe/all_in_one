@@ -40,7 +40,13 @@ const SOCIAL_OFFERS = [
 ] as const;
 
 const WEEK_MS = 7 * 86_400_000;
-const trialEnd = (verifiedAt: Date) => new Date(verifiedAt.getTime() + WEEK_MS);
+/**
+ * Trials launched on this day (Tehran midnight). Accounts confirmed earlier get their week from here, so no
+ * customer meets the paywall without having had a trial.
+ */
+export const TRIAL_LAUNCH = new Date('2026-11-06T20:30:00.000Z');
+const trialEnd = (verifiedAt: Date) =>
+  new Date(Math.max(verifiedAt.getTime(), TRIAL_LAUNCH.getTime()) + WEEK_MS);
 
 const planFields = {
   code: true,
@@ -122,7 +128,10 @@ export class BillingService {
     };
   }
 
-  /** Trial time starts after email confirmation, when the account can sign in. */
+  /**
+   * Trial time starts after email confirmation, when the account can sign in (not before TRIAL_LAUNCH).
+   * Admins run the service and always have AI.
+   */
   async access(userId: string, now = new Date()): Promise<BillingAccessState> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -145,7 +154,8 @@ export class BillingService {
     const paidUntil = user?.billingSubscription?.paidUntil ?? null;
     const earnedUntil = user?.billingRewards[0]?.expiresAt ?? null;
     let tier: BillingAccessState['tier'] = 'free';
-    if (paidUntil && paidUntil > now) tier = 'paid';
+    if (user?.role === 'ADMIN') tier = 'staff';
+    else if (paidUntil && paidUntil > now) tier = 'paid';
     else if (earnedUntil) tier = 'earned';
     else if (trialUntil && trialUntil > now) tier = 'trial';
     return {
@@ -301,21 +311,9 @@ export class BillingService {
       ({ flag }) => this.config.get(flag) === 'true',
     );
     if (!offers.length) return [];
-    const access = await this.access(userId, now);
-    if (!access.trialUntil || access.tier === 'trial' || access.tier === 'paid')
-      return [];
-    const since = new Date(now.getTime() - 30 * 86_400_000);
-    const active = await this.prisma.$queryRaw<{ active: boolean }[]>`
-      SELECT EXISTS (
-        SELECT 1 FROM planner_tasks WHERE "userId" = ${userId}::uuid AND "createdAt" >= ${since} AND "deletedAt" IS NULL
-        UNION ALL
-        SELECT 1 FROM english_review_days WHERE "userId" = ${userId}::uuid AND date >= ${since}::date AND reviews > 0
-        UNION ALL
-        SELECT 1 FROM workout_logs WHERE "userId" = ${userId}::uuid AND "createdAt" >= ${since}
-        UNION ALL
-        SELECT 1 FROM meal_logs WHERE "userId" = ${userId}::uuid AND "createdAt" >= ${since}
-      ) AS active
-    `;
+    // Every confirmed customer can earn each week once, from signup on (directive 108); the week is
+    // queued after the trial, paid time and earlier rewards.
+    if (!(await this.access(userId, now)).trialUntil) return [];
     const [grants, requests] = await Promise.all([
       this.prisma.billingReward.findMany({
         where: { userId },
@@ -326,16 +324,15 @@ export class BillingService {
         select: { campaign: true },
       }),
     ]);
-    return offers.flatMap(({ campaign, url }) => {
-      const status = grants.some((item) => item.campaign === campaign)
+    return offers.map(({ campaign, url }) => ({
+      campaign,
+      url,
+      status: grants.some((item) => item.campaign === campaign)
         ? 'earned'
         : requests.some((item) => item.campaign === campaign)
           ? 'pending'
-          : 'available';
-      return active[0]?.active || status !== 'available'
-        ? [{ campaign, url, status }]
-        : [];
-    });
+          : 'available',
+    }));
   }
 
   async requestReward(

@@ -30,7 +30,8 @@ export type BillingPlanInput = z.infer<typeof billingPlanInputSchema>;
 export type BillingPlan = BillingPlanInput;
 
 export interface BillingAccessState {
-  tier: 'free' | 'trial' | 'earned' | 'paid';
+  /** `staff`: an admin account, which always has AI. */
+  tier: 'free' | 'trial' | 'earned' | 'paid' | 'staff';
   trialUntil: string | null;
   earnedUntil: string | null;
   paidUntil: string | null;

@@ -1,4 +1,7 @@
 import { Component, inject } from '@angular/core';
+import { httpResource } from '@angular/common/http';
+import type { BillingRewardOffer } from '@all-in-one/shared/schemas';
+import { API_BASE_URL } from '@all-in-one/web/shared';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { SwPush } from '@angular/service-worker';
@@ -52,17 +55,31 @@ export function pushRoute(url: unknown): string | null {
               | aioTranslate
           }}
         </p>
+        @if (canEarn()) {
+          <p class="text-muted-foreground mt-2">
+            {{
+              'با عضویت در تلگرام یا اینستاگرام Poshtetgarm، برای هر کدام یک هفته هوش مصنوعی هدیه بگیر.'
+                | aioTranslate
+            }}
+          </p>
+        }
       </ng-template>
       <ng-template aioDialogActions>
         <button
           aioBtn
           type="button"
-          variant="outline"
+          variant="ghost"
+          class="min-h-11"
           (click)="paywall.open.set(false)"
         >
           {{ 'فعلاً نه' | aioTranslate }}
         </button>
-        <a aioBtn routerLink="/billing" (click)="paywall.open.set(false)">
+        <a
+          aioBtn
+          class="min-h-11"
+          routerLink="/billing"
+          (click)="paywall.open.set(false)"
+        >
           {{ 'دیدن پلن‌ها' | aioTranslate }}
         </a>
       </ng-template>
@@ -73,6 +90,15 @@ export class App {
   protected readonly paywall = inject(AiPaywall);
 
   protected readonly english = this.locale.english;
+  private readonly api = inject(API_BASE_URL);
+  /** Loaded only when the sheet opens: offers are off until the official channels exist. */
+  private readonly offers = httpResource<BillingRewardOffer[]>(() =>
+    this.paywall.open() ? `${this.api}/billing/reward-offers` : undefined,
+  );
+  protected readonly canEarn = () =>
+    this.offers.hasValue() &&
+    this.offers.value().some((offer) => offer.status === 'available');
+
   constructor() {
     const router = inject(Router);
     // The service worker only focuses the open window (navigating first loses the
