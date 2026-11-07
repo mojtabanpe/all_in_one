@@ -96,7 +96,10 @@ export interface GrowthChannel {
 }
 
 /** Exact first-touch campaign filters; empty form controls are omitted. */
+export const GROWTH_CAMPAIGN_WINDOWS = ['7', '30', '90'] as const;
+
 export const growthCampaignFilterSchema = z.strictObject({
+  days: z.optional(z.enum(GROWTH_CAMPAIGN_WINDOWS)),
   source: z.optional(campaignValue),
   medium: z.optional(campaignValue),
   campaign: z.optional(campaignValue),

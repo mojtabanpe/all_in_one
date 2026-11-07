@@ -25,9 +25,11 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ...PRIVACY_MESSAGES,
   ...BILLING_MESSAGES,
   ['عملکرد کمپین‌ها', 'Campaign performance'],
+  ['بازهٔ گزارش کمپین', 'Campaign reporting period'],
+  ['۹۰ روز گذشته', 'Last 90 days'],
   [
-    'اولین منبع ثبت‌شدهٔ هر مرورگر در ۳۰ روز اخیر، بر اساس روزهای تهران. فیلترها با مقدار کامل و دقیق تطبیق داده می‌شوند؛ خالی یعنی همه. ثبت‌نام و فعالیت بعدی همان مرورگر هم در نتیجه حساب می‌شود.',
-    'Each browser\u2019s first recorded source in the last 30 Tehran calendar days. Filters match complete values exactly; blank means all. Later signups and activity from the same browser remain included.',
+    'اولین منبع ثبت‌شدهٔ هر مرورگر در بازهٔ انتخابی، بر اساس روزهای تهران. فیلترها با مقدار کامل و دقیق تطبیق داده می‌شوند؛ خالی یعنی همه. ثبت‌نام و فعالیت بعدی همان مرورگر هم در نتیجه حساب می‌شود.',
+    'Each browser\u2019s first recorded source in the selected range of Tehran calendar days. Filters match complete values exactly; blank means all. Later signups and activity from the same browser remain included.',
   ],
   ['اعمال فیلتر کمپین', 'Apply campaign filters'],
   ['پاک کردن فیلترها', 'Clear filters'],

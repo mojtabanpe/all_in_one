@@ -77,8 +77,9 @@ export class GrowthService {
     filter: GrowthCampaignFilter = {},
   ): Promise<GrowthCampaignReport> {
     const now = new Date();
+    const windowDays = Number(filter.days ?? WINDOW_DAYS);
     const since = dayAt(
-      new Date(now.getTime() - (WINDOW_DAYS - 1) * 86_400_000),
+      new Date(now.getTime() - (windowDays - 1) * 86_400_000),
     );
     const until = dayAt(now);
     const rows = await this.prisma.$queryRaw<
@@ -127,7 +128,7 @@ export class GrowthService {
       activeVisitors: Number(row?.active ?? 0),
     });
     return {
-      windowDays: WINDOW_DAYS,
+      windowDays,
       totals: metrics(rows.find((row) => row.level === 7)),
       rows: rows
         .filter((row) => row.level === 0)

@@ -2,6 +2,7 @@ import { httpResource } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { form, FormField, maxLength } from '@angular/forms/signals';
 import {
+  GROWTH_CAMPAIGN_WINDOWS,
   growthCampaignFilterSchema,
   type GrowthCampaignFilter,
   type GrowthCampaignReport,
@@ -14,6 +15,8 @@ import {
   AioFormField,
   AioInput,
   AioLocale,
+  AioNativeSelect,
+  AioNativeSelectOption,
   AioSkeletonRows,
   AioTableDirectives,
   AioTranslate,
@@ -26,6 +29,8 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
     FormField,
     AioFormField,
     AioInput,
+    AioNativeSelect,
+    AioNativeSelectOption,
     AioButton,
     AioCardDirectives,
     AioCardHeading,
@@ -44,12 +49,25 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
       </h2>
       <p class="text-sm leading-7 text-muted-foreground">
         {{
-          'اولین منبع ثبت‌شدهٔ هر مرورگر در ۳۰ روز اخیر، بر اساس روزهای تهران. فیلترها با مقدار کامل و دقیق تطبیق داده می‌شوند؛ خالی یعنی همه. ثبت‌نام و فعالیت بعدی همان مرورگر هم در نتیجه حساب می‌شود.'
+          'اولین منبع ثبت‌شدهٔ هر مرورگر در بازهٔ انتخابی، بر اساس روزهای تهران. فیلترها با مقدار کامل و دقیق تطبیق داده می‌شوند؛ خالی یعنی همه. ثبت‌نام و فعالیت بعدی همان مرورگر هم در نتیجه حساب می‌شود.'
             | aioTranslate
         }}
       </p>
       <form class="flex flex-col gap-3" (submit)="apply($event)">
-        <div class="grid gap-3 md:grid-cols-3">
+        <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <aio-form-field label="بازهٔ گزارش کمپین" [controlId]="daysId">
+            <aio-native-select
+              [selectId]="daysId"
+              [value]="model().days"
+              (valueChange)="setDays($event)"
+            >
+              @for (window of windows; track window.days) {
+                <option aioNativeSelectOption [value]="window.days">
+                  {{ window.label | aioTranslate }}
+                </option>
+              }
+            </aio-native-select>
+          </aio-form-field>
           @for (field of fields; track field.key) {
             <aio-form-field [label]="field.label" [controlId]="field.id">
               <input
@@ -87,6 +105,7 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
         }
       </form>
       <div class="flex flex-wrap gap-3 text-sm" aria-live="polite">
+        <span>{{ appliedWindowLabel() | aioTranslate }}</span>
         <span>{{ 'فیلترهای اعمال‌شده' | aioTranslate }}:</span>
         @if (hasFilters()) {
           @for (field of fields; track field.key) {
@@ -221,7 +240,12 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
 export class CampaignReport {
   protected readonly locale = inject(AioLocale);
   private readonly api = inject(API_BASE_URL);
-  protected readonly model = signal({ source: '', medium: '', campaign: '' });
+  protected readonly model = signal({
+    days: '30',
+    source: '',
+    medium: '',
+    campaign: '',
+  });
   protected readonly filterForm = form(this.model, (path) => {
     maxLength(path.source, 200);
     maxLength(path.medium, 200);
@@ -246,8 +270,21 @@ export class CampaignReport {
       id: this.locale.controlId(),
     },
   ] as const;
-  protected readonly hasFilters = computed(
-    () => Object.keys(this.filters()).length > 0,
+  protected readonly daysId = this.locale.controlId();
+  protected readonly windows = GROWTH_CAMPAIGN_WINDOWS.map((days) => ({
+    days,
+    label: { '7': '۷ روز گذشته', '30': '۳۰ روز گذشته', '90': '۹۰ روز گذشته' }[
+      days
+    ],
+  }));
+  protected readonly appliedWindowLabel = computed(
+    () =>
+      this.windows.find(
+        (window) => window.days === (this.filters().days ?? '30'),
+      )?.label ?? '',
+  );
+  protected readonly hasFilters = computed(() =>
+    this.fields.some((field) => this.filters()[field.key]),
   );
   protected readonly report = httpResource<GrowthCampaignReport>(() => {
     const params = new URLSearchParams(this.filters());
@@ -266,6 +303,9 @@ export class CampaignReport {
         ]
       : [];
   });
+  protected setDays(days: string): void {
+    this.model.update((model) => ({ ...model, days }));
+  }
   protected apply(event: Event): void {
     event.preventDefault();
     const filter = Object.fromEntries(
@@ -277,7 +317,7 @@ export class CampaignReport {
     this.setFilters(parsed.data);
   }
   protected reset(): void {
-    this.model.set({ source: '', medium: '', campaign: '' });
+    this.model.set({ days: '30', source: '', medium: '', campaign: '' });
     this.invalid.set(false);
     this.setFilters({});
   }

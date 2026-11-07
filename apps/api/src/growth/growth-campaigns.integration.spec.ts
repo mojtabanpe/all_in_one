@@ -49,6 +49,25 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         ...(campaign ? { campaign } : {}),
       };
     };
+    it('uses the requested Tehran reporting window, defaulting to 30 days', async () => {
+      const campaign = `window-${randomUUID()}`;
+      await prisma.growthEvent.createMany({
+        data: [6, 7, 29, 30, 89, 90].map((ago) =>
+          event(visitor(), 'landing_view', ago, { utm_campaign: campaign }),
+        ),
+      });
+
+      for (const [days, windowDays, landingVisitors] of [
+        ['7', 7, 1],
+        [undefined, 30, 3],
+        ['90', 90, 5],
+      ] as const) {
+        const report = await service.campaigns({ campaign, days });
+        expect(report.windowDays).toBe(windowDays);
+        expect(report.totals.landingVisitors).toBe(landingVisitors);
+      }
+    });
+
     it('excludes test visitors and their later untagged activity from campaign results', async () => {
       const campaign = `qa-exclusion-${randomUUID()}`;
       const controlSource = `${source}-qa-control`;
