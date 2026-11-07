@@ -59,3 +59,27 @@ model UserAiPreset {
   @@index([userId, kind, createdAt])
   @@map("user_ai_presets")
 }
+
+/// Operator-owned AI configuration; secrets inside the snapshot stay sealed.
+model ManagedAiConfiguration {
+  id Int @id
+  settings Json
+
+  @@map("managed_ai_configuration")
+}
+
+model ManagedAiPreset {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  kind      String   @db.VarChar(10)
+  url       String   @db.VarChar(500)
+  model     String   @db.VarChar(100)
+  model2    String?  @db.VarChar(100)
+  key       String?  @db.VarChar(1000)
+  proxy     String?  @db.VarChar(500)
+  elevenlabs Boolean @default(false)
+  deepgram   Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([kind, createdAt])
+  @@map("managed_ai_presets")
+}

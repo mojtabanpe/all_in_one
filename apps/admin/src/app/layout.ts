@@ -18,6 +18,7 @@ import {
   lucideReceipt,
   lucideShieldCheck,
   lucideUsers,
+  lucideSparkles,
 } from '@ng-icons/lucide';
 
 @Component({
@@ -40,6 +41,7 @@ import {
       lucideReceipt,
       lucideShieldCheck,
       lucideUsers,
+      lucideSparkles,
     }),
   ],
   template: `
@@ -77,6 +79,7 @@ export class Layout {
     { label: 'کاربران', icon: 'lucideUsers', link: '/users' },
     { label: 'محتوا', icon: 'lucideLibrary', link: '/content' },
     { label: 'اشتراک', icon: 'lucideReceipt', link: '/billing' },
+    { label: 'هوش مصنوعی', icon: 'lucideSparkles', link: '/ai' },
     { label: 'طراحی', icon: 'lucidePalette', link: '/design' },
   ];
 

@@ -23,6 +23,7 @@ export const envSchema = z.object({
   APP_PUBLIC_URL: z.url().optional(),
 
   // Managed AI credentials belong only in server configuration.
+  AI_KEYS_SECRET: z.string().optional(),
   AI_ALLOW_PRIVATE_URLS: z.enum(['true', 'false']).optional(),
   MANAGED_AI_CHAT_URL: z.string().optional(),
   MANAGED_AI_CHAT_MODEL: z.string().optional(),

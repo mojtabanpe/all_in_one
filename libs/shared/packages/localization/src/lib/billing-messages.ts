@@ -2,6 +2,16 @@
 export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
   ['اشتراک', 'Subscription'],
   ['دسترسی به هوش مصنوعی', 'AI access'],
+  ['مدیریت هوش مصنوعی', 'Manage AI'],
+  ['در حال دریافت تنظیمات هوش مصنوعی', 'Loading AI settings'],
+  [
+    'تنظیمات فعال این صفحه برای همهٔ کاربران دارای دسترسی اعمال می‌شود.',
+    'Active settings on this page apply to everyone with AI access.',
+  ],
+  [
+    'کلیدها روی سرور رمزگذاری می‌شوند و در پنل نمایش داده نمی‌شوند.',
+    'Keys are encrypted on the server and hidden in this panel.',
+  ],
   [
     'برای استفاده از هوش مصنوعی، یک پلن فعال لازم است.',
     'An active plan is required to use AI.',

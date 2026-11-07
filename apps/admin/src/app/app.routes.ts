@@ -54,6 +54,12 @@ export const appRoutes: Route[] = [
           import('./pages/billing-plans').then((m) => m.BillingPlans),
       },
       {
+        path: 'ai',
+        title: 'مدیریت هوش مصنوعی',
+        loadComponent: () =>
+          import('./pages/ai-settings').then((m) => m.AiSettingsPage),
+      },
+      {
         path: 'design',
         title: 'سیستم طراحی',
         loadComponent: () =>

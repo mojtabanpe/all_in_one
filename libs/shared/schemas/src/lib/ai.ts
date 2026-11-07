@@ -36,19 +36,20 @@ export interface AiSettings {
   presets: AiPresetView[];
 }
 
-/** A saved setup; the key itself never leaves the server, only its last 4 characters. */
+/** A saved setup; the key never leaves the server. */
 export interface AiPresetView {
   id: string;
   kind: AiKind;
   url: string;
   model: string;
   model2: string;
-  /** e.g. '…a1b2', or '' when the setup has no key. */
+  /** Masked indicator, or empty when the setup has no key. */
   keyHint: string;
   /** Proxy url, '' = direct. */
   proxy: string;
   elevenlabs: boolean;
   deepgram: boolean;
+  active: boolean;
   createdAt: string;
 }
 

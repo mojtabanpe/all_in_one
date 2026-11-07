@@ -1,3 +1,4 @@
+import type { PrismaService } from '@all-in-one/api/db';
 import { ConfigService } from '@nestjs/config';
 import {
   AiSettingsService,
@@ -14,8 +15,15 @@ import {
 import { isPrivateAddress } from './net-guard';
 import { SecretBox } from './secret-box';
 
+const withManagedRow = (settings?: object) =>
+  ({
+    managedAiConfiguration: {
+      findUnique: vi.fn().mockResolvedValue(settings ? { settings } : null),
+    },
+  }) as unknown as PrismaService;
+
 describe('api-ai', () => {
-  it('resolves managed targets and reports only capability flags', () => {
+  it('resolves managed targets and reports only capability flags', async () => {
     const settings = new AiSettingsService(
       new ConfigService({
         MANAGED_AI_CHAT_URL: 'https://managed.example/v1',
@@ -25,17 +33,56 @@ describe('api-ai', () => {
         MANAGED_AI_TTS_KEY: 'fixture-tts-key',
         MANAGED_AI_TTS_SECONDARY_MODEL: 'secondary-voice',
       }),
+      withManagedRow(),
     );
-    expect(settings.status()).toEqual({ chat: true, tts: true, stt: false });
-    expect(settings.targets().chat).toMatchObject({
+    expect(await settings.status()).toEqual({
+      chat: true,
+      tts: true,
+      stt: false,
+    });
+    expect((await settings.targets()).chat).toMatchObject({
       endpoint: 'https://managed.example/v1/chat/completions',
       model: 'managed-chat',
       key: 'fixture-key',
     });
-    expect(settings.targets().tts).toMatchObject({
+    expect((await settings.targets()).tts).toMatchObject({
       endpoint: 'https://api.deepgram.com',
       model2: 'secondary-voice',
       provider: 'deepgram',
+    });
+  });
+
+  it('uses the sealed operator snapshot and ignores the environment once configured', async () => {
+    const secret = 'a'.repeat(40);
+    const box = new SecretBox(secret);
+    const settings = new AiSettingsService(
+      new ConfigService({
+        JWT_SECRET: secret,
+        MANAGED_AI_CHAT_URL: 'https://fallback.example/v1',
+        MANAGED_AI_CHAT_MODEL: 'fallback',
+      }),
+      withManagedRow({
+        chatUrl: 'https://managed.example/v1',
+        chatModel: 'imported-model',
+        chatKey: box.seal('test-managed-key'),
+        chatProxyOn: true,
+        chatProxy: 'http://proxy.example:7890',
+        ttsEleven: true,
+        ttsKey: box.seal('speech-fixture'),
+        ttsModel: 'voice-one',
+        ttsModel2: 'voice-two',
+      }),
+    );
+    const targets = await settings.targets();
+    expect(targets.chat).toMatchObject({
+      endpoint: 'https://managed.example/v1/chat/completions',
+      model: 'imported-model',
+      key: 'test-managed-key',
+      proxy: 'http://proxy.example:7890',
+    });
+    expect(targets.tts).toMatchObject({
+      provider: 'elevenlabs',
+      model2: 'voice-two',
     });
   });
 
@@ -43,7 +90,7 @@ describe('api-ai', () => {
     const config = new ConfigService({
       MANAGED_AI_TTS_URL: 'https://managed.example/v1',
     });
-    const settings = new AiSettingsService(config);
+    const settings = new AiSettingsService(config, withManagedRow());
     const targets = vi.spyOn(settings, 'targets');
     const access = vi.fn().mockResolvedValue({ tier: 'free' });
     const gateway = new AiGateway(settings, config, { access });
