@@ -103,7 +103,9 @@ export class GrowthService {
         FROM events ORDER BY "visitorId", "createdAt", id
       ), selected AS (
         SELECT * FROM first_touch
-        WHERE (${filter.source ?? null}::text IS NULL OR source = ${filter.source ?? null})
+        -- Keep operational checks out of the campaign funnel, including later untagged activity.
+        WHERE COALESCE(LOWER(source), '') NOT IN ('qa', 'test', 'roadmap_check')
+          AND (${filter.source ?? null}::text IS NULL OR source = ${filter.source ?? null})
           AND (${filter.medium ?? null}::text IS NULL OR medium = ${filter.medium ?? null})
           AND (${filter.campaign ?? null}::text IS NULL OR campaign = ${filter.campaign ?? null})
       )

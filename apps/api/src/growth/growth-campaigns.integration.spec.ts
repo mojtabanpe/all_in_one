@@ -49,6 +49,36 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         ...(campaign ? { campaign } : {}),
       };
     };
+    it('excludes test visitors and their later untagged activity from campaign results', async () => {
+      const campaign = `qa-exclusion-${randomUUID()}`;
+      const controlSource = `${source}-qa-control`;
+      const real = visitor();
+      const qa = visitor();
+      await prisma.growthEvent.createMany({
+        data: [
+          event(real, 'landing_view', 2, {
+            utm_source: controlSource,
+            utm_campaign: campaign,
+          }),
+          event(qa, 'landing_view', 2, {
+            utm_source: 'QA',
+            utm_campaign: campaign,
+          }),
+          event(qa, 'signup_completed', 1),
+          event(qa, 'first_review_completed', 0),
+        ],
+      });
+
+      const report = await service.campaigns({ campaign });
+      expect(report.totals).toEqual({
+        landingVisitors: 1,
+        signupVisitors: 0,
+        completedSignupVisitors: 0,
+        activeVisitors: 0,
+      });
+      expect(report.rows.map((row) => row.source)).toEqual([controlSource]);
+    });
+
     it('filters the original touch, retains later untagged activity and binds SQL values literally', async () => {
       const [a, b, c, d, future] = Array.from({ length: 5 }, visitor);
       const injection = "alpha' OR true --";

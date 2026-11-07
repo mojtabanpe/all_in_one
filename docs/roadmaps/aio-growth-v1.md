@@ -171,6 +171,8 @@ Evidence: `libs/web/shared/src/lib/auth/ai-settings.ts` currently allows users t
 
 ## 90-day marketing experiments (after P0 instrumentation)
 
+- `DONE` Local campaign-report hygiene: first-touch sources `qa`, `test` and `roadmap_check` are reserved for internal checks and excluded case-insensitively from the campaign report, including their later untagged activity. Raw events and the separate growth summary are unchanged. The local PostgreSQL campaign suite passed all four tests.
+
 - `DONE` Campaign preparation (2026-11-07): [7-day English pilot](aio-growth-english-pilot.fa.md) includes Persian Telegram/Instagram copy, tagged links, launch checks and reporting limits. The owner deferred publication on 2026-11-07. Keep the campaign ready and continue independent work.
 - `DONE` Production smoke check (2026-11-07): CI run 42352081948 and Deploy run 42352321280 succeeded for `20813d8`. Live HTTP returned 200 for home, signup entry, admin billing shell, API health and sitemap; unauthenticated billing orders and growth summary returned 401. Real SMTP delivery and authenticated production billing remain unverified.
 
