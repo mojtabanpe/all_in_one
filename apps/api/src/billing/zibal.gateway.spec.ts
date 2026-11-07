@@ -1,3 +1,7 @@
+import {
+  BadGatewayException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ZibalGateway } from './zibal.gateway';
 
@@ -91,5 +95,60 @@ describe('Zibal gateway transport', () => {
     await expect(gateway().verify('123', 500000, 'order-1')).rejects.toThrow(
       'Payment gateway is unavailable',
     );
+  });
+  describe('payment test matrix', () => {
+    // Zibal verify replies: result 202 = not paid; status 3 = cancelled by the customer, 5 = insufficient funds.
+    it('treats a cancelled or declined payment as a rejection, not an outage', async () => {
+      for (const status of [3, 4, 5, -1]) {
+        reply({ result: 202, status });
+        await expect(
+          gateway().verify('123', 500000, 'order-1'),
+        ).rejects.toBeInstanceOf(BadGatewayException);
+      }
+    });
+
+    it('treats a timeout, an HTTP error or an unreadable reply as an outage', async () => {
+      const timeout = new DOMException('timed out', 'TimeoutError');
+      for (const fetchMock of [
+        vi.fn().mockRejectedValue(timeout),
+        vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) }),
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: async () => {
+            throw new SyntaxError('Unexpected token <');
+          },
+        }),
+        vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) }),
+      ]) {
+        vi.stubGlobal('fetch', fetchMock);
+        await expect(
+          gateway().verify('123', 500000, 'order-1'),
+        ).rejects.toBeInstanceOf(ServiceUnavailableException);
+      }
+    });
+
+    it('keeps a paid order retryable when the merchant setup is rejected', async () => {
+      for (const result of [102, 103, 104]) {
+        reply({ result });
+        await expect(
+          gateway().verify('123', 500000, 'order-1'),
+        ).rejects.toBeInstanceOf(ServiceUnavailableException);
+        reply({ result });
+        await expect(
+          gateway().request('order-1', 500000),
+        ).rejects.toBeInstanceOf(ServiceUnavailableException);
+      }
+    });
+
+    it('accepts a paid but not yet verified payment and rejects a foreign amount', async () => {
+      reply({ result: 100, status: 2, amount: 500000 });
+      expect((await gateway().verify('123', 500000, 'order-1')).kind).toBe(
+        'verified',
+      );
+      reply({ result: 201, status: 1, amount: 490000 });
+      await expect(
+        gateway().verify('123', 500000, 'order-1'),
+      ).rejects.toBeInstanceOf(BadGatewayException);
+    });
   });
 });

@@ -71,15 +71,15 @@ is written here as a request (`→ Codex: …`), not done in the other lane's fi
 Owns `apps/api/src/billing`, `libs/api/ai`, `apps/api/src/admin` AI/billing parts, SMS/auth delivery
 (`libs/api/auth`), the customer billing page and paywall, admin `/admin/billing` and `/admin/ai`.
 
-| ID  | Task                                                                                                                                                    | Status               |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| C1  | Payment test matrix with a mocked Zibal: success, cancel, timeout, duplicate callback, amount mismatch, renewal/expiry, provider outage                 | IN_PROGRESS (Claude) |
-| C2  | Refunds: admin action with audit row and access end; Zibal refund call if the merchant supports it, otherwise a recorded manual refund                  | TODO                 |
-| C3  | Paywall entry points: account/navigation link to `/app/billing`, upgrade calls on locked AI actions (works with no plans: shows the trial/earned state) | TODO                 |
-| C4  | Commercial metrics endpoint + admin cards: paid users, MRR (Toman), failed payments, refunds                                                            | TODO                 |
-| C5  | AI provider fallback (second preset per service), error-rate/budget alerts in `/admin/ai`, per-user concurrency limit                                   | TODO                 |
-| C6  | Faraz SMS client, phone verification and the five template flows behind an env switch, tested with a mocked provider (real delivery waits for O4)       | TODO                 |
-| C7  | Per-model AI price history, so cost reports keep old prices after a model change                                                                        | TODO                 |
+| ID  | Task                                                                                                                                                    | Status                                |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| C1  | Payment test matrix with a mocked Zibal: success, cancel, timeout, duplicate callback, amount mismatch, renewal/expiry, provider outage                 | DONE (Claude, see payment tests item) |
+| C2  | Refunds: admin action with audit row and access end; Zibal refund call if the merchant supports it, otherwise a recorded manual refund                  | TODO                                  |
+| C3  | Paywall entry points: account/navigation link to `/app/billing`, upgrade calls on locked AI actions (works with no plans: shows the trial/earned state) | TODO                                  |
+| C4  | Commercial metrics endpoint + admin cards: paid users, MRR (Toman), failed payments, refunds                                                            | TODO                                  |
+| C5  | AI provider fallback (second preset per service), error-rate/budget alerts in `/admin/ai`, per-user concurrency limit                                   | TODO                                  |
+| C6  | Faraz SMS client, phone verification and the five template flows behind an env switch, tested with a mocked provider (real delivery waits for O4)       | TODO                                  |
+| C7  | Per-model AI price history, so cost reports keep old prices after a model change                                                                        | TODO                                  |
 
 ### ChatGPT (Codex) lane: acquisition, activation and retention
 
@@ -237,7 +237,8 @@ Evidence: `apps/admin/src/app/pages/dashboard.ts` already shows basic user/conte
   - `DONE` Admin `/admin/billing` («اشتراک» in the admin navigation): plans table and a Signal Forms editor (code fixed once created, Persian/English titles, 1–24 months, price in whole Toman sent as Rial, active switch). All new copy is in `billing-messages.ts` (Persian/English) including the api's payment errors.
   - Evidence: Better Design UX principles (pricing actions, comparison) and review rules; copy trimmed after `check-comprehension` (57 words on a full return screen). Local browser run with a disposable admin account: admin validation errors on an empty submit, plan saved through the form (99,000 toman stored as 990,000 Rial), customer page in Persian and English at desktop and 375px with paid/failed/pending banners, no horizontal overflow, 44px buttons; «بررسی دوباره» on a pending order without a trackId returned the failed state. Test account, plan and orders deleted afterwards. 7 projects lint/test/typecheck/build passed; DB billing/onboarding tests 21 passed.
   - `TODO` Paywall entry points (AI features, navigation/account link) once plans exist and managed AI enforces `isPaid`.
-- [ ] `TODO` Test success, cancellation, timeout, duplicate callback, amount mismatch, renewal/expiration, refund and payment-provider outage.
+- [ ] `IN_PROGRESS` Test success, cancellation, timeout, duplicate callback, amount mismatch, renewal/expiration, refund and payment-provider outage.
+  - `DONE` (C1, 2026-11-07, local, not deployed) Mocked-Zibal matrix: gateway transport (`zibal.gateway.spec.ts`, 10 tests) covers cancel/declined (result 202, status 3/4/5/-1 → rejected), timeout, HTTP error, unreadable or empty reply (→ outage, order stays pending), paid-unverified status 2 and a foreign amount on an already-verified reply. PostgreSQL lifecycle (`billing.integration.spec.ts`, 23 tests with `GROWTH_DB_INTEGRATION=1`) adds: outage at callback settled once by reconciliation, already-verified reply after a lost activation, cancelled order never revived, verify with the order's own amount/months after a price change, unknown callbacks never reach Zibal, expiry drops to free and renewal counts from the payment day. **Bug fixed:** Zibal merchant errors (result 102–104) on verify used to mark a paid order `FAILED` for good; they are now an outage, so the order stays pending and is retried. `api` lint/test/typecheck/build passed (34 billing tests). Remaining: refunds (C2) and a real sandbox run (O8).
 
 ## P0/P1 — replace user AI configuration with one reliable managed service
 

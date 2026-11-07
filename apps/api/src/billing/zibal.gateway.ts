@@ -20,6 +20,9 @@ const responseSchema = z.object({
   refNumber: z.optional(z.union([z.string(), z.number()])),
 });
 
+/** Zibal result codes for a missing, inactive or invalid merchant. */
+const MERCHANT_ERRORS = new Set([102, 103, 104]);
+
 /** Transport only. Billing must bind trackId to an owned order and activate atomically. */
 @Injectable()
 export class ZibalGateway {
@@ -45,6 +48,7 @@ export class ZibalGateway {
     payload: Record<string, unknown>,
   ) {
     const merchant = this.merchant();
+    let data: z.infer<typeof responseSchema>;
     try {
       const response = await fetch(`${ORIGIN}/v1/${path}`, {
         method: 'POST',
@@ -54,11 +58,15 @@ export class ZibalGateway {
         redirect: 'error',
       });
       if (!response.ok) throw new Error('Gateway HTTP failure');
-      return responseSchema.parse(await response.json());
+      data = responseSchema.parse(await response.json());
     } catch {
       // Provider bodies/errors can include secrets; never forward or log them.
       throw new ServiceUnavailableException('Payment gateway is unavailable');
     }
+    // Our merchant setup, not the payment, is at fault: a paid order must stay pending and be retried.
+    if (MERCHANT_ERRORS.has(data.result))
+      throw new ServiceUnavailableException('Payment gateway is unavailable');
+    return data;
   }
 
   async request(orderId: string, amountRial: number) {

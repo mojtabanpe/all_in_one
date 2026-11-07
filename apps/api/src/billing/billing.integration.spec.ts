@@ -656,5 +656,124 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         NotFoundException,
       );
     });
+
+    describe('payment test matrix', () => {
+      const reactivate = () =>
+        prisma.billingPlan.update({
+          where: { code },
+          data: { active: true, priceRial: 990_000, months: 1 },
+        });
+      const orderOf = (trackId: string) =>
+        prisma.billingOrder.findUniqueOrThrow({ where: { trackId } });
+      beforeEach(reactivate);
+
+      it('settles a payment whose callback hit an outage on the next reconciliation, once', async () => {
+        const before = (await service().subscription(userId)).paidUntil;
+        const track = trackOf(
+          (await service().checkout(userId, code)).paymentUrl,
+        );
+        gateway.verify.mockRejectedValueOnce(
+          new ServiceUnavailableException('timeout'),
+        );
+        expect(await service().settle(track)).toBe('pending');
+        const order = await orderOf(track);
+        const later = new Date(order.createdAt.getTime() + 31 * 60_000);
+        expect(await service().reconcile(later)).toBeGreaterThan(0);
+        expect((await orderOf(track)).status).toBe('PAID');
+        const after = (await service().subscription(userId)).paidUntil;
+        expect(after).not.toBe(before);
+        gateway.verify.mockClear();
+        await service().reconcile(later);
+        expect(gateway.verify).not.toHaveBeenCalled();
+        expect(await service().settle(track)).toBe('paid');
+        expect((await service().subscription(userId)).paidUntil).toBe(after);
+      });
+
+      it('activates when Zibal reports the payment was already verified but access was never granted', async () => {
+        const track = trackOf(
+          (await service().checkout(userId, code)).paymentUrl,
+        );
+        const before = (await service().subscription(userId)).paidUntil;
+        gateway.verify.mockResolvedValueOnce({
+          kind: 'already_verified' as never,
+          refNumber: null as never,
+        });
+        expect(await service().settle(track)).toBe('paid');
+        const after = (await service().subscription(userId)).paidUntil;
+        expect(after).toBe(
+          addMonths(new Date(before as string), 1).toISOString(),
+        );
+      });
+
+      it('fails a cancelled payment and never grants access for it', async () => {
+        const before = (await service().subscription(userId)).paidUntil;
+        const track = trackOf(
+          (await service().checkout(userId, code)).paymentUrl,
+        );
+        gateway.verify.mockRejectedValueOnce(
+          new BadGatewayException('cancelled'),
+        );
+        expect(await service().settle(track)).toBe('failed');
+        expect((await orderOf(track)).status).toBe('FAILED');
+        expect((await service().subscription(userId)).paidUntil).toBe(before);
+        // A late success reply for the same order cannot revive it.
+        expect(await service().settle(track)).toBe('failed');
+        expect(gateway.verify).toHaveBeenCalledTimes(1);
+      });
+
+      it('verifies the amount and months the order was created with, even after a price change', async () => {
+        const track = trackOf(
+          (await service().checkout(userId, code)).paymentUrl,
+        );
+        await prisma.billingPlan.update({
+          where: { code },
+          data: { priceRial: 1_490_000, months: 3 },
+        });
+        const before = (await service().subscription(userId)).paidUntil;
+        const order = await orderOf(track);
+        expect(await service().settle(track)).toBe('paid');
+        expect(gateway.verify).toHaveBeenCalledWith(track, 990_000, order.id);
+        expect((await service().subscription(userId)).paidUntil).toBe(
+          addMonths(new Date(before as string), 1).toISOString(),
+        );
+      });
+
+      it('ignores callbacks for unknown orders without calling Zibal', async () => {
+        expect(await service().settle('99999999999999999')).toBe('failed');
+        expect(await service().settle('')).toBe('failed');
+        expect(gateway.verify).not.toHaveBeenCalled();
+      });
+
+      it('drops to free after expiry and renews from the payment day, not the old end', async () => {
+        const expired = new Date(Date.now() - 3 * 86_400_000);
+        await prisma.billingSubscription.update({
+          where: { userId },
+          data: { paidUntil: expired },
+        });
+        expect(await service().isPaid(userId)).toBe(false);
+        expect((await service().access(userId)).tier).toBe('free');
+        const track = trackOf(
+          (await service().checkout(userId, code)).paymentUrl,
+        );
+        const start = Date.now();
+        expect(await service().settle(track)).toBe('paid');
+        const until = new Date(
+          (await service().subscription(userId)).paidUntil as string,
+        );
+        expect(until.getTime()).toBeGreaterThanOrEqual(
+          addMonths(new Date(start), 1).getTime() - 1_000,
+        );
+        expect((await service().access(userId)).tier).toBe('paid');
+        // An unpaid renewal attempt leaves access to end on time.
+        const unpaid = trackOf(
+          (await service().checkout(userId, code)).paymentUrl,
+        );
+        gateway.verify.mockRejectedValueOnce(new BadGatewayException('no'));
+        expect(await service().settle(unpaid)).toBe('failed');
+        expect(
+          await service().isPaid(userId, new Date(until.getTime() + 1)),
+        ).toBe(false);
+      });
+    });
   },
 );
