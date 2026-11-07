@@ -265,11 +265,12 @@ Use the attached approved reference images of AIO Coach v1 as the identity sourc
 
 Use a clean light-gray studio, matte floor, soft even lighting and a subtle ground shadow. Fixed camera, entire body and all working equipment visible with generous margins. No cuts, zooms, camera orbit, dramatic effects, music, speech, captions, anatomy overlays or text. Prioritize accurate exercise mechanics and clear joint positions. Natural spinal curves are allowed; neutral spine does not mean a permanently vertical torso. No extra limbs, sliding feet, impossible joints, body morphing, floating weights or discontinuous equipment. Target 8 seconds, landscape 16:9, 1080p when supported; if the available generator cannot deliver these settings, report actual settings rather than claiming compliance. Export MP4 when supported; retain the original output.
 
-CAMERA: front three-quarter.
+CAMERA: fixed front three-quarter view at hip height, about 30 degrees off center, full body with both feet always in frame, so the alternating knees and the opposite arm swing are clearly visible.
 
-ACTION: Stand tall and march in place at an easy steady pace, alternating knees with natural opposite arm swing. Show several controlled steps with soft landings, relaxed shoulders and normal breathing. No jumping.
+ACTION: Start standing tall on one spot, feet hip-width apart, arms relaxed at the sides. March in place at an easy, steady walking rhythm (about one step per second): lift one knee to roughly hip-thigh height of 45 degrees, place the foot back down softly on the same spot, then lift the other knee. Arms swing naturally and in OPPOSITION to the legs: when the RIGHT knee lifts, the LEFT arm swings forward and the right arm back; when the LEFT knee lifts, the RIGHT arm swings forward. Never swing the arm and the knee of the same side forward together. Elbows softly bent, shoulders relaxed and down, trunk upright with no leaning back or side-to-side rocking, eyes forward, calm relaxed face.
+Stay on exactly the same spot the whole time: no walking forward, no turning, no drifting sideways. Only one foot leaves the floor at a time; both feet are never in the air together. Soft quiet landings, no jumping, no high knees, no running.
 
-TIMING: Show continuous easy marching for the clip duration.
+TIMING: About 8 continuous steps at the same easy rhythm (4 per leg), beginning and ending in the same relaxed standing pose on the same spot so the clip loops cleanly.
 
 EQUIPMENT: Show only the equipment needed for this exercise, with mechanically coherent support, contact points and load paths. Use light demonstration loads where applicable.
 
