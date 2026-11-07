@@ -522,13 +522,10 @@ import { MealForm } from './meal-form';
             } @else if (!swapAiStatus.value()?.chat) {
               <p class="text-muted-foreground text-sm">
                 {{
-                  'برای پیشنهاد شخصی، سرویس گفتگوی خودت را در حساب کاربری تنظیم کن.'
+                  'پیشنهاد شخصی با هوش مصنوعی فعلاً در دسترس نیست.'
                     | aioTranslate
                 }}
               </p>
-              <a aioBtn variant="outline" routerLink="/account">{{
-                'تنظیم هوش مصنوعی' | aioTranslate
-              }}</a>
             } @else {
               <aio-form-field
                 class="min-w-0 gap-2"

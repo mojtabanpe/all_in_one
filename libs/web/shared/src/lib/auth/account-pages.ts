@@ -25,7 +25,6 @@ import {
   AioNotifications,
 } from '@all-in-one/ui';
 import { apiErrorMessage } from './auth.guards';
-import { AiSettingsCard } from './ai-settings';
 import { APP_VERSION } from '../release-version';
 import { AiConnection } from './ai-connection';
 import { AuthStore } from './auth.store';
@@ -326,7 +325,6 @@ export class VerifyEmailPage implements OnInit {
     AioCardDirectives,
     AioFieldDirectives,
     AioInput,
-    AiSettingsCard,
     AiConnection,
     AioFormField,
     AioCardHeading,
@@ -593,7 +591,6 @@ export class VerifyEmailPage implements OnInit {
           }
         </div>
       </section>
-      <web-ai-settings />
       <web-ai-connection />
       <ng-content />
     </div>

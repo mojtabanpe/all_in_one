@@ -18,6 +18,7 @@ import {
 } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { authInterceptor } from '@all-in-one/web/shared';
+import { aiPaywallInterceptor } from './billing/ai-paywall';
 import { appRoutes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -33,7 +34,10 @@ export const appConfig: ApplicationConfig = {
         anchorScrolling: 'enabled',
       }),
     ),
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([authInterceptor, aiPaywallInterceptor]),
+    ),
     // PWA (install on phone, offline shell, updates); production builds only.
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),

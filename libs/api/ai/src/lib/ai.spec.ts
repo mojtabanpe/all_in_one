@@ -1,9 +1,74 @@
-import { deepgramBase, elevenBase, endpointFor } from './ai-settings.service';
-import { isRetryable, retryDelay, transcriptOf } from './ai-gateway.service';
+import { ConfigService } from '@nestjs/config';
+import {
+  AiSettingsService,
+  deepgramBase,
+  elevenBase,
+  endpointFor,
+} from './ai-settings.service';
+import {
+  AiGateway,
+  isRetryable,
+  retryDelay,
+  transcriptOf,
+} from './ai-gateway.service';
 import { isPrivateAddress } from './net-guard';
 import { SecretBox } from './secret-box';
 
 describe('api-ai', () => {
+  it('resolves managed targets and reports only capability flags', () => {
+    const settings = new AiSettingsService(
+      new ConfigService({
+        MANAGED_AI_CHAT_URL: 'https://managed.example/v1',
+        MANAGED_AI_CHAT_MODEL: 'managed-chat',
+        MANAGED_AI_CHAT_KEY: 'fixture-key',
+        MANAGED_AI_TTS_PROVIDER: 'deepgram',
+        MANAGED_AI_TTS_KEY: 'fixture-tts-key',
+        MANAGED_AI_TTS_SECONDARY_MODEL: 'secondary-voice',
+      }),
+    );
+    expect(settings.status()).toEqual({ chat: true, tts: true, stt: false });
+    expect(settings.targets().chat).toMatchObject({
+      endpoint: 'https://managed.example/v1/chat/completions',
+      model: 'managed-chat',
+      key: 'fixture-key',
+    });
+    expect(settings.targets().tts).toMatchObject({
+      endpoint: 'https://api.deepgram.com',
+      model2: 'secondary-voice',
+      provider: 'deepgram',
+    });
+  });
+
+  it('rejects free AI before resolving providers, including cached speech', async () => {
+    const config = new ConfigService({
+      MANAGED_AI_TTS_URL: 'https://managed.example/v1',
+    });
+    const settings = new AiSettingsService(config);
+    const targets = vi.spyOn(settings, 'targets');
+    const access = vi.fn().mockResolvedValue({ tier: 'free' });
+    const gateway = new AiGateway(settings, config, { access });
+
+    await expect(gateway.chat('user', [])).rejects.toMatchObject({
+      status: 402,
+    });
+    await expect(gateway.speechTarget('user', 'primary')).rejects.toMatchObject(
+      { status: 402 },
+    );
+    await expect(
+      gateway.transcribe('user', Buffer.alloc(1), 'audio/wav'),
+    ).rejects.toMatchObject({ status: 402 });
+    expect(targets).not.toHaveBeenCalled();
+
+    for (const tier of ['trial', 'paid']) {
+      access.mockResolvedValue({ tier });
+      await expect(
+        gateway.speechTarget('user', 'primary'),
+      ).resolves.toMatchObject({
+        endpoint: 'https://managed.example/v1/audio/speech',
+      });
+    }
+  });
+
   it('seals and opens keys, and a rotated secret reads as no key', () => {
     const box = new SecretBox('a'.repeat(40));
     const sealed = box.seal('sk-test-123');

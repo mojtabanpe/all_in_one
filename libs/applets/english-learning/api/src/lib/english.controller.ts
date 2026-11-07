@@ -325,10 +325,8 @@ export class EnglishAiController {
 
   /** Which of the user's AI services are set (apps hide or explain AI buttons). */
   @Get('ai/status')
-  async status(
-    @CurrentUser() user: AuthUser,
-  ): Promise<{ ai: boolean; tts: boolean; stt: boolean }> {
-    const s = await this.gateway.status(user.id);
+  status(): { ai: boolean; tts: boolean; stt: boolean } {
+    const s = this.gateway.status();
     return { ai: s.chat, tts: s.tts, stt: s.stt };
   }
 

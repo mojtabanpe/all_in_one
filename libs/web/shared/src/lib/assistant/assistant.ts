@@ -1,4 +1,8 @@
-import { HttpClient, httpResource } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  httpResource,
+} from '@angular/common/http';
 import {
   booleanAttribute,
   Component,
@@ -11,7 +15,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import type {
   AiStatus,
   AssistantContext,
@@ -81,7 +85,7 @@ export class AssistantStore {
 
 /**
  * The in-app AI assistant: a header button and a chat sheet. It runs on the
- * user's own AI (profile settings) with the same tools as the ChatGPT
+ * managed AI service with the same tools as the ChatGPT
  * connection, so it can change tasks, meals, cards and more.
  */
 @Component({
@@ -93,7 +97,6 @@ export class AssistantStore {
     AioIcon,
     AioInputGroupDirectives,
     AioSpinner,
-    RouterLink,
     AioTranslate,
   ],
   providers: [
@@ -157,21 +160,8 @@ export class AssistantStore {
           >
             {{
               copy(
-                'دستیار با سرویس هوش مصنوعی خودت کار می‌کند. اول در',
-                'The assistant uses your own AI service. Open'
-              ) | aioTranslate
-            }}<a
-              class="font-semibold underline"
-              routerLink="/account"
-              (click)="open.set(false)"
-              >{{
-                copy('حساب کاربری ← هوش مصنوعی', 'Account → AI') | aioTranslate
-              }}</a
-            >
-            {{
-              copy(
-                'نشانی، مدل و کلید را بگذار.',
-                'and configure your URL, model and API key.'
+                'دستیار فعلاً در دسترس نیست.',
+                'The assistant is currently unavailable.'
               ) | aioTranslate
             }}
           </div>
@@ -354,7 +344,7 @@ export class Assistant implements OnDestroy {
     n.toLocaleString(this.english() ? 'en-US' : 'fa-IR');
   private errorMessage(error: unknown): string {
     return this.english()
-      ? 'Unable to complete the request. Check your AI settings and try again.'
+      ? 'Unable to complete the request. Try again.'
       : apiErrorMessage(error);
   }
 
@@ -395,6 +385,12 @@ export class Assistant implements OnDestroy {
         },
       ]);
     } catch (error) {
+      if (error instanceof HttpErrorResponse && error.status === 402) {
+        conversation.update((list) => list.slice(0, -1));
+        this.draft.set(content);
+        this.open.set(false);
+        return;
+      }
       conversation.update((list) => [
         ...list,
         { role: 'assistant', content: this.errorMessage(error) },
@@ -475,6 +471,10 @@ export class Assistant implements OnDestroy {
       await this.send(text);
     } catch (error) {
       this.busy.set(false);
+      if (error instanceof HttpErrorResponse && error.status === 402) {
+        this.open.set(false);
+        return;
+      }
       this.notifications.error(this.errorMessage(error));
     }
   }

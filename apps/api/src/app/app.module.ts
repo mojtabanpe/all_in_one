@@ -22,13 +22,7 @@ import { GrowthService } from '../growth/growth.service';
 import { GrowthRetention } from '../growth/growth-retention';
 import { GrowthActivityInterceptor } from '../growth/growth-activity.interceptor';
 import { OnboardingService } from './onboarding.service';
-import {
-  BillingController,
-  PaymentsController,
-} from '../billing/billing.controller';
-import { BillingService } from '../billing/billing.service';
-import { BillingReconciler } from '../billing/billing-reconciler';
-import { ZibalGateway } from '../billing/zibal.gateway';
+import { BillingModule } from '../billing/billing.module';
 
 @Module({
   imports: [
@@ -36,7 +30,8 @@ import { ZibalGateway } from '../billing/zibal.gateway';
     PrismaModule,
     PushModule,
     AuthModule,
-    // Per-user AI services (profile settings) for every applet
+    // Managed AI services for every applet
+    BillingModule,
     AiModule,
     // Applets
     PlannerApiModule,
@@ -52,8 +47,6 @@ import { ZibalGateway } from '../billing/zibal.gateway';
     AdminController,
     GrowthController,
     OnboardingController,
-    BillingController,
-    PaymentsController,
   ],
   providers: [
     AppService,
@@ -62,9 +55,6 @@ import { ZibalGateway } from '../billing/zibal.gateway';
     GrowthRetention,
     { provide: APP_INTERCEPTOR, useClass: GrowthActivityInterceptor },
     OnboardingService,
-    ZibalGateway,
-    BillingService,
-    BillingReconciler,
   ],
 })
 export class AppModule {}

@@ -287,10 +287,7 @@ const freshTask = (): TaskState => ({
             icon="lucideHeadphones"
           ></button>
           <p class="text-muted-foreground text-sm">
-            {{
-              'To generate exercises and audio, configure chat and text-to-speech in Account → AI.'
-                | aioTranslate
-            }}
+            {{ 'New exercises and audio use Poshtetgarm AI.' | aioTranslate }}
           </p>
         </section>
         @if (shadowLine(); as sentence) {

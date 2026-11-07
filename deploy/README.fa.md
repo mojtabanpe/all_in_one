@@ -20,20 +20,20 @@
 | `/admin/`                                                                        | پنل مدیر                          | فایل ثابت در کانتینر web |
 | `/api/` و `/authorize`، `/token`، `/register`، `/revoke`، `/.well-known/oauth-*` | api و اتصال ChatGPT               | `127.0.0.1:4321`         |
 
-کانتینر `web` (nginx) روی `127.0.0.1:4320` همه این مسیرها را پخش می‌کند. Nginx خود سرور فقط HTTPS را می‌گیرد و همه چیز را به آن می‌فرستد. Postgres روی `127.0.0.1:15433` و Redis روی `127.0.0.1:16380` است. هیچ‌کدام از این پورت‌ها عمومی نیستند. هوش مصنوعی را هر کاربر خودش در «حساب کاربری ← هوش مصنوعی» تنظیم می‌کند (نشانی OpenAI-compatible گفتگو، متن به گفتار و گفتار به متن). اگر بخواهید کاربران از 9Router همین سرور (`http://127.0.0.1:20128/v1`) استفاده کنند، `AI_ALLOW_PRIVATE_URLS=true` بگذارید؛ برای همین api با شبکه میزبان اجرا می‌شود. روی سروری با کاربران ناشناس آن را `false` نگه دارید.
+کانتینر `web` (nginx) روی `127.0.0.1:4320` همه این مسیرها را پخش می‌کند. Nginx خود سرور فقط HTTPS را می‌گیرد و همه چیز را به آن می‌فرستد. Postgres روی `127.0.0.1:15433` و Redis روی `127.0.0.1:16380` است. هیچ‌کدام از این پورت‌ها عمومی نیستند. هوش مصنوعی از تنظیمات مدیریت‌شدهٔ سرور استفاده می‌کند. برای یک درگاه محلی مورداعتماد، مثل 9Router روی همین سرور، می‌توان `AI_ALLOW_PRIVATE_URLS=true` گذاشت.
 
 ## ۱. پوشه‌ها و تنظیمات خصوصی
 
 ```sh
 sudo install -d -m 750 -o recall-deploy -g recall-deploy /opt/all-in-one /opt/all-in-one/shared
-cp deploy/.env.example /opt/all-in-one/shared/.env          # JWT_SECRET، AI_KEYS_SECRET و SMTP_URL را پر کنید
+cp deploy/.env.example /opt/all-in-one/shared/.env          # JWT_SECRET، SMTP_URL و تنظیمات MANAGED_AI را پر کنید
 cp deploy/compose.env.example /opt/all-in-one/shared/compose.env   # رمز Postgres
 chmod 600 /opt/all-in-one/shared/.env /opt/all-in-one/shared/compose.env
 ```
 
 - `JWT_SECRET`: دست‌کم ۳۲ نویسه تصادفی (`openssl rand -base64 48`).
 - `SMTP_URL`: برای بازیابی رمز و تأیید ایمیل هنگام ثبت‌نام لازم است. بدون آن، ثبت‌نام در حالت production خطای «ایمیل در دسترس نیست» می‌دهد.
-- `AI_KEYS_SECRET`: کلید رمزگذاری کلیدهای هوش مصنوعی کاربران (`openssl rand -base64 32`). اگر عوض شود، کاربران باید کلیدهایشان را دوباره وارد کنند.
+- `MANAGED_AI_CHAT_URL`، `MANAGED_AI_CHAT_MODEL` و در صورت نیاز `MANAGED_AI_CHAT_KEY`: درگاه و مدل گفت‌وگوی مدیریت‌شده. برای گفتار، متغیرهای `MANAGED_AI_TTS_*` و `MANAGED_AI_STT_*` را تنظیم کنید. کلیدهای واقعی فقط در تنظیمات محرمانهٔ سرور قرار می‌گیرند.
 
 ## ۲. ساخت ایمیج‌ها
 

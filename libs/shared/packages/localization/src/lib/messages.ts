@@ -2993,8 +2993,8 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['وضعیت هوش مصنوعی دریافت نشد.', 'AI status not received.'],
   ['بررسی دوباره', 'Check again'],
   [
-    'برای پیشنهاد شخصی، سرویس گفتگوی خودت را در حساب کاربری تنظیم کن.',
-    'For personal suggestion, set up your own chat service in your account.',
+    'پیشنهاد شخصی با هوش مصنوعی فعلاً در دسترس نیست.',
+    'AI meal suggestions are currently unavailable.',
   ],
   ['تنظیم هوش مصنوعی', 'Setting up artificial intelligence'],
   ['چه غذایی دوست داری؟ (اختیاری)', 'what food do you like (optional)'],
@@ -3962,8 +3962,8 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['تمرین تازه', 'New exercise'],
   ['در حال آماده سازی…', 'Preparing…'],
   [
-    'برای تولید تمرینات و صدا، چت و تبدیل متن به گفتار را در Account → AI پیکربندی کنید.',
-    'To generate exercises and audio, configure chat and text-to-speech in Account → AI.',
+    'تمرین‌های تازه و صدا با هوش مصنوعی Poshtetgarm ساخته می‌شوند.',
+    'New exercises and audio use Poshtetgarm AI.',
   ],
   ['جمله {0} از {1}', 'Sentence {0} of {1}'],
   [

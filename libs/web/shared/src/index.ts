@@ -6,6 +6,5 @@ export * from './lib/auth/login-page';
 export * from './lib/format/fa';
 export * from './lib/auth/account-pages';
 export * from './lib/auth/ai-connection';
-export * from './lib/auth/ai-settings';
 export * from './lib/assistant/assistant';
 export * from './lib/growth-analytics';

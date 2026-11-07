@@ -2,11 +2,13 @@ import { requestLanguage } from './request-language';
 import {
   BadGatewayException,
   BadRequestException,
+  HttpException,
+  Inject,
   Injectable,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { AiKind, AiTestResult } from '@all-in-one/shared/schemas';
+import type { AiKind, BillingAccessState } from '@all-in-one/shared/schemas';
 import { fetch, FormData } from 'undici';
 import {
   AiSettingsService,
@@ -51,38 +53,43 @@ export const RECORDING_TYPES: Record<string, string> = {
   'audio/wav': 'wav',
 };
 
-const NOT_SET: Record<AiKind, string> = {
-  chat: 'هوش مصنوعی خاموش است: در «حساب کاربری ← هوش مصنوعی» نشانی و مدل سرویس گفتگو را بگذار.',
-  tts: 'خواندن متن خاموش است: در «حساب کاربری ← هوش مصنوعی» نشانی سرویس متن به گفتار را بگذار.',
-  stt: 'تشخیص گفتار خاموش است: در «حساب کاربری ← هوش مصنوعی» نشانی سرویس گفتار به متن را بگذار.',
-};
+export const AI_ACCESS = Symbol('AI_ACCESS');
 
-/**
- * Calls the user's own OpenAI-compatible services (chat with tool calling,
- * text-to-speech, speech-to-text). Urls are user input, so every request
- * goes through a lookup that refuses private addresses unless the operator
- * sets AI_ALLOW_PRIVATE_URLS=true (e.g. a single-user server with a local
- * gateway).
- */
+export interface AiAccess {
+  access(userId: string): Promise<BillingAccessState>;
+}
+
+/** Calls operator-managed AI services through guarded HTTP connections. */
 @Injectable()
 export class AiGateway {
   constructor(
     private readonly settings: AiSettingsService,
     private readonly config: ConfigService,
+    @Inject(AI_ACCESS) private readonly access: AiAccess,
   ) {}
 
   private get allowPrivate(): boolean {
     return this.config.get('AI_ALLOW_PRIVATE_URLS') === 'true';
   }
 
-  status(userId: string) {
-    return this.settings.status(userId);
+  status() {
+    return this.settings.status();
   }
 
   private async target<K extends AiKind>(userId: string, kind: K) {
-    const targets = await this.settings.targets(userId);
+    if ((await this.access.access(userId)).tier === 'free') {
+      throw new HttpException(
+        {
+          code: 'AI_PLAN_REQUIRED',
+          message: 'برای استفاده از هوش مصنوعی، یک پلن فعال لازم است.',
+        },
+        402,
+      );
+    }
+    const targets = this.settings.targets();
     const target = targets[kind];
-    if (!target) throw new ServiceUnavailableException(NOT_SET[kind]);
+    if (!target)
+      throw new ServiceUnavailableException('سرویس هوش مصنوعی در دسترس نیست.');
     return target as NonNullable<(typeof targets)[K]>;
   }
 
@@ -113,12 +120,8 @@ export class AiGateway {
           : guardedAgent(this.allowPrivate),
         signal: AbortSignal.timeout(init.timeout),
       });
-    } catch (error) {
-      const cause =
-        (error as { cause?: Error }).cause?.message ?? (error as Error).message;
-      throw new BadGatewayException(
-        `سرویس هوش مصنوعی در دسترس نیست (${cause.slice(0, 120)}).`,
-      );
+    } catch {
+      throw new BadGatewayException('سرویس هوش مصنوعی در دسترس نیست.');
     }
   }
 
@@ -126,26 +129,10 @@ export class AiGateway {
     response: Awaited<ReturnType<typeof fetch>>,
     what: string,
   ): Promise<never> {
-    let detail = '';
-    try {
-      const body = (await response.json()) as {
-        error?: { message?: string } | string;
-        /** ElevenLabs */
-        detail?: { message?: string } | string;
-        /** Deepgram */
-        err_msg?: string;
-      };
-      const e = body.error ?? body.detail ?? body.err_msg;
-      detail = typeof e === 'string' ? e : (e?.message ?? '');
-    } catch {
-      // not JSON
-    }
-    throw new BadGatewayException(
-      `${what} خطا داد (${response.status}${detail ? `: ${detail.slice(0, 160)}` : ''}).`,
-    );
+    await response.body?.cancel().catch(() => undefined);
+    throw new BadGatewayException(`${what} خطا داد (${response.status}).`);
   }
 
-  /** One chat completion; the reply may contain tool calls. */
   async chat(
     userId: string,
     messages: ChatMessage[],
@@ -286,59 +273,6 @@ export class AiGateway {
       );
     return text.slice(0, 3000);
   }
-
-  /** "Test connection" in settings: a tiny real request to that service. */
-  async test(userId: string, kind: AiKind): Promise<AiTestResult> {
-    try {
-      if (kind === 'chat') {
-        await this.text(
-          userId,
-          [{ role: 'user', content: 'Reply with: ok' }],
-          0,
-          30_000,
-        );
-        return { ok: true, message: 'سرویس گفتگو پاسخ داد.' };
-      }
-      if (kind === 'tts') {
-        await this.speech(userId, 'Hello', 'primary');
-        return { ok: true, message: 'سرویس متن به گفتار صدا ساخت.' };
-      }
-      const probe = sttTarget(await this.target(userId, 'stt'));
-      // A minimal request: a valid answer or a 4xx about the audio both prove the url and key work.
-      const response = await this.request(probe, {
-        ...sttBody(probe, silentWav(), 'audio/wav', 'probe.wav'),
-        timeout: 30_000,
-      });
-      if (
-        response.status === 401 ||
-        response.status === 403 ||
-        response.status === 404
-      )
-        return this.fail(response, 'سرویس گفتار به متن');
-      return { ok: true, message: 'سرویس گفتار به متن در دسترس است.' };
-    } catch (error) {
-      return { ok: false, message: (error as Error).message };
-    }
-  }
-}
-
-/** 0.2 s of silence as 16 kHz mono WAV. */
-function silentWav(): Buffer {
-  const samples = 3200;
-  const header = Buffer.alloc(44);
-  header.write('RIFF', 0);
-  header.writeUInt32LE(36 + samples * 2, 4);
-  header.write('WAVEfmt ', 8);
-  header.writeUInt32LE(16, 16);
-  header.writeUInt16LE(1, 20);
-  header.writeUInt16LE(1, 22);
-  header.writeUInt32LE(16000, 24);
-  header.writeUInt32LE(32000, 28);
-  header.writeUInt16LE(2, 32);
-  header.writeUInt16LE(16, 34);
-  header.write('data', 36);
-  header.writeUInt32LE(samples * 2, 40);
-  return Buffer.concat([header, Buffer.alloc(samples * 2)]);
 }
 
 const SPEECH_ATTEMPTS = 3;

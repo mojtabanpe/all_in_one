@@ -22,11 +22,24 @@ export const envSchema = z.object({
   APP_ORIGINS: z.string().optional(),
   APP_PUBLIC_URL: z.url().optional(),
 
-  // AI: each user sets their own OpenAI-compatible chat / TTS / STT urls in the profile.
-  /** Let those urls reach private addresses (e.g. a local gateway on a single-user server). */
+  // Managed AI credentials belong only in server configuration.
   AI_ALLOW_PRIVATE_URLS: z.enum(['true', 'false']).optional(),
-  /** 32 random bytes (base64) to encrypt the users' AI keys; derived from JWT_SECRET if unset. */
-  AI_KEYS_SECRET: z.string().optional(),
+  MANAGED_AI_CHAT_URL: z.string().optional(),
+  MANAGED_AI_CHAT_MODEL: z.string().optional(),
+  MANAGED_AI_CHAT_KEY: z.string().optional(),
+  MANAGED_AI_TTS_PROVIDER: z
+    .enum(['', 'openai', 'elevenlabs', 'deepgram'])
+    .optional(),
+  MANAGED_AI_TTS_URL: z.string().optional(),
+  MANAGED_AI_TTS_MODEL: z.string().optional(),
+  MANAGED_AI_TTS_SECONDARY_MODEL: z.string().optional(),
+  MANAGED_AI_TTS_KEY: z.string().optional(),
+  MANAGED_AI_STT_PROVIDER: z
+    .enum(['', 'openai', 'elevenlabs', 'deepgram'])
+    .optional(),
+  MANAGED_AI_STT_URL: z.string().optional(),
+  MANAGED_AI_STT_MODEL: z.string().optional(),
+  MANAGED_AI_STT_KEY: z.string().optional(),
   TTS_CACHE_TTL_SECONDS: z.coerce.number().int().positive().optional(),
   /** Optional Redis for the speech audio cache. */
   REDIS_URL: z.string().optional(),

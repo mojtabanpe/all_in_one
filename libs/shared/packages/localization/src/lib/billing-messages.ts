@@ -1,6 +1,17 @@
 /** Subscription page, admin plans and payment errors. */
 export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
   ['اشتراک', 'Subscription'],
+  ['دسترسی به هوش مصنوعی', 'AI access'],
+  [
+    'برای استفاده از هوش مصنوعی، یک پلن فعال لازم است.',
+    'An active plan is required to use AI.',
+  ],
+  [
+    'با فعال کردن یک پلن، می‌توانی از امکانات هوش مصنوعی Poshtetgarm استفاده کنی.',
+    'Activate a plan to use Poshtetgarm AI features.',
+  ],
+  ['فعلاً نه', 'Not now'],
+  ['دیدن پلن‌ها', 'View plans'],
   ['پرداخت تأیید شد', 'Payment confirmed'],
   ['اشتراکت فعال شد.', 'Your subscription is active.'],
   ['پرداخت انجام نشد', 'Payment not completed'],
