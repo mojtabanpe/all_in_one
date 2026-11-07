@@ -1,5 +1,5 @@
 import { Meta, Title } from '@angular/platform-browser';
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, NgOptimizedImage } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -18,6 +18,7 @@ import { GOAL_LANDINGS } from './goal-landing-data';
   selector: 'public-goal-landing',
   imports: [
     RouterLink,
+    NgOptimizedImage,
     AioButton,
     AioCardDirectives,
     AioCardHeading,
@@ -49,12 +50,12 @@ import { GOAL_LANDINGS } from './goal-landing-data';
         </div>
         <figure aioCard class="mx-auto w-full max-w-sm overflow-hidden p-4">
           <img
-            [src]="image()"
+            [ngSrc]="image()"
             [alt]="page().imageAlt | aioTranslate"
             width="430"
             height="900"
             class="h-[26rem] w-full rounded-xl object-contain"
-            fetchpriority="high"
+            priority
           />
           <figcaption
             class="mt-3 text-center text-sm leading-6 text-muted-foreground"
@@ -194,7 +195,7 @@ export class GoalLanding {
   );
   protected readonly image = computed(
     () =>
-      `/product/${this.page().image}-${this.locale.english() ? 'en' : 'fa'}.jpg`,
+      `/product/${this.page().image}-${this.locale.english() ? 'en' : 'fa'}.${this.page().image === 'english' ? 'webp' : 'jpg'}`,
   );
   protected readonly related = computed(() =>
     GOAL_LANDINGS.filter((guide) => guide.slug !== this.page().slug),
