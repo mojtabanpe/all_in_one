@@ -104,6 +104,8 @@ export class GrowthService {
         completed: bigint;
         active: bigint;
         first_review: bigint;
+        eligible: bigint;
+        retained: bigint;
       }[]
     >`
       WITH events AS (
@@ -121,6 +123,18 @@ export class GrowthService {
           AND (${filter.source ?? null}::text IS NULL OR source = ${filter.source ?? null})
           AND (${filter.medium ?? null}::text IS NULL OR medium = ${filter.medium ?? null})
           AND (${filter.campaign ?? null}::text IS NULL OR campaign = ${filter.campaign ?? null})
+      ), signups AS (
+        SELECT e."visitorId", MIN(e.day::date) AS day
+        FROM events e JOIN selected f USING ("visitorId")
+        WHERE e.name = 'signup_completed'
+        GROUP BY e."visitorId"
+      ), mature AS (
+        SELECT s."visitorId", COUNT(DISTINCT a.day) AS active_days
+        FROM signups s LEFT JOIN events a ON a."visitorId" = s."visitorId"
+          AND a.name = 'active_day'
+          AND a.day BETWEEN s.day::text AND (s.day + 6)::text
+        WHERE s.day + 6 <= LEAST(${until}::date, ${today}::date - 1)
+        GROUP BY s."visitorId"
       )
       SELECT GROUPING(f.source, f.medium, f.campaign) AS level,
         f.source, f.medium, f.campaign,
@@ -128,8 +142,11 @@ export class GrowthService {
         COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'signup_started') AS started,
         COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'signup_completed') AS completed,
         COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name IN ('active_day', 'first_task_created', 'first_review_completed')) AS active,
-        COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'first_review_completed') AS first_review
+        COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'first_review_completed') AS first_review,
+        COUNT(DISTINCT m."visitorId") AS eligible,
+        COUNT(DISTINCT m."visitorId") FILTER (WHERE m.active_days >= 3) AS retained
       FROM selected f JOIN events e ON e."visitorId" = f."visitorId"
+      LEFT JOIN mature m ON m."visitorId" = f."visitorId"
       GROUP BY GROUPING SETS ((f.source, f.medium, f.campaign), ())
       ORDER BY level DESC, landing DESC, completed DESC,
         f.source NULLS LAST, f.medium NULLS LAST, f.campaign NULLS LAST LIMIT 21
@@ -140,6 +157,8 @@ export class GrowthService {
       completedSignupVisitors: Number(row?.completed ?? 0),
       activeVisitors: Number(row?.active ?? 0),
       firstReviewVisitors: Number(row?.first_review ?? 0),
+      eligibleSignupVisitors: Number(row?.eligible ?? 0),
+      threeDaySignupVisitors: Number(row?.retained ?? 0),
     });
     return {
       windowDays,

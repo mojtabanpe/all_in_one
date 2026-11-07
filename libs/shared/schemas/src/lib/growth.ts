@@ -125,6 +125,8 @@ export interface GrowthCampaignMetrics {
   completedSignupVisitors: number;
   activeVisitors: number;
   firstReviewVisitors: number;
+  eligibleSignupVisitors: number;
+  threeDaySignupVisitors: number;
 }
 export interface GrowthCampaignReport {
   windowDays: number;

@@ -205,6 +205,10 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ],
   ['فعالیت در سه روز از هفتهٔ اول', 'Active on three days in the first week'],
   [
+    'شاخص هفتهٔ اول، مرورگرهای فعال در سه روز یا بیشتر را از میان ثبت‌نام‌هایی می‌شمارد که هفت روز کامل در بازهٔ گزارش داشته‌اند. شمارش از روز ثبت‌نام شروع می‌شود.',
+    'First-week activity counts browsers active on at least three days among signups with seven complete days in the reporting window. Counting starts on the signup day.',
+  ],
+  [
     'ثبت‌نام‌های ۳۰ روز اخیر در همین مرورگر که هفت روز کامل از آن‌ها گذشته؛ روز ثبت‌نام هم حساب می‌شود. ثبت‌نام تازه وارد مخرج نمی‌شود.',
     'Signups in this browser within the last 30 days with seven complete days observed, including signup day. Recent signups are excluded from the denominator.',
   ],

@@ -120,6 +120,46 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       ).toEqual([all[0]]);
     });
 
+    it('counts only complete first weeks and distinct in-week active days', async () => {
+      const campaign = `first-week-${randomUUID()}`;
+      const tags = { utm_source: campaign, utm_campaign: campaign };
+      const [retained, late, recent] = Array.from({ length: 3 }, visitor);
+      const data = [
+        event(retained, 'signup_completed', 8, tags),
+        event(retained, 'active_day', 8),
+        event(retained, 'active_day', 5),
+        event(retained, 'active_day', 2),
+        event(late, 'signup_completed', 7, tags),
+        event(late, 'active_day', 7),
+        event(late, 'active_day', 3),
+        event(late, 'first_review_completed', 3),
+        event(late, 'active_day', 0),
+        event(recent, 'signup_completed', 6, tags),
+        event(recent, 'active_day', 6),
+        event(recent, 'active_day', 4),
+        event(recent, 'active_day', 2),
+      ];
+      await prisma.growthEvent.createMany({ data });
+      const current = await service.campaigns({ campaign });
+      expect(current.totals).toMatchObject({
+        eligibleSignupVisitors: 2,
+        threeDaySignupVisitors: 1,
+      });
+      expect(current.rows[0]).toMatchObject({
+        eligibleSignupVisitors: 2,
+        threeDaySignupVisitors: 1,
+      });
+      const historical = await service.campaigns({
+        campaign,
+        from: data[0].day,
+        to: data[3].day,
+      });
+      expect(historical.totals).toMatchObject({
+        eligibleSignupVisitors: 1,
+        threeDaySignupVisitors: 1,
+      });
+    });
+
     it('uses the requested Tehran reporting window, defaulting to 30 days', async () => {
       const campaign = `window-${randomUUID()}`;
       await prisma.growthEvent.createMany({
@@ -188,6 +228,8 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         completedSignupVisitors: 0,
         activeVisitors: 0,
         firstReviewVisitors: 0,
+        eligibleSignupVisitors: 0,
+        threeDaySignupVisitors: 0,
       });
       expect(report.rows.map((row) => row.source)).toEqual([controlSource]);
     });
@@ -254,6 +296,8 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         completedSignupVisitors: 1,
         activeVisitors: 1,
         firstReviewVisitors: 1,
+        eligibleSignupVisitors: 0,
+        threeDaySignupVisitors: 0,
       });
       expect(exact.rows).toEqual([
         { source, medium: 'social', campaign: 'alpha', ...exact.totals },
@@ -265,6 +309,8 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         completedSignupVisitors: 2,
         activeVisitors: 2,
         firstReviewVisitors: 1,
+        eligibleSignupVisitors: 0,
+        threeDaySignupVisitors: 0,
       });
       expect(all.rows).toHaveLength(3);
       expect(

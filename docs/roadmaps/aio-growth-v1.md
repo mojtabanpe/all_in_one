@@ -196,6 +196,8 @@ Done for customers (directive 86): the former customer page `libs/web/shared/src
 
 ## 90-day marketing experiments (after P0 instrumentation)
 
+- `DONE` (local) Campaign totals, channel rows and CSV show first-week activity for signup browsers with seven complete Tehran days in the selected window. The numerator requires three distinct active days from signup through day six. Current-day activity cannot make an incomplete first week eligible. Verify the metric with a signed-in production admin after release.
+
 - `DONE` (local) Campaign reporting includes unique browsers with a first English card review in the selected window. The count uses the existing first-touch attribution and QA exclusion and is included in the totals, channel rows and CSV. Verify the column with a signed-in production admin after deployment.
 
 - `DONE` Local campaign-report hygiene: first-touch sources `qa`, `test` and `roadmap_check` are reserved for internal checks and excluded case-insensitively from the campaign report, including their later untagged activity. Raw events and the separate growth summary are unchanged. The local PostgreSQL campaign suite passed all four tests.

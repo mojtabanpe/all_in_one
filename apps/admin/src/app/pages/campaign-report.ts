@@ -5,6 +5,7 @@ import {
   GROWTH_CAMPAIGN_WINDOWS,
   growthCampaignFilterSchema,
   type GrowthCampaignFilter,
+  type GrowthCampaignMetrics,
   type GrowthCampaignReport,
 } from '@all-in-one/shared/schemas';
 import {
@@ -152,19 +153,19 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
       </div>
       @if (report.isLoading()) {
         <div
-          class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5"
+          class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
           role="status"
           [attr.aria-label]="'در حال دریافت آمار کمپین' | aioTranslate"
         >
           <div
             aioSkeletonRows
             class="contents"
-            [count]="5"
+            [count]="6"
             itemClass="h-20 rounded-xl"
           ></div>
         </div>
       } @else if (report.hasValue()) {
-        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           @for (tile of tiles(); track tile.label) {
             <section aioCard size="sm">
               <div
@@ -176,7 +177,22 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
               ></div>
             </section>
           }
+          <section aioCard size="sm">
+            <div
+              aioCardHeading
+              [title]="firstWeekProgress(report.value().totals)"
+              [description]="'فعالیت در سه روز از هفتهٔ اول' | aioTranslate"
+              [level]="3"
+              titleClass="text-2xl"
+            ></div>
+          </section>
         </div>
+        <p class="text-sm leading-7 text-muted-foreground">
+          {{
+            'شاخص هفتهٔ اول، مرورگرهای فعال در سه روز یا بیشتر را از میان ثبت‌نام‌هایی می‌شمارد که هفت روز کامل در بازهٔ گزارش داشته‌اند. شمارش از روز ثبت‌نام شروع می‌شود.'
+              | aioTranslate
+          }}
+        </p>
         <p class="text-sm leading-7 text-muted-foreground">
           {{
             'شمارنده‌ها شامل همهٔ نتیجه‌های منطبق‌اند؛ جدول فقط ۲۰ ترکیب برتر منبع، رسانه و کمپین را نشان می‌دهد. این اعداد نرخ تبدیل یک گروه ثابت نیستند. منبع ثبت‌نشده با مقدار متنی unknown یا direct یکی نیست.'
@@ -223,6 +239,9 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
                   <th aioTh scope="col">
                     {{ 'اولین مرور کارت در مرورگر' | aioTranslate }}
                   </th>
+                  <th aioTh scope="col">
+                    {{ 'فعالیت در سه روز از هفتهٔ اول' | aioTranslate }}
+                  </th>
                 </tr>
               </thead>
               <tbody aioTBody>
@@ -246,6 +265,9 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
                     </td>
                     <td aioTd>{{ locale.number(row.activeVisitors) }}</td>
                     <td aioTd>{{ locale.number(row.firstReviewVisitors) }}</td>
+                    <td aioTd>
+                      <bdi>{{ firstWeekProgress(row) }}</bdi>
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -373,6 +395,15 @@ export class CampaignReport {
         ]
       : [];
   });
+  protected firstWeekProgress(metrics: GrowthCampaignMetrics): string {
+    return metrics.eligibleSignupVisitors
+      ? this.locale.text('{0} از {1}', [
+          this.locale.number(metrics.threeDaySignupVisitors),
+          this.locale.number(metrics.eligibleSignupVisitors),
+        ])
+      : '—';
+  }
+
   protected downloadCsv(): void {
     if (this.report.isLoading() || !this.report.hasValue()) return;
     const { rows, from, to } = this.report.value();
@@ -393,6 +424,8 @@ export class CampaignReport {
       'completed_signup_visitors',
       'active_visitors',
       'first_review_visitors',
+      'first_week_eligible_signup_visitors',
+      'first_week_three_day_signup_visitors',
     ];
     const records = rows.map((row) => [
       from,
@@ -408,6 +441,8 @@ export class CampaignReport {
       row.completedSignupVisitors,
       row.activeVisitors,
       row.firstReviewVisitors,
+      row.eligibleSignupVisitors,
+      row.threeDaySignupVisitors,
     ]);
     const csv = [header, ...records]
       .map((record) => record.map(csvCell).join(','))
