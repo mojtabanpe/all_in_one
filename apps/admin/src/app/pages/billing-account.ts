@@ -1,5 +1,9 @@
 import { firstValueFrom } from 'rxjs';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  httpResource,
+} from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import {
   email,
@@ -16,11 +20,13 @@ import {
 import {
   BILLING_REWARD_CAMPAIGNS,
   type BillingAccount,
+  type BillingPendingReward,
   type BillingRewardCampaign,
 } from '@all-in-one/shared/schemas';
 import {
   AioAsyncButton,
   AioBadge,
+  AioButton,
   AioCardDirectives,
   AioConfirm,
   AioDatePipe,
@@ -45,6 +51,7 @@ type Action = 'extend' | 'end';
   imports: [
     AioAsyncButton,
     AioBadge,
+    AioButton,
     AioCardDirectives,
     AioDatePipe,
     AioFormErrors,
@@ -72,6 +79,67 @@ type Action = 'extend' | 'end';
         </p>
       </div>
       <div aioCardContent class="flex flex-col gap-6">
+        <section
+          class="flex min-w-0 flex-col gap-2"
+          aria-labelledby="reward-requests-title"
+        >
+          <h3 id="reward-requests-title" class="font-semibold">
+            {{ 'درخواست‌های هدیه' | aioTranslate }}
+          </h3>
+          @if (pendingRewards.hasValue()) {
+            @for (request of pendingRewards.value(); track request.id) {
+              <div
+                class="border-border flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-xl border p-2 text-sm"
+              >
+                <div class="min-w-0">
+                  <p>{{ rewardLabels[request.campaign] | aioTranslate }}</p>
+                  <p dir="ltr" class="break-all">
+                    <bdi>{{ request.email }}</bdi> ·
+                    <bdi>{{ request.handle }}</bdi>
+                  </p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    aioBtn
+                    type="button"
+                    variant="outline"
+                    (click)="reviewRewardRequest(request)"
+                    [disabled]="finding()"
+                  >
+                    {{ 'بررسی حساب' | aioTranslate }}
+                  </button>
+                  <button
+                    aioBtn
+                    type="button"
+                    variant="ghost"
+                    (click)="dismissRewardRequest(request)"
+                    [disabled]="rewardSaving()"
+                  >
+                    {{ 'رد درخواست' | aioTranslate }}
+                  </button>
+                </div>
+              </div>
+            } @empty {
+              <p class="text-muted-foreground text-sm">
+                {{ 'درخواست بازی وجود ندارد.' | aioTranslate }}
+              </p>
+            }
+          } @else if (pendingRewards.error()) {
+            <button
+              aioBtn
+              type="button"
+              variant="outline"
+              class="self-start"
+              (click)="pendingRewards.reload()"
+            >
+              {{ 'دریافت دوباره' | aioTranslate }}
+            </button>
+          } @else {
+            <p role="status" class="text-muted-foreground text-sm">
+              {{ 'در حال دریافت درخواست‌ها…' | aioTranslate }}
+            </p>
+          }
+        </section>
         <form
           class="flex flex-wrap items-end gap-3"
           [formRoot]="findForm"
@@ -340,6 +408,38 @@ export class BillingAccountPanel {
   protected readonly account = signal<BillingAccount | null>(null);
   protected readonly finding = signal(false);
   protected readonly rewardSaving = signal(false);
+  protected readonly pendingRewards = httpResource<BillingPendingReward[]>(
+    () => `${this.api}/billing/admin/reward-requests`,
+  );
+
+  protected reviewRewardRequest(request: BillingPendingReward) {
+    this.findModel.set({ email: request.email });
+    this.rewardModel.set({ campaign: request.campaign, reason: '' });
+    this.find();
+  }
+
+  protected async dismissRewardRequest(request: BillingPendingReward) {
+    const ok = await this.confirm.ask({
+      title: 'درخواست رد شود؟',
+      description: 'کاربر می‌تواند دوباره درخواست بدهد.',
+      confirmText: 'رد درخواست',
+    });
+    if (!ok) return;
+    this.rewardSaving.set(true);
+    try {
+      await firstValueFrom(
+        this.http.delete(
+          `${this.api}/billing/admin/reward-requests/${request.id}`,
+        ),
+      );
+      this.pendingRewards.reload();
+    } catch (error) {
+      this.notifications.error(apiErrorMessage(error));
+    } finally {
+      this.rewardSaving.set(false);
+    }
+  }
+
   protected readonly rewardCampaigns = BILLING_REWARD_CAMPAIGNS;
   protected readonly rewardLabels = {
     TELEGRAM_JOIN: 'عضویت در تلگرام',
@@ -392,6 +492,7 @@ export class BillingAccountPanel {
         );
         if (this.account()?.email === account.email) this.account.set(updated);
         this.rewardModel.update((model) => ({ ...model, reason: '' }));
+        this.pendingRewards.reload();
         this.notifications.success('هدیه ثبت شد.');
       } catch (error) {
         this.notifications.error('تغییر ثبت نشد', apiErrorMessage(error));

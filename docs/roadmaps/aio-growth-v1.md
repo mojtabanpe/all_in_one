@@ -127,17 +127,16 @@ Evidence: `apps/admin/src/app/pages/dashboard.ts` already shows basic user/conte
   - `TODO` Refunds through Zibal (manual "end" exists; money still moves outside the app).
 - [ ] `TODO` Admin-only global AI provider settings, health checks, budgets, quotas, model/provider fallback and monitoring.
 
-## SMS templates — waiting for provider approval
+## SMS templates — Faraz SMS
 
-- [ ] `WAITING` The owner is submitting templates and will provide approved IDs in this order: `AUTH_CODE`, `PASSWORD_RESET`, `PASSWORD_CHANGED`, `SUBSCRIPTION_ACTIVATED`, `SUBSCRIPTION_EXPIRING`. No IDs are configured yet; continue independent roadmap work meanwhile.
-- Variables use percent delimiters: `%code%` numeric, 6 characters; `%minutes%` numeric, up to 2; `%plan%` text, up to 30; `%expiry_date%` text, 10 (Solar Hijri `YYYY/MM/DD`). `PASSWORD_CHANGED` has no variables. These are the submitted specifications, not an implemented OTP policy.
-- [ ] `TODO` Once approved IDs arrive, confirm provider configuration, map IDs in the order above and implement/verify the corresponding delivery flows. Current authentication still uses email/password and email verification/reset; SMS authentication and subscription notifications are not operational.
+- `DONE` Owner supplied the sender line and all five approved template IDs (directive 88).
+- `TODO` Confirm a Faraz API key is installed in server secrets, wire up phone verification and the corresponding delivery flows, and test real delivery. Email-based authentication remains in use.
 
 ## P1 — Iranian payment gateway and Freemium
 
 - Owner decision (2026-11-07): seven days of trial access for new customers, followed by offers based on observed product usage. Verified actions can each add a week, for example joining the official Telegram or Instagram community. The free tier remains usable after expiry. AI requires current trial, earned or paid access. A locked AI action opens the shared plan-selection sheet.
 - Implemented base entitlement state in authenticated `GET /api/billing/access`. Trial starts on email confirmation and expires after seven full days. An active paid subscription takes precedence. Server-side AI access accepts paid, trial and earned access.
-- Admin support can grant the two verified social rewards once each per account, for one week each, with an audit note. The grant queues after current access and uses a separate ledger from purchases. The customer subscription page shows active trial or earned access. User-facing usage-based offers and automatic membership evidence remain open.
+- Admin support can grant the two verified social rewards once each per account, for one week each, with an audit note. The grant queues after current access and uses a separate ledger from purchases. The customer subscription page shows active trial or earned access. Customers with an expired trial and at least one meaningful action in the last 30 days can see enabled offers and request verification. The support queue allows manual verification and dismissal. Links assume the handle `poshtetgarm`; offers are disabled until the official channels exist. Automatic membership checks remain open.
 - Owner decision: Poshtetgarm supplies all AI. Customers never provide an AI service or key. Plan pricing and free-tier limits beyond AI remain open.
 
 - [x] `DONE` Owner-supplied Enamad verification link/seal added to the shared public-page footer (2026-11-06); original URLs, code and origin referrer policy preserved, bilingual accessible labels and new-tab isolation added. Public lint/build passed (2/2); mobile footer stayed within 390px viewport. External seal image did not load in localhost browser verification; validate image delivery and seal status on the production domain after deployment. This does not establish payment-provider approval or active payment integration.

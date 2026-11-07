@@ -7,7 +7,10 @@ import type {
   BillingPlan,
   BillingReturnStatus,
   BillingAccessState,
+  BillingRewardCampaign,
+  BillingRewardOffer,
 } from '@all-in-one/shared/schemas';
+import { billingRewardRequestSchema } from '@all-in-one/shared/schemas';
 import {
   AioAlertDirectives,
   AioAsyncButton,
@@ -17,6 +20,8 @@ import {
   AioDatePipe,
   AioEmptyState,
   AioIcon,
+  AioFormField,
+  AioInput,
   AioLocale,
   AioNotifications,
   AioSkeletonRows,
@@ -47,6 +52,8 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
     AioDatePipe,
     AioEmptyState,
     AioIcon,
+    AioFormField,
+    AioInput,
     AioSkeletonRows,
     AioTranslate,
   ],
@@ -158,6 +165,86 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
           }
         </div>
       </section>
+
+      @if (offers.hasValue() && offers.value().length) {
+        <section aioCard aria-labelledby="offers-heading">
+          <div aioCardHeader>
+            <h2 aioCardTitle id="offers-heading">
+              {{ 'یک هفته هوش مصنوعی هدیه' | aioTranslate }}
+            </h2>
+          </div>
+          <div aioCardContent class="grid gap-4 sm:grid-cols-2">
+            @for (offer of offers.value(); track offer.campaign) {
+              <article
+                class="border-border flex min-w-0 flex-col gap-3 rounded-xl border p-3"
+              >
+                <h3 class="font-semibold">
+                  {{ rewardLabels[offer.campaign] | aioTranslate }}
+                </h3>
+                @switch (offer.status) {
+                  @case ('earned') {
+                    <p>{{ 'هدیه ثبت شد.' | aioTranslate }}</p>
+                  }
+                  @case ('pending') {
+                    <p role="status">
+                      {{ 'درخواست در انتظار بررسی است.' | aioTranslate }}
+                    </p>
+                  }
+                  @case ('available') {
+                    <a
+                      aioBtn
+                      variant="outline"
+                      class="min-h-11 self-start"
+                      [href]="offer.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {{ 'باز کردن صفحهٔ رسمی' | aioTranslate }}
+                    </a>
+                    <form
+                      class="flex flex-col gap-3"
+                      (submit)="
+                        $event.preventDefault();
+                        requestReward(offer.campaign, handle.value)
+                      "
+                    >
+                      <aio-form-field
+                        label="نام کاربری شبکهٔ اجتماعی"
+                        [controlId]="'offer-' + offer.campaign"
+                      >
+                        <input
+                          aioInput
+                          #handle
+                          [id]="'offer-' + offer.campaign"
+                          type="text"
+                          dir="ltr"
+                          autocomplete="off"
+                          maxlength="31"
+                          required
+                        />
+                      </aio-form-field>
+                      <p class="text-muted-foreground text-xs">
+                        {{
+                          'بعد از عضویت، نام کاربری را برای بررسی بفرست.'
+                            | aioTranslate
+                        }}
+                      </p>
+                      <button
+                        aioAsyncButton
+                        type="submit"
+                        label="درخواست هدیه"
+                        class="min-h-11 self-start"
+                        [busy]="requesting() === offer.campaign"
+                        [disabled]="requesting() !== null"
+                      ></button>
+                    </form>
+                  }
+                }
+              </article>
+            }
+          </div>
+        </section>
+      }
 
       <section aria-labelledby="plans-heading" class="flex flex-col gap-4">
         <h2 id="plans-heading" class="text-xl font-semibold">
@@ -321,6 +408,42 @@ export class Billing {
   protected readonly access = httpResource<BillingAccessState>(
     () => `${this.api}/billing/access`,
   );
+  protected readonly offers = httpResource<BillingRewardOffer[]>(
+    () => `${this.api}/billing/reward-offers`,
+  );
+  protected readonly requesting = signal<BillingRewardCampaign | null>(null);
+  protected readonly rewardLabels = {
+    TELEGRAM_JOIN: 'عضویت در تلگرام',
+    INSTAGRAM_FOLLOW: 'دنبال‌کردن در اینستاگرام',
+  } as const;
+
+  protected async requestReward(
+    campaign: BillingRewardCampaign,
+    handle: string,
+  ) {
+    if (this.requesting()) return;
+    const input = billingRewardRequestSchema.safeParse({ campaign, handle });
+    if (!input.success) {
+      this.notifications.error('نام کاربری معتبر وارد کن.');
+      return;
+    }
+    this.requesting.set(campaign);
+    try {
+      this.offers.set(
+        await firstValueFrom(
+          this.http.post<BillingRewardOffer[]>(
+            `${this.api}/billing/reward-requests`,
+            input.data,
+          ),
+        ),
+      );
+    } catch (error) {
+      this.notifications.error(apiErrorMessage(error));
+    } finally {
+      this.requesting.set(null);
+    }
+  }
+
   protected readonly paid = computed(
     () => this.access.hasValue() && this.access.value().tier === 'paid',
   );

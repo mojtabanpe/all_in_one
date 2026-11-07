@@ -13,6 +13,8 @@ export const envSchema = z.object({
   ZIBAL_MERCHANT: z.string().optional(),
   ZIBAL_SANDBOX: z.enum(['true', 'false']).default('false'),
   ZIBAL_CALLBACK_URL: z.url().optional(),
+  BILLING_TELEGRAM_OFFER_ENABLED: z.enum(['true', 'false']).default('false'),
+  BILLING_INSTAGRAM_OFFER_ENABLED: z.enum(['true', 'false']).default('false'),
   // First-party acquisition analytics, enabled without an end-user control.
   GROWTH_ANALYTICS_ENABLED: z.enum(['true', 'false']).default('true'),
   DATABASE_URL: z.url(),

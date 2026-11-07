@@ -135,6 +135,28 @@ export const billingRewardSchema = z.strictObject({
 });
 export type BillingRewardInput = z.infer<typeof billingRewardSchema>;
 
+export const billingRewardRequestSchema = z.strictObject({
+  campaign: z.enum(BILLING_REWARD_CAMPAIGNS),
+  handle: z.string().check(z.trim(), z.regex(/^@?[a-zA-Z0-9_.]{1,30}$/)),
+});
+export type BillingRewardRequestInput = z.infer<
+  typeof billingRewardRequestSchema
+>;
+
+export interface BillingRewardOffer {
+  campaign: BillingRewardCampaign;
+  url: string;
+  status: 'available' | 'pending' | 'earned';
+}
+
+export interface BillingPendingReward {
+  id: string;
+  campaign: BillingRewardCampaign;
+  email: string;
+  handle: string;
+  createdAt: string;
+}
+
 export interface BillingRewardSummary {
   campaign: BillingRewardCampaign;
   startsAt: string;

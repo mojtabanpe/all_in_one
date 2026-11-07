@@ -97,3 +97,17 @@ model BillingReward {
   @@unique([userId, campaign])
   @@map("billing_rewards")
 }
+
+/// Pending membership check; the handle is removed when the request is decided.
+model BillingRewardRequest {
+  id        String @id @default(uuid(7)) @db.Uuid
+  userId    String @db.Uuid
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign  BillingRewardCampaign
+  handle    String @db.VarChar(32)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, campaign])
+  @@index([createdAt])
+  @@map("billing_reward_requests")
+}

@@ -42,6 +42,7 @@ model User {
   billingSubscription BillingSubscription?
   billingRewards BillingReward[] @relation("BillingRewardUser")
   billingRewardsGranted BillingReward[] @relation("BillingRewardAdmin")
+  billingRewardRequests BillingRewardRequest[]
   billingAdjustments  BillingAdjustment[] @relation("BillingAdjustmentUser")
   billingAdjustmentsMade BillingAdjustment[] @relation("BillingAdjustmentAdmin")
 

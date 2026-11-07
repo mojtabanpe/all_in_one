@@ -1,6 +1,30 @@
 /** Subscription page, admin plans and payment errors. */
 export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
   ['اشتراک', 'Subscription'],
+  ['یک هفته هوش مصنوعی هدیه', 'One week of AI access'],
+  ['درخواست در انتظار بررسی است.', 'Your request is waiting for review.'],
+  ['باز کردن صفحهٔ رسمی', 'Open the official page'],
+  ['نام کاربری شبکهٔ اجتماعی', 'Social media username'],
+  [
+    'بعد از عضویت، نام کاربری را برای بررسی بفرست.',
+    'After joining, submit your username for review.',
+  ],
+  ['درخواست هدیه', 'Request reward'],
+  ['نام کاربری معتبر وارد کن.', 'Enter a valid username.'],
+  ['درخواست‌های هدیه', 'Reward requests'],
+  ['بررسی حساب', 'Review account'],
+  ['رد درخواست', 'Decline request'],
+  ['درخواست بازی وجود ندارد.', 'There are no open requests.'],
+  ['در حال دریافت درخواست‌ها…', 'Loading requests…'],
+  ['درخواست رد شود؟', 'Decline this request?'],
+  [
+    'کاربر می‌تواند دوباره درخواست بدهد.',
+    'The customer can submit another request.',
+  ],
+  [
+    'این پیشنهاد برای حساب تو در دسترس نیست.',
+    'This offer is unavailable for your account.',
+  ],
   ['هدیه‌های دسترسی', 'Access rewards'],
   [
     'بعد از تأیید عضویت، یک هفته دسترسی هوش مصنوعی ثبت کن. هر هدیه فقط یک بار قابل ثبت است.',

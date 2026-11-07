@@ -306,6 +306,88 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       }
     });
 
+    it('hides disabled offers and accepts one request after the trial and recent activity', async () => {
+      const now = new Date('2026-11-07T12:00:00.000Z');
+      const customer = await prisma.user.create({
+        data: {
+          email: `offer-${randomUUID()}@example.test`,
+          passwordHash: 'fixture',
+          emailVerifiedAt: new Date('2026-10-30T12:00:00.000Z'),
+        },
+      });
+      const admin = await prisma.user.create({
+        data: {
+          email: `review-${randomUUID()}@example.test`,
+          passwordHash: 'fixture',
+          role: 'ADMIN',
+        },
+      });
+      const offers = new BillingService(
+        prisma,
+        gateway as unknown as ZibalGateway,
+        new ConfigService({ BILLING_TELEGRAM_OFFER_ENABLED: 'true' }),
+      );
+      const input = {
+        campaign: 'TELEGRAM_JOIN' as const,
+        handle: '@fixture_user',
+      };
+      try {
+        expect(await service().rewardOffers(customer.id, now)).toEqual([]);
+        expect(await offers.rewardOffers(customer.id, now)).toEqual([]);
+        await expect(
+          offers.requestReward(customer.id, input, now),
+        ).rejects.toMatchObject({ status: 403 });
+        await prisma.englishReviewDay.create({
+          data: {
+            userId: customer.id,
+            date: new Date('2026-11-06'),
+            reviews: 1,
+          },
+        });
+        expect(await offers.rewardOffers(customer.id, now)).toEqual([
+          {
+            campaign: 'TELEGRAM_JOIN',
+            url: 'https://t.me/poshtetgarm',
+            status: 'available',
+          },
+        ]);
+        await Promise.all([
+          offers.requestReward(customer.id, input, now),
+          offers.requestReward(customer.id, input, now),
+        ]);
+        expect(
+          await prisma.billingRewardRequest.count({
+            where: { userId: customer.id },
+          }),
+        ).toBe(1);
+        expect(
+          (await offers.pendingRewards()).find(
+            (request) => request.email === customer.email,
+          )?.handle,
+        ).toBe('fixture_user');
+        await offers.grantReward(
+          admin.id,
+          {
+            email: customer.email,
+            campaign: input.campaign,
+            reason: 'Membership verified',
+          },
+          now,
+        );
+        expect(
+          await prisma.billingRewardRequest.count({
+            where: { userId: customer.id },
+          }),
+        ).toBe(0);
+        expect((await offers.rewardOffers(customer.id, now))[0]?.status).toBe(
+          'earned',
+        );
+      } finally {
+        await prisma.user.delete({ where: { id: customer.id } });
+        await prisma.user.delete({ where: { id: admin.id } });
+      }
+    });
+
     it('activates once for concurrent callbacks and extends from the current end', async () => {
       const first = trackOf(
         (await service().checkout(userId, code)).paymentUrl,

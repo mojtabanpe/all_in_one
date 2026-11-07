@@ -1,6 +1,8 @@
 import {
   Body,
   Controller,
+  Delete,
+  HttpCode,
   Get,
   Param,
   ParseUUIDPipe,
@@ -24,6 +26,8 @@ import {
   billingCheckoutSchema,
   billingPlanInputSchema,
   billingRewardSchema,
+  billingRewardRequestSchema,
+  type BillingRewardRequestInput,
   type BillingRewardInput,
   type BillingAccountQuery,
   type BillingAdjustmentInput,
@@ -52,6 +56,21 @@ export class BillingController {
   @Get('access')
   access(@CurrentUser() user: AuthUser) {
     return this.billing.access(user.id);
+  }
+
+  @Get('reward-offers')
+  rewardOffers(@CurrentUser() user: AuthUser) {
+    return this.billing.rewardOffers(user.id);
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Post('reward-requests')
+  requestReward(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: billingRewardRequestSchema })
+    input: BillingRewardRequestInput,
+  ) {
+    return this.billing.requestReward(user.id, input);
   }
 
   @Get('orders')
@@ -107,6 +126,19 @@ export class BillingController {
     @Body({ schema: billingAdjustmentSchema }) input: BillingAdjustmentInput,
   ) {
     return this.billing.adjust(admin.id, input);
+  }
+
+  @Roles('ADMIN')
+  @Get('admin/reward-requests')
+  pendingRewards() {
+    return this.billing.pendingRewards();
+  }
+
+  @Roles('ADMIN')
+  @Delete('admin/reward-requests/:id')
+  @HttpCode(204)
+  dismissRewardRequest(@Param('id', ParseUUIDPipe) id: string) {
+    return this.billing.dismissRewardRequest(id);
   }
 
   @Roles('ADMIN')

@@ -2,13 +2,18 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  ForbiddenException,
   UnprocessableEntityException,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@all-in-one/api/db';
 import type {
   BillingAccessState,
   BillingRewardInput,
+  BillingRewardOffer,
+  BillingRewardRequestInput,
+  BillingPendingReward,
   BillingAccount,
   BillingAdjustmentInput,
   BillingAdminOrderPage,
@@ -20,6 +25,19 @@ import type {
   BillingSubscriptionState,
 } from '@all-in-one/shared/schemas';
 import { ZibalGateway } from './zibal.gateway';
+
+const SOCIAL_OFFERS = [
+  {
+    campaign: 'TELEGRAM_JOIN',
+    url: 'https://t.me/poshtetgarm',
+    flag: 'BILLING_TELEGRAM_OFFER_ENABLED',
+  },
+  {
+    campaign: 'INSTAGRAM_FOLLOW',
+    url: 'https://www.instagram.com/poshtetgarm/',
+    flag: 'BILLING_INSTAGRAM_OFFER_ENABLED',
+  },
+] as const;
 
 const WEEK_MS = 7 * 86_400_000;
 const trialEnd = (verifiedAt: Date) => new Date(verifiedAt.getTime() + WEEK_MS);
@@ -62,6 +80,7 @@ export class BillingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly gateway: ZibalGateway,
+    private readonly config: ConfigService = new ConfigService(),
   ) {}
 
   plans(): Promise<BillingPlan[]> {
@@ -274,6 +293,101 @@ export class BillingService {
     };
   }
 
+  async rewardOffers(
+    userId: string,
+    now = new Date(),
+  ): Promise<BillingRewardOffer[]> {
+    const offers = SOCIAL_OFFERS.filter(
+      ({ flag }) => this.config.get(flag) === 'true',
+    );
+    if (!offers.length) return [];
+    const access = await this.access(userId, now);
+    if (!access.trialUntil || access.tier === 'trial' || access.tier === 'paid')
+      return [];
+    const since = new Date(now.getTime() - 30 * 86_400_000);
+    const active = await this.prisma.$queryRaw<{ active: boolean }[]>`
+      SELECT EXISTS (
+        SELECT 1 FROM planner_tasks WHERE "userId" = ${userId}::uuid AND "createdAt" >= ${since} AND "deletedAt" IS NULL
+        UNION ALL
+        SELECT 1 FROM english_review_days WHERE "userId" = ${userId}::uuid AND date >= ${since}::date AND reviews > 0
+        UNION ALL
+        SELECT 1 FROM workout_logs WHERE "userId" = ${userId}::uuid AND "createdAt" >= ${since}
+        UNION ALL
+        SELECT 1 FROM meal_logs WHERE "userId" = ${userId}::uuid AND "createdAt" >= ${since}
+      ) AS active
+    `;
+    const [grants, requests] = await Promise.all([
+      this.prisma.billingReward.findMany({
+        where: { userId },
+        select: { campaign: true },
+      }),
+      this.prisma.billingRewardRequest.findMany({
+        where: { userId },
+        select: { campaign: true },
+      }),
+    ]);
+    return offers.flatMap(({ campaign, url }) => {
+      const status = grants.some((item) => item.campaign === campaign)
+        ? 'earned'
+        : requests.some((item) => item.campaign === campaign)
+          ? 'pending'
+          : 'available';
+      return active[0]?.active || status !== 'available'
+        ? [{ campaign, url, status }]
+        : [];
+    });
+  }
+
+  async requestReward(
+    userId: string,
+    input: BillingRewardRequestInput,
+    now = new Date(),
+  ) {
+    const eligible = (await this.rewardOffers(userId, now)).find(
+      ({ campaign }) => campaign === input.campaign,
+    );
+    if (!eligible || eligible.status === 'earned')
+      throw new ForbiddenException('این پیشنهاد برای حساب تو در دسترس نیست.');
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT 1 FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
+      const granted = await tx.billingReward.findUnique({
+        where: { userId_campaign: { userId, campaign: input.campaign } },
+        select: { id: true },
+      });
+      if (granted) return;
+      await tx.billingRewardRequest.createMany({
+        data: [
+          {
+            userId,
+            campaign: input.campaign,
+            handle: input.handle.replace(/^@/, ''),
+          },
+        ],
+        skipDuplicates: true,
+      });
+    });
+    return this.rewardOffers(userId, now);
+  }
+
+  async pendingRewards(): Promise<BillingPendingReward[]> {
+    const rows = await this.prisma.billingRewardRequest.findMany({
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      take: 30,
+      include: { user: { select: { email: true } } },
+    });
+    return rows.map(({ id, campaign, handle, createdAt, user }) => ({
+      id,
+      campaign,
+      handle,
+      createdAt: createdAt.toISOString(),
+      email: user.email,
+    }));
+  }
+
+  async dismissRewardRequest(id: string): Promise<void> {
+    await this.prisma.billingRewardRequest.deleteMany({ where: { id } });
+  }
+
   async grantReward(
     adminId: string,
     input: BillingRewardInput,
@@ -320,6 +434,9 @@ export class BillingService {
           startsAt: new Date(start),
           expiresAt: new Date(start + WEEK_MS),
         },
+      });
+      await tx.billingRewardRequest.deleteMany({
+        where: { userId: user.id, campaign: input.campaign },
       });
     });
     return this.account(email, now);
