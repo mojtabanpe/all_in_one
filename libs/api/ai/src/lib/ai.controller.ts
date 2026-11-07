@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  Inject,
   Param,
   ParseUUIDPipe,
   Post,
@@ -21,9 +22,10 @@ import {
   type UpdateAiSettingsInput,
   updateAiSettingsSchema,
 } from '@all-in-one/shared/schemas';
-import { AiGateway } from './ai-gateway.service';
 import { AiSettingsService } from './ai-settings.service';
 import { AiScopeGuard } from './ai-scope';
+import { AiUsageService } from './ai-usage.service';
+import { AI_ACCESS, AiGateway, type AiAccess } from './ai-gateway.service';
 
 /** The signed-in user's AI services (profile page). Keys are write-only. */
 @Roles('ADMIN')
@@ -33,7 +35,14 @@ export class AiAdminController {
     private readonly settings: AiSettingsService,
     private readonly gateway: AiGateway,
     private readonly scope: AiScopeGuard,
+    private readonly usage: AiUsageService,
   ) {}
+
+  /** Today's AI use of all accounts, per service. */
+  @Get('usage')
+  usageOverview() {
+    return this.usage.overview();
+  }
 
   /** Try a sentence against the current scope check (decision model). */
   @Post('scope-test')
@@ -85,10 +94,21 @@ export class AiAdminController {
 
 @Controller('ai')
 export class AiController {
-  constructor(private readonly settings: AiSettingsService) {}
+  constructor(
+    private readonly settings: AiSettingsService,
+    private readonly usage: AiUsageService,
+    @Inject(AI_ACCESS) private readonly access: AiAccess,
+  ) {}
 
   @Get('status')
   status() {
     return this.settings.status();
+  }
+
+  /** The signed-in account's AI use today and its daily limits. */
+  @Get('usage')
+  async myUsage(@CurrentUser() user: AuthUser) {
+    const { tier } = await this.access.access(user.id);
+    return this.usage.view(user.id, tier);
   }
 }

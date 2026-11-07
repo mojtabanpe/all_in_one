@@ -16,6 +16,8 @@ import {
   type SaveAiPresetInput,
   type AiScopeSettings,
   type AiScopeProvider,
+  type AiQuotas,
+  DEFAULT_AI_QUOTAS,
   TYPESAFE_URL,
 } from '@all-in-one/shared/schemas';
 
@@ -29,6 +31,7 @@ type ManagedSettings = Partial<UserAiSettings> & {
   scopeKey?: string | null;
   scopeProxyOn?: boolean;
   scopeProxy?: string | null;
+  quotas?: AiQuotas;
 };
 
 /** The scope check as the server uses it (Jev key opened). */
@@ -133,6 +136,11 @@ export class AiSettingsService {
     };
   }
 
+  /** Daily limits per tier: the admin's, or DEFAULT_AI_QUOTAS. */
+  async quotas(): Promise<AiQuotas> {
+    return (await this.row())?.quotas ?? DEFAULT_AI_QUOTAS;
+  }
+
   async scopeTarget(): Promise<AiScopeTarget> {
     const r = await this.row();
     const view = await this.scope();
@@ -174,6 +182,7 @@ export class AiSettingsService {
       ready: await this.status(),
       presets: await this.presets(r),
       scope: await this.scope(),
+      quotas: r?.quotas ?? DEFAULT_AI_QUOTAS,
       savedModels: {
         chat: remember(r?.chatModels ?? [], [r?.chatModel]),
         tts: remember(r?.ttsModels ?? [], [r?.ttsModel, r?.ttsModel2]),
@@ -314,6 +323,7 @@ export class AiSettingsService {
     preset?: { kind: AiKind; key: string | null },
   ): Promise<AiSettings> {
     const data: Omit<ManagedSettings, 'userId' | 'updatedAt'> = {};
+    if (input.quotas) data.quotas = input.quotas;
     const scope = input.scope;
     if (scope?.on !== undefined) data.scopeOn = scope.on;
     if (scope?.provider !== undefined) data.scopeProvider = scope.provider;

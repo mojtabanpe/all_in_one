@@ -73,6 +73,7 @@ model User {
   mealPlans       MealPlan[]
   aiSettings      UserAiSettings?
   aiPresets UserAiPreset[]
+  aiUsage   AiUsageDay[]
 
   @@map("users")
 }

@@ -5,6 +5,7 @@ import {
   HttpException,
   Inject,
   Injectable,
+  Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -20,6 +21,7 @@ import {
   type AiTarget,
 } from './ai-settings.service';
 import { assertPublicUrl, guardedAgent, proxyAgent } from './net-guard';
+import { AiUsageService } from './ai-usage.service';
 
 export interface ToolCall {
   id: string;
@@ -47,7 +49,12 @@ export interface ChatOptions {
   tools?: ToolDefinition[];
   /** Another model on the same chat service (the scope check's own model). */
   model?: string;
+  /** false: not counted against the daily quota (the scope check itself). */
+  meter?: boolean;
 }
+
+/** Rough tokens of a text when the service reports no usage (about 4 characters a token). */
+const roughTokens = (text: string) => Math.ceil(text.length / 4);
 
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 export const MAX_RECORDING_BYTES = 1500 * 1024;
@@ -74,7 +81,25 @@ export class AiGateway {
     private readonly settings: AiSettingsService,
     private readonly config: ConfigService,
     @Inject(AI_ACCESS) private readonly access: AiAccess,
+    @Optional() private readonly usage?: AiUsageService,
   ) {}
+
+  /** Daily quota (AiUsageService): refuse when used up; the operator's own tests are never limited. */
+  private async allow(
+    userId: AiCaller,
+    tier: BillingAccessState['tier'],
+    kind: AiKind,
+    extra = 0,
+  ) {
+    if (userId === OPERATOR_TEST || !this.usage) return;
+    await this.usage.check(userId, tier, kind, extra);
+  }
+
+  private async meter(userId: AiCaller, kind: AiKind, units: number) {
+    if (userId === OPERATOR_TEST || !this.usage) return;
+    // Metering must never turn a successful answer into an error.
+    await this.usage.record(userId, kind, units).catch(() => undefined);
+  }
 
   private get allowPrivate(): boolean {
     return this.config.get('AI_ALLOW_PRIVATE_URLS') === 'true';
@@ -85,10 +110,11 @@ export class AiGateway {
   }
 
   private async target<K extends AiKind>(userId: AiCaller, kind: K) {
-    if (
-      userId !== OPERATOR_TEST &&
-      (await this.access.access(userId)).tier === 'free'
-    ) {
+    const tier =
+      userId === OPERATOR_TEST
+        ? 'staff'
+        : (await this.access.access(userId)).tier;
+    if (tier === 'free') {
       throw new HttpException(
         {
           code: 'AI_PLAN_REQUIRED',
@@ -101,7 +127,7 @@ export class AiGateway {
     const target = targets[kind];
     if (!target)
       throw new ServiceUnavailableException('سرویس هوش مصنوعی در دسترس نیست.');
-    return target as NonNullable<(typeof targets)[K]>;
+    return { ...(target as NonNullable<(typeof targets)[K]>), tier };
   }
 
   private async request(
@@ -150,6 +176,7 @@ export class AiGateway {
     options: ChatOptions = {},
   ) {
     const target = await this.target(userId, 'chat');
+    if (options.meter !== false) await this.allow(userId, target.tier, 'chat');
     const response = await this.request(target, {
       json: true,
       timeout: options.timeout ?? 60_000,
@@ -174,10 +201,20 @@ export class AiGateway {
     if (!response.ok) return this.fail(response, 'سرویس گفتگو');
     const body = (await response.json()) as {
       choices?: { message?: { content?: unknown; tool_calls?: ToolCall[] } }[];
+      usage?: { total_tokens?: unknown };
     };
     const message = body.choices?.[0]?.message;
     if (!message)
       throw new BadGatewayException('پاسخ سرویس گفتگو نامعتبر بود.');
+    if (options.meter !== false)
+      await this.meter(
+        userId,
+        'chat',
+        typeof body.usage?.total_tokens === 'number'
+          ? body.usage.total_tokens
+          : roughTokens(JSON.stringify(messages)) +
+              roughTokens(JSON.stringify(message)),
+      );
     return {
       content: typeof message.content === 'string' ? message.content : null,
       toolCalls: Array.isArray(message.tool_calls) ? message.tool_calls : [],
@@ -212,6 +249,7 @@ export class AiGateway {
       key: target.key,
       proxy: target.proxy,
       provider: target.provider,
+      tier: target.tier,
     };
   }
 
@@ -221,6 +259,7 @@ export class AiGateway {
     voice: 'primary' | 'secondary',
   ): Promise<{ audio: Buffer; contentType: string }> {
     const target = await this.speechTarget(userId, voice);
+    await this.allow(userId, target.tier, 'tts', text.length);
     const body = JSON.stringify(
       target.provider === 'elevenlabs'
         ? { text, model_id: ELEVEN_DEFAULTS.ttsModel }
@@ -255,6 +294,7 @@ export class AiGateway {
     const audio = Buffer.from(await response.arrayBuffer());
     if (!audio.length || audio.length > MAX_AUDIO_BYTES)
       throw new BadGatewayException('صدای برگشتی نامعتبر است.');
+    await this.meter(userId, 'tts', text.length);
     return { audio, contentType };
   }
 
@@ -271,13 +311,16 @@ export class AiGateway {
     const extension = RECORDING_TYPES[mime];
     if (!extension)
       throw new BadRequestException('این قالب صدا پشتیبانی نمی‌شود.');
-    const target = sttTarget(await this.target(userId, 'stt'));
+    const managed = await this.target(userId, 'stt');
+    await this.allow(userId, managed.tier, 'stt');
+    const target = sttTarget(managed);
     const response = await this.request(target, {
       ...sttBody(target, audio, mime, `speech.${extension}`),
       timeout: 90_000,
     });
     if (!response.ok) return this.fail(response, 'سرویس گفتار به متن');
     const text = transcriptOf(await response.json());
+    await this.meter(userId, 'stt', 1);
     if (!text)
       throw new BadGatewayException(
         'صدایی تشخیص داده نشد. دوباره بگو یا بنویس.',

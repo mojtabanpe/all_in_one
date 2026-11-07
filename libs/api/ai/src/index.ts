@@ -6,4 +6,5 @@ export * from './lib/secret-box';
 export * from './lib/json-reply';
 export * from './lib/ai-scope';
 export * from './lib/scope-classifier';
+export * from './lib/ai-usage.service';
 export * from './lib/request-language';

@@ -86,6 +86,55 @@ describe('api-ai', () => {
     });
   });
 
+  it('checks the daily quota before a chat call and records its tokens after', async () => {
+    const config = new ConfigService({
+      MANAGED_AI_CHAT_URL: 'https://managed.example/v1',
+      MANAGED_AI_CHAT_MODEL: 'small',
+    });
+    const settings = new AiSettingsService(config, withManagedRow());
+    const usage = {
+      check: vi.fn().mockResolvedValue(undefined),
+      record: vi.fn().mockResolvedValue(undefined),
+    };
+    const gateway = new AiGateway(
+      settings,
+      config,
+      { access: vi.fn().mockResolvedValue({ tier: 'trial' }) },
+      usage as never,
+    );
+    const fetchSpy = vi
+      .spyOn(gateway as never, 'request' as never)
+      .mockImplementation(
+        async () =>
+          new Response(
+            JSON.stringify({
+              choices: [{ message: { content: 'hi' } }],
+              usage: { total_tokens: 321 },
+            }),
+          ) as never,
+      );
+    await gateway.chat('user', [{ role: 'user', content: 'hello' }]);
+    expect(usage.check).toHaveBeenCalledWith('user', 'trial', 'chat', 0);
+    expect(usage.record).toHaveBeenCalledWith('user', 'chat', 321);
+
+    // The scope check's own call is not counted.
+    usage.check.mockClear();
+    usage.record.mockClear();
+    await gateway.chat('user', [], { meter: false });
+    expect(usage.check).not.toHaveBeenCalled();
+    expect(usage.record).not.toHaveBeenCalled();
+
+    // A used-up quota stops the call before it is made.
+    usage.check.mockRejectedValueOnce(
+      Object.assign(new Error('quota'), { status: 429 }),
+    );
+    fetchSpy.mockClear();
+    await expect(gateway.chat('user', [])).rejects.toMatchObject({
+      status: 429,
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it('rejects free AI before resolving providers, including cached speech', async () => {
     const config = new ConfigService({
       MANAGED_AI_TTS_URL: 'https://managed.example/v1',

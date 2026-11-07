@@ -14,8 +14,14 @@ import type {
   AiPresetView,
   AiScopeProvider,
   AiScopeTestResult,
+  AiQuotas,
+  AiQuotaTier,
+  AiUsageOverview,
 } from '@all-in-one/shared/schemas';
-import { DEFAULT_AI_PROXY } from '@all-in-one/shared/schemas';
+import {
+  DEFAULT_AI_PROXY,
+  DEFAULT_AI_QUOTAS,
+} from '@all-in-one/shared/schemas';
 import {
   AioTranslate,
   AioButton,
@@ -31,6 +37,7 @@ import {
   AioCheckbox,
   AioNativeSelect,
   AioNativeSelectOption,
+  AioLocale,
 } from '@all-in-one/ui';
 import {
   lucideCircleCheck,
@@ -649,6 +656,91 @@ const SERVICES: {
         </form>
       </section>
     }
+    @if (settings.hasValue()) {
+      <section aioCard class="mt-6" aria-labelledby="ai-quota-heading">
+        <div aioCardHeader>
+          <h2 aioCardTitle id="ai-quota-heading">
+            {{ 'سهمیهٔ روزانهٔ هوش مصنوعی' | aioTranslate }}
+          </h2>
+          <p aioCardDescription>
+            {{
+              'سقف مصرف هر روز (به وقت تهران) برای هر نوع دسترسی. گفتگو بر حسب توکن، متن به گفتار بر حسب کاراکتر و گفتار به متن بر حسب تعداد ضبط. مدیرها محدودیتی ندارند.'
+                | aioTranslate
+            }}
+          </p>
+        </div>
+        <form
+          aioCardContent
+          class="flex flex-col gap-5"
+          (submit)="$event.preventDefault(); saveQuotas()"
+        >
+          @for (tier of quotaTiers; track tier.id) {
+            <fieldset class="flex min-w-0 flex-col gap-3">
+              <legend class="mb-2 text-sm font-semibold">
+                {{ tier.label | aioTranslate }}
+              </legend>
+              <div class="grid gap-3 sm:grid-cols-3">
+                @for (kind of quotaKinds; track kind.id) {
+                  <aio-form-field
+                    [label]="kind.label | aioTranslate"
+                    [controlId]="'quota-' + tier.id + '-' + kind.id"
+                  >
+                    <input
+                      aioInput
+                      type="number"
+                      inputmode="numeric"
+                      min="0"
+                      step="1"
+                      dir="ltr"
+                      lang="en"
+                      required
+                      [id]="'quota-' + tier.id + '-' + kind.id"
+                      [value]="quotaDraft()[tier.id][kind.id]"
+                      (input)="
+                        setQuota(tier.id, kind.id, $any($event.target).value)
+                      "
+                    />
+                  </aio-form-field>
+                }
+              </div>
+            </fieldset>
+          }
+          <button
+            aioAsyncButton
+            type="submit"
+            class="min-h-11 self-start"
+            [busy]="savingQuotas()"
+            [label]="'ذخیرهٔ سهمیه‌ها' | aioTranslate"
+          ></button>
+        </form>
+        @if (overview.hasValue()) {
+          <div aioCardFooter class="flex flex-col items-stretch gap-2">
+            <h3 class="text-sm font-semibold">
+              {{ 'مصرف امروز همهٔ کاربران' | aioTranslate }}
+            </h3>
+            <ul class="flex flex-col gap-1 text-sm">
+              @for (kind of quotaKinds; track kind.id) {
+                @let row = overview.value().kinds[kind.id];
+                <li class="flex flex-wrap justify-between gap-x-3">
+                  <span class="font-medium">{{
+                    kind.label | aioTranslate
+                  }}</span>
+                  <span class="text-muted-foreground">{{
+                    '{0} کاربر، {1} درخواست، {2} واحد'
+                      | aioTranslate
+                        : [
+                            locale.number(row.users),
+                            locale.number(row.calls),
+                            locale.number(row.units),
+                          ]
+                  }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </section>
+    }
   `,
 })
 export class AiSettingsPage {
@@ -662,6 +754,54 @@ export class AiSettingsPage {
   protected readonly busy = signal<AiKind | null>(null);
   protected readonly testing = signal<AiKind | null>(null);
   protected readonly savingScope = signal(false);
+  protected readonly locale = inject(AioLocale);
+  protected readonly quotaTiers: { id: AiQuotaTier; label: string }[] = [
+    { id: 'trial', label: 'دورهٔ آزمایشی' },
+    { id: 'earned', label: 'هدیه' },
+    { id: 'paid', label: 'پولی' },
+  ];
+  protected readonly quotaKinds: { id: AiKind; label: string }[] = [
+    { id: 'chat', label: 'گفتگو (توکن)' },
+    { id: 'tts', label: 'متن به گفتار (کاراکتر)' },
+    { id: 'stt', label: 'گفتار به متن (ضبط)' },
+  ];
+  protected readonly quotaDraft = linkedSignal<AiQuotas>(() =>
+    structuredClone(
+      this.settings.hasValue()
+        ? this.settings.value().quotas
+        : DEFAULT_AI_QUOTAS,
+    ),
+  );
+  protected readonly savingQuotas = signal(false);
+  protected readonly overview = httpResource<AiUsageOverview>(
+    () => `${this.base}/usage`,
+  );
+
+  protected setQuota(tier: AiQuotaTier, kind: AiKind, value: string) {
+    const amount = Math.max(0, Math.floor(Number(value) || 0));
+    this.quotaDraft.update((all) => ({
+      ...all,
+      [tier]: { ...all[tier], [kind]: amount },
+    }));
+  }
+
+  protected async saveQuotas() {
+    this.savingQuotas.set(true);
+    try {
+      this.settings.set(
+        await firstValueFrom(
+          this.http.put<AiSettings>(this.base, {
+            quotas: this.quotaDraft(),
+          } satisfies UpdateAiSettingsInput),
+        ),
+      );
+      this.notifications.success('ذخیره شد');
+    } catch (error) {
+      this.notifications.error(apiErrorMessage(error));
+    } finally {
+      this.savingQuotas.set(false);
+    }
+  }
   protected readonly probing = signal(false);
   protected readonly probeResult = signal<AiScopeTestResult | null>(null);
   /** The scope form; `key` is only what the admin typed (the stored key never comes back). */

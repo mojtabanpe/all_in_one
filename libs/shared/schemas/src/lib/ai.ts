@@ -36,6 +36,8 @@ export interface AiSettings {
   presets: AiPresetView[];
   /** The scope check («decision model») run before free-text AI requests. */
   scope: AiScopeSettings;
+  /** Daily limits per access tier (DEFAULT_AI_QUOTAS until saved). */
+  quotas: AiQuotas;
 }
 
 /**
@@ -99,6 +101,43 @@ export interface AiStatus {
 export const AI_KINDS = ['chat', 'tts', 'stt'] as const;
 export type AiKind = (typeof AI_KINDS)[number];
 
+/** Access tiers that have AI (staff is never limited). */
+export const AI_QUOTA_TIERS = ['trial', 'earned', 'paid'] as const;
+export type AiQuotaTier = (typeof AI_QUOTA_TIERS)[number];
+/** Daily limits per Tehran day: chat in tokens, tts in characters, stt in recordings. */
+export type AiDailyLimits = Record<AiKind, number>;
+export type AiQuotas = Record<AiQuotaTier, AiDailyLimits>;
+
+/**
+ * Used until an admin sets quotas in /admin/ai. An assistant message costs a few thousand tokens (the tools are
+ * sent with every step), so 300k tokens is a busy day of use; at small-model prices a full day stays cents.
+ */
+export const DEFAULT_AI_QUOTAS: AiQuotas = {
+  trial: { chat: 300_000, tts: 30_000, stt: 60 },
+  earned: { chat: 300_000, tts: 30_000, stt: 60 },
+  paid: { chat: 1_000_000, tts: 100_000, stt: 200 },
+};
+
+const limit = z.int().check(z.minimum(0), z.maximum(100_000_000));
+const limits = z.object({ chat: limit, tts: limit, stt: limit });
+export const aiQuotasSchema = z.object({
+  trial: limits,
+  earned: limits,
+  paid: limits,
+});
+
+/** Today's use against the account's limits; `limit` null = unlimited (admins). */
+export interface AiUsageView {
+  day: string;
+  kinds: Record<AiKind, { used: number; limit: number | null }>;
+}
+
+/** Admin overview: today's totals per service. */
+export interface AiUsageOverview {
+  day: string;
+  kinds: Record<AiKind, { users: number; calls: number; units: number }>;
+}
+
 /** A base url (…/v1) or the full endpoint; '' clears it. */
 const url = z
   .string()
@@ -131,6 +170,7 @@ export const updateAiSettingsSchema = z.partial(
     chat: service,
     tts: z.extend(service, { model2: z.optional(model) }),
     stt: service,
+    quotas: aiQuotasSchema,
     scope: z.partial(
       z.object({
         on: z.boolean(),

@@ -127,7 +127,12 @@ export class AiScopeGuard implements OnApplicationBootstrap {
           content: `Area: ${area}\nRequest:\n"""\n${request}\n"""`,
         },
       ],
-      { temperature: 0, timeout: 20_000, model: target.model || undefined },
+      {
+        temperature: 0,
+        timeout: 20_000,
+        model: target.model || undefined,
+        meter: false,
+      },
     );
     const verdict = parseJsonReply<{ in_scope?: unknown }>(
       reply.content ?? '',

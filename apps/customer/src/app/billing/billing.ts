@@ -9,6 +9,8 @@ import type {
   BillingAccessState,
   BillingRewardCampaign,
   BillingRewardOffer,
+  AiKind,
+  AiUsageView,
 } from '@all-in-one/shared/schemas';
 import { billingRewardRequestSchema } from '@all-in-one/shared/schemas';
 import {
@@ -24,6 +26,7 @@ import {
   AioInput,
   AioLocale,
   AioNotifications,
+  AioProgressDirectives,
   AioSkeletonRows,
   AioTranslate,
   provideIcons,
@@ -54,6 +57,7 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
     AioIcon,
     AioFormField,
     AioInput,
+    AioProgressDirectives,
     AioSkeletonRows,
     AioTranslate,
   ],
@@ -169,6 +173,44 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
           }
         </div>
       </section>
+
+      @if (usage.hasValue() && hasLimits()) {
+        <section aioCard aria-labelledby="usage-heading">
+          <div aioCardHeader>
+            <h2 aioCardTitle id="usage-heading">
+              {{ 'مصرف امروز هوش مصنوعی' | aioTranslate }}
+            </h2>
+            <p aioCardDescription>
+              {{
+                'سهمیه هر روز ساعت ۰۰:۰۰ به وقت تهران تازه می‌شود.'
+                  | aioTranslate
+              }}
+            </p>
+          </div>
+          <div aioCardContent class="flex flex-col gap-4">
+            @for (row of usageRows(); track row.kind) {
+              <div class="flex flex-col gap-1.5">
+                <div class="flex items-baseline justify-between gap-3 text-sm">
+                  <span class="font-medium">{{
+                    row.label | aioTranslate
+                  }}</span>
+                  <span class="text-muted-foreground">{{
+                    '{0}٪ مصرف شده' | aioTranslate: [locale.number(row.percent)]
+                  }}</span>
+                </div>
+                <div
+                  aioProgress
+                  class="bg-muted h-2 rounded-full"
+                  [value]="row.percent"
+                  [attr.aria-label]="row.label | aioTranslate"
+                >
+                  <div aioProgressIndicator class="rounded-full"></div>
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      }
 
       @if (offers.hasValue() && offers.value().length) {
         <section aioCard aria-labelledby="offers-heading">
@@ -412,6 +454,36 @@ export class Billing {
   protected readonly access = httpResource<BillingAccessState>(
     () => `${this.api}/billing/access`,
   );
+  protected readonly usage = httpResource<AiUsageView>(
+    () => `${this.api}/ai/usage`,
+  );
+  private readonly usageLabels: Record<AiKind, string> = {
+    chat: 'گفتگو و دستیار',
+    tts: 'متن به گفتار',
+    stt: 'گفتار به متن',
+  };
+  /** Shown only to accounts with limited AI (trial, earned, paid); admins and free accounts have no bars. */
+  protected readonly hasLimits = computed(
+    () =>
+      this.usage.hasValue() &&
+      Object.values(this.usage.value().kinds).some((k) => !!k.limit),
+  );
+  protected readonly usageRows = computed(() => {
+    if (!this.usage.hasValue()) return [];
+    const kinds = this.usage.value().kinds;
+    return (Object.keys(this.usageLabels) as AiKind[]).flatMap((kind) => {
+      const { used, limit } = kinds[kind];
+      return limit
+        ? [
+            {
+              kind,
+              label: this.usageLabels[kind],
+              percent: Math.min(100, Math.round((used / limit) * 100)),
+            },
+          ]
+        : [];
+    });
+  });
   protected readonly offers = httpResource<BillingRewardOffer[]>(
     () => `${this.api}/billing/reward-offers`,
   );

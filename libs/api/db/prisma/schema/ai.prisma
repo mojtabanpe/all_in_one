@@ -83,3 +83,20 @@ model ManagedAiPreset {
   @@index([kind, createdAt])
   @@map("managed_ai_presets")
 }
+
+/// AI use per account and Tehran calendar day (quotas, cost overview). chat units = tokens, tts = characters,
+/// stt = recordings (units equal calls).
+model AiUsageDay {
+  userId String   @db.Uuid
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day    DateTime @db.Date
+  /// chat | tts | stt
+  kind   String   @db.VarChar(10)
+  calls  Int      @default(0)
+  units  Int      @default(0)
+
+  @@id([userId, day, kind])
+  @@index([day])
+  @@map("ai_usage_days")
+}
+

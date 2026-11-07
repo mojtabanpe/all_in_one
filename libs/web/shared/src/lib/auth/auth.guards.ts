@@ -72,6 +72,13 @@ export function apiErrorMessage(
 ): string {
   if (error instanceof HttpErrorResponse) {
     if (error.status === 0) return 'ارتباط با سرور برقرار نشد.';
+    // A used-up daily AI quota says which service and when it comes back; other 429s are rate limits.
+    if (
+      error.status === 429 &&
+      error.error?.code === 'AI_QUOTA_REACHED' &&
+      typeof error.error.message === 'string'
+    )
+      return error.error.message;
     if (error.status === 429)
       return 'تعداد تلاش‌ها زیاد بود؛ کمی بعد دوباره امتحان کنید.';
     const message = error.error?.message;
