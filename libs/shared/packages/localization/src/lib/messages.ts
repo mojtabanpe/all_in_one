@@ -27,6 +27,17 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['عملکرد کمپین‌ها', 'Campaign performance'],
   ['دانلود جدول کمپین‌ها (CSV)', 'Download campaign table (CSV)'],
   ['بازهٔ گزارش کمپین', 'Campaign reporting period'],
+  ['بازهٔ دلخواه', 'Custom range'],
+  ['شروع بازهٔ کمپین', 'Campaign start date'],
+  ['پایان بازهٔ کمپین', 'Campaign end date'],
+  [
+    'تاریخ شروع و پایان را به ترتیب و در ۹۰ روز گذشته انتخاب کن.',
+    'Choose a start and end date in order within the last 90 days.',
+  ],
+  [
+    'بازهٔ کمپین باید در ۹۰ روز گذشته باشد.',
+    'The campaign date range must be within the last 90 days.',
+  ],
   ['۹۰ روز گذشته', 'Last 90 days'],
   [
     'اولین منبع ثبت‌شدهٔ هر مرورگر در بازهٔ انتخابی، بر اساس روزهای تهران. فیلترها با مقدار کامل و دقیق تطبیق داده می‌شوند؛ خالی یعنی همه. ثبت‌نام و فعالیت بعدی همان مرورگر هم در نتیجه حساب می‌شود.',

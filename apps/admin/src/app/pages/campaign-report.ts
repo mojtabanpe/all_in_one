@@ -11,6 +11,7 @@ import {
   AioButton,
   AioCardDirectives,
   AioCardHeading,
+  AioDateInput,
   AioEmptyState,
   AioFormField,
   AioInput,
@@ -34,6 +35,7 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
     AioButton,
     AioCardDirectives,
     AioCardHeading,
+    AioDateInput,
     AioEmptyState,
     AioSkeletonRows,
     AioTableDirectives,
@@ -68,6 +70,20 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
               }
             </aio-native-select>
           </aio-form-field>
+          @if (model().days === 'custom') {
+            @for (date of dateFields; track date.key) {
+              <aio-form-field [label]="date.label" [controlId]="date.id">
+                <aio-date-input
+                  [inputId]="date.id"
+                  [minDate]="oldestDay"
+                  [maxDate]="today"
+                  [value]="model()[date.key]"
+                  (valueChange)="setDate(date.key, $event)"
+                  required
+                />
+              </aio-form-field>
+            }
+          }
           @for (field of fields; track field.key) {
             <aio-form-field [label]="field.label" [controlId]="field.id">
               <input
@@ -103,9 +119,23 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
             }}
           </p>
         }
+        @if (invalidRange()) {
+          <p role="alert" class="text-sm text-destructive">
+            {{
+              'تاریخ شروع و پایان را به ترتیب و در ۹۰ روز گذشته انتخاب کن.'
+                | aioTranslate
+            }}
+          </p>
+        }
       </form>
       <div class="flex flex-wrap gap-3 text-sm" aria-live="polite">
-        <span>{{ appliedWindowLabel() | aioTranslate }}</span>
+        @if (filters().from; as from) {
+          <span
+            >{{ locale.date(from) }} – {{ locale.date(filters().to!) }}</span
+          >
+        } @else {
+          <span>{{ appliedWindowLabel() | aioTranslate }}</span>
+        }
         <span>{{ 'فیلترهای اعمال‌شده' | aioTranslate }}:</span>
         @if (hasFilters()) {
           @for (field of fields; track field.key) {
@@ -252,6 +282,8 @@ export class CampaignReport {
   private readonly api = inject(API_BASE_URL);
   protected readonly model = signal({
     days: '30',
+    from: '',
+    to: '',
     source: '',
     medium: '',
     campaign: '',
@@ -263,6 +295,18 @@ export class CampaignReport {
   });
   protected readonly filters = signal<GrowthCampaignFilter>({});
   protected readonly invalid = signal(false);
+  protected readonly invalidRange = signal(false);
+  private readonly dayFormat = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Tehran',
+  });
+  protected readonly today = this.dayFormat.format(new Date());
+  protected readonly oldestDay = this.dayFormat.format(
+    new Date(Date.now() - 89 * 86_400_000),
+  );
+  protected readonly dateFields = [
+    { key: 'from', label: 'شروع بازهٔ کمپین', id: this.locale.controlId() },
+    { key: 'to', label: 'پایان بازهٔ کمپین', id: this.locale.controlId() },
+  ] as const;
   protected readonly fields = [
     {
       key: 'source',
@@ -281,12 +325,15 @@ export class CampaignReport {
     },
   ] as const;
   protected readonly daysId = this.locale.controlId();
-  protected readonly windows = GROWTH_CAMPAIGN_WINDOWS.map((days) => ({
-    days,
-    label: { '7': '۷ روز گذشته', '30': '۳۰ روز گذشته', '90': '۹۰ روز گذشته' }[
-      days
-    ],
-  }));
+  protected readonly windows = [
+    ...GROWTH_CAMPAIGN_WINDOWS.map((days) => ({
+      days,
+      label: { '7': '۷ روز گذشته', '30': '۳۰ روز گذشته', '90': '۹۰ روز گذشته' }[
+        days
+      ],
+    })),
+    { days: 'custom', label: 'بازهٔ دلخواه' },
+  ];
   protected readonly appliedWindowLabel = computed(
     () =>
       this.windows.find(
@@ -351,10 +398,24 @@ export class CampaignReport {
   protected setDays(days: string): void {
     this.model.update((model) => ({ ...model, days }));
   }
+  protected setDate(key: 'from' | 'to', value: string): void {
+    this.model.update((model) => ({ ...model, [key]: value }));
+  }
   protected apply(event: Event): void {
     event.preventDefault();
+    const { days, from, to, ...campaign } = this.model();
+    const custom = days === 'custom';
+    const invalidRange =
+      custom &&
+      (!from || !to || from > to || from < this.oldestDay || to > this.today);
+    this.invalidRange.set(invalidRange);
+    this.invalid.set(false);
+    if (invalidRange) return;
     const filter = Object.fromEntries(
-      Object.entries(this.model()).filter(([, value]) => value !== ''),
+      Object.entries({
+        ...campaign,
+        ...(custom ? { from, to } : { days }),
+      }).filter(([, value]) => value !== ''),
     );
     const parsed = growthCampaignFilterSchema.safeParse(filter);
     this.invalid.set(!parsed.success);
@@ -362,8 +423,16 @@ export class CampaignReport {
     this.setFilters(parsed.data);
   }
   protected reset(): void {
-    this.model.set({ days: '30', source: '', medium: '', campaign: '' });
+    this.model.set({
+      days: '30',
+      from: '',
+      to: '',
+      source: '',
+      medium: '',
+      campaign: '',
+    });
     this.invalid.set(false);
+    this.invalidRange.set(false);
     this.setFilters({});
   }
   private setFilters(filter: GrowthCampaignFilter): void {

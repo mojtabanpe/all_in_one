@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '@all-in-one/api/db';
 import type {
   GrowthEventInput,
@@ -77,11 +77,17 @@ export class GrowthService {
     filter: GrowthCampaignFilter = {},
   ): Promise<GrowthCampaignReport> {
     const now = new Date();
-    const windowDays = Number(filter.days ?? WINDOW_DAYS);
-    const since = dayAt(
-      new Date(now.getTime() - (windowDays - 1) * 86_400_000),
-    );
-    const until = dayAt(now);
+    const presetDays = Number(filter.days ?? WINDOW_DAYS);
+    const oldest = dayAt(new Date(now.getTime() - 89 * 86_400_000));
+    const today = dayAt(now);
+    const since =
+      filter.from ??
+      dayAt(new Date(now.getTime() - (presetDays - 1) * 86_400_000));
+    const until = filter.to ?? today;
+    if (since < oldest || until > today) {
+      throw new BadRequestException('بازهٔ کمپین باید در ۹۰ روز گذشته باشد.');
+    }
+    const windowDays = (Date.parse(until) - Date.parse(since)) / 86_400_000 + 1;
     const rows = await this.prisma.$queryRaw<
       {
         level: number;

@@ -68,6 +68,24 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       }
     });
 
+    it('reports an inclusive historical range and rejects dates beyond retention', async () => {
+      const campaign = `historical-${randomUUID()}`;
+      const events = [5, 6, 7, 8].map((ago) =>
+        event(visitor(), 'landing_view', ago, { utm_campaign: campaign }),
+      );
+      await prisma.growthEvent.createMany({ data: events });
+      const report = await service.campaigns({
+        campaign,
+        from: events[2].day,
+        to: events[1].day,
+      });
+      expect(report.windowDays).toBe(2);
+      expect(report.totals.landingVisitors).toBe(2);
+      await expect(
+        service.campaigns({ from: '2000-01-01', to: events[1].day }),
+      ).rejects.toThrow();
+    });
+
     it('excludes test visitors and their later untagged activity from campaign results', async () => {
       const campaign = `qa-exclusion-${randomUUID()}`;
       const controlSource = `${source}-qa-control`;
