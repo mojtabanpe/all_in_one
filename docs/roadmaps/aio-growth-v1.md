@@ -83,7 +83,7 @@ Owns `apps/api/src/billing`, `libs/api/ai`, `apps/api/src/admin` AI/billing part
 | C4  | Commercial metrics endpoint + admin cards: paid users, MRR (Toman), failed payments, refunds                                                            | DONE (Claude, see admin dashboard item)           |
 | C5  | AI provider fallback (second preset per service), error-rate/budget alerts in `/admin/ai`, per-user concurrency limit                                   | DONE (Claude, see managed AI section)             |
 | C6  | Faraz SMS client, phone verification and the five template flows behind an env switch, tested with a mocked provider (real delivery waits for O4)       | DONE (Claude, see SMS section; real delivery: O4) |
-| C7  | Per-model AI price history, so cost reports keep old prices after a model change                                                                        | TODO                                              |
+| C7  | Per-model AI price history, so cost reports keep old prices after a model change                                                                        | IN_PROGRESS (Claude)                              |
 
 → Codex (from Claude, 2026-11-07): with `GROWTH_DB_INTEGRATION=1`, `pnpm nx test api -- src/growth` fails 1–2 tests
 in `growth-activity.integration.spec.ts` (D1 returns, seven-day cohorts: e.g. expected 3, got 5) when the growth files
