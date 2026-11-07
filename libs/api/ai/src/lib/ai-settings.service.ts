@@ -14,7 +14,14 @@ import {
   type AiPresetView,
   type UpdateAiSettingsInput,
   type SaveAiPresetInput,
+  type AiScopeSettings,
 } from '@all-in-one/shared/schemas';
+
+/** The stored managed configuration: the old per-user columns plus the scope check. */
+type ManagedSettings = Partial<UserAiSettings> & {
+  scopeOn?: boolean;
+  scopeModel?: string | null;
+};
 
 /** One service's resolved config for a request (key decrypted, server side only). */
 export interface AiTarget {
@@ -86,11 +93,17 @@ export class AiSettingsService {
     );
   }
 
-  private async row(): Promise<Partial<UserAiSettings> | undefined> {
+  private async row(): Promise<ManagedSettings | undefined> {
     const stored = await this.prisma.managedAiConfiguration.findUnique({
       where: { id: 1 },
     });
-    return stored?.settings as Partial<UserAiSettings> | undefined;
+    return stored?.settings as ManagedSettings | undefined;
+  }
+
+  /** The scope check: on unless an admin switched it off; '' model = the chat model. */
+  async scope(): Promise<AiScopeSettings> {
+    const r = await this.row();
+    return { on: r?.scopeOn !== false, model: r?.scopeModel ?? '' };
   }
 
   async view(): Promise<AiSettings> {
@@ -117,6 +130,7 @@ export class AiSettingsService {
       },
       ready: await this.status(),
       presets: await this.presets(r),
+      scope: await this.scope(),
       savedModels: {
         chat: remember(r?.chatModels ?? [], [r?.chatModel]),
         tts: remember(r?.ttsModels ?? [], [r?.ttsModel, r?.ttsModel2]),
@@ -256,7 +270,10 @@ export class AiSettingsService {
     input: UpdateAiSettingsInput,
     preset?: { kind: AiKind; key: string | null },
   ): Promise<AiSettings> {
-    const data: Partial<Omit<UserAiSettings, 'userId' | 'updatedAt'>> = {};
+    const data: Omit<ManagedSettings, 'userId' | 'updatedAt'> = {};
+    if (input.scope?.on !== undefined) data.scopeOn = input.scope.on;
+    if (input.scope?.model !== undefined)
+      data.scopeModel = input.scope.model || null;
     const put = (
       kind: 'chat' | 'tts' | 'stt',
       value:

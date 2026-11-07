@@ -288,8 +288,9 @@ export class AioDateCalendar {
           }
         </div>
       </ng-template>
-      <ng-template aioDialogActions>
-        @if (!required()) {
+      @if (!required()) {
+        <!-- Closing is the sheet's × (directive 109); only the clear action stays here. -->
+        <ng-template aioDialogActions>
           <button
             aioBtn
             type="button"
@@ -298,16 +299,8 @@ export class AioDateCalendar {
           >
             {{ 'پاک‌کردن تاریخ' | aioTranslate }}
           </button>
-        }
-        <button
-          aioBtn
-          type="button"
-          variant="outline"
-          (click)="open.set(false)"
-        >
-          {{ 'بستن' | aioTranslate }}
-        </button>
-      </ng-template>
+        </ng-template>
+      }
     </aio-dialog>
   `,
 })

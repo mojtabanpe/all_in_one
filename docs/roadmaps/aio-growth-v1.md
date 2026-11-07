@@ -176,6 +176,7 @@ Done for customers (directive 86): the former customer page `libs/web/shared/src
 - [x] `DONE` The gateway checks trial/paid access before resolving a provider, including speech cache target resolution and assistant/MCP calls. Free AI requests return 402, opening the shared plan sheet in the customer app.
 - [x] `DONE` Admin-only AI settings and encrypted presets at `/admin/ai`. Includes chat, TTS, STT, proxy, second voice, model history and connection testing. Active preset matching includes the key without exposing it.
 - [ ] `TODO` Verify real chat, TTS and STT calls using the imported operator configuration. Add provider fallback, budgets and monitoring.
+- [x] `DONE` (local, directive 110) Scope check against misuse: a decision model classifies every assistant message and English card answer before the main call; out-of-scope requests get a friendly refusal. Admins switch it and choose its model in `/admin/ai`. Evidence: `ai-scope.spec.ts` unit tests. Real-model accuracy on production traffic is unmeasured.
 - [ ] `TODO` Define per-plan AI quotas and rate limits, including audio duration, token budgets, concurrency and abuse controls. Show remaining allowance.
 - [x] `DONE` Verified weekly rewards unlock AI only during their recorded window, after trial or existing access.
 - [ ] `TODO` Test provider outages and expiry with real devices, and finalize the legacy key deletion policy.

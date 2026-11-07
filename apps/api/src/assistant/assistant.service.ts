@@ -1,5 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { AiGateway, type ChatMessage } from '@all-in-one/api/ai';
+import {
+  AI_OUT_OF_SCOPE_EN,
+  AI_OUT_OF_SCOPE_FA,
+  AiGateway,
+  AiScopeGuard,
+  type ChatMessage,
+} from '@all-in-one/api/ai';
 import { PrismaService } from '@all-in-one/api/db';
 import { EnglishAiService } from '@all-in-one/applets/english-learning/api';
 import {
@@ -71,7 +77,23 @@ export class AssistantService {
     private readonly tools: ToolsService,
     private readonly prisma: PrismaService,
     private readonly englishAi: EnglishAiService,
+    private readonly scope: AiScopeGuard,
   ) {}
+
+  /**
+   * The user's new message, with the previous reply for context, so a short follow-up («آره»، «همونو
+   * پاک کن») is judged by what it answers.
+   */
+  private async allowed(userId: string, request: AssistantRequest) {
+    const last = request.messages.at(-1);
+    if (last?.role !== 'user') return true;
+    const previous = request.messages.at(-2);
+    const text =
+      previous?.role === 'assistant'
+        ? `(Previous assistant reply, for context: ${previous.content.slice(0, 500)})\n${last.content}`
+        : last.content;
+    return this.scope.inScope(userId, text, 'assistant');
+  }
 
   private async system(
     userId: string,
@@ -133,6 +155,12 @@ export class AssistantService {
     userId: string,
     request: AssistantRequest,
   ): Promise<AssistantReply> {
+    if (!(await this.allowed(userId, request)))
+      return this.done(
+        request.language === 'en' ? AI_OUT_OF_SCOPE_EN : AI_OUT_OF_SCOPE_FA,
+        [],
+        [],
+      );
     const collector = new ToolCollector(userId);
     this.tools.register(collector);
     const definitions = collector.definitions();

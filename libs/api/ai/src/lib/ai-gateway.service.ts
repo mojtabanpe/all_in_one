@@ -45,6 +45,8 @@ export interface ChatOptions {
   temperature?: number;
   timeout?: number;
   tools?: ToolDefinition[];
+  /** Another model on the same chat service (the scope check's own model). */
+  model?: string;
 }
 
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
@@ -152,7 +154,7 @@ export class AiGateway {
       json: true,
       timeout: options.timeout ?? 60_000,
       body: JSON.stringify({
-        model: target.model,
+        model: options.model || target.model,
         stream: false,
         temperature: options.temperature ?? 0.7,
         messages: requestLanguage.getStore()

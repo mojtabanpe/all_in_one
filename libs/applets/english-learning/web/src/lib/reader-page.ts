@@ -333,9 +333,6 @@ const UNIT_KEY = 'aio.english.reader.unit';
         </form>
       </ng-template>
       <ng-template aioDialogActions>
-        <button aioBtn variant="outline" (click)="close()">
-          {{ 'Close' | aioTranslate }}
-        </button>
         <button
           aioBtn
           type="submit"

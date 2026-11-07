@@ -34,6 +34,15 @@ export interface AiSettings {
   savedModels: Record<AiKind, string[]>;
   /** Saved setups (url, model, key) per service, newest first. */
   presets: AiPresetView[];
+  /** The scope check («decision model») run before free-text AI requests. */
+  scope: AiScopeSettings;
+}
+
+export interface AiScopeSettings {
+  /** On by default. */
+  on: boolean;
+  /** Model on the chat service; '' = the chat model. */
+  model: string;
 }
 
 /** A saved setup; the key never leaves the server. */
@@ -94,6 +103,7 @@ export const updateAiSettingsSchema = z.partial(
     chat: service,
     tts: z.extend(service, { model2: z.optional(model) }),
     stt: service,
+    scope: z.partial(z.object({ on: z.boolean(), model })),
     /** Remove a model name from the remembered list of a service. */
     forgetModel: z.object({
       kind: z.enum(['chat', 'tts', 'stt']),

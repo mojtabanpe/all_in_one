@@ -124,10 +124,6 @@ export function parseRemind(
               {{ 'انجام شد' | aioTranslate }}
             </button>
           }
-        } @else {
-          <button aioBtn variant="outline" (click)="close()">
-            {{ 'بستن' | aioTranslate }}
-          </button>
         }
       </ng-template>
     </aio-dialog>

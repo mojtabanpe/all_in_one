@@ -445,6 +445,72 @@ const SERVICES: {
         }
       </div>
     </section>
+    @if (settings.hasValue()) {
+      <section aioCard class="mt-6" aria-labelledby="ai-scope-heading">
+        <div aioCardHeader>
+          <h2 aioCardTitle id="ai-scope-heading">
+            {{ 'بررسی حوزهٔ درخواست' | aioTranslate }}
+          </h2>
+          <p aioCardDescription>
+            {{
+              'پیش از هر درخواست آزاد (دستیار و پاسخ کارت)، یک مدل تصمیم‌گیر بررسی می‌کند که درخواست به برنامه‌ریزی، انگلیسی یا سلامت مربوط باشد، تا کسی از هوش مصنوعی برنامه برای کار دیگری استفاده نکند.'
+                | aioTranslate
+            }}
+          </p>
+        </div>
+        <form
+          aioCardContent
+          class="flex flex-col gap-4"
+          (submit)="$event.preventDefault(); saveScope()"
+        >
+          <label
+            class="flex min-h-11 w-fit cursor-pointer items-center gap-2 text-sm font-medium"
+            for="ai-scope-on"
+          >
+            <aio-checkbox
+              inputId="ai-scope-on"
+              [checked]="scope().on"
+              (checkedChange)="scope.set({ on: $event, model: scope().model })"
+            />
+            {{ 'بررسی حوزه روشن باشد' | aioTranslate }}
+          </label>
+          <aio-form-field
+            [label]="'مدل تصمیم‌گیر' | aioTranslate"
+            controlId="ai-scope-model"
+          >
+            <input
+              aioInput
+              id="ai-scope-model"
+              dir="ltr"
+              lang="en"
+              autocomplete="off"
+              maxlength="100"
+              [placeholder]="settings.value().chat.model || 'gpt-4o-mini'"
+              [value]="scope().model"
+              (input)="
+                scope.set({
+                  on: scope().on,
+                  model: $any($event.target).value,
+                })
+              "
+            />
+          </aio-form-field>
+          <p class="text-muted-foreground -mt-2 text-xs">
+            {{
+              'روی همان سرویس گفتگو؛ خالی = همان مدل گفتگو. یک مدل کوچک و ارزان کافی است.'
+                | aioTranslate
+            }}
+          </p>
+          <button
+            aioAsyncButton
+            type="submit"
+            class="min-h-11 self-start"
+            [busy]="savingScope()"
+            [label]="'ذخیرهٔ بررسی حوزه' | aioTranslate"
+          ></button>
+        </form>
+      </section>
+    }
   `,
 })
 export class AiSettingsPage {
@@ -457,6 +523,12 @@ export class AiSettingsPage {
   protected readonly settings = httpResource<AiSettings>(() => this.base);
   protected readonly busy = signal<AiKind | null>(null);
   protected readonly testing = signal<AiKind | null>(null);
+  protected readonly savingScope = signal(false);
+  protected readonly scope = linkedSignal(() =>
+    this.settings.hasValue()
+      ? { ...this.settings.value().scope }
+      : { on: true, model: '' },
+  );
 
   protected readonly drafts = linkedSignal<Record<AiKind, Draft>>(() => {
     const s = this.settings.hasValue() ? this.settings.value() : null;
@@ -542,6 +614,25 @@ export class AiSettingsPage {
       return;
     }
     void this.put({ [kind]: service }, kind, 'ذخیره شد');
+  }
+
+  protected async saveScope() {
+    const { on, model } = this.scope();
+    this.savingScope.set(true);
+    try {
+      this.settings.set(
+        await firstValueFrom(
+          this.http.put<AiSettings>(this.base, {
+            scope: { on, model: model.trim() },
+          } satisfies UpdateAiSettingsInput),
+        ),
+      );
+      this.notifications.success('ذخیره شد');
+    } catch (error) {
+      this.notifications.error(apiErrorMessage(error));
+    } finally {
+      this.savingScope.set(false);
+    }
   }
 
   protected presetsOf(kind: AiKind): AiPresetView[] {

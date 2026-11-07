@@ -519,3 +519,22 @@ origin master` and read the index and the roadmap; after work, update its status
      rewards. Membership is still verified by support before the week is granted, and the offers stay off
      (`BILLING_TELEGRAM_OFFER_ENABLED`, `BILLING_INSTAGRAM_OFFER_ENABLED`) until the official pages exist. Admin
      accounts always have AI (`tier: 'staff'`). This refines directive 85.
+
+## Sheet close button (2026-11-07)
+
+109. **Bottom sheets close with a × icon** (owner: «هرجای اپ که می‌خوای باتم‌شیت ببینید به‌جای دکمه close آیکون ضربدر
+     بذار»). The shared `aio-dialog` header has a 44px round × (`lucideX`, labelled «بستن»/«Close» for screen readers)
+     beside the start-aligned title; never add a text «بستن»/«Close» button to a sheet's actions. Actions keep real
+     choices only (save, cancel a form, clear a date).
+
+## AI scope check (2026-11-07)
+
+110. **A decision model keeps the AI inside the app's domain** (owner: «یک مدل تصمیم‌گیر می‌خوام که آیا سؤالی که از AI
+     پرسیده می‌شه در حوزهٔ کاری این اپ هست یا نه، که کسی سوءاستفاده نکنه»). `AiScopeGuard` (`libs/api/ai`) asks a
+     short classification call (temperature 0, JSON verdict) before free-text AI work: every assistant message (with
+     the previous reply as context) and English card answers. In scope: planning/productivity, learning English,
+     health/fitness/nutrition, the app itself and small talk; everything else (code, other homework, general
+     knowledge, politics, legal/financial/medical diagnosis, prompt tricks) is refused with a friendly message
+     (assistant reply, or 422 `AI_OUT_OF_SCOPE`). Admins switch it and pick its model in `/admin/ai` («بررسی حوزهٔ
+     درخواست»; stored as `scopeOn`/`scopeModel` in the managed configuration, empty = the chat model). An unreadable
+     verdict lets the request through (logged). A new free-text AI entry point must call it too.

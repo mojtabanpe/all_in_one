@@ -645,16 +645,6 @@ import { MealForm } from './meal-form';
           </section>
         </div></ng-template
       >
-      <ng-template aioDialogActions>
-        <button
-          aioBtn
-          variant="outline"
-          class="min-h-11 w-full"
-          (click)="swapOpen.set(false)"
-        >
-          {{ 'بستن' | aioTranslate }}
-        </button>
-      </ng-template>
     </aio-dialog>
     <aio-dialog
       contentClass="applet-health health-calm"

@@ -53,6 +53,22 @@ export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
   ['هدیهٔ هوش مصنوعی تا {0} فعال است.', 'Your AI reward is active until {0}.'],
   ['دسترسی به هوش مصنوعی', 'AI access'],
   [
+    'هوش مصنوعی Poshtetgarm فقط برای برنامه‌ریزی، یادگیری انگلیسی و سلامت است؛ این درخواست بیرون از این حوزه‌هاست.',
+    'Poshtetgarm AI only helps with planning, learning English and health; this request is outside those areas.',
+  ],
+  ['بررسی حوزهٔ درخواست', 'Request scope check'],
+  [
+    'پیش از هر درخواست آزاد (دستیار و پاسخ کارت)، یک مدل تصمیم‌گیر بررسی می‌کند که درخواست به برنامه‌ریزی، انگلیسی یا سلامت مربوط باشد، تا کسی از هوش مصنوعی برنامه برای کار دیگری استفاده نکند.',
+    'Before each free-text request (assistant and card answers), a decision model checks that it is about planning, English or health, so nobody uses the app’s AI for anything else.',
+  ],
+  ['بررسی حوزه روشن باشد', 'Scope check on'],
+  ['مدل تصمیم‌گیر', 'Decision model'],
+  [
+    'روی همان سرویس گفتگو؛ خالی = همان مدل گفتگو. یک مدل کوچک و ارزان کافی است.',
+    'Runs on the chat service; empty = the chat model. A small, cheap model is enough.',
+  ],
+  ['ذخیرهٔ بررسی حوزه', 'Save scope check'],
+  [
     'حساب مدیر است؛ هوش مصنوعی همیشه فعال است.',
     'This is an admin account; AI is always on.',
   ],

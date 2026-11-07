@@ -1,5 +1,5 @@
 import { BadGatewayException, HttpException, Injectable } from '@nestjs/common';
-import { AiGateway } from '@all-in-one/api/ai';
+import { AiGateway, AiScopeGuard } from '@all-in-one/api/ai';
 import { createHash } from 'node:crypto';
 import {
   type CardAnswer,
@@ -133,6 +133,7 @@ export class AiService {
   constructor(
     private readonly gateway: AiGateway,
     private readonly texts: TextsService,
+    private readonly scope: AiScopeGuard,
   ) {}
 
   /** Asks the user's model; an unusable answer becomes a friendly 502. */
@@ -164,12 +165,14 @@ export class AiService {
     }
   }
 
-  cardAnswer(
+  /** The front is free text, so the scope check runs first (directive 110). */
+  async cardAnswer(
     userId: string,
     front: string,
     deck?: string,
     context?: string,
   ): Promise<CardAnswer> {
+    await this.scope.assert(userId, front, 'english');
     return this.ask(
       userId,
       CARD_ANSWER_INSTRUCTIONS,
