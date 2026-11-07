@@ -86,14 +86,14 @@ Owns `apps/api/src/billing`, `libs/api/ai`, `apps/api/src/admin` AI/billing part
 Owns `apps/public`, `apps/api/src/growth`, onboarding, admin growth dashboard pages, weekly digest/reminders,
 campaign content in `docs/roadmaps/*pilot*`.
 
-| ID  | Task                                                                                                                                                                    | Status |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| ID  | Task                                                                                                                                                                    | Status              |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
 | X1  | Onboarding goal-change history (record each change; report the current and first goal)                                                                                  | IN_PROGRESS (Codex) |
-| X2  | Referral experiment: personal invite link with first-touch attribution `utm_source=referral`, referral counts in the campaign report; no reward until the owner decides | TODO   |
-| X3  | Two more SEO topic guides (health/fitness at home, habit building), with metadata, JSON-LD, sitemap and tagged campaign links                                           | TODO   |
-| X4  | Daily-English guide performance: bring the throttled mobile LCP (1.76 s) closer to home (0.52 s); remeasure with the same lab setup                                     | TODO   |
-| X5  | Growth admin: audit log of report views/exports and simple alerts (signups or activation dropping week over week)                                                       | TODO   |
-| X6  | Campaign kits for days 31–60: Telegram partnership post and three short Instagram demo scripts, each with its tagged links (like the English pilot file)                | TODO   |
+| X2  | Referral experiment: personal invite link with first-touch attribution `utm_source=referral`, referral counts in the campaign report; no reward until the owner decides | TODO                |
+| X3  | Two more SEO topic guides (health/fitness at home, habit building), with metadata, JSON-LD, sitemap and tagged campaign links                                           | TODO                |
+| X4  | Daily-English guide performance: bring the throttled mobile LCP (1.76 s) closer to home (0.52 s); remeasure with the same lab setup                                     | TODO                |
+| X5  | Growth admin: audit log of report views/exports and simple alerts (signups or activation dropping week over week)                                                       | TODO                |
+| X6  | Campaign kits for days 31–60: Telegram partnership post and three short Instagram demo scripts, each with its tagged links (like the English pilot file)                | TODO                |
 
 ### Owner lane: decisions, accounts, devices and networks
 
