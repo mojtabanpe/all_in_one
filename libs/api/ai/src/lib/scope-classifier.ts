@@ -48,16 +48,29 @@ export class LocalScopeClassifier {
 
   constructor(private readonly config: ConfigService) {}
 
-  /** P(in scope), or null when the model cannot be loaded (logged once). */
+  private warned = false;
+
+  /**
+   * Off unless `AI_SCOPE_LOCAL_MODEL=on`: the model needs about 400 MB of RAM, and the first deploy that loaded it
+   * at startup took the server's deploy runner down. Turn it on only once the server has the memory.
+   */
+  get enabled(): boolean {
+    return this.config.get<string>('AI_SCOPE_LOCAL_MODEL') === 'on';
+  }
+
+  /** P(in scope), or null when the model is off or cannot be loaded (logged once). */
   async probability(text: string): Promise<number | null> {
+    if (!this.enabled) {
+      if (!this.warned)
+        this.logger.warn(
+          'Local scope model is off (AI_SCOPE_LOCAL_MODEL is not "on"); requests pass unchecked',
+        );
+      this.warned = true;
+      return null;
+    }
     const model = await this.load();
     if (!model) return null;
     return vote(await model.embed(text), model.examples);
-  }
-
-  /** Starts loading in the background (first request then needs no wait). */
-  warm(): void {
-    void this.load();
   }
 
   private load() {
@@ -80,6 +93,8 @@ export class LocalScopeClassifier {
     }
     const extract = await pipeline('feature-extraction', SCOPE_MODEL, {
       dtype: 'q8',
+      // One thread: a short request needs no more, and it keeps CPU spikes off the rest of the server.
+      session_options: { intraOpNumThreads: 1, interOpNumThreads: 1 },
     });
     const embed: Embed = async (text) =>
       (await extract(text, { pooling: 'mean', normalize: true }))

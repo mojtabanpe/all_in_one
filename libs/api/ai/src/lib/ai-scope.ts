@@ -1,9 +1,4 @@
-import {
-  HttpException,
-  Injectable,
-  Logger,
-  type OnApplicationBootstrap,
-} from '@nestjs/common';
+import { HttpException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { fetch } from 'undici';
 import type { AiScopeProvider } from '@all-in-one/shared/schemas';
@@ -70,7 +65,7 @@ export interface AiScopeDecision {
  * outage never blocks users.
  */
 @Injectable()
-export class AiScopeGuard implements OnApplicationBootstrap {
+export class AiScopeGuard {
   private readonly logger = new Logger(AiScopeGuard.name);
 
   constructor(
@@ -79,13 +74,6 @@ export class AiScopeGuard implements OnApplicationBootstrap {
     private readonly config: ConfigService,
     private readonly local: LocalScopeClassifier,
   ) {}
-
-  /** Load the local model in the background so the first request does not wait (not in tests). */
-  async onApplicationBootstrap() {
-    if (process.env['VITEST']) return;
-    const target = await this.settings.scopeTarget().catch(() => null);
-    if (target?.on && target.provider === 'local') this.local.warm();
-  }
 
   async decide(
     userId: string,

@@ -27,6 +27,8 @@
 - `VERIFY` Enamad seal image: link present in production HTML, but the seal image did not load from this environment (403 / zero-size image). Check it from an Iranian network on the production page.
 - `TODO` Core Web Vitals: PageSpeed Insights' anonymous daily quota was exhausted; rerun after the compression fix. Search Console ownership and actual social preview rendering remain unverified.
 
+**Incident — 2026-11-07 15:03 (Tehran 18:33):** `BLOCKED` The deploy of `0f30581` (local scope model, loaded at api startup) died mid-release with no logs and the self-hosted runner `aio-server` went offline; later deploys (`160656e`, `8646907`, `d696d3c`) are queued. Production could not be checked from the agent environment (connection reset). Suspected cause: memory (~400 MB for the model). Mitigation pushed: the model is opt-in (`AI_SCOPE_LOCAL_MODEL=on`), lazy and single-threaded. Owner action: check the server (memory, disk, `docker ps`, runner service) and restart the runner.
+
 **Production verification — 2026-11-07:**
 
 - `DONE` A fresh QA registration received the real verification email. The confirmed account signed in, copied a starter deck and saved its first review via production API. Database verification found one `signup_completed`, one `first_review_completed` and one `active_day` for the QA visitor. Exclude QA from campaign reporting.

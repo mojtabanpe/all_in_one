@@ -555,3 +555,8 @@ origin master` and read the index and the roadmap; after work, update its status
      `node tools/scripts/eval-scope-model.mjs` (held-out set `tools/scripts/scope-eval-set.json`, never copied into
      the examples; 41/44 right, no false refusal at 0.3 on 2026-11-07). The assistant's system prompt also tells it
      to decline off-topic requests. `chat` and `jev` (proxy only) stay selectable in `/admin/ai`.
+     **The local model is opt-in** (2026-11-07): the first deploy that loaded it at api startup took the server's
+     deploy runner down (job died mid-release, runner offline; cause unconfirmed, memory suspected). It now loads
+     only when `AI_SCOPE_LOCAL_MODEL=on` is set in the server's env, lazily on the first checked request, with one
+     ONNX thread; otherwise requests pass unchecked (logged once) and only the assistant prompt declines off-topic.
+     Turn it on only after checking the server's free memory (~400 MB needed).
