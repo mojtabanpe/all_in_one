@@ -8,9 +8,9 @@
 2. در داشبورد رشد، آمار فعلی و تاریخ شروع را ثبت کنید. گزارش فعلی منابع را در پنجرهٔ ۳۰ روزه نشان می‌دهد؛ برای دور اول از هر منبع فقط برای همین آزمایش استفاده کنید.
 3. دور اول را با انتشار ارگانیک اجرا کنید. بررسی نتایج را یک هفته بعد از آخرین ورودی انجام دهید تا افراد تازه‌وارد هم فرصت کامل داشته باشند.
 
-| محل انتشار | لینک |
-| --- | --- |
-| پست تلگرام | [راهنمای انگلیسی روزانه](https://poshtetgarm.ir/daily-english?utm_source=telegram&utm_medium=organic_social&utm_campaign=english_7day_pilot) |
+| محل انتشار        | لینک                                                                                                                                          |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| پست تلگرام        | [راهنمای انگلیسی روزانه](https://poshtetgarm.ir/daily-english?utm_source=telegram&utm_medium=organic_social&utm_campaign=english_7day_pilot)  |
 | استوری اینستاگرام | [راهنمای انگلیسی روزانه](https://poshtetgarm.ir/daily-english?utm_source=instagram&utm_medium=organic_social&utm_campaign=english_7day_pilot) |
 
 ## متن آمادهٔ انتشار
