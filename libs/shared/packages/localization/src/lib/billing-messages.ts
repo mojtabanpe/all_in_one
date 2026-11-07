@@ -397,4 +397,16 @@ export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
     'The planner, flashcards and health stay free. Activate a plan for AI.',
   ],
   ['مدیریت اشتراک', 'Manage subscription'],
+  ['درآمد تکرارشونده', 'Recurring revenue'],
+  ['آمار اشتراک دریافت نشد.', 'Could not load subscription metrics.'],
+  [
+    'درآمد ماهانه: آخرین پرداخت هر مشترک فعال (منهای بازپرداخت) تقسیم بر ماه‌های آن. تمدید دستی در آن حساب نمی‌شود. بقیهٔ آمار مربوط به ۳۰ روز اخیر است.',
+    'MRR: the latest payment of each active subscriber (minus refunds) divided by its months. Manual extensions add nothing. The other figures cover the last 30 days.',
+  ],
+  ['درآمد ماهانهٔ تکرارشونده (تومان)', 'MRR (Toman)'],
+  ['مشترک پولی فعال', 'Active paid subscribers'],
+  ['{0} (دستی: {1})', '{0} ({1} manual)'],
+  ['مشترک تازه در ۳۰ روز', 'New subscribers in 30 days'],
+  ['تمدید در ۳۰ روز', 'Renewals in 30 days'],
+  ['اشتراک تمام‌شده در ۳۰ روز', 'Ended in 30 days'],
 ];

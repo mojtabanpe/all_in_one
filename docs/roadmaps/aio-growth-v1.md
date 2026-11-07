@@ -71,15 +71,15 @@ is written here as a request (`→ Codex: …`), not done in the other lane's fi
 Owns `apps/api/src/billing`, `libs/api/ai`, `apps/api/src/admin` AI/billing parts, SMS/auth delivery
 (`libs/api/auth`), the customer billing page and paywall, admin `/admin/billing` and `/admin/ai`.
 
-| ID  | Task                                                                                                                                                    | Status                                |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| C1  | Payment test matrix with a mocked Zibal: success, cancel, timeout, duplicate callback, amount mismatch, renewal/expiry, provider outage                 | DONE (Claude, see payment tests item) |
-| C2  | Refunds: admin action with audit row and access end; Zibal refund call if the merchant supports it, otherwise a recorded manual refund                  | DONE (Claude, see refunds item)       |
-| C3  | Paywall entry points: account/navigation link to `/app/billing`, upgrade calls on locked AI actions (works with no plans: shows the trial/earned state) | DONE (Claude, see paywall UI item)    |
-| C4  | Commercial metrics endpoint + admin cards: paid users, MRR (Toman), failed payments, refunds                                                            | IN_PROGRESS (Claude)                  |
-| C5  | AI provider fallback (second preset per service), error-rate/budget alerts in `/admin/ai`, per-user concurrency limit                                   | TODO                                  |
-| C6  | Faraz SMS client, phone verification and the five template flows behind an env switch, tested with a mocked provider (real delivery waits for O4)       | TODO                                  |
-| C7  | Per-model AI price history, so cost reports keep old prices after a model change                                                                        | TODO                                  |
+| ID  | Task                                                                                                                                                    | Status                                  |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| C1  | Payment test matrix with a mocked Zibal: success, cancel, timeout, duplicate callback, amount mismatch, renewal/expiry, provider outage                 | DONE (Claude, see payment tests item)   |
+| C2  | Refunds: admin action with audit row and access end; Zibal refund call if the merchant supports it, otherwise a recorded manual refund                  | DONE (Claude, see refunds item)         |
+| C3  | Paywall entry points: account/navigation link to `/app/billing`, upgrade calls on locked AI actions (works with no plans: shows the trial/earned state) | DONE (Claude, see paywall UI item)      |
+| C4  | Commercial metrics endpoint + admin cards: paid users, MRR (Toman), failed payments, refunds                                                            | DONE (Claude, see admin dashboard item) |
+| C5  | AI provider fallback (second preset per service), error-rate/budget alerts in `/admin/ai`, per-user concurrency limit                                   | TODO                                    |
+| C6  | Faraz SMS client, phone verification and the five template flows behind an env switch, tested with a mocked provider (real delivery waits for O4)       | TODO                                    |
+| C7  | Per-model AI price history, so cost reports keep old prices after a model change                                                                        | TODO                                    |
 
 ### ChatGPT (Codex) lane: acquisition, activation and retention
 
@@ -195,6 +195,7 @@ Evidence: `apps/admin/src/app/pages/dashboard.ts` already shows basic user/conte
 
 - [ ] `IN_PROGRESS` Extend dashboard with signups, cohorts, DAU/WAU/MAU, D1/D7/D30 retention, funnel, UTM channels, conversions, paid users, MRR, refunds, failed payments, AI usage/cost, alerts.
   - `DONE` Local first acquisition section: five real 30-day unique-visitor counters with bilingual descriptions, skeletons and error/retry behavior. Registration completion is server-created, not a browser-claimed event. Initial activity/first-week and D1/D7/D30 return metrics are implemented; commercial metrics and historical cohort breakdown remain TODO.
+  - `DONE` (C4, 2026-11-07, local, not deployed) Commercial metrics: `GET /api/billing/admin/metrics` (admin only) and a «درآمد تکرارشونده» row on `/admin/billing` above the payments overview: MRR in Toman (each active subscriber's latest paid order minus any refund, divided by its months; manual extensions add nothing), active paid subscribers (manual-only ones shown in brackets), new paying accounts, renewals and ended paid access in the last 30 days. Failed payments and refunds stay in the payments overview below it (the duplicate «مشترک فعال» card there was removed). Evidence: PostgreSQL test at a fixed 2030 date with a renewal, a partial refund, a failed order, a manual-only account and an ended subscription (37 billing tests); 17 affected projects lint/test/typecheck/build; local Chrome at 375px and 1280px matched the local data with no overflow. Not yet seen with production data; revenue charts over time remain open.
 - [ ] `IN_PROGRESS` Add date range, filters, export, access controls, audit logging and safe aggregated metrics.
   - `DONE` Campaign report supports trailing 7, 30 and 90 Tehran calendar days alongside exact source, medium and campaign filters. The default remains 30 days. Attribution uses the first observed event within the selected window, so it can change when the window changes. PostgreSQL coverage checks the inclusive day boundaries and default. A custom inclusive start and end date is available within the retained 90 Tehran days, using the shared calendar controls.
   - `DONE` Download the filtered campaign table as UTF-8 CSV, with spreadsheet formula protection for public UTM fields. The download covers the same top 20 rows as the table and includes the inclusive Tehran dates and applied UTM filters on every row.

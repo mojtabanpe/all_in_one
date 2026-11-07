@@ -114,6 +114,12 @@ export class BillingController {
   }
 
   @Roles('ADMIN')
+  @Get('admin/metrics')
+  metrics() {
+    return this.billing.metrics();
+  }
+
+  @Roles('ADMIN')
   @Get('admin/account')
   account(
     @Query({ schema: billingAccountQuerySchema }) query: BillingAccountQuery,

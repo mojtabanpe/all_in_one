@@ -47,6 +47,7 @@ describe('Billing rules', () => {
       billing.account,
       billing.adjust,
       billing.refund,
+      billing.metrics,
     ])
       expect(reflector.get(ROLES, handler)).toEqual(['ADMIN']);
     expect(reflector.get(IS_PUBLIC, billing.plans)).toBe(true);
@@ -683,6 +684,98 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       await expect(service().checkout(userId, code)).rejects.toBeInstanceOf(
         NotFoundException,
       );
+    });
+
+    it('reports paying users, MRR, new and renewed payers and ended access', async () => {
+      const now = new Date('2030-06-01T00:00:00.000Z');
+      const at = (iso: string) => new Date(iso);
+      const plan = await prisma.billingPlan.findUniqueOrThrow({
+        where: { code },
+      });
+      const users = await Promise.all(
+        ['a', 'b', 'c', 'd', 'admin'].map((name) =>
+          prisma.user.create({
+            data: {
+              email: `metrics-${name}-${randomUUID()}@example.invalid`,
+              passwordHash: 'synthetic-integration-fixture',
+              role: name === 'admin' ? 'ADMIN' : 'CUSTOMER',
+            },
+          }),
+        ),
+      );
+      const [a, b, c, d, admin] = users;
+      const order = (
+        userId: string,
+        months: number,
+        amountRial: number,
+        paidAt: string,
+      ) =>
+        prisma.billingOrder.create({
+          data: {
+            userId,
+            planId: plan.id,
+            months,
+            amountRial,
+            status: 'PAID',
+            paidAt: at(paidAt),
+          },
+        });
+      try {
+        // A: renewed inside the window; MRR follows the latest order.
+        await order(a.id, 12, 9_900_000, '2030-01-01T00:00:00Z');
+        await order(a.id, 1, 990_000, '2030-05-20T00:00:00Z');
+        // B: new payer with a partial refund.
+        const bOrder = await order(
+          b.id,
+          12,
+          12_000_000,
+          '2030-05-25T00:00:00Z',
+        );
+        await prisma.billingRefund.create({
+          data: {
+            orderId: bOrder.id,
+            adminId: admin.id,
+            amountRial: 1_200_000,
+            reason: 'partial',
+          },
+        });
+        // A failed order never counts.
+        await prisma.billingOrder.create({
+          data: {
+            userId: b.id,
+            planId: plan.id,
+            months: 1,
+            amountRial: 990_000,
+            status: 'FAILED',
+          },
+        });
+        await prisma.billingSubscription.createMany({
+          data: [
+            { userId: a.id, paidUntil: at('2031-01-20T00:00:00Z') },
+            { userId: b.id, paidUntil: at('2031-05-25T00:00:00Z') },
+            // C: paid access by hand only; D: ended inside the window.
+            { userId: c.id, paidUntil: at('2030-07-01T00:00:00Z') },
+            { userId: d.id, paidUntil: at('2030-05-15T00:00:00Z') },
+          ],
+        });
+        expect(await service().metrics(now)).toEqual({
+          paidUsers: 3,
+          manualPaidUsers: 1,
+          mrrRial: 990_000 + 900_000,
+          newPaidUsers: 1,
+          renewals: 1,
+          endedPaidUsers: 1,
+        });
+      } finally {
+        const ids = users.map((user) => user.id);
+        await prisma.billingRefund.deleteMany({
+          where: { adminId: admin.id },
+        });
+        await prisma.billingOrder.deleteMany({
+          where: { userId: { in: ids } },
+        });
+        await prisma.user.deleteMany({ where: { id: { in: ids } } });
+      }
     });
 
     describe('payment test matrix', () => {

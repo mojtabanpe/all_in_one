@@ -2,6 +2,7 @@ import { httpResource } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import type {
   BillingAdminOrderPage,
+  BillingMetrics,
   BillingOrderStatus,
 } from '@all-in-one/shared/schemas';
 import {
@@ -29,6 +30,44 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
   ],
   template: `
     <section aria-labelledby="orders-title" class="flex flex-col gap-4">
+      <h2 id="recurring-title" class="text-xl font-semibold">
+        {{ 'درآمد تکرارشونده' | aioTranslate }}
+      </h2>
+      @if (commercial.error()) {
+        <p role="alert" class="flex flex-wrap items-center gap-2">
+          {{ 'آمار اشتراک دریافت نشد.' | aioTranslate }}
+          <button
+            aioBtn
+            variant="outline"
+            class="min-h-11"
+            (click)="commercial.reload()"
+          >
+            {{ 'تلاش دوباره' | aioTranslate }}
+          </button>
+        </p>
+      } @else {
+        <dl
+          class="grid grid-cols-2 gap-3 lg:grid-cols-5"
+          aria-labelledby="recurring-title"
+        >
+          @for (metric of recurring(); track metric.label) {
+            <div
+              aioMetric
+              [definition]="true"
+              class="glass flex flex-col-reverse gap-1 rounded-2xl p-4"
+              valueClass="text-2xl font-bold tabular-nums"
+              [label]="metric.label"
+              [value]="metric.value"
+            ></div>
+          }
+        </dl>
+        <p class="text-sm text-muted-foreground">
+          {{
+            'درآمد ماهانه: آخرین پرداخت هر مشترک فعال (منهای بازپرداخت) تقسیم بر ماه‌های آن. تمدید دستی در آن حساب نمی‌شود. بقیهٔ آمار مربوط به ۳۰ روز اخیر است.'
+              | aioTranslate
+          }}
+        </p>
+      }
       <h2 id="orders-title" class="text-xl font-semibold">
         {{ 'پرداخت‌ها' | aioTranslate }}
       </h2>
@@ -198,6 +237,37 @@ export class BillingOrders {
     REFUNDED: 'outline',
   } as const;
 
+  protected readonly commercial = httpResource<BillingMetrics>(
+    () => `${this.api}/billing/admin/metrics`,
+  );
+
+  protected recurring() {
+    const value = this.commercial.hasValue()
+      ? this.commercial.value()
+      : undefined;
+    const n = (x: number | undefined) =>
+      x === undefined ? '—' : this.locale.number(x);
+    return [
+      {
+        label: 'درآمد ماهانهٔ تکرارشونده (تومان)',
+        value: n(value && Math.round(value.mrrRial / 10)),
+      },
+      {
+        label: 'مشترک پولی فعال',
+        value:
+          value && value.manualPaidUsers
+            ? this.locale.text('{0} (دستی: {1})', [
+                n(value.paidUsers),
+                n(value.manualPaidUsers),
+              ])
+            : n(value?.paidUsers),
+      },
+      { label: 'مشترک تازه در ۳۰ روز', value: n(value?.newPaidUsers) },
+      { label: 'تمدید در ۳۰ روز', value: n(value?.renewals) },
+      { label: 'اشتراک تمام‌شده در ۳۰ روز', value: n(value?.endedPaidUsers) },
+    ];
+  }
+
   protected metrics() {
     const overview = this.list.hasValue()
       ? this.list.value().overview
@@ -205,7 +275,6 @@ export class BillingOrders {
     const n = (value: number | undefined) =>
       value === undefined ? '—' : this.locale.number(value);
     return [
-      { label: 'مشترک فعال', value: n(overview?.activeSubscribers) },
       {
         label: 'درآمد ۳۰ روز (تومان)',
         value: n(overview && overview.paidRial / 10),

@@ -18,6 +18,7 @@ import type {
   BillingAdjustmentInput,
   BillingAdminOrderPage,
   BillingAdminOrdersQuery,
+  BillingMetrics,
   BillingOrderSummary,
   BillingPlan,
   BillingPlanInput,
@@ -279,6 +280,50 @@ export class BillingService {
         pendingOrders,
       },
     };
+  }
+
+  /** Recurring-revenue view for admins; see `BillingMetrics` for each definition. */
+  async metrics(now = new Date()): Promise<BillingMetrics> {
+    const since = new Date(now.getTime() - 30 * 86_400_000);
+    const [row] = await this.prisma.$queryRaw<
+      {
+        paidUsers: number;
+        manualPaidUsers: number;
+        mrrRial: number;
+        newPaidUsers: number;
+        renewals: number;
+        endedPaidUsers: number;
+      }[]
+    >`
+      WITH active AS (
+        SELECT "userId" FROM billing_subscriptions WHERE "paidUntil" > ${now}
+      ),
+      latest AS (
+        SELECT DISTINCT ON (o."userId")
+          o."userId", (o."amountRial" - COALESCE(r."amountRial", 0))::float8 / o.months AS monthly
+        FROM billing_orders o
+        JOIN active a ON a."userId" = o."userId"
+        LEFT JOIN billing_refunds r ON r."orderId" = o.id
+        WHERE o.status = 'PAID'
+        ORDER BY o."userId", o."paidAt" DESC
+      ),
+      firsts AS (
+        SELECT "userId", MIN("paidAt") AS first
+        FROM billing_orders WHERE status IN ('PAID', 'REFUNDED') GROUP BY "userId"
+      )
+      SELECT
+        (SELECT COUNT(*) FROM active)::int AS "paidUsers",
+        (SELECT COUNT(*) FROM active a WHERE NOT EXISTS
+          (SELECT 1 FROM latest l WHERE l."userId" = a."userId"))::int AS "manualPaidUsers",
+        COALESCE((SELECT ROUND(SUM(monthly)) FROM latest), 0)::int AS "mrrRial",
+        (SELECT COUNT(*) FROM firsts WHERE first >= ${since})::int AS "newPaidUsers",
+        (SELECT COUNT(*) FROM billing_orders o JOIN firsts f ON f."userId" = o."userId"
+          WHERE o.status IN ('PAID', 'REFUNDED') AND o."paidAt" >= ${since}
+            AND o."paidAt" > f.first)::int AS "renewals",
+        (SELECT COUNT(*) FROM billing_subscriptions
+          WHERE "paidUntil" > ${since} AND "paidUntil" <= ${now})::int AS "endedPaidUsers"
+    `;
+    return row;
   }
 
   /** Support view of one account: paid access, latest orders and every manual change. */

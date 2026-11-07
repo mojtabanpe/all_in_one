@@ -92,6 +92,25 @@ export interface BillingAdminOverview {
   pendingOrders: number;
 }
 
+/** Subscription health for admins. Money is Rial; windows are the last 30 days. */
+export interface BillingMetrics {
+  /** Accounts whose paid access has not ended (payments and manual extensions). */
+  paidUsers: number;
+  /** Of those, accounts whose access comes only from manual extensions (no paid order behind it). */
+  manualPaidUsers: number;
+  /**
+   * Monthly recurring revenue: for each paying account, its latest paid order's amount (minus any refund)
+   * divided by the order's months. Manual extensions add nothing.
+   */
+  mrrRial: number;
+  /** Accounts whose first paid order is in the window. */
+  newPaidUsers: number;
+  /** Paid orders in the window from accounts that had paid before. */
+  renewals: number;
+  /** Accounts whose paid access ended in the window and has not been renewed. */
+  endedPaidUsers: number;
+}
+
 export interface BillingAdminOrderPage {
   orders: BillingAdminOrder[];
   total: number;
