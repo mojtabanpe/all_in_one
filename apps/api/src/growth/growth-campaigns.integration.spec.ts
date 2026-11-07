@@ -201,23 +201,24 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       ).rejects.toThrow();
     });
 
-    it('excludes test visitors and their later untagged activity from campaign results', async () => {
+    it('excludes test visitors even when their QA tag predates the report window', async () => {
       const campaign = `qa-exclusion-${randomUUID()}`;
       const controlSource = `${source}-qa-control`;
       const real = visitor();
       const qa = visitor();
+      const tags = { utm_source: controlSource, utm_campaign: campaign };
+      const firstInWindow = event(real, 'landing_view', 2, tags);
+      const lastInWindow = event(qa, 'first_review_completed', 0);
       await prisma.growthEvent.createMany({
         data: [
-          event(real, 'landing_view', 2, {
-            utm_source: controlSource,
-            utm_campaign: campaign,
-          }),
-          event(qa, 'landing_view', 2, {
+          firstInWindow,
+          event(qa, 'landing_view', 3, {
             utm_source: 'QA',
             utm_campaign: campaign,
           }),
+          event(qa, 'landing_view', 2, tags),
           event(qa, 'signup_completed', 1),
-          event(qa, 'first_review_completed', 0),
+          lastInWindow,
         ],
       });
 
@@ -232,6 +233,13 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         threeDaySignupVisitors: 0,
       });
       expect(report.rows.map((row) => row.source)).toEqual([controlSource]);
+      const custom = await service.campaigns({
+        campaign,
+        from: firstInWindow.day,
+        to: lastInWindow.day,
+      });
+      expect(custom.totals).toEqual(report.totals);
+      expect(custom.rows).toEqual(report.rows);
     });
 
     it('filters the original touch, retains later untagged activity and binds SQL values literally', async () => {

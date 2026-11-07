@@ -117,9 +117,13 @@ export class GrowthService {
           NULLIF(campaign->>'utm_campaign', '') AS campaign
         FROM events ORDER BY "visitorId", "createdAt", id
       ), selected AS (
-        SELECT * FROM first_touch
-        -- Keep operational checks out of the campaign funnel, including later untagged activity.
-        WHERE COALESCE(LOWER(source), '') NOT IN ('qa', 'test', 'roadmap_check')
+        SELECT f.* FROM first_touch f
+        -- A QA tag can predate the selected window even though later events are in it.
+        WHERE NOT EXISTS (
+          SELECT 1 FROM growth_events qa
+          WHERE qa."visitorId" = f."visitorId" AND qa.day <= ${until}
+            AND LOWER(qa.campaign->>'utm_source') IN ('qa', 'test', 'roadmap_check')
+        )
           AND (${filter.source ?? null}::text IS NULL OR source = ${filter.source ?? null})
           AND (${filter.medium ?? null}::text IS NULL OR medium = ${filter.medium ?? null})
           AND (${filter.campaign ?? null}::text IS NULL OR campaign = ${filter.campaign ?? null})
