@@ -1,6 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import type { AiGateway } from './ai-gateway.service';
 import type { AiScopeTarget, AiSettingsService } from './ai-settings.service';
+import { type LocalScopeClassifier, vote } from './scope-classifier';
 import {
   AI_SCOPE_INSTRUCTIONS,
   AiScopeGuard,
@@ -24,16 +25,22 @@ const target = (change: Partial<AiScopeTarget> = {}): AiScopeTarget => ({
   ...change,
 });
 
-function setup(reply: string | null, scope = target()) {
+function setup(
+  reply: string | null,
+  scope = target(),
+  local: number | null = null,
+) {
   const chat = vi.fn().mockResolvedValue({ content: reply, toolCalls: [] });
+  const probability = vi.fn().mockResolvedValue(local);
   const guard = new AiScopeGuard(
     { chat } as unknown as AiGateway,
     {
       scopeTarget: vi.fn().mockResolvedValue(scope),
     } as unknown as AiSettingsService,
     new ConfigService({}),
+    { probability } as unknown as LocalScopeClassifier,
   );
-  return { chat, guard };
+  return { chat, guard, probability };
 }
 
 const jevReply = (noul: number, status = 200) =>
@@ -47,6 +54,41 @@ const jevReply = (noul: number, status = 200) =>
 
 describe('AiScopeGuard', () => {
   beforeEach(() => fetchMock.mockReset());
+
+  it('decides with the local model without calling anything outside', async () => {
+    const out = setup(null, target({ provider: 'local' }), 0.12);
+    await expect(
+      out.guard.decide('u1', 'یک کد پایتون بنویس', 'assistant'),
+    ).resolves.toEqual({
+      inScope: false,
+      probability: 0.12,
+      provider: 'local',
+    });
+    expect(out.probability).toHaveBeenCalledWith('یک کد پایتون بنویس');
+    expect(out.chat).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    const borderline = setup(null, target({ provider: 'local' }), 0.31);
+    await expect(
+      borderline.guard.inScope('u1', 'باشه', 'assistant'),
+    ).resolves.toBe(true);
+    // A model that cannot load never blocks anyone.
+    const broken = setup(null, target({ provider: 'local' }), null);
+    await expect(broken.guard.inScope('u1', 'x', 'assistant')).resolves.toBe(
+      true,
+    );
+  });
+
+  it('votes by the nearest labelled examples, closer ones counting more', () => {
+    const v = (...xs: number[]) => Float32Array.from(xs);
+    const examples = [
+      { inScope: true, vector: v(1, 0) },
+      { inScope: false, vector: v(0, 1) },
+      { inScope: false, vector: v(0.1, 0.995) },
+    ];
+    expect(vote(v(0.99, 0.14), examples)).toBeGreaterThan(0.9);
+    expect(vote(v(0.1, 0.995), examples)).toBeLessThan(0.1);
+  });
 
   it('asks Jev one yes/no question and refuses a low probability', async () => {
     const { chat, guard } = setup(null, target({ provider: 'jev', key: 'k1' }));

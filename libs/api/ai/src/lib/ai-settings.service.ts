@@ -119,15 +119,12 @@ export class AiSettingsService {
     return stored?.settings as ManagedSettings | undefined;
   }
 
-  /**
-   * The scope check: on unless an admin switched it off. Jev once it has a key (or when chosen), otherwise
-   * the chat model.
-   */
+  /** The scope check: on unless an admin switched it off; the local model unless another was chosen. */
   async scope(): Promise<AiScopeSettings> {
     const r = await this.row();
     return {
       on: r?.scopeOn !== false,
-      provider: r?.scopeProvider ?? (r?.scopeKey ? 'jev' : 'chat'),
+      provider: r?.scopeProvider ?? 'local',
       model: r?.scopeModel ?? '',
       url: r?.scopeUrl ?? '',
       hasKey: !!r?.scopeKey,

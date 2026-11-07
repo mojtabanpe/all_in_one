@@ -68,7 +68,12 @@ export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
     'Runs on the chat service; empty = the chat model. A small, cheap model is enough.',
   ],
   ['ذخیرهٔ بررسی حوزه', 'Save scope check'],
-  ['Jev (TypeSafe)، ارزان و سریع', 'Jev (TypeSafe), cheap and fast'],
+  ['Jev (TypeSafe)، فقط با پراکسی', 'Jev (TypeSafe), proxy only'],
+  ['مدل محلی روی سرور (رایگان)', 'Local model on the server (free)'],
+  [
+    'یک مدل کوچک چندزبانه روی همین سرور: درخواست جایی فرستاده نمی‌شود و هزینه‌ای ندارد. درخواست را با نمونه‌های در حوزه و بیرون از حوزه مقایسه می‌کند.',
+    'A small multilingual model on this server: nothing is sent anywhere and it costs nothing. It compares each request with in-scope and out-of-scope examples.',
+  ],
   ['یک مدل روی سرویس گفتگو', 'A model on the chat service'],
   [
     'Jev متن تولید نمی‌کند؛ فقط احتمال «در حوزه بودن» را برمی‌گرداند و فقط توکن ورودی حساب می‌شود. کلید را از typesafe.ai بگیر.',

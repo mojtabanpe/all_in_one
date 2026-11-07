@@ -545,3 +545,13 @@ origin master` and read the index and the roadmap; after work, update its status
      optional url and proxy; it becomes the default once a key is saved. The LLM judge stays as the «chat» fallback.
      If Jev has no key, times out or errors, the request passes (logged) so an outage never blocks users. `/admin/ai`
      has a box to test a sentence against the current decision model.
+     **Jev is filtered; the default is a local model** (owner, same day: «به نظر میاد که Jev فیلتره، یک جایگزین پیدا
+     کن»). Provider `local` (default): `LocalScopeClassifier` runs `Xenova/paraphrase-multilingual-MiniLM-L12-v2`
+     (int8, ~120 MB, a few ms) on the api server through `@huggingface/transformers` and votes by the 7 nearest
+     labelled examples in `libs/api/ai/src/lib/scope-anchors.ts`; below `LOCAL_REFUSE_BELOW` (0.3) is refused. No
+     request leaves the server and nothing is paid per call. The model is downloaded at image build on GitHub
+     (`tools/scripts/fetch-scope-model.mjs`) into `/app/models` (`AI_SCOPE_MODEL_DIR`); the server never fetches it.
+     To fix a misjudged kind of request, add Persian and English examples to `scope-anchors.ts` and check with
+     `node tools/scripts/eval-scope-model.mjs` (held-out set `tools/scripts/scope-eval-set.json`, never copied into
+     the examples; 41/44 right, no false refusal at 0.3 on 2026-11-07). The assistant's system prompt also tells it
+     to decline off-topic requests. `chat` and `jev` (proxy only) stay selectable in `/admin/ai`.

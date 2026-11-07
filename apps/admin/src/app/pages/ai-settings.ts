@@ -490,15 +490,25 @@ const SERVICES: {
               [value]="sc.provider"
               (valueChange)="patchScope({ provider: $any($event) })"
             >
-              <option aioNativeSelectOption value="jev">
-                {{ 'Jev (TypeSafe)، ارزان و سریع' | aioTranslate }}
+              <option aioNativeSelectOption value="local">
+                {{ 'مدل محلی روی سرور (رایگان)' | aioTranslate }}
               </option>
               <option aioNativeSelectOption value="chat">
                 {{ 'یک مدل روی سرویس گفتگو' | aioTranslate }}
               </option>
+              <option aioNativeSelectOption value="jev">
+                {{ 'Jev (TypeSafe)، فقط با پراکسی' | aioTranslate }}
+              </option>
             </aio-native-select>
           </aio-form-field>
-          @if (sc.provider === 'jev') {
+          @if (sc.provider === 'local') {
+            <p class="text-muted-foreground -mt-2 text-xs">
+              {{
+                'یک مدل کوچک چندزبانه روی همین سرور: درخواست جایی فرستاده نمی‌شود و هزینه‌ای ندارد. درخواست را با نمونه‌های در حوزه و بیرون از حوزه مقایسه می‌کند.'
+                  | aioTranslate
+              }}
+            </p>
+          } @else if (sc.provider === 'jev') {
             <p class="text-muted-foreground -mt-2 text-xs">
               {{
                 'Jev متن تولید نمی‌کند؛ فقط احتمال «در حوزه بودن» را برمی‌گرداند و فقط توکن ورودی حساب می‌شود. کلید را از typesafe.ai بگیر.'
@@ -659,7 +669,7 @@ export class AiSettingsPage {
     const s = this.settings.hasValue() ? this.settings.value().scope : null;
     return {
       on: s?.on ?? true,
-      provider: s?.provider ?? ('jev' as AiScopeProvider),
+      provider: s?.provider ?? ('local' as AiScopeProvider),
       model: s?.model ?? '',
       url: s?.url ?? '',
       key: '',

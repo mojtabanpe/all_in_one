@@ -18,6 +18,8 @@ ENV NX_DAEMON=false NX_NO_CLOUD=true
 COPY . .
 RUN pnpm nx run api-db:prisma-generate \
  && pnpm nx run-many -t build -p api public customer admin --configuration=production
+# The AI scope check's local model, baked in: the server never downloads it (Hugging Face may be unreachable).
+RUN node tools/scripts/fetch-scope-model.mjs /app/models
 
 # ---- api: NestJS + Prisma migrations on start
 FROM node:24-bookworm-slim AS api
@@ -29,6 +31,8 @@ RUN groupadd -g 10001 app && useradd -u 10001 -g app -s /usr/sbin/nologin app \
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/package.json ./package.json
 COPY --from=build /app/dist/apps/api ./dist/apps/api
+COPY --from=build /app/models ./models
+ENV AI_SCOPE_MODEL_DIR=/app/models
 COPY --from=build /app/libs/api/db/prisma ./libs/api/db/prisma
 COPY --from=build /app/libs/api/db/prisma.config.ts ./libs/api/db/prisma.config.ts
 USER app

@@ -1,10 +1,16 @@
-import { HttpException, Injectable, Logger } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  Logger,
+  type OnApplicationBootstrap,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { fetch } from 'undici';
 import type { AiScopeProvider } from '@all-in-one/shared/schemas';
 import { AiGateway } from './ai-gateway.service';
 import { AiSettingsService, type AiScopeTarget } from './ai-settings.service';
 import { assertPublicUrl, guardedAgent, proxyAgent } from './net-guard';
+import { LocalScopeClassifier } from './scope-classifier';
 import { parseJsonReply } from './json-reply';
 
 /** Where a request comes from; it only steers the borderline cases. */
@@ -43,6 +49,11 @@ export const JEV_SCOPE_QUESTION = {
 
 /** Below this Jev probability a request is refused (borderline ones pass). */
 export const JEV_REFUSE_BELOW = 0.35;
+/**
+ * Below this local-model probability a request is refused. On the held-out set (eval-scope-model.mjs) 0.3 gave
+ * 41/44 right and no false refusal; refusing a real user costs more than letting a stray request through.
+ */
+export const LOCAL_REFUSE_BELOW = 0.3;
 const JEV_DEFAULT_MODEL = 'jev-latest';
 
 export interface AiScopeDecision {
@@ -53,19 +64,28 @@ export interface AiScopeDecision {
 
 /**
  * The «decision model»: before free-text AI work it decides whether the request belongs to the app (planner,
- * English, health). Preferably TypeSafe's Jev (a non-generative decision model: one yes/no probability, billed
- * per input token only); otherwise a temperature-0 LLM call on the chat service. Admins choose and test it in
- * /admin/ai. A decision that cannot be made lets the request through (logged), so an outage never blocks users.
+ * English, health). By default a small embedding model on our own server (`LocalScopeClassifier`: no external
+ * call, nothing paid per request); admins can switch to an LLM on the chat service or to TypeSafe's Jev in
+ * /admin/ai and try sentences there. A decision that cannot be made lets the request through (logged), so an
+ * outage never blocks users.
  */
 @Injectable()
-export class AiScopeGuard {
+export class AiScopeGuard implements OnApplicationBootstrap {
   private readonly logger = new Logger(AiScopeGuard.name);
 
   constructor(
     private readonly gateway: AiGateway,
     private readonly settings: AiSettingsService,
     private readonly config: ConfigService,
+    private readonly local: LocalScopeClassifier,
   ) {}
+
+  /** Load the local model in the background so the first request does not wait (not in tests). */
+  async onApplicationBootstrap() {
+    if (process.env['VITEST']) return;
+    const target = await this.settings.scopeTarget().catch(() => null);
+    if (target?.on && target.provider === 'local') this.local.warm();
+  }
 
   async decide(
     userId: string,
@@ -80,6 +100,15 @@ export class AiScopeGuard {
       provider: target.provider,
     };
     if (!request || !target.on) return pass;
+    if (target.provider === 'local') {
+      const probability = await this.local.probability(request);
+      if (probability === null) return pass;
+      return {
+        inScope: probability >= LOCAL_REFUSE_BELOW,
+        probability,
+        provider: 'local',
+      };
+    }
     if (target.provider === 'jev') {
       const probability = await this.jev(target, request, area);
       if (probability === null) return pass;

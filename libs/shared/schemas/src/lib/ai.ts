@@ -38,8 +38,11 @@ export interface AiSettings {
   scope: AiScopeSettings;
 }
 
-/** Who makes the scope decision: TypeSafe's Jev decision model, or an LLM on the chat service. */
-export const AI_SCOPE_PROVIDERS = ['jev', 'chat'] as const;
+/**
+ * Who makes the scope decision: `local`, a small model on our own server (default, free); `chat`, an LLM on
+ * the chat service; `jev`, TypeSafe's Jev api (filtered in Iran; reachable only through a proxy).
+ */
+export const AI_SCOPE_PROVIDERS = ['local', 'chat', 'jev'] as const;
 export type AiScopeProvider = (typeof AI_SCOPE_PROVIDERS)[number];
 /** Used when the Jev url is left empty. */
 export const TYPESAFE_URL = 'https://api.typesafe.ai';
@@ -65,7 +68,7 @@ export const testAiScopeSchema = z.object({
 export type TestAiScopeInput = z.infer<typeof testAiScopeSchema>;
 export interface AiScopeTestResult {
   inScope: boolean;
-  /** Jev's probability that the request fits the app; null for the chat model. */
+  /** Probability that the request fits the app (local model, Jev); null for the chat model. */
   probability: number | null;
   provider: AiScopeProvider;
 }
