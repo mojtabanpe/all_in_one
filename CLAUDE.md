@@ -89,6 +89,10 @@
 - Production layout (`deploy/`, guide `deploy/README.fa.md`): one domain; `/` public SSR, `/app/` customer (PWA,
   `baseHref /app/`), `/admin/`, `/api/` + OAuth paths. Images come from `deploy/images.dockerfile` (not named
   `Dockerfile`: the `@nx/docker` plugin would infer a project from it). Servers listen on loopback (`API_HOST`, `HOST`).
+- Billing (`apps/api/src/billing`, schema `billing.prisma`): amounts are Rial (Zibal's unit), shown as Toman; plans are
+  admin-managed in `/admin/billing` and nothing is seeded. Only a server-side Zibal verify of an owned order activates,
+  once, under a per-account row lock (`activate`/`adjust`); manual changes always write a `billing_adjustments` row.
+  `BillingService.isPaid(userId)` is the entitlement check. Customer page `/app/billing` is the gateway's return URL.
 - Before pushing: `pnpm nx run-many -t lint test build typecheck`.
 
 # User directives (binding — given by the project owner)
