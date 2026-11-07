@@ -2,6 +2,8 @@ import { HttpException, Injectable } from '@nestjs/common';
 import { PrismaService } from '@all-in-one/api/db';
 import {
   AI_KINDS,
+  aiCostUsd,
+  type AiCostReport,
   type AiKind,
   type AiUsageOverview,
   type AiUsageView,
@@ -78,21 +80,96 @@ export class AiUsageService {
       );
   }
 
-  /** Adds one call and its units (chat tokens, tts characters, one stt recording) to today's row. */
+  /**
+   * Adds one call and its units (chat tokens, tts characters, one stt recording) to today's row; for chat
+   * `outputUnits` are the output tokens among them (priced apart). The tier is kept for cost per plan.
+   */
   async record(
     userId: string,
     kind: AiKind,
     units: number,
+    options: { outputUnits?: number; tier?: Tier } = {},
     now = new Date(),
   ): Promise<void> {
     const day = usageDay(now);
     const amount = Math.max(0, Math.round(units));
+    const output = Math.min(
+      amount,
+      Math.max(0, Math.round(options.outputUnits ?? 0)),
+    );
+    const tier = options.tier ?? null;
     await this.prisma.$executeRaw`
-      INSERT INTO ai_usage_days ("userId", day, kind, calls, units)
-      VALUES (${userId}::uuid, ${day}::date, ${kind}, 1, ${amount})
+      INSERT INTO ai_usage_days ("userId", day, kind, calls, units, "outputUnits", tier)
+      VALUES (${userId}::uuid, ${day}::date, ${kind}, 1, ${amount}, ${output}, ${tier})
       ON CONFLICT ("userId", day, kind)
-      DO UPDATE SET calls = ai_usage_days.calls + 1, units = ai_usage_days.units + ${amount}
+      DO UPDATE SET calls = ai_usage_days.calls + 1,
+        units = ai_usage_days.units + ${amount},
+        "outputUnits" = ai_usage_days."outputUnits" + ${output},
+        tier = COALESCE(${tier}, ai_usage_days.tier)
     `;
+  }
+
+  /**
+   * What AI cost over the last `days` Tehran days (today included) at the admin's current prices, per service
+   * and per access tier, with the cost per account per 30 days (the figure plan prices must cover). Costs are
+   * estimates: chat tokens come from the service's own usage report, or a length estimate when it gives none.
+   */
+  async costs(days = 30, now = new Date()): Promise<AiCostReport> {
+    const to = usageDay(now);
+    const from = usageDay(new Date(now.getTime() - (days - 1) * 86_400_000));
+    const prices = await this.settings.prices();
+    const rows = await this.prisma.$queryRaw<
+      {
+        userId: string;
+        kind: AiKind;
+        tier: string | null;
+        calls: bigint;
+        units: bigint;
+        output: bigint;
+      }[]
+    >`
+      SELECT "userId"::text AS "userId", kind, tier,
+        SUM(calls) AS calls, SUM(units) AS units, SUM("outputUnits") AS output
+      FROM ai_usage_days WHERE day BETWEEN ${from}::date AND ${to}::date
+      GROUP BY "userId", kind, tier
+    `;
+    const kinds = Object.fromEntries(
+      AI_KINDS.map((kind) => [kind, { calls: 0, units: 0, usd: 0 }]),
+    ) as AiCostReport['kinds'];
+    const tiers = new Map<string, { users: Set<string>; usd: number }>();
+    for (const row of rows) {
+      const units = Number(row.units);
+      const usd = aiCostUsd(prices, row.kind, units, Number(row.output));
+      kinds[row.kind].calls += Number(row.calls);
+      kinds[row.kind].units += units;
+      kinds[row.kind].usd += usd;
+      const tier = ['trial', 'earned', 'paid', 'staff'].includes(row.tier ?? '')
+        ? (row.tier as string)
+        : 'unknown';
+      const entry = tiers.get(tier) ?? { users: new Set<string>(), usd: 0 };
+      entry.users.add(row.userId);
+      entry.usd += usd;
+      tiers.set(tier, entry);
+    }
+    const order = ['paid', 'trial', 'earned', 'staff', 'unknown'];
+    return {
+      days,
+      from,
+      to,
+      priced:
+        prices.chatInput + prices.chatOutput + prices.tts + prices.stt > 0,
+      usdToToman: prices.usdToToman,
+      totalUsd: AI_KINDS.reduce((sum, kind) => sum + kinds[kind].usd, 0),
+      kinds,
+      tiers: [...tiers.entries()]
+        .sort(([a], [b]) => order.indexOf(a) - order.indexOf(b))
+        .map(([tier, { users, usd }]) => ({
+          tier: tier as AiCostReport['tiers'][number]['tier'],
+          users: users.size,
+          usd,
+          usdPerUserMonth: users.size ? ((usd / users.size) * 30) / days : 0,
+        })),
+    };
   }
 
   /** The account's use today against its limits (shown on the subscription page). */

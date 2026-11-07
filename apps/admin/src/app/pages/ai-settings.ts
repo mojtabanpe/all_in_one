@@ -17,10 +17,13 @@ import type {
   AiQuotas,
   AiQuotaTier,
   AiUsageOverview,
+  AiPrices,
+  AiCostReport,
 } from '@all-in-one/shared/schemas';
 import {
   DEFAULT_AI_PROXY,
   DEFAULT_AI_QUOTAS,
+  DEFAULT_AI_PRICES,
 } from '@all-in-one/shared/schemas';
 import {
   AioTranslate,
@@ -741,6 +744,124 @@ const SERVICES: {
         }
       </section>
     }
+    @if (settings.hasValue()) {
+      <section aioCard class="mt-6" aria-labelledby="ai-cost-heading">
+        <div aioCardHeader>
+          <h2 aioCardTitle id="ai-cost-heading">
+            {{ 'هزینهٔ هوش مصنوعی' | aioTranslate }}
+          </h2>
+          <p aioCardDescription>
+            {{
+              'قیمت سرویس‌ها را به دلار (همان‌طور که ارائه‌دهنده حساب می‌کند) وارد کن تا هزینهٔ ۳۰ روز اخیر به تفکیک سرویس و نوع دسترسی محاسبه شود. قیمت‌ها برای مدل فعلی هر سرویس است و هزینه‌ها برآوردی‌اند.'
+                | aioTranslate
+            }}
+          </p>
+        </div>
+        <form
+          aioCardContent
+          class="flex flex-col gap-4"
+          (submit)="$event.preventDefault(); savePrices()"
+        >
+          <div class="grid gap-3 sm:grid-cols-2">
+            @for (field of priceFields; track field.id) {
+              <aio-form-field
+                [label]="field.label | aioTranslate"
+                [controlId]="'price-' + field.id"
+              >
+                <input
+                  aioInput
+                  type="number"
+                  inputmode="decimal"
+                  min="0"
+                  step="any"
+                  dir="ltr"
+                  lang="en"
+                  required
+                  [id]="'price-' + field.id"
+                  [value]="priceDraft()[field.id]"
+                  (input)="setPrice(field.id, $any($event.target).value)"
+                />
+              </aio-form-field>
+            }
+          </div>
+          <button
+            aioAsyncButton
+            type="submit"
+            class="min-h-11 self-start"
+            [busy]="savingPrices()"
+            [label]="'ذخیرهٔ قیمت‌ها' | aioTranslate"
+          ></button>
+        </form>
+        @if (costs.hasValue()) {
+          @let report = costs.value();
+          <div aioCardFooter class="flex flex-col items-stretch gap-4">
+            @if (!report.priced) {
+              <p class="text-muted-foreground text-sm">
+                {{
+                  'تا قیمت‌ها وارد نشوند، هزینه صفر نشان داده می‌شود.'
+                    | aioTranslate
+                }}
+              </p>
+            }
+            <p class="text-sm font-semibold">
+              {{
+                'هزینهٔ ۳۰ روز اخیر: {0}'
+                  | aioTranslate: [money(report.totalUsd)]
+              }}
+            </p>
+            <ul class="flex flex-col gap-1 text-sm">
+              @for (kind of quotaKinds; track kind.id) {
+                <li class="flex flex-wrap justify-between gap-x-3">
+                  <span class="font-medium">{{
+                    kind.label | aioTranslate
+                  }}</span>
+                  <span class="text-muted-foreground">{{
+                    money(report.kinds[kind.id].usd)
+                  }}</span>
+                </li>
+              }
+            </ul>
+            @if (report.tiers.length) {
+              <div
+                aioTableContainer
+                class="max-w-full overflow-x-auto"
+                tabindex="0"
+                [attr.aria-label]="'هزینه به تفکیک نوع دسترسی' | aioTranslate"
+              >
+                <table aioTable>
+                  <thead aioTHead>
+                    <tr aioTr>
+                      <th aioTh scope="col">
+                        {{ 'نوع دسترسی' | aioTranslate }}
+                      </th>
+                      <th aioTh scope="col">
+                        {{ 'کاربران' | aioTranslate }}
+                      </th>
+                      <th aioTh scope="col">{{ 'هزینه' | aioTranslate }}</th>
+                      <th aioTh scope="col">
+                        {{ 'هر کاربر در ماه' | aioTranslate }}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody aioTBody>
+                    @for (row of report.tiers; track row.tier) {
+                      <tr aioTr>
+                        <th aioTh scope="row">
+                          {{ tierLabels[row.tier] | aioTranslate }}
+                        </th>
+                        <td aioTd>{{ locale.number(row.users) }}</td>
+                        <td aioTd>{{ money(row.usd) }}</td>
+                        <td aioTd>{{ money(row.usdPerUserMonth) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
   `,
 })
 export class AiSettingsPage {
@@ -773,6 +894,69 @@ export class AiSettingsPage {
     ),
   );
   protected readonly savingQuotas = signal(false);
+  protected readonly priceFields: { id: keyof AiPrices; label: string }[] = [
+    { id: 'chatInput', label: 'گفتگو: دلار برای هر میلیون توکن ورودی' },
+    { id: 'chatOutput', label: 'گفتگو: دلار برای هر میلیون توکن خروجی' },
+    { id: 'tts', label: 'متن به گفتار: دلار برای هر میلیون کاراکتر' },
+    { id: 'stt', label: 'گفتار به متن: دلار برای هر ضبط' },
+    { id: 'usdToToman', label: 'نرخ دلار (تومان)' },
+  ];
+  protected readonly tierLabels: Record<
+    AiCostReport['tiers'][number]['tier'],
+    string
+  > = {
+    paid: 'پولی',
+    trial: 'دورهٔ آزمایشی',
+    earned: 'هدیه',
+    staff: 'مدیر',
+    unknown: 'نامشخص (پیش از ثبت نوع)',
+  };
+  protected readonly priceDraft = linkedSignal<AiPrices>(() => ({
+    ...(this.settings.hasValue()
+      ? this.settings.value().prices
+      : DEFAULT_AI_PRICES),
+  }));
+  protected readonly savingPrices = signal(false);
+  protected readonly costs = httpResource<AiCostReport>(
+    () => `${this.base}/costs`,
+  );
+
+  /** Dollars, plus Toman when the rate is set: «۱٫۲۴ دلار (۱۲۴٬۰۰۰ تومان)». */
+  protected money(usd: number): string {
+    const rate = this.costs.hasValue() ? this.costs.value().usdToToman : 0;
+    const dollars = this.locale.number(usd, {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: usd < 1 ? 4 : 2,
+    });
+    return rate
+      ? `${dollars} (${this.locale.number(Math.round(usd * rate))} ${this.locale.text('تومان')})`
+      : dollars;
+  }
+
+  protected setPrice(field: keyof AiPrices, value: string) {
+    const amount = Math.max(0, Number(value) || 0);
+    this.priceDraft.update((all) => ({ ...all, [field]: amount }));
+  }
+
+  protected async savePrices() {
+    this.savingPrices.set(true);
+    try {
+      this.settings.set(
+        await firstValueFrom(
+          this.http.put<AiSettings>(this.base, {
+            prices: this.priceDraft(),
+          } satisfies UpdateAiSettingsInput),
+        ),
+      );
+      this.costs.reload();
+      this.notifications.success('ذخیره شد');
+    } catch (error) {
+      this.notifications.error(apiErrorMessage(error));
+    } finally {
+      this.savingPrices.set(false);
+    }
+  }
   protected readonly overview = httpResource<AiUsageOverview>(
     () => `${this.base}/usage`,
   );

@@ -38,6 +38,8 @@ export interface AiSettings {
   scope: AiScopeSettings;
   /** Daily limits per access tier (DEFAULT_AI_QUOTAS until saved). */
   quotas: AiQuotas;
+  /** What the services cost us (DEFAULT_AI_PRICES until saved). */
+  prices: AiPrices;
 }
 
 /**
@@ -126,6 +128,71 @@ export const aiQuotasSchema = z.object({
   paid: limits,
 });
 
+/**
+ * What the AI services cost us, in US dollars as providers bill them (0 = not set). Chat per million input and
+ * output tokens, text-to-speech per million characters, speech-to-text per recording; `usdToToman` turns the
+ * totals into Toman for pricing plans.
+ */
+export interface AiPrices {
+  chatInput: number;
+  chatOutput: number;
+  tts: number;
+  stt: number;
+  usdToToman: number;
+}
+export const DEFAULT_AI_PRICES: AiPrices = {
+  chatInput: 0,
+  chatOutput: 0,
+  tts: 0,
+  stt: 0,
+  usdToToman: 0,
+};
+const price = z.number().check(z.minimum(0), z.maximum(1_000_000));
+export const aiPricesSchema = z.object({
+  chatInput: price,
+  chatOutput: price,
+  tts: price,
+  stt: price,
+  usdToToman: z.number().check(z.minimum(0), z.maximum(100_000_000)),
+});
+
+/** Dollars for some use of one service: chat `units` are all tokens, `outputUnits` the output part of them. */
+export function aiCostUsd(
+  prices: AiPrices,
+  kind: AiKind,
+  units: number,
+  outputUnits = 0,
+): number {
+  if (kind === 'chat') {
+    const output = Math.min(outputUnits, units);
+    return (
+      ((units - output) * prices.chatInput + output * prices.chatOutput) /
+      1_000_000
+    );
+  }
+  if (kind === 'tts') return (units * prices.tts) / 1_000_000;
+  return units * prices.stt;
+}
+
+/** AI cost over the last `days` Tehran days (today included), per service and per access tier. */
+export interface AiCostReport {
+  days: number;
+  from: string;
+  to: string;
+  /** False until an admin enters at least one price: the dollars below are then 0. */
+  priced: boolean;
+  usdToToman: number;
+  totalUsd: number;
+  kinds: Record<AiKind, { calls: number; units: number; usd: number }>;
+  /** Accounts that used AI in the window, their cost, and cost per account per 30 days. */
+  tiers: {
+    tier: 'trial' | 'earned' | 'paid' | 'staff' | 'unknown';
+    users: number;
+    usd: number;
+    usdPerUserMonth: number;
+  }[];
+}
+
 /** Today's use against the account's limits; `limit` null = unlimited (admins). */
 export interface AiUsageView {
   day: string;
@@ -171,6 +238,7 @@ export const updateAiSettingsSchema = z.partial(
     tts: z.extend(service, { model2: z.optional(model) }),
     stt: service,
     quotas: aiQuotasSchema,
+    prices: aiPricesSchema,
     scope: z.partial(
       z.object({
         on: z.boolean(),

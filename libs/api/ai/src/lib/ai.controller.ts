@@ -44,6 +44,12 @@ export class AiAdminController {
     return this.usage.overview();
   }
 
+  /** What AI cost over the last 30 days at the admin's prices, per service and per access tier. */
+  @Get('costs')
+  costs() {
+    return this.usage.costs();
+  }
+
   /** Try a sentence against the current scope check (decision model). */
   @Post('scope-test')
   @HttpCode(200)

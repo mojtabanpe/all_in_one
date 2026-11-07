@@ -83,6 +83,38 @@ export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
   ['متن به گفتار (کاراکتر)', 'Text-to-speech (characters)'],
   ['گفتار به متن (ضبط)', 'Speech-to-text (recordings)'],
   ['ذخیرهٔ سهمیه‌ها', 'Save limits'],
+  ['هزینهٔ هوش مصنوعی', 'AI cost'],
+  [
+    'قیمت سرویس‌ها را به دلار (همان‌طور که ارائه‌دهنده حساب می‌کند) وارد کن تا هزینهٔ ۳۰ روز اخیر به تفکیک سرویس و نوع دسترسی محاسبه شود. قیمت‌ها برای مدل فعلی هر سرویس است و هزینه‌ها برآوردی‌اند.',
+    'Enter what the services cost in dollars (as the provider bills them) to see the last 30 days by service and access type. Prices are for each service’s current model; costs are estimates.',
+  ],
+  [
+    'گفتگو: دلار برای هر میلیون توکن ورودی',
+    'Chat: dollars per million input tokens',
+  ],
+  [
+    'گفتگو: دلار برای هر میلیون توکن خروجی',
+    'Chat: dollars per million output tokens',
+  ],
+  [
+    'متن به گفتار: دلار برای هر میلیون کاراکتر',
+    'Text-to-speech: dollars per million characters',
+  ],
+  ['گفتار به متن: دلار برای هر ضبط', 'Speech-to-text: dollars per recording'],
+  ['نرخ دلار (تومان)', 'Dollar rate (Toman)'],
+  ['ذخیرهٔ قیمت‌ها', 'Save prices'],
+  [
+    'تا قیمت‌ها وارد نشوند، هزینه صفر نشان داده می‌شود.',
+    'Costs show as zero until prices are entered.',
+  ],
+  ['هزینهٔ ۳۰ روز اخیر: {0}', 'Last 30 days: {0}'],
+  ['هزینه به تفکیک نوع دسترسی', 'Cost by access type'],
+  ['نوع دسترسی', 'Access type'],
+  ['هزینه', 'Cost'],
+  ['تومان', 'Toman'],
+  ['هر کاربر در ماه', 'Per account per month'],
+  ['مدیر', 'Admin'],
+  ['نامشخص (پیش از ثبت نوع)', 'Unknown (before types were recorded)'],
   ['مصرف امروز همهٔ کاربران', "Today's use, all accounts"],
   ['{0} کاربر، {1} درخواست، {2} واحد', '{0} accounts, {1} requests, {2} units'],
   [

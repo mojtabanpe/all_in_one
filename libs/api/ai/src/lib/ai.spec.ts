@@ -109,13 +109,20 @@ describe('api-ai', () => {
           new Response(
             JSON.stringify({
               choices: [{ message: { content: 'hi' } }],
-              usage: { total_tokens: 321 },
+              usage: {
+                total_tokens: 321,
+                prompt_tokens: 300,
+                completion_tokens: 21,
+              },
             }),
           ) as never,
       );
     await gateway.chat('user', [{ role: 'user', content: 'hello' }]);
     expect(usage.check).toHaveBeenCalledWith('user', 'trial', 'chat', 0);
-    expect(usage.record).toHaveBeenCalledWith('user', 'chat', 321);
+    expect(usage.record).toHaveBeenCalledWith('user', 'chat', 321, {
+      outputUnits: 21,
+      tier: 'trial',
+    });
 
     // The scope check's own call is not counted.
     usage.check.mockClear();

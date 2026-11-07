@@ -94,6 +94,10 @@ model AiUsageDay {
   kind   String   @db.VarChar(10)
   calls  Int      @default(0)
   units  Int      @default(0)
+  /// chat only: the output (completion) tokens included in `units`, priced apart.
+  outputUnits Int  @default(0)
+  /// Access tier at the latest recorded call (trial | earned | paid | staff), for cost per plan.
+  tier   String?  @db.VarChar(10)
 
   @@id([userId, day, kind])
   @@index([day])

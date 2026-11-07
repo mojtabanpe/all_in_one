@@ -17,7 +17,9 @@ import {
   type AiScopeSettings,
   type AiScopeProvider,
   type AiQuotas,
+  type AiPrices,
   DEFAULT_AI_QUOTAS,
+  DEFAULT_AI_PRICES,
   TYPESAFE_URL,
 } from '@all-in-one/shared/schemas';
 
@@ -32,6 +34,7 @@ type ManagedSettings = Partial<UserAiSettings> & {
   scopeProxyOn?: boolean;
   scopeProxy?: string | null;
   quotas?: AiQuotas;
+  prices?: AiPrices;
 };
 
 /** The scope check as the server uses it (Jev key opened). */
@@ -141,6 +144,11 @@ export class AiSettingsService {
     return (await this.row())?.quotas ?? DEFAULT_AI_QUOTAS;
   }
 
+  /** What the services cost us: the admin's prices, or zeros (not set). */
+  async prices(): Promise<AiPrices> {
+    return { ...DEFAULT_AI_PRICES, ...(await this.row())?.prices };
+  }
+
   async scopeTarget(): Promise<AiScopeTarget> {
     const r = await this.row();
     const view = await this.scope();
@@ -183,6 +191,7 @@ export class AiSettingsService {
       presets: await this.presets(r),
       scope: await this.scope(),
       quotas: r?.quotas ?? DEFAULT_AI_QUOTAS,
+      prices: { ...DEFAULT_AI_PRICES, ...r?.prices },
       savedModels: {
         chat: remember(r?.chatModels ?? [], [r?.chatModel]),
         tts: remember(r?.ttsModels ?? [], [r?.ttsModel, r?.ttsModel2]),
@@ -324,6 +333,7 @@ export class AiSettingsService {
   ): Promise<AiSettings> {
     const data: Omit<ManagedSettings, 'userId' | 'updatedAt'> = {};
     if (input.quotas) data.quotas = input.quotas;
+    if (input.prices) data.prices = input.prices;
     const scope = input.scope;
     if (scope?.on !== undefined) data.scopeOn = scope.on;
     if (scope?.provider !== undefined) data.scopeProvider = scope.provider;

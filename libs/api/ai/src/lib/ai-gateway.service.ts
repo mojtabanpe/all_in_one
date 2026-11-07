@@ -95,10 +95,18 @@ export class AiGateway {
     await this.usage.check(userId, tier, kind, extra);
   }
 
-  private async meter(userId: AiCaller, kind: AiKind, units: number) {
+  private async meter(
+    userId: AiCaller,
+    kind: AiKind,
+    units: number,
+    tier: BillingAccessState['tier'],
+    outputUnits = 0,
+  ) {
     if (userId === OPERATOR_TEST || !this.usage) return;
     // Metering must never turn a successful answer into an error.
-    await this.usage.record(userId, kind, units).catch(() => undefined);
+    await this.usage
+      .record(userId, kind, units, { outputUnits, tier })
+      .catch(() => undefined);
   }
 
   private get allowPrivate(): boolean {
@@ -201,20 +209,32 @@ export class AiGateway {
     if (!response.ok) return this.fail(response, 'سرویس گفتگو');
     const body = (await response.json()) as {
       choices?: { message?: { content?: unknown; tool_calls?: ToolCall[] } }[];
-      usage?: { total_tokens?: unknown };
+      usage?: {
+        total_tokens?: unknown;
+        prompt_tokens?: unknown;
+        completion_tokens?: unknown;
+      };
     };
     const message = body.choices?.[0]?.message;
     if (!message)
       throw new BadGatewayException('پاسخ سرویس گفتگو نامعتبر بود.');
-    if (options.meter !== false)
+    if (options.meter !== false) {
+      const usage = body.usage;
+      const counted = (value: unknown) =>
+        typeof value === 'number' && Number.isFinite(value) ? value : null;
+      const input =
+        counted(usage?.prompt_tokens) ?? roughTokens(JSON.stringify(messages));
+      const output =
+        counted(usage?.completion_tokens) ??
+        roughTokens(JSON.stringify(message));
       await this.meter(
         userId,
         'chat',
-        typeof body.usage?.total_tokens === 'number'
-          ? body.usage.total_tokens
-          : roughTokens(JSON.stringify(messages)) +
-              roughTokens(JSON.stringify(message)),
+        counted(usage?.total_tokens) ?? input + output,
+        target.tier,
+        output,
       );
+    }
     return {
       content: typeof message.content === 'string' ? message.content : null,
       toolCalls: Array.isArray(message.tool_calls) ? message.tool_calls : [],
@@ -294,7 +314,7 @@ export class AiGateway {
     const audio = Buffer.from(await response.arrayBuffer());
     if (!audio.length || audio.length > MAX_AUDIO_BYTES)
       throw new BadGatewayException('صدای برگشتی نامعتبر است.');
-    await this.meter(userId, 'tts', text.length);
+    await this.meter(userId, 'tts', text.length, target.tier);
     return { audio, contentType };
   }
 
@@ -320,7 +340,7 @@ export class AiGateway {
     });
     if (!response.ok) return this.fail(response, 'سرویس گفتار به متن');
     const text = transcriptOf(await response.json());
-    await this.meter(userId, 'stt', 1);
+    await this.meter(userId, 'stt', 1, managed.tier);
     if (!text)
       throw new BadGatewayException(
         'صدایی تشخیص داده نشد. دوباره بگو یا بنویس.',
