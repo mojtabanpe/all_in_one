@@ -121,6 +121,8 @@ export interface GrowthCampaignMetrics {
 }
 export interface GrowthCampaignReport {
   windowDays: number;
+  from: string;
+  to: string;
   totals: GrowthCampaignMetrics;
   rows: (GrowthCampaignMetrics & {
     source: string | null;

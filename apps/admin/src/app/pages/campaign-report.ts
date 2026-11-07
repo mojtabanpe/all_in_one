@@ -362,10 +362,16 @@ export class CampaignReport {
   });
   protected downloadCsv(): void {
     if (this.report.isLoading() || !this.report.hasValue()) return;
-    const { rows, windowDays } = this.report.value();
+    const { rows, from, to } = this.report.value();
+    const { source, medium, campaign } = this.filters();
     if (!rows.length) return;
 
     const header = [
+      'date_from_tehran',
+      'date_to_tehran',
+      'filter_utm_source',
+      'filter_utm_medium',
+      'filter_utm_campaign',
       'utm_source',
       'utm_medium',
       'utm_campaign',
@@ -375,6 +381,11 @@ export class CampaignReport {
       'active_visitors',
     ];
     const records = rows.map((row) => [
+      from,
+      to,
+      source ?? null,
+      medium ?? null,
+      campaign ?? null,
       row.source,
       row.medium,
       row.campaign,
@@ -391,7 +402,7 @@ export class CampaignReport {
     );
     const link = document.createElement('a');
     link.href = url;
-    link.download = `campaign-report-${windowDays}d.csv`;
+    link.download = `campaign-report-${from}_${to}.csv`;
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }

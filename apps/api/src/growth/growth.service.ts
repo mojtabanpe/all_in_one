@@ -135,6 +135,8 @@ export class GrowthService {
     });
     return {
       windowDays,
+      from: since,
+      to: until,
       totals: metrics(rows.find((row) => row.level === 7)),
       rows: rows
         .filter((row) => row.level === 0)

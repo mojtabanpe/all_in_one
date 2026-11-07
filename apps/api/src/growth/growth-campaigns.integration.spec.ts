@@ -79,7 +79,11 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         from: events[2].day,
         to: events[1].day,
       });
-      expect(report.windowDays).toBe(2);
+      expect(report).toMatchObject({
+        windowDays: 2,
+        from: events[2].day,
+        to: events[1].day,
+      });
       expect(report.totals.landingVisitors).toBe(2);
       await expect(
         service.campaigns({ from: '2000-01-01', to: events[1].day }),
