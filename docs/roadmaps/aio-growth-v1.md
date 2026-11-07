@@ -97,7 +97,7 @@ campaign content in `docs/roadmaps/*pilot*`.
 | X3  | Two more SEO topic guides (health/fitness at home, habit building), with metadata, JSON-LD, sitemap and tagged campaign links                                           | DONE (local browser and build)             |
 | X4  | Daily-English guide performance: bring the throttled mobile LCP (1.76 s) closer to home (0.52 s); remeasure with the same lab setup                                     | DONE (local lab; production VERIFY)        |
 | X5  | Growth admin: audit log of report views/exports and simple alerts (signups or activation dropping week over week)                                                       | DONE (local PostgreSQL and browser)        |
-| X6  | Campaign kits for days 31–60: Telegram partnership post and three short Instagram demo scripts, each with its tagged links (like the English pilot file)                | TODO                                       |
+| X6  | Campaign kits for days 31–60: Telegram partnership post and three short Instagram demo scripts, each with its tagged links (like the English pilot file)                | IN_PROGRESS (Codex)                        |
 
 ### Owner lane: decisions, accounts, devices and networks
 
