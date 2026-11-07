@@ -88,7 +88,7 @@ campaign content in `docs/roadmaps/*pilot*`.
 
 | ID  | Task                                                                                                                                                                    | Status |
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| X1  | Onboarding goal-change history (record each change; report the current and first goal)                                                                                  | TODO   |
+| X1  | Onboarding goal-change history (record each change; report the current and first goal)                                                                                  | IN_PROGRESS (Codex) |
 | X2  | Referral experiment: personal invite link with first-touch attribution `utm_source=referral`, referral counts in the campaign report; no reward until the owner decides | TODO   |
 | X3  | Two more SEO topic guides (health/fitness at home, habit building), with metadata, JSON-LD, sitemap and tagged campaign links                                           | TODO   |
 | X4  | Daily-English guide performance: bring the throttled mobile LCP (1.76 s) closer to home (0.52 s); remeasure with the same lab setup                                     | TODO   |
