@@ -33,13 +33,30 @@ export class OnboardingService {
     userId: string,
     input: OnboardingInput,
   ): Promise<OnboardingState> {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        onboardingGoal: input.goal,
-        onboardingSkipped: input.goal === null,
-        onboardingCompletedAt: null,
-      },
+    const skipped = input.goal === null;
+    await this.prisma.$transaction(async (tx) => {
+      // A concurrent update rechecks this predicate after acquiring the row
+      // lock. Repeated choices cannot duplicate history or reset completion.
+      const { count } = await tx.user.updateMany({
+        where: {
+          id: userId,
+          OR: [
+            { onboardingSkipped: !skipped },
+            { onboardingGoal: { not: input.goal } },
+            ...(skipped ? [] : [{ onboardingGoal: null }]),
+          ],
+        },
+        data: {
+          onboardingGoal: input.goal,
+          onboardingSkipped: skipped,
+          onboardingCompletedAt: null,
+        },
+      });
+      if (count) {
+        await tx.onboardingGoalChange.create({
+          data: { userId, goal: input.goal },
+        });
+      }
     });
     return this.state(userId);
   }

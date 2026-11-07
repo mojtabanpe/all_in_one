@@ -31,6 +31,7 @@ model User {
   onboardingGoal String? @db.VarChar(16)
   onboardingSkipped Boolean @default(false)
   onboardingCompletedAt DateTime?
+  onboardingGoalChanges OnboardingGoalChange[]
 
   pushSubscriptions PushSubscription[]
   reviewReminder ReviewReminderSetting?

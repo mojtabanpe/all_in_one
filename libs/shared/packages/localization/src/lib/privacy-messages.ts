@@ -7,8 +7,8 @@ export const PRIVACY_MESSAGES: readonly (readonly [string, string])[] = [
   ],
   ['حساب و محتوای شخصی', 'Account and personal content'],
   [
-    'برای حساب، ایمیل، نام اختیاری و نسخهٔ هش‌شدهٔ رمز نگهداری می‌شود. کارها و عادت‌ها، کارت‌ها و سابقهٔ مرور، متن‌ها و داده‌های سلامت مانند وعده‌ها، وزن و تمرین‌هایی که وارد می‌کنی در سرور ذخیره می‌شوند. هدف انتخاب‌شده در راهنمای شروع، رد کردن راهنما و زمان تکمیل قدم اول هم در حساب نگهداری می‌شوند. رمز عبور به‌صورت متن خوانا ذخیره نمی‌شود.',
-    'Your account stores your email, optional name and a password hash. Tasks, habits, cards, review history, reading texts and health information you enter, such as meals, weight and workouts, are stored on the server. Your chosen getting-started goal, guide dismissal and first-step completion time are also stored in your account. Passwords are not stored as readable text.',
+    'برای حساب، ایمیل، نام اختیاری و نسخهٔ هش‌شدهٔ رمز نگهداری می‌شود. کارها و عادت‌ها، کارت‌ها و سابقهٔ مرور، متن‌ها و داده‌های سلامت مانند وعده‌ها، وزن و تمرین‌هایی که وارد می‌کنی در سرور ذخیره می‌شوند. هدف فعلی، تاریخچهٔ تغییر هدف یا رد کردن راهنما و زمان تکمیل قدم اول هم در حساب نگهداری می‌شوند. رمز عبور به‌صورت متن خوانا ذخیره نمی‌شود.',
+    'Your account stores your email, optional name and a password hash. Tasks, habits, cards, review history, reading texts and health information you enter, such as meals, weight and workouts, are stored on the server. Your current getting-started goal, history of goal changes or guide dismissals and first-step completion time are also stored in your account. Passwords are not stored as readable text.',
   ],
   ['دسترسی و اشتراک‌گذاری', 'Access and sharing'],
   [

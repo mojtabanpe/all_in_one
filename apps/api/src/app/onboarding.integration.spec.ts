@@ -67,7 +67,10 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         completed: false,
         established: false,
       });
-      await service.choose(ids[0], { goal: 'planner' });
+      await Promise.all([
+        service.choose(ids[0], { goal: 'planner' }),
+        service.choose(ids[0], { goal: 'planner' }),
+      ]);
       expect((await new OnboardingService(prisma).state(ids[0])).goal).toBe(
         'planner',
       );
@@ -82,6 +85,13 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       const completed = await prisma.user.findUniqueOrThrow({
         where: { id: ids[0] },
       });
+      await service.choose(ids[0], { goal: 'planner' });
+      expect(
+        await prisma.onboardingGoalChange.findMany({
+          where: { userId: ids[0] },
+          select: { goal: true },
+        }),
+      ).toEqual([{ goal: 'planner' }]);
       await service.complete(ids[0], 'planner');
       expect(
         (await prisma.user.findUniqueOrThrow({ where: { id: ids[0] } }))
@@ -110,7 +120,13 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
               86_400_000,
           );
           const samples = [
-            { onboardingGoal: 'planner', onboardingCompletedAt: new Date() },
+            {
+              onboardingGoal: 'planner',
+              onboardingCompletedAt: new Date(),
+              onboardingGoalChanges: {
+                create: [{ goal: null }, { goal: 'planner' }],
+              },
+            },
             { onboardingGoal: 'english' },
             {
               createdAt: new Date(now.getTime() - 7 * 86_400_000),
@@ -172,11 +188,22 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
             );
           }
           // Changing a goal moves the same account and resets completion.
-          await new OnboardingService(tx as never).choose(plannerId, {
-            goal: 'health',
+          await tx.user.update({
+            where: { id: plannerId },
+            data: {
+              onboardingGoal: 'health',
+              onboardingCompletedAt: null,
+              onboardingGoalChanges: { create: { goal: 'health' } },
+            },
           });
           const changed = (await growth.summary(now)).onboarding;
           expect(changed.accounts).toBe(after.accounts);
+          expect(after.goals[0].firstGoalAccounts).toBe(
+            before.goals[0].firstGoalAccounts + 1,
+          );
+          expect(changed.goals.map((goal) => goal.firstGoalAccounts)).toEqual(
+            after.goals.map((goal) => goal.firstGoalAccounts),
+          );
           expect(
             changed.goals.find((row) => row.goal === 'planner')!
               .selectedAccounts,
@@ -224,6 +251,13 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       });
       await service.complete(ids[0], 'english');
       expect((await service.state(ids[0])).completed).toBe(true);
+      expect(
+        await prisma.onboardingGoalChange.findMany({
+          where: { userId: ids[0] },
+          orderBy: { id: 'asc' },
+          select: { goal: true },
+        }),
+      ).toEqual([{ goal: 'planner' }, { goal: null }, { goal: 'english' }]);
     });
   },
 );

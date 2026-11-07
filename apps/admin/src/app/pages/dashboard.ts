@@ -105,7 +105,7 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
           </h2>
           <p class="text-sm leading-7 text-muted-foreground">
             {{
-              'وضعیت فعلی حساب‌های مشتری ساخته‌شده در ۳۰ روز اخیر بر اساس روزهای تهران؛ شامل حساب‌های منتظر تأیید ایمیل. انتخاب دوبارهٔ هدف جای انتخاب قبلی را می‌گیرد و تکمیل قدم اول از نو سنجیده می‌شود. ستون هفت‌روزه فقط حساب‌هایی را می‌شمارد که دست‌کم هفت روز از ساختشان گذشته است.'
+              'حساب‌های مشتری ساخته‌شده در ۳۰ روز اخیر بر اساس روزهای تهران، از جمله حساب‌های منتظر تأیید ایمیل. نخستین هدف ثبت‌شده برای حساب‌های قدیمی از هدف زمان مهاجرت شروع می‌شود. با تغییر هدف، تکمیل قدم اول از نو سنجیده می‌شود. ستون هفت‌روزه فقط حساب‌های دست‌کم هفت‌روزه را می‌شمارد.'
                 | aioTranslate
             }}
           </p>
@@ -138,10 +138,13 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
               <thead aioTHead>
                 <tr aioTr>
                   <th aioTh scope="col">
-                    {{ 'هدف انتخاب‌شده' | aioTranslate }}
+                    {{ 'نوع هدف' | aioTranslate }}
                   </th>
                   <th aioTh scope="col">
-                    {{ 'انتخاب‌کنندگان' | aioTranslate }}
+                    {{ 'نخستین هدف ثبت‌شده' | aioTranslate }}
+                  </th>
+                  <th aioTh scope="col">
+                    {{ 'هدف فعلی' | aioTranslate }}
                   </th>
                   <th aioTh scope="col">{{ 'قدم اول کامل' | aioTranslate }}</th>
                   <th aioTh scope="col">
@@ -158,6 +161,7 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
                     <th aioTh scope="row">
                       {{ goalLabels[row.goal] | aioTranslate }}
                     </th>
+                    <td aioTd>{{ fa(row.firstGoalAccounts) }}</td>
                     <td aioTd>{{ fa(row.selectedAccounts) }}</td>
                     <td aioTd>{{ fa(row.completedAccounts) }}</td>
                     <td aioTd>

@@ -1,0 +1,10 @@
+model OnboardingGoalChange {
+  id         Int      @id @default(autoincrement())
+  userId     String   @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal       String?  @db.VarChar(16)
+  recordedAt DateTime @default(now())
+
+  @@index([userId, id])
+  @@map("onboarding_goal_changes")
+}

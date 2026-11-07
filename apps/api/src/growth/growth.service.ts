@@ -425,20 +425,35 @@ export class GrowthService {
     // Account totals stay aggregated and separate from pseudonymous browser events.
     const onboarding = await this.prisma.$queryRaw<
       {
-        bucket: string;
+        bucket: string | null;
+        first_goal: string | null;
         accounts: bigint;
         completed: bigint;
         eligible: bigint;
         completed_in_week: bigint;
       }[]
     >`
-      SELECT CASE
-        WHEN "onboardingSkipped" THEN 'skipped'
-        WHEN "onboardingGoal" IN ('planner', 'english', 'health') THEN "onboardingGoal"
-        ELSE 'unselected' END AS bucket,
+      WITH cohort AS (
+        SELECT CASE
+          WHEN "onboardingSkipped" THEN 'skipped'
+          WHEN "onboardingGoal" IN ('planner', 'english', 'health') THEN "onboardingGoal"
+          ELSE 'unselected' END AS bucket,
+          history.goal AS first_goal,
+          "createdAt", "onboardingCompletedAt"
+        FROM users
+        LEFT JOIN LATERAL (
+          SELECT goal FROM onboarding_goal_changes
+          WHERE "userId" = users.id AND goal IN ('planner', 'english', 'health')
+          ORDER BY id LIMIT 1
+        ) history ON TRUE
+        WHERE role = 'CUSTOMER'
+          AND "createdAt" >= ((${since}::date::timestamp AT TIME ZONE 'Asia/Tehran') AT TIME ZONE 'UTC')
+          AND "createdAt" < (((${until}::date + 1)::timestamp AT TIME ZONE 'Asia/Tehran') AT TIME ZONE 'UTC')
+      )
+      SELECT bucket, first_goal,
         COUNT(*) AS accounts,
         COUNT(*) FILTER (WHERE "onboardingCompletedAt" IS NOT NULL
-          AND NOT "onboardingSkipped" AND "onboardingGoal" IN ('planner', 'english', 'health')) AS completed,
+          AND bucket IN ('planner', 'english', 'health')) AS completed,
         COUNT(*) FILTER (
           WHERE "createdAt" <= (${firstWeekCutoff}::timestamptz AT TIME ZONE 'UTC')
         ) AS eligible,
@@ -446,18 +461,15 @@ export class GrowthService {
           WHERE "createdAt" <= (${firstWeekCutoff}::timestamptz AT TIME ZONE 'UTC')
             AND "onboardingCompletedAt" BETWEEN "createdAt" AND "createdAt" + INTERVAL '168 hours'
         ) AS completed_in_week
-      FROM users
-      WHERE role = 'CUSTOMER'
-        AND "createdAt" >= ((${since}::date::timestamp AT TIME ZONE 'Asia/Tehran') AT TIME ZONE 'UTC')
-        AND "createdAt" < (((${until}::date + 1)::timestamp AT TIME ZONE 'Asia/Tehran') AT TIME ZONE 'UTC')
-      GROUP BY bucket
+      FROM cohort
+      GROUP BY GROUPING SETS ((bucket), (first_goal))
     `;
     const bucketCount = (bucket: string) =>
       Number(onboarding.find((row) => row.bucket === bucket)?.accounts ?? 0);
     return {
       onboarding: {
         accounts: onboarding.reduce(
-          (sum, row) => sum + Number(row.accounts),
+          (sum, row) => sum + (row.bucket ? Number(row.accounts) : 0),
           0,
         ),
         skippedAccounts: bucketCount('skipped'),
@@ -467,6 +479,10 @@ export class GrowthService {
           return {
             goal,
             selectedAccounts: Number(row?.accounts ?? 0),
+            firstGoalAccounts: Number(
+              onboarding.find((entry) => entry.first_goal === goal)?.accounts ??
+                0,
+            ),
             completedAccounts: Number(row?.completed ?? 0),
             firstWeekEligibleAccounts: Number(row?.eligible ?? 0),
             firstWeekCompletedAccounts: Number(row?.completed_in_week ?? 0),

@@ -142,6 +142,7 @@ describe('Growth data boundaries', () => {
           {
             goal: 'planner',
             selectedAccounts: 0,
+            firstGoalAccounts: 0,
             completedAccounts: 0,
             firstWeekEligibleAccounts: 0,
             firstWeekCompletedAccounts: 0,
@@ -149,6 +150,7 @@ describe('Growth data boundaries', () => {
           {
             goal: 'english',
             selectedAccounts: 0,
+            firstGoalAccounts: 0,
             completedAccounts: 0,
             firstWeekEligibleAccounts: 0,
             firstWeekCompletedAccounts: 0,
@@ -156,6 +158,7 @@ describe('Growth data boundaries', () => {
           {
             goal: 'health',
             selectedAccounts: 0,
+            firstGoalAccounts: 0,
             completedAccounts: 0,
             firstWeekEligibleAccounts: 0,
             firstWeekCompletedAccounts: 0,
