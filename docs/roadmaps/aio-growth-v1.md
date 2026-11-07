@@ -71,15 +71,15 @@ is written here as a request (`→ Codex: …`), not done in the other lane's fi
 Owns `apps/api/src/billing`, `libs/api/ai`, `apps/api/src/admin` AI/billing parts, SMS/auth delivery
 (`libs/api/auth`), the customer billing page and paywall, admin `/admin/billing` and `/admin/ai`.
 
-| ID  | Task                                                                                                                                                    | Status |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| C1  | Payment test matrix with a mocked Zibal: success, cancel, timeout, duplicate callback, amount mismatch, renewal/expiry, provider outage                 | TODO   |
-| C2  | Refunds: admin action with audit row and access end; Zibal refund call if the merchant supports it, otherwise a recorded manual refund                  | TODO   |
-| C3  | Paywall entry points: account/navigation link to `/app/billing`, upgrade calls on locked AI actions (works with no plans: shows the trial/earned state) | TODO   |
-| C4  | Commercial metrics endpoint + admin cards: paid users, MRR (Toman), failed payments, refunds                                                            | TODO   |
-| C5  | AI provider fallback (second preset per service), error-rate/budget alerts in `/admin/ai`, per-user concurrency limit                                   | TODO   |
-| C6  | Faraz SMS client, phone verification and the five template flows behind an env switch, tested with a mocked provider (real delivery waits for O4)       | TODO   |
-| C7  | Per-model AI price history, so cost reports keep old prices after a model change                                                                        | TODO   |
+| ID  | Task                                                                                                                                                    | Status               |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| C1  | Payment test matrix with a mocked Zibal: success, cancel, timeout, duplicate callback, amount mismatch, renewal/expiry, provider outage                 | IN_PROGRESS (Claude) |
+| C2  | Refunds: admin action with audit row and access end; Zibal refund call if the merchant supports it, otherwise a recorded manual refund                  | TODO                 |
+| C3  | Paywall entry points: account/navigation link to `/app/billing`, upgrade calls on locked AI actions (works with no plans: shows the trial/earned state) | TODO                 |
+| C4  | Commercial metrics endpoint + admin cards: paid users, MRR (Toman), failed payments, refunds                                                            | TODO                 |
+| C5  | AI provider fallback (second preset per service), error-rate/budget alerts in `/admin/ai`, per-user concurrency limit                                   | TODO                 |
+| C6  | Faraz SMS client, phone verification and the five template flows behind an env switch, tested with a mocked provider (real delivery waits for O4)       | TODO                 |
+| C7  | Per-model AI price history, so cost reports keep old prices after a model change                                                                        | TODO                 |
 
 ### ChatGPT (Codex) lane: acquisition, activation and retention
 
