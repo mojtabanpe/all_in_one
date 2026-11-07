@@ -53,6 +53,64 @@
 
 **Latest validation:** 2026-11-07 (later): quotas, cost and churn passed PostgreSQL tests against a local database (usage 3 tests, churn 1), unit and component tests, and lint/test/typecheck/build of the affected projects; CI is green for each, authenticated production reports and real provider calls still require verification. Earlier the same day: billing (plans, checkout, callback, reconciliation, owner retry, admin orders/overview, audited adjustments) passed 19 PostgreSQL integration tests with a mocked gateway and local browser checks with disposable accounts; affected projects passed lint/test/typecheck/build; production returns 200 for `/app/billing`, `/admin/billing`, `/api/billing/plans` (empty list) and 401 for admin billing routes. JSON-LD verified in prerendered output and on production.
 
+## Work split — Claude / ChatGPT (Codex) / owner (2026-11-07)
+
+The owner works with Claude and ChatGPT at the same time (directive 112). Each agent owns whole areas, backend and UI,
+so the two rarely touch the same files. Take the next `TODO` from your own lane, top to bottom.
+
+**Claim protocol.** Before starting an item, `git pull origin master`, change its status here to
+`IN_PROGRESS (Claude)` or `IN_PROGRESS (Codex)`, commit and push that line alone (`docs(roadmap): claim C1`). If the
+item is already claimed, take the next one. When done, write `DONE` + evidence in the same commit as the code.
+Shared hotspots (`AGENTS.md`, this file, the localization message table, `base.prisma`, `apps/api/src/app`): pull
+right before editing, keep the change small, push immediately. Run `prisma-migrate` only right after a pull and push
+the migration in the next commit, so the two agents never create migrations from different bases. A cross-lane need
+is written here as a request (`→ Codex: …`), not done in the other lane's files.
+
+### Claude lane: money, AI and messaging
+
+Owns `apps/api/src/billing`, `libs/api/ai`, `apps/api/src/admin` AI/billing parts, SMS/auth delivery
+(`libs/api/auth`), the customer billing page and paywall, admin `/admin/billing` and `/admin/ai`.
+
+| ID  | Task                                                                                                                                                    | Status |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| C1  | Payment test matrix with a mocked Zibal: success, cancel, timeout, duplicate callback, amount mismatch, renewal/expiry, provider outage                 | TODO   |
+| C2  | Refunds: admin action with audit row and access end; Zibal refund call if the merchant supports it, otherwise a recorded manual refund                  | TODO   |
+| C3  | Paywall entry points: account/navigation link to `/app/billing`, upgrade calls on locked AI actions (works with no plans: shows the trial/earned state) | TODO   |
+| C4  | Commercial metrics endpoint + admin cards: paid users, MRR (Toman), failed payments, refunds                                                            | TODO   |
+| C5  | AI provider fallback (second preset per service), error-rate/budget alerts in `/admin/ai`, per-user concurrency limit                                   | TODO   |
+| C6  | Faraz SMS client, phone verification and the five template flows behind an env switch, tested with a mocked provider (real delivery waits for O4)       | TODO   |
+| C7  | Per-model AI price history, so cost reports keep old prices after a model change                                                                        | TODO   |
+
+### ChatGPT (Codex) lane: acquisition, activation and retention
+
+Owns `apps/public`, `apps/api/src/growth`, onboarding, admin growth dashboard pages, weekly digest/reminders,
+campaign content in `docs/roadmaps/*pilot*`.
+
+| ID  | Task                                                                                                                                                                    | Status |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| X1  | Onboarding goal-change history (record each change; report the current and first goal)                                                                                  | TODO   |
+| X2  | Referral experiment: personal invite link with first-touch attribution `utm_source=referral`, referral counts in the campaign report; no reward until the owner decides | TODO   |
+| X3  | Two more SEO topic guides (health/fitness at home, habit building), with metadata, JSON-LD, sitemap and tagged campaign links                                           | TODO   |
+| X4  | Daily-English guide performance: bring the throttled mobile LCP (1.76 s) closer to home (0.52 s); remeasure with the same lab setup                                     | TODO   |
+| X5  | Growth admin: audit log of report views/exports and simple alerts (signups or activation dropping week over week)                                                       | TODO   |
+| X6  | Campaign kits for days 31–60: Telegram partnership post and three short Instagram demo scripts, each with its tagged links (like the English pilot file)                | TODO   |
+
+### Owner lane: decisions, accounts, devices and networks
+
+Agents cannot do these: they need the owner's decision, login, devices or an Iranian network.
+
+| ID  | Task                                                                                                                                       | Unblocks          | Status |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- | ------ |
+| O1  | Define plans and prices (Toman) in `/admin/billing`, and which features are paid besides AI                                                | C3 copy, payments | TODO   |
+| O2  | `/admin/ai`: connection test for chat, TTS, STT; enter provider prices; confirm daily limits per tier                                      | C5, C7, AI launch | TODO   |
+| O3  | Check free memory on the server (`free -m`); if ≥ 400 MB spare, set `AI_SCOPE_LOCAL_MODEL=on`                                              | scope check       | TODO   |
+| O4  | Put the Faraz API key into the server secrets                                                                                              | C6 real delivery  | TODO   |
+| O5  | From an Iranian network: Enamad seal loads; PageSpeed for home and `/daily-english`; Search Console ownership + submit the sitemap         | SEO items         | TODO   |
+| O6  | Install the PWA on a real Android (Chrome) and iPhone (Safari): offline reopen, then update                                                | PWA item          | TODO   |
+| O7  | Create the official Telegram/Instagram pages, then turn on `BILLING_*_OFFER_ENABLED`; publish the English pilot when ready                 | social weeks, X6  | TODO   |
+| O8  | After O1: Zibal sandbox, then one real low-amount payment; with your admin login, open the growth/AI reports on production and note issues | payments, reports | TODO   |
+| O9  | Talk to 5–20 users (pilot interview questions) and write the findings here                                                                 | experiments       | TODO   |
+
 ## North star and KPIs
 
 North star: users completing meaningful activity on 3 separate days in their first 7 days.

@@ -103,17 +103,13 @@ When the owner gives a new instruction, add it to this list in the same change.
 ## One source for Claude and ChatGPT/Codex (2026-11-07)
 
 107. **The owner works on this project with both Claude (Claude Code) and ChatGPT (Codex); keep them in sync**
-     (owner: «یکاری کن که همیشه هماهنگ باشین»).
-     - `AGENTS.md` is the only instruction file. `CLAUDE.md` just imports it (`@AGENTS.md`); never write
-       instructions into `CLAUDE.md` or keep a second copy anywhere. `node tools/scripts/check-agent-docs.mjs`
-       (run in CI) fails if `CLAUDE.md` holds anything else or two directives share a number.
-     - New directive = the next number after the highest one in this file (never reuse a number). When a new
-       instruction changes an older one, add a short «superseded by N» note to the old one instead of deleting it.
-     - Roadmap state lives only in `docs/roadmaps/` (index: `docs/roadmaps/README.md`). Before working, `git pull
+     (owner: «یکاری کن که همیشه هماهنگ باشین»). - `AGENTS.md` is the only instruction file. `CLAUDE.md` just imports it (`@AGENTS.md`); never write
+     instructions into `CLAUDE.md` or keep a second copy anywhere. `node tools/scripts/check-agent-docs.mjs`
+     (run in CI) fails if `CLAUDE.md` holds anything else or two directives share a number. - New directive = the next number after the highest one in this file (never reuse a number). When a new
+     instruction changes an older one, add a short «superseded by N» note to the old one instead of deleting it. - Roadmap state lives only in `docs/roadmaps/` (index: `docs/roadmaps/README.md`). Before working, `git pull
 origin master` and read the index and the roadmap; after work, update its status and evidence in the same
-       commit, and keep its summary, checkpoint table and index row consistent with the items below them.
-     - Both agents commit to `master` (directive 16) with a Conventional Commit message, so each sees the other's
-       work in `git log`. Never leave finished work only in a local branch or chat.
+     commit, and keep its summary, checkpoint table and index row consistent with the items below them. - Both agents commit to `master` (directive 16) with a Conventional Commit message, so each sees the other's
+     work in `git log`. Never leave finished work only in a local branch or chat.
 
 ## UI components (2026-10-29)
 
@@ -566,3 +562,12 @@ origin master` and read the index and the roadmap; after work, update its status
 111. **Preserve the current customer PWA behavior.** The owner confirmed that installation and updates work
      as expected with `index.html` in the service-worker asset list. Keep that entry and the current
      network-first navigation policy. Offline startup is outside the growth roadmap.
+
+## Parallel work split (2026-11-07)
+
+112. **Claude, ChatGPT/Codex and the owner work on the marketing roadmap at the same time** (owner: «میخوام کارهارو
+     تقسیم کنی بین خودت و چت جی پی تی و من همزمان با جفتتون کار کنم»). The lanes, task IDs and claim protocol are in
+     the «Work split» section of `docs/roadmaps/aio-growth-v1.md`: each agent takes items only from its own lane,
+     claims an item (commit + push of the status line) before starting, and writes requests for the other lane there
+     instead of editing that lane's files. Owner-only items (decisions, logins, devices, Iranian network) are listed
+     there too.
