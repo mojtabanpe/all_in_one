@@ -199,17 +199,17 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
               | aioTranslate
           }}
         </p>
+        <div>
+          <button
+            aioBtn
+            type="button"
+            variant="outline"
+            (click)="downloadCsv()"
+          >
+            {{ 'دانلود گزارش کمپین‌ها (CSV)' | aioTranslate }}
+          </button>
+        </div>
         @if (report.value().rows.length) {
-          <div>
-            <button
-              aioBtn
-              type="button"
-              variant="outline"
-              (click)="downloadCsv()"
-            >
-              {{ 'دانلود جدول کمپین‌ها (CSV)' | aioTranslate }}
-            </button>
-          </div>
           <div
             aioTableContainer
             class="max-w-full overflow-x-auto"
@@ -406,9 +406,8 @@ export class CampaignReport {
 
   protected downloadCsv(): void {
     if (this.report.isLoading() || !this.report.hasValue()) return;
-    const { rows, from, to } = this.report.value();
+    const { rows, totals, from, to } = this.report.value();
     const { source, medium, campaign } = this.filters();
-    if (!rows.length) return;
 
     const header = [
       'date_from_tehran',
@@ -426,8 +425,13 @@ export class CampaignReport {
       'first_review_visitors',
       'first_week_eligible_signup_visitors',
       'first_week_three_day_signup_visitors',
+      'row_type',
     ];
-    const records = rows.map((row) => [
+    const exportRows = [
+      ...rows.map((row) => ({ ...row, type: 'detail' })),
+      { ...totals, source: null, medium: null, campaign: null, type: 'total' },
+    ];
+    const records = exportRows.map((row) => [
       from,
       to,
       source ?? null,
@@ -443,6 +447,7 @@ export class CampaignReport {
       row.firstReviewVisitors,
       row.eligibleSignupVisitors,
       row.threeDaySignupVisitors,
+      row.type,
     ]);
     const csv = [header, ...records]
       .map((record) => record.map(csvCell).join(','))

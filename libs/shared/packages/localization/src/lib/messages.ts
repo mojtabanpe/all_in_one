@@ -70,7 +70,7 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'No retention data has been recorded yet.',
   ],
   ['دریافت دوباره آمار نگهداشت', 'Retry loading retention data'],
-  ['دانلود جدول کمپین‌ها (CSV)', 'Download campaign table (CSV)'],
+  ['دانلود گزارش کمپین‌ها (CSV)', 'Download campaign report (CSV)'],
   ['بازهٔ گزارش کمپین', 'Campaign reporting period'],
   ['بازهٔ دلخواه', 'Custom range'],
   ['شروع بازهٔ کمپین', 'Campaign start date'],
