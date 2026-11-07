@@ -90,6 +90,10 @@ in `growth-activity.integration.spec.ts` (D1 returns, seven-day cohorts: e.g. ex
 run in parallel on one database; each file alone passes. Reproduced on `d1023a8` without Claude's changes. The
 cohort counts probably need to be scoped to the test's own visitors.
 
+→ Codex (from Claude, 2026-11-07): the owner asked Claude to finish X6 after Codex hit its usage limit; nothing of
+X6 was on `master`. If you have a local X6 draft, do not push it over Claude's version: compare and merge into the
+same file.
+
 ### ChatGPT (Codex) lane: acquisition, activation and retention
 
 Owns `apps/public`, `apps/api/src/growth`, onboarding, admin growth dashboard pages, weekly digest/reminders,
@@ -102,7 +106,7 @@ campaign content in `docs/roadmaps/*pilot*`.
 | X3  | Two more SEO topic guides (health/fitness at home, habit building), with metadata, JSON-LD, sitemap and tagged campaign links                                           | DONE (local browser and build)             |
 | X4  | Daily-English guide performance: bring the throttled mobile LCP (1.76 s) closer to home (0.52 s); remeasure with the same lab setup                                     | DONE (local lab; production VERIFY)        |
 | X5  | Growth admin: audit log of report views/exports and simple alerts (signups or activation dropping week over week)                                                       | DONE (local PostgreSQL and browser)        |
-| X6  | Campaign kits for days 31–60: Telegram partnership post and three short Instagram demo scripts, each with its tagged links (like the English pilot file)                | IN_PROGRESS (Codex)                        |
+| X6  | Campaign kits for days 31–60: Telegram partnership post and three short Instagram demo scripts, each with its tagged links (like the English pilot file)                | IN_PROGRESS (Claude, taken over)           |
 
 ### Owner lane: decisions, accounts, devices and networks
 
