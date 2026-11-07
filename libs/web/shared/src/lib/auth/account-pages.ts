@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { extractGrowthCampaign } from '@all-in-one/shared/schemas';
 import { PushSettings } from './push-settings';
 import { Component, inject, OnInit, signal } from '@angular/core';
@@ -240,7 +241,6 @@ export class ResetPasswordPage {
     AioButton,
     AioCardDirectives,
     AioSpinner,
-    RouterLink,
     AioCardHeading,
     AioLanguageSwitcher,
     AioTranslate,
@@ -264,18 +264,13 @@ export class ResetPasswordPage {
             }
             @case ('done') {
               <p>{{ 'ایمیلت تأیید شد. حالا وارد شو.' | aioTranslate }}</p>
-              <a aioBtn size="lg" routerLink="/login" [queryParams]="campaign">
+              <a aioBtn size="lg" [href]="loginHref">
                 {{ 'ورود' | aioTranslate }}
               </a>
             }
             @case ('failed') {
-              <p class="text-destructive">{{ error() }}</p>
-              <a
-                aioBtn
-                variant="outline"
-                routerLink="/login"
-                [queryParams]="campaign"
-              >
+              <p class="text-destructive">{{ error() | aioTranslate }}</p>
+              <a aioBtn variant="outline" [href]="loginHref">
                 {{ 'بازگشت به ورود و فرستادن لینک تازه' | aioTranslate }}
               </a>
             }
@@ -288,8 +283,13 @@ export class ResetPasswordPage {
 export class VerifyEmailPage implements OnInit {
   private readonly auth = inject(AuthStore);
   private readonly route = inject(ActivatedRoute);
-  protected readonly campaign = extractGrowthCampaign(
-    this.route.snapshot.queryParamMap,
+  private readonly router = inject(Router);
+  protected readonly loginHref = inject(Location).prepareExternalUrl(
+    this.router.serializeUrl(
+      this.router.createUrlTree(['/login'], {
+        queryParams: extractGrowthCampaign(this.route.snapshot.queryParamMap),
+      }),
+    ),
   );
   protected readonly page = PAGE;
   protected readonly state = signal<'working' | 'done' | 'failed'>('working');
