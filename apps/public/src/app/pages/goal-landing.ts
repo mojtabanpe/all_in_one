@@ -1,5 +1,6 @@
 import { Meta, Title } from '@angular/platform-browser';
-import { Component, computed, effect, inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
@@ -62,6 +63,40 @@ import { GOAL_LANDINGS } from './goal-landing-data';
           </figcaption>
         </figure>
       </header>
+      @if (page().slug === 'daily-planner') {
+        <section aioCard aria-labelledby="daily-plan-template">
+          <div aioCardHeader>
+            <h2 id="daily-plan-template" aioCardTitle>
+              {{ 'الگوی برنامهٔ امروز' | aioTranslate }}
+            </h2>
+            <p aioCardDescription>
+              {{
+                'الگو را در یادداشت‌هایت کپی کن و جاهای خالی را پر کن.'
+                  | aioTranslate
+              }}
+            </p>
+          </div>
+          <div aioCardContent>
+            <pre
+              class="select-text whitespace-pre-wrap wrap-break-word font-sans leading-8"
+              >{{ dailyPlanTemplate() }}</pre>
+          </div>
+          <div aioCardFooter class="flex flex-wrap gap-3">
+            <button
+              aioBtn
+              variant="outline"
+              type="button"
+              class="min-h-11"
+              (click)="copyDailyPlan()"
+            >
+              {{ 'کپی الگو' | aioTranslate }}
+            </button>
+            <p role="status" class="text-sm text-muted-foreground">
+              {{ copyStatus() | aioTranslate }}
+            </p>
+          </div>
+        </section>
+      }
       <section aria-labelledby="guide-steps-title" class="flex flex-col gap-5">
         <h2 id="guide-steps-title" class="text-xl font-semibold">
           {{ 'برای شروع، این سه قدم را بردار' | aioTranslate }}
@@ -136,6 +171,19 @@ import { GOAL_LANDINGS } from './goal-landing-data';
 })
 export class GoalLanding {
   protected readonly locale = inject(AioLocale);
+  private readonly document = inject(DOCUMENT);
+  protected readonly copyStatus = signal('');
+  protected readonly dailyPlanTemplate = computed(() =>
+    [
+      this.locale.text('مهم‌ترین کار امروز: …'),
+      '',
+      this.locale.text('دو کار کوچک:'),
+      '– …',
+      '– …',
+      '',
+      this.locale.text('اولین قدم فردا: …'),
+    ].join('\n'),
+  );
   protected readonly customerLinks = injectCustomerLinks();
   private readonly route = inject(ActivatedRoute);
   private readonly data = toSignal(this.route.data, {
@@ -154,6 +202,22 @@ export class GoalLanding {
   private readonly analytics = inject(GrowthAnalytics);
   private readonly meta = inject(Meta);
   private readonly title = inject(Title);
+
+  protected async copyDailyPlan(): Promise<void> {
+    this.copyStatus.set('');
+    try {
+      const clipboard = this.document.defaultView?.navigator.clipboard;
+      if (clipboard) {
+        await clipboard.writeText(this.dailyPlanTemplate());
+        this.copyStatus.set('الگو کپی شد.');
+        return;
+      }
+    } catch {
+      // The preview stays selectable when clipboard access is blocked.
+    }
+    this.copyStatus.set('متن الگو را انتخاب کن و دستی کپی کن.');
+  }
+
   constructor() {
     effect(() => {
       const page = this.page();

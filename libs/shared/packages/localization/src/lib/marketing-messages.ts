@@ -1,5 +1,19 @@
 export const MARKETING_MESSAGES: readonly (readonly [string, string])[] = [
   ['ورود به حساب', 'Sign in'],
+  ['الگوی برنامهٔ امروز', 'Today’s planning template'],
+  [
+    'الگو را در یادداشت‌هایت کپی کن و جاهای خالی را پر کن.',
+    'Copy the template into your notes and fill in the blanks.',
+  ],
+  ['مهم‌ترین کار امروز: …', 'Today’s most important task: …'],
+  ['دو کار کوچک:', 'Two small tasks:'],
+  ['اولین قدم فردا: …', 'Tomorrow’s first step: …'],
+  ['کپی الگو', 'Copy template'],
+  ['الگو کپی شد.', 'Template copied.'],
+  [
+    'متن الگو را انتخاب کن و دستی کپی کن.',
+    'Select the template text and copy it manually.',
+  ],
   [
     'برنامه‌ریزی روزانه را با یک کار کوچک شروع کن',
     'Start daily planning with one small task',

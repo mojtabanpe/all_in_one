@@ -217,6 +217,7 @@ Done for customers (directive 86): the former customer page `libs/web/shared/src
 
 - Days 1–14: 20 user interviews, baseline funnel, landing/signup fixes.
 - Days 15–30: 7-day English challenge and daily-planning template; target 100 initial signups as **experiment goal**, not forecast.
+- `DONE` (local) The bilingual daily-planning guide includes a free, copyable plain-text template for one priority, two small tasks and tomorrow's first step. The preview stays selectable if clipboard access fails. Campaign draft: «برای امروز فقط یک کار مهم انتخاب کن. دو کار کوچک کنارش بنویس و اولین قدم فردا را مشخص کن. الگو را بردار و در یادداشت‌هایت پر کن.» Tagged links: [Telegram](https://poshtetgarm.ir/daily-planner?utm_source=telegram&utm_medium=organic_social&utm_campaign=daily_plan_template#daily-plan-template), [Instagram](https://poshtetgarm.ir/daily-planner?utm_source=instagram&utm_medium=organic_social&utm_campaign=daily_plan_template#daily-plan-template). Measure campaign visits, signups and first-week activity after publication. Template copies do not create a separate analytics event.
 - Days 31–60: Telegram niche channel partnerships, short-form Instagram demonstrations, SEO content, referral experiment; track attributed activated users and CAC.
 - Days 61–90: double down on highest-retention channel; test freemium plan/price with actual users; measure paid conversion, refunds and AI unit economics.
 - Budget hypothesis: up to 10m toman first month only after attribution and activation measurement; adjust from observed CAC.
