@@ -1,5 +1,13 @@
 export const MARKETING_MESSAGES: readonly (readonly [string, string])[] = [
   ['ورود به حساب', 'Sign in'],
+  ['دعوت از دوستان', 'Invite friends'],
+  ['لینک دعوتت را برای دوستانت بفرست.', 'Send your invite link to friends.'],
+  ['لینک دعوت', 'Invite link'],
+  ['کپی لینک دعوت', 'Copy invite link'],
+  ['لینک دعوت آماده نشد.', 'Unable to create the invite link.'],
+  ['لینک دعوت کپی شد.', 'Invite link copied.'],
+  ['لینک را انتخاب کن و دستی کپی کن.', 'Select the link and copy it manually.'],
+  ['نمایش آمار دعوت‌ها', 'Show referral metrics'],
   ['الگوی برنامهٔ امروز', 'Today’s planning template'],
   [
     'الگو را در یادداشت‌هایت کپی کن و جاهای خالی را پر کن.',

@@ -3,6 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { form, FormField, maxLength } from '@angular/forms/signals';
 import {
   GROWTH_CAMPAIGN_WINDOWS,
+  GROWTH_REFERRAL_SOURCE,
   growthCampaignFilterSchema,
   type GrowthCampaignFilter,
   type GrowthCampaignMetrics,
@@ -110,6 +111,16 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
             (click)="reset()"
           >
             {{ 'پاک کردن فیلترها' | aioTranslate }}
+          </button>
+          <button
+            aioBtn
+            type="button"
+            variant="outline"
+            class="min-h-11"
+            [disabled]="report.isLoading()"
+            (click)="showReferrals()"
+          >
+            {{ 'نمایش آمار دعوت‌ها' | aioTranslate }}
           </button>
         </div>
         @if (invalid()) {
@@ -467,8 +478,17 @@ export class CampaignReport {
   protected setDate(key: 'from' | 'to', value: string): void {
     this.model.update((model) => ({ ...model, [key]: value }));
   }
-  protected apply(event: Event): void {
-    event.preventDefault();
+  protected showReferrals(): void {
+    this.model.update((model) => ({
+      ...model,
+      source: GROWTH_REFERRAL_SOURCE,
+      medium: '',
+      campaign: '',
+    }));
+    this.apply();
+  }
+  protected apply(event?: Event): void {
+    event?.preventDefault();
     const { days, from, to, ...campaign } = this.model();
     const custom = days === 'custom';
     const invalidRange =

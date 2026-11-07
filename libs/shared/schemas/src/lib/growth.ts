@@ -19,6 +19,8 @@ const campaignValue = z.string().check(
   ),
 );
 
+export const GROWTH_REFERRAL_SOURCE = 'referral';
+
 export const GROWTH_CAMPAIGN_KEYS = [
   'utm_source',
   'utm_medium',

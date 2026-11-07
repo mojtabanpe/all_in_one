@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@all-in-one/api/db';
+import { GROWTH_REFERRAL_SOURCE } from '@all-in-one/shared/schemas';
 import { GrowthService } from './growth.service';
 
 describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
@@ -49,6 +50,41 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         ...(campaign ? { campaign } : {}),
       };
     };
+    it('counts first-touch referrals across personal links and later untagged signups', async () => {
+      const [first, second, returning] = Array.from({ length: 3 }, visitor);
+      const filter = {
+        source: GROWTH_REFERRAL_SOURCE,
+        medium: 'invite',
+        campaign: 'personal-invite',
+      };
+      const before = (await service.campaigns(filter)).totals;
+      const invite = (code: string) => ({
+        utm_source: filter.source,
+        utm_medium: filter.medium,
+        utm_campaign: filter.campaign,
+        utm_content: code,
+      });
+      await prisma.growthEvent.createMany({
+        data: [
+          event(first, 'landing_view', 4, invite('a'.repeat(32))),
+          event(first, 'signup_started', 3),
+          event(first, 'signup_completed', 2),
+          event(second, 'landing_view', 4, invite('b'.repeat(32))),
+          event(returning, 'landing_view', 5, { utm_source: 'newsletter' }),
+          event(returning, 'landing_view', 4, invite('a'.repeat(32))),
+          event(returning, 'signup_completed', 2),
+        ],
+      });
+      const report = await service.campaigns(filter);
+      expect(report.rows).toHaveLength(1);
+      expect(report.totals).toEqual({
+        ...before,
+        landingVisitors: before.landingVisitors + 2,
+        signupVisitors: before.signupVisitors + 1,
+        completedSignupVisitors: before.completedSignupVisitors + 1,
+      });
+    });
+
     it('groups Saturday cohorts and excludes incomplete return days and QA visitors', async () => {
       const now = new Date('2030-11-13T10:00:00Z');
       const [older, recent, qa] = Array.from({ length: 3 }, visitor);
