@@ -36,25 +36,46 @@ export class AioDialogActions {
   readonly template = inject(TemplateRef);
 }
 
-/** Establish the off-screen frame before transitioning a newly portalled sheet. */
+/** Fit the portalled sheet to the visible viewport and establish its opening frame. */
 @Directive({
-  selector: '[aioBottomSheetMotion]',
+  selector: '[aioBottomSheetSurface]',
   host: { '[attr.data-motion-ready]': 'ready()' },
 })
-class AioBottomSheetMotion {
+class AioBottomSheetSurface {
   protected readonly ready = signal(false);
 
   constructor() {
     const element = inject(ElementRef<HTMLElement>).nativeElement;
     const destroy = inject(DestroyRef);
-    let frame: number | undefined;
-    destroy.onDestroy(() => {
-      if (frame !== undefined) cancelAnimationFrame(frame);
-    });
     afterNextRender(() => {
+      const root = element.ownerDocument.documentElement;
+      const viewport = element.ownerDocument.defaultView?.visualViewport;
+      const fitViewport = () => {
+        if (!viewport) return;
+        // Mobile browser chrome and the keyboard can shrink or pan the visual
+        // viewport while fixed positioning still uses the layout viewport.
+        const bottom = Math.max(
+          0,
+          root.clientHeight - viewport.offsetTop - viewport.height,
+        );
+        element.style.setProperty(
+          '--aio-sheet-viewport-height',
+          `${viewport.height}px`,
+        );
+        element.style.setProperty('--aio-sheet-bottom', `${bottom}px`);
+      };
+      fitViewport();
+      viewport?.addEventListener('resize', fitViewport);
+      viewport?.addEventListener('scroll', fitViewport);
+
       // A layout read establishes the starting transform before the next frame.
       element.getBoundingClientRect();
-      frame = requestAnimationFrame(() => this.ready.set(true));
+      const frame = requestAnimationFrame(() => this.ready.set(true));
+      destroy.onDestroy(() => {
+        cancelAnimationFrame(frame);
+        viewport?.removeEventListener('resize', fitViewport);
+        viewport?.removeEventListener('scroll', fitViewport);
+      });
     });
   }
 }
@@ -77,7 +98,7 @@ class AioBottomSheetMotion {
     HlmDrawerImports,
     HlmButton,
     NgTemplateOutlet,
-    AioBottomSheetMotion,
+    AioBottomSheetSurface,
     AioTranslate,
     AioIcon,
   ],
@@ -91,11 +112,11 @@ class AioBottomSheetMotion {
       >
         <hlm-drawer-content
           *hlmDrawerPortal="let ctx"
-          aioBottomSheetMotion
+          aioBottomSheetSurface
           [attr.dir]="activeLanguage() === 'en' ? 'ltr' : 'rtl'"
           [attr.lang]="activeLanguage()"
           [class]="
-            'aio-bottom-sheet mx-auto w-full min-w-0 max-w-full overflow-hidden pb-[calc(1rem+env(safe-area-inset-bottom,0px))] data-[vaul-drawer-direction=bottom]:max-h-[calc(100dvh-1rem)] ' +
+            'aio-bottom-sheet mx-auto w-full min-w-0 max-w-full overflow-hidden pb-[calc(1rem+env(safe-area-inset-bottom,0px))] ' +
             contentClass()
           "
         >

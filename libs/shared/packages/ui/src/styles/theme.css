@@ -323,6 +323,14 @@ html[lang='en'] *,
   }
 }
 
+.aio-bottom-sheet[data-vaul-drawer-direction='bottom'] {
+  bottom: var(--aio-sheet-bottom, 0px);
+  max-height: calc(
+    var(--aio-sheet-viewport-height, 100dvh) -
+      max(1rem, env(safe-area-inset-top, 0px))
+  );
+}
+
 /* Native transitions reverse smoothly if a sheet is closed while opening.
    Spartan waits for the exit transition before removing the overlay. Dragging
    keeps using Brain's inline transform, so swipe-to-dismiss remains intact. */
