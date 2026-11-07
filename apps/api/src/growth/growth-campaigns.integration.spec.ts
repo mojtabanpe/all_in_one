@@ -187,6 +187,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         signupVisitors: 0,
         completedSignupVisitors: 0,
         activeVisitors: 0,
+        firstReviewVisitors: 0,
       });
       expect(report.rows.map((row) => row.source)).toEqual([controlSource]);
     });
@@ -212,6 +213,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
           event(a, 'signup_completed', 3),
           event(a, 'active_day', 1),
           event(a, 'first_task_created', 1, undefined, 1),
+          event(a, 'first_review_completed', 1, undefined, 2),
           event(b, 'landing_view', 3, {
             utm_source: source,
             utm_medium: 'email',
@@ -251,14 +253,18 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         signupVisitors: 1,
         completedSignupVisitors: 1,
         activeVisitors: 1,
+        firstReviewVisitors: 1,
       });
-      expect(exact.rows).toHaveLength(1);
+      expect(exact.rows).toEqual([
+        { source, medium: 'social', campaign: 'alpha', ...exact.totals },
+      ]);
       const all = await service.campaigns({ source });
       expect(all.totals).toEqual({
         landingVisitors: 3,
         signupVisitors: 2,
         completedSignupVisitors: 2,
         activeVisitors: 2,
+        firstReviewVisitors: 1,
       });
       expect(all.rows).toHaveLength(3);
       expect(

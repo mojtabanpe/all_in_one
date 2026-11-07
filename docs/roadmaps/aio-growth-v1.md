@@ -196,6 +196,8 @@ Done for customers (directive 86): the former customer page `libs/web/shared/src
 
 ## 90-day marketing experiments (after P0 instrumentation)
 
+- `DONE` (local) Campaign reporting includes unique browsers with a first English card review in the selected window. The count uses the existing first-touch attribution and QA exclusion and is included in the totals, channel rows and CSV. Verify the column with a signed-in production admin after deployment.
+
 - `DONE` Local campaign-report hygiene: first-touch sources `qa`, `test` and `roadmap_check` are reserved for internal checks and excluded case-insensitively from the campaign report, including their later untagged activity. Raw events and the separate growth summary are unchanged. The local PostgreSQL campaign suite passed all four tests.
 
 - `DONE` Campaign preparation (2026-11-07): [7-day English pilot](aio-growth-english-pilot.fa.md) includes Persian Telegram/Instagram copy, tagged links, launch checks and reporting limits. The owner deferred publication on 2026-11-07. Keep the campaign ready and continue independent work.

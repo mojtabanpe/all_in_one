@@ -103,6 +103,7 @@ export class GrowthService {
         started: bigint;
         completed: bigint;
         active: bigint;
+        first_review: bigint;
       }[]
     >`
       WITH events AS (
@@ -126,7 +127,8 @@ export class GrowthService {
         COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'landing_view') AS landing,
         COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'signup_started') AS started,
         COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'signup_completed') AS completed,
-        COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name IN ('active_day', 'first_task_created', 'first_review_completed')) AS active
+        COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name IN ('active_day', 'first_task_created', 'first_review_completed')) AS active,
+        COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'first_review_completed') AS first_review
       FROM selected f JOIN events e ON e."visitorId" = f."visitorId"
       GROUP BY GROUPING SETS ((f.source, f.medium, f.campaign), ())
       ORDER BY level DESC, landing DESC, completed DESC,
@@ -137,6 +139,7 @@ export class GrowthService {
       signupVisitors: Number(row?.started ?? 0),
       completedSignupVisitors: Number(row?.completed ?? 0),
       activeVisitors: Number(row?.active ?? 0),
+      firstReviewVisitors: Number(row?.first_review ?? 0),
     });
     return {
       windowDays,

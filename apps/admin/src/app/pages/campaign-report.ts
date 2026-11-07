@@ -152,14 +152,19 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
       </div>
       @if (report.isLoading()) {
         <div
-          aioSkeletonRows
-          [count]="4"
-          itemClass="h-20 rounded-xl"
+          class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5"
           role="status"
           [attr.aria-label]="'در حال دریافت آمار کمپین' | aioTranslate"
-        ></div>
+        >
+          <div
+            aioSkeletonRows
+            class="contents"
+            [count]="5"
+            itemClass="h-20 rounded-xl"
+          ></div>
+        </div>
       } @else if (report.hasValue()) {
-        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           @for (tile of tiles(); track tile.label) {
             <section aioCard size="sm">
               <div
@@ -215,6 +220,9 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
                   <th aioTh scope="col">
                     {{ 'مرورگرهای دارای فعالیت' | aioTranslate }}
                   </th>
+                  <th aioTh scope="col">
+                    {{ 'اولین مرور کارت در مرورگر' | aioTranslate }}
+                  </th>
                 </tr>
               </thead>
               <tbody aioTBody>
@@ -237,6 +245,7 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
                       {{ locale.number(row.completedSignupVisitors) }}
                     </td>
                     <td aioTd>{{ locale.number(row.activeVisitors) }}</td>
+                    <td aioTd>{{ locale.number(row.firstReviewVisitors) }}</td>
                   </tr>
                 }
               </tbody>
@@ -357,6 +366,10 @@ export class CampaignReport {
           { label: 'شروع ثبت‌نام در کمپین', value: data.signupVisitors },
           { label: 'ساخت حساب در کمپین', value: data.completedSignupVisitors },
           { label: 'مرورگرهای دارای فعالیت', value: data.activeVisitors },
+          {
+            label: 'اولین مرور کارت در مرورگر',
+            value: data.firstReviewVisitors,
+          },
         ]
       : [];
   });
@@ -379,6 +392,7 @@ export class CampaignReport {
       'signup_started_visitors',
       'completed_signup_visitors',
       'active_visitors',
+      'first_review_visitors',
     ];
     const records = rows.map((row) => [
       from,
@@ -393,6 +407,7 @@ export class CampaignReport {
       row.signupVisitors,
       row.completedSignupVisitors,
       row.activeVisitors,
+      row.firstReviewVisitors,
     ]);
     const csv = [header, ...records]
       .map((record) => record.map(csvCell).join(','))
