@@ -3,11 +3,13 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Optional,
   UnprocessableEntityException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@all-in-one/api/db';
+import { SmsService, smsDate } from '@all-in-one/api/auth';
 import type {
   BillingAccessState,
   BillingRewardInput,
@@ -42,6 +44,8 @@ const SOCIAL_OFFERS = [
 ] as const;
 
 const WEEK_MS = 7 * 86_400_000;
+/** SUBSCRIPTION_EXPIRING goes out when paid access ends within three days. */
+export const EXPIRY_NOTICE_MS = 3 * 86_400_000;
 /**
  * Trials launched on this day (Tehran midnight). Accounts confirmed earlier get their week from here, so no
  * customer meets the paywall without having had a trial.
@@ -89,7 +93,61 @@ export class BillingService {
     private readonly prisma: PrismaService,
     private readonly gateway: ZibalGateway,
     private readonly config: ConfigService = new ConfigService(),
+    @Optional() private readonly sms?: SmsService,
   ) {}
+
+  /**
+   * SUBSCRIPTION_EXPIRING: one SMS per paid period, when its end is less than EXPIRY_NOTICE_MS away, to accounts
+   * with a confirmed number. Claimed per row first, so overlapping sweeps never send twice.
+   */
+  async notifyExpiring(now = new Date()): Promise<number> {
+    if (!this.sms?.enabled) return 0;
+    const rows = await this.prisma.billingSubscription.findMany({
+      where: {
+        paidUntil: { gt: now, lte: new Date(now.getTime() + EXPIRY_NOTICE_MS) },
+        user: { phone: { not: null } },
+      },
+      select: {
+        userId: true,
+        paidUntil: true,
+        expiryNoticeFor: true,
+        user: { select: { phone: true } },
+      },
+      take: 100,
+    });
+    let sent = 0;
+    for (const row of rows) {
+      if (row.expiryNoticeFor?.getTime() === row.paidUntil.getTime()) continue;
+      const claimed = await this.prisma.billingSubscription.updateMany({
+        where: {
+          userId: row.userId,
+          paidUntil: row.paidUntil,
+          OR: [
+            { expiryNoticeFor: null },
+            { expiryNoticeFor: { not: row.paidUntil } },
+          ],
+        },
+        data: { expiryNoticeFor: row.paidUntil },
+      });
+      if (!claimed.count || !row.user.phone) continue;
+      this.sms.notify('SUBSCRIPTION_EXPIRING', row.user.phone, {
+        plan: await this.planTitle(row.userId),
+        expiry_date: smsDate(row.paidUntil),
+      });
+      sent++;
+    }
+    return sent;
+  }
+
+  /** The `%plan%` of an account: its latest paid plan's Persian title (30 characters at most). */
+  private async planTitle(userId: string): Promise<string> {
+    const order = await this.prisma.billingOrder.findFirst({
+      where: { userId, status: 'PAID' },
+      orderBy: { paidAt: 'desc' },
+      select: { plan: { select: { titleFa: true } } },
+    });
+    return (order?.plan.titleFa ?? 'Poshtetgarm').slice(0, 30);
+  }
 
   plans(): Promise<BillingPlan[]> {
     return this.prisma.billingPlan.findMany({
@@ -769,13 +827,13 @@ export class BillingService {
 
   /** Marks the order paid and extends the subscription in one transaction; a repeat is a no-op. */
   private async activate(orderId: string, refNumber: string | null) {
-    await this.prisma.$transaction(async (tx) => {
+    const activated = await this.prisma.$transaction(async (tx) => {
       const paidAt = new Date();
       const claimed = await tx.billingOrder.updateMany({
         where: { id: orderId, status: 'PENDING' },
         data: { status: 'PAID', paidAt, refNumber },
       });
-      if (claimed.count !== 1) return;
+      if (claimed.count !== 1) return null;
       const { userId, months } = await tx.billingOrder.findUniqueOrThrow({
         where: { id: orderId },
         select: { userId: true, months: true },
@@ -793,6 +851,18 @@ export class BillingService {
         create: { userId, paidUntil },
         update: { paidUntil },
       });
+      return { userId, paidUntil };
     });
+    // After the commit, and only for the request that activated: a failed SMS never undoes a payment.
+    if (activated && this.sms?.enabled) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: activated.userId },
+        select: { phone: true },
+      });
+      this.sms.notify('SUBSCRIPTION_ACTIVATED', user?.phone, {
+        plan: await this.planTitle(activated.userId),
+        expiry_date: smsDate(activated.paidUntil),
+      });
+    }
   }
 }

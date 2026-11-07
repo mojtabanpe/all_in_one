@@ -19,6 +19,9 @@ export class BillingReconciler implements OnModuleInit, OnModuleDestroy {
       .catch(() =>
         this.logger.warn('Payment reconciliation failed; will retry'),
       );
+    void this.billing
+      .notifyExpiring()
+      .catch(() => this.logger.warn('Expiry SMS sweep failed; will retry'));
   }
 
   onModuleInit(): void {

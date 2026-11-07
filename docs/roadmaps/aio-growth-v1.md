@@ -75,15 +75,20 @@ is written here as a request (`→ Codex: …`), not done in the other lane's fi
 Owns `apps/api/src/billing`, `libs/api/ai`, `apps/api/src/admin` AI/billing parts, SMS/auth delivery
 (`libs/api/auth`), the customer billing page and paywall, admin `/admin/billing` and `/admin/ai`.
 
-| ID  | Task                                                                                                                                                    | Status                                  |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| C1  | Payment test matrix with a mocked Zibal: success, cancel, timeout, duplicate callback, amount mismatch, renewal/expiry, provider outage                 | DONE (Claude, see payment tests item)   |
-| C2  | Refunds: admin action with audit row and access end; Zibal refund call if the merchant supports it, otherwise a recorded manual refund                  | DONE (Claude, see refunds item)         |
-| C3  | Paywall entry points: account/navigation link to `/app/billing`, upgrade calls on locked AI actions (works with no plans: shows the trial/earned state) | DONE (Claude, see paywall UI item)      |
-| C4  | Commercial metrics endpoint + admin cards: paid users, MRR (Toman), failed payments, refunds                                                            | DONE (Claude, see admin dashboard item) |
-| C5  | AI provider fallback (second preset per service), error-rate/budget alerts in `/admin/ai`, per-user concurrency limit                                   | DONE (Claude, see managed AI section)   |
-| C6  | Faraz SMS client, phone verification and the five template flows behind an env switch, tested with a mocked provider (real delivery waits for O4)       | IN_PROGRESS (Claude)                    |
-| C7  | Per-model AI price history, so cost reports keep old prices after a model change                                                                        | TODO                                    |
+| ID  | Task                                                                                                                                                    | Status                                            |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| C1  | Payment test matrix with a mocked Zibal: success, cancel, timeout, duplicate callback, amount mismatch, renewal/expiry, provider outage                 | DONE (Claude, see payment tests item)             |
+| C2  | Refunds: admin action with audit row and access end; Zibal refund call if the merchant supports it, otherwise a recorded manual refund                  | DONE (Claude, see refunds item)                   |
+| C3  | Paywall entry points: account/navigation link to `/app/billing`, upgrade calls on locked AI actions (works with no plans: shows the trial/earned state) | DONE (Claude, see paywall UI item)                |
+| C4  | Commercial metrics endpoint + admin cards: paid users, MRR (Toman), failed payments, refunds                                                            | DONE (Claude, see admin dashboard item)           |
+| C5  | AI provider fallback (second preset per service), error-rate/budget alerts in `/admin/ai`, per-user concurrency limit                                   | DONE (Claude, see managed AI section)             |
+| C6  | Faraz SMS client, phone verification and the five template flows behind an env switch, tested with a mocked provider (real delivery waits for O4)       | DONE (Claude, see SMS section; real delivery: O4) |
+| C7  | Per-model AI price history, so cost reports keep old prices after a model change                                                                        | TODO                                              |
+
+→ Codex (from Claude, 2026-11-07): with `GROWTH_DB_INTEGRATION=1`, `pnpm nx test api -- src/growth` fails 1–2 tests
+in `growth-activity.integration.spec.ts` (D1 returns, seven-day cohorts: e.g. expected 3, got 5) when the growth files
+run in parallel on one database; each file alone passes. Reproduced on `d1023a8` without Claude's changes. The
+cohort counts probably need to be scoped to the test's own visitors.
 
 ### ChatGPT (Codex) lane: acquisition, activation and retention
 
@@ -214,7 +219,8 @@ Evidence: `apps/admin/src/app/pages/dashboard.ts` already shows basic user/conte
 ## SMS templates — Faraz SMS
 
 - `DONE` Owner supplied the sender line and all five approved template IDs (directive 88).
-- `TODO` Confirm a Faraz API key is installed in server secrets, wire up phone verification and the corresponding delivery flows, and test real delivery. Email-based authentication remains in use.
+- `DONE` (C6, 2026-11-07, local, not deployed) Faraz client and the five flows, off by default. `SmsService` sends patterns through IPPanel Edge (`POST https://edge.ippanel.com/v1/api/send`, key as `Authorization`, sender `+9820002178584475`, one E.164 recipient); it runs only when `SMS_ENABLED=true` and `FARAZ_SMS_API_KEY` is set in `/opt/all-in-one/shared/.env`, and never logs the key, codes or numbers. Flows: AUTH_CODE confirms a mobile number on the account page («شمارهٔ موبایل»; `GET/POST/DELETE /api/auth/phone`, `POST /api/auth/phone/confirm`); PASSWORD_RESET resets the password from «بازیابی با پیامک» on the forgot-password page for a confirmed number (same answer for unknown numbers; signs every session out); PASSWORD_CHANGED after any password change or reset; SUBSCRIPTION_ACTIVATED after a verified payment (once, after commit); SUBSCRIPTION_EXPIRING once per paid period within three days of the end (10-minute sweep, claimed per row). Codes: 6 digits, only the SHA-256 stored (`phone_codes`), 5 minutes (verify) or 10 (reset), 60 s between sends, 5 sends a day and 5 wrong guesses per code, single use. Variables follow the submitted templates: `%code%`+`%minutes%` (AUTH_CODE, PASSWORD_RESET), none (PASSWORD_CHANGED), `%plan%`+`%expiry_date%` as Solar Hijri `YYYY/MM/DD` (both subscription templates). Evidence: migration `sms_phone`; 16 unit tests (request shape, off switch, no secrets in logs, number parsing, dates), 4 PostgreSQL phone tests, billing SMS test (one activation SMS for concurrent callbacks, one expiry notice per period) and the reconciler test; 18 affected projects lint/test/typecheck/build; local Chrome at 375px: hidden with SMS off on the real api, and with stubbed responses the account and forgot-password flows sent the normalized number and code. Not verified: real delivery, the exact `Authorization` format (the docs show the bare key; an `API ` prefix in one example), and that the approved templates use exactly these variable names.
+- `TODO` (owner, O4) Put `FARAZ_SMS_API_KEY` in `/opt/all-in-one/shared/.env`, deploy, then set `SMS_ENABLED=true`, confirm your own number in «حساب کاربری» and report whether the code arrives; then try «بازیابی با پیامک». Email-based authentication remains the main path.
 
 ## P1 — Iranian payment gateway and Freemium
 

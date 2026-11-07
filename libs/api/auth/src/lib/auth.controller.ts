@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   NotFoundException,
@@ -27,11 +28,21 @@ import {
   verifyEmailSchema,
   resendVerificationSchema,
   type ResendVerificationInput,
+  phoneStartSchema,
+  type PhoneStartInput,
+  phoneConfirmSchema,
+  type PhoneConfirmInput,
+  phoneResetRequestSchema,
+  type PhoneResetRequestInput,
+  phoneResetSchema,
+  type PhoneResetInput,
+  type PhoneState,
 } from '@all-in-one/shared/schemas';
 import type { User as DbUser } from '@all-in-one/api/db';
 import { type AuthUser, CurrentUser, Public } from './auth.decorators';
 import { SESSION_COOKIE } from './auth.guard';
 import { AuthService, toUser } from './auth.service';
+import { PhoneService } from './phone.service';
 
 const SESSION_SECONDS = 60 * 60 * 24 * 7;
 
@@ -41,7 +52,66 @@ export class AuthController {
     private readonly auth: AuthService,
     private readonly adapterHost: HttpAdapterHost,
     private readonly config: ConfigService,
+    private readonly phones: PhoneService,
   ) {}
+
+  /** Whether SMS is on, the account's confirmed number and one waiting for its code. */
+  @Get('phone')
+  phone(@CurrentUser() current: AuthUser): Promise<PhoneState> {
+    return this.phones.state(current.id);
+  }
+
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  @HttpCode(202)
+  @Post('phone')
+  startPhone(
+    @CurrentUser() current: AuthUser,
+    @Body({ schema: phoneStartSchema }) input: PhoneStartInput,
+  ): Promise<PhoneState> {
+    return this.phones.start(current.id, input.phone);
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @HttpCode(200)
+  @Post('phone/confirm')
+  confirmPhone(
+    @CurrentUser() current: AuthUser,
+    @Body({ schema: phoneConfirmSchema }) input: PhoneConfirmInput,
+  ): Promise<PhoneState> {
+    return this.phones.confirm(current.id, input.code);
+  }
+
+  @Delete('phone')
+  removePhone(@CurrentUser() current: AuthUser): Promise<PhoneState> {
+    return this.phones.remove(current.id);
+  }
+
+  /** Whether «forgot password» can offer SMS (no account data). */
+  @Public()
+  @Get('sms')
+  smsStatus(): { enabled: boolean } {
+    return { enabled: this.phones.enabled };
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  @HttpCode(202)
+  @Post('forgot-password-sms')
+  async forgotPasswordSms(
+    @Body({ schema: phoneResetRequestSchema }) input: PhoneResetRequestInput,
+  ): Promise<void> {
+    await this.phones.requestReset(input.phone);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @HttpCode(204)
+  @Post('reset-password-sms')
+  async resetPasswordSms(
+    @Body({ schema: phoneResetSchema }) input: PhoneResetInput,
+  ): Promise<void> {
+    await this.phones.reset(input.phone, input.code, input.password);
+  }
 
   @Public()
   @Throttle({ default: { limit: 5, ttl: 60_000 } })

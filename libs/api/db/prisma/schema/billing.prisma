@@ -51,6 +51,8 @@ model BillingSubscription {
   userId    String   @id @db.Uuid
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   paidUntil DateTime
+  /// The paidUntil an expiry SMS was sent for, so each period gets one notice.
+  expiryNoticeFor DateTime?
   updatedAt DateTime @updatedAt
 
   @@map("billing_subscriptions")

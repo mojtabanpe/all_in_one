@@ -4,3 +4,5 @@ export * from './lib/auth.module';
 export * from './lib/auth.service';
 export * from './lib/password';
 export * from './lib/mail.service';
+export * from './lib/sms.service';
+export * from './lib/phone.service';

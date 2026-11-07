@@ -61,3 +61,53 @@ export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 export type RegisterResult =
   | { status: 'signed-in'; user: User }
   | { status: 'verify-email'; email: string };
+
+const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
+const ARABIC_DIGITS = '٠١٢٣٤٥٦٧٨٩';
+
+/**
+ * An Iranian mobile number in E.164 (`+989121234567`), from what people type: `09121234567`, `9121234567`,
+ * `+98 912 123 4567`, `00989121234567`, Persian or Arabic digits. Null when it is not an Iranian mobile.
+ */
+export function iranMobile(input: string): string | null {
+  const latin = input.replace(/[۰-۹٠-٩]/g, (d) =>
+    String(
+      PERSIAN_DIGITS.includes(d)
+        ? PERSIAN_DIGITS.indexOf(d)
+        : ARABIC_DIGITS.indexOf(d),
+    ),
+  );
+  const digits = latin.replace(/[\s\-().]/g, '');
+  const match = /^(?:\+98|0098|98|0)?(9\d{9})$/.exec(digits);
+  return match ? `+98${match[1]}` : null;
+}
+
+const mobile = z.string().check(
+  z.maxLength(24),
+  z.refine((value) => iranMobile(value) !== null, 'شمارهٔ موبایل درست نیست.'),
+);
+const smsCode = z.string().check(z.regex(/^\d{6}$/));
+
+/** Start confirming a mobile number for the signed-in account (a 6-digit code by SMS). */
+export const phoneStartSchema = z.object({ phone: mobile });
+export type PhoneStartInput = z.infer<typeof phoneStartSchema>;
+export const phoneConfirmSchema = z.object({ code: smsCode });
+export type PhoneConfirmInput = z.infer<typeof phoneConfirmSchema>;
+
+/** «Forgot password» by SMS: always answered the same way, whether the number belongs to an account or not. */
+export const phoneResetRequestSchema = z.object({ phone: mobile });
+export type PhoneResetRequestInput = z.infer<typeof phoneResetRequestSchema>;
+export const phoneResetSchema = z.object({
+  phone: mobile,
+  code: smsCode,
+  password,
+});
+export type PhoneResetInput = z.infer<typeof phoneResetSchema>;
+
+/** The account's number; `enabled` is false while SMS sending is switched off on the server. */
+export interface PhoneState {
+  enabled: boolean;
+  phone: string | null;
+  /** A code was sent to this number and waits for confirmation. */
+  pending: string | null;
+}

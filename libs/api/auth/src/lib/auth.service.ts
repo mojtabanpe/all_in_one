@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   Logger,
+  Optional,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -19,6 +20,7 @@ import type {
 import { PrismaService, type User as DbUser } from '@all-in-one/api/db';
 import { MailService } from './mail.service';
 import { hashPassword, isLegacyHash, verifyPassword } from './password';
+import { SmsService } from './sms.service';
 
 const RESET_LIFETIME = 60 * 60 * 1000;
 const VERIFY_LIFETIME = 24 * 60 * 60 * 1000;
@@ -52,6 +54,7 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly mail: MailService,
     private readonly config: ConfigService,
+    @Optional() private readonly sms?: SmsService,
   ) {}
 
   /** New accounts confirm their email unless REQUIRE_EMAIL_VERIFICATION=false. */
@@ -231,6 +234,7 @@ export class AuthService {
       });
     });
     this.notify(updated.email, 'رمز حسابت در «Poshtetgarm» عوض شد');
+    this.sms?.notify('PASSWORD_CHANGED', updated.phone, {});
     return updated;
   }
 
@@ -308,6 +312,7 @@ export class AuthService {
         'این لینک بازیابی نامعتبر است یا منقضی شده.',
       );
     this.notify(user.email, 'رمز حسابت در «Poshtetgarm» بازنشانی شد');
+    this.sms?.notify('PASSWORD_CHANGED', user.phone, {});
   }
 
   /** Security notice; a mail failure must not undo the password change. */

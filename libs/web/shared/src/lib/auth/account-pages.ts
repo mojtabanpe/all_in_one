@@ -28,6 +28,8 @@ import {
 import { apiErrorMessage } from './auth.guards';
 import { APP_VERSION } from '../release-version';
 import { AiConnection } from './ai-connection';
+import { PhoneSettings } from './phone-settings';
+import { PhoneReset } from './phone-reset';
 import { AuthStore } from './auth.store';
 
 const PAGE =
@@ -37,6 +39,7 @@ const PAGE =
 @Component({
   selector: 'web-forgot-password-page',
   imports: [
+    PhoneReset,
     AioButton,
     AioCardDirectives,
     AioInput,
@@ -96,6 +99,7 @@ const PAGE =
             'بازگشت به ورود' | aioTranslate
           }}</a>
         </form>
+        <div aioCardFooter class="block"><web-phone-reset /></div>
       </section>
     </div>
   `,
@@ -321,6 +325,7 @@ export class VerifyEmailPage implements OnInit {
 @Component({
   selector: 'web-account-page',
   imports: [
+    PhoneSettings,
     RouterLink,
     AioButton,
     AioSwitch,
@@ -485,6 +490,7 @@ export class VerifyEmailPage implements OnInit {
           </button>
         </form>
       </section>
+      <web-phone-settings />
       <section aioCard>
         <div
           aioCardHeading

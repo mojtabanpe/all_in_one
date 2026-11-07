@@ -896,6 +896,73 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         ).toBe(false);
       });
 
+      it('texts an activation once and an expiry notice once per paid period', async () => {
+        const sms = { enabled: true, notify: vi.fn() };
+        const texting = new BillingService(
+          prisma,
+          gateway as unknown as ZibalGateway,
+          undefined,
+          sms as never,
+        );
+        const customer = await prisma.user.create({
+          data: {
+            email: `billing-sms-${randomUUID()}@example.invalid`,
+            passwordHash: 'synthetic-integration-fixture',
+            phone: `+989${String(Math.floor(Math.random() * 1e9)).padStart(9, '0')}`,
+            phoneVerifiedAt: new Date(),
+          },
+        });
+        try {
+          const track = trackOf(
+            (await texting.checkout(customer.id, code)).paymentUrl,
+          );
+          await Promise.all([texting.settle(track), texting.settle(track)]);
+          const until = (await texting.subscription(customer.id))
+            .paidUntil as string;
+          expect(sms.notify).toHaveBeenCalledTimes(1);
+          expect(sms.notify).toHaveBeenCalledWith(
+            'SUBSCRIPTION_ACTIVATED',
+            customer.phone,
+            {
+              plan: 'آزمایشی',
+              expiry_date: expect.stringMatching(/^14\d\d\/\d\d\/\d\d$/),
+            },
+          );
+          sms.notify.mockClear();
+          const early = new Date(Date.parse(until) - 5 * 86_400_000);
+          const near = new Date(Date.parse(until) - 2 * 86_400_000);
+          await texting.notifyExpiring(early);
+          expect(sms.notify).not.toHaveBeenCalled();
+          await Promise.all([
+            texting.notifyExpiring(near),
+            texting.notifyExpiring(near),
+          ]);
+          const toCustomer = () =>
+            sms.notify.mock.calls.filter((call) => call[1] === customer.phone);
+          expect(toCustomer()).toHaveLength(1);
+          expect(toCustomer()[0][0]).toBe('SUBSCRIPTION_EXPIRING');
+          // A renewal opens a new period with its own notice.
+          await prisma.billingSubscription.update({
+            where: { userId: customer.id },
+            data: { paidUntil: new Date(Date.parse(until) + 30 * 86_400_000) },
+          });
+          await texting.notifyExpiring(near);
+          expect(toCustomer()).toHaveLength(1);
+          await texting.notifyExpiring(
+            new Date(Date.parse(until) + 28 * 86_400_000),
+          );
+          expect(toCustomer()).toHaveLength(2);
+          // Switched off: no query, nothing sent.
+          sms.enabled = false;
+          expect(await texting.notifyExpiring(near)).toBe(0);
+        } finally {
+          await prisma.billingOrder.deleteMany({
+            where: { userId: customer.id },
+          });
+          await prisma.user.delete({ where: { id: customer.id } });
+        }
+      });
+
       it('records refunds once, takes paid time back on request and closes fully refunded orders', async () => {
         const admin = await prisma.user.create({
           data: {

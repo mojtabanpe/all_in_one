@@ -7,6 +7,8 @@ import { AuthController } from './auth.controller';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 import { MailService } from './mail.service';
+import { SmsService } from './sms.service';
+import { PhoneService } from './phone.service';
 
 @Module({
   imports: [
@@ -24,9 +26,11 @@ import { MailService } from './mail.service';
   providers: [
     AuthService,
     MailService,
+    SmsService,
+    PhoneService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: AuthGuard },
   ],
-  exports: [AuthService, MailService],
+  exports: [AuthService, MailService, SmsService],
 })
 export class AuthModule {}
