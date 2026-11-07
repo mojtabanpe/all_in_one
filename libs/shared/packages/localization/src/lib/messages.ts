@@ -25,6 +25,7 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ...PRIVACY_MESSAGES,
   ...BILLING_MESSAGES,
   ['عملکرد کمپین‌ها', 'Campaign performance'],
+  ['دانلود جدول کمپین‌ها (CSV)', 'Download campaign table (CSV)'],
   ['بازهٔ گزارش کمپین', 'Campaign reporting period'],
   ['۹۰ روز گذشته', 'Last 90 days'],
   [

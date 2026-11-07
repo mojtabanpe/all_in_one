@@ -149,6 +149,16 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
           }}
         </p>
         @if (report.value().rows.length) {
+          <div>
+            <button
+              aioBtn
+              type="button"
+              variant="outline"
+              (click)="downloadCsv()"
+            >
+              {{ 'دانلود جدول کمپین‌ها (CSV)' | aioTranslate }}
+            </button>
+          </div>
           <div
             aioTableContainer
             class="max-w-full overflow-x-auto"
@@ -303,6 +313,41 @@ export class CampaignReport {
         ]
       : [];
   });
+  protected downloadCsv(): void {
+    if (this.report.isLoading() || !this.report.hasValue()) return;
+    const { rows, windowDays } = this.report.value();
+    if (!rows.length) return;
+
+    const header = [
+      'utm_source',
+      'utm_medium',
+      'utm_campaign',
+      'landing_visitors',
+      'signup_started_visitors',
+      'completed_signup_visitors',
+      'active_visitors',
+    ];
+    const records = rows.map((row) => [
+      row.source,
+      row.medium,
+      row.campaign,
+      row.landingVisitors,
+      row.signupVisitors,
+      row.completedSignupVisitors,
+      row.activeVisitors,
+    ]);
+    const csv = [header, ...records]
+      .map((record) => record.map(csvCell).join(','))
+      .join('\r\n');
+    const url = URL.createObjectURL(
+      new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' }),
+    );
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `campaign-report-${windowDays}d.csv`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
   protected setDays(days: string): void {
     this.model.update((model) => ({ ...model, days }));
   }
@@ -326,4 +371,11 @@ export class CampaignReport {
       this.report.reload();
     else this.filters.set(filter);
   }
+}
+
+function csvCell(value: string | number | null): string {
+  const text = String(value ?? '');
+  // Campaign values are public input. Keep spreadsheet apps from evaluating them.
+  const safe = /^[\s\uFEFF]*[=+@-]/u.test(text) ? "'" + text : text;
+  return '"' + safe.replaceAll('"', '""') + '"';
 }
