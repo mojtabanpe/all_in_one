@@ -4,6 +4,7 @@ import { Component, computed, inject } from '@angular/core';
 import type {
   AdminStats,
   GrowthRetentionCohort,
+  GrowthChurnReport,
   GrowthSummary,
 } from '@all-in-one/shared/schemas';
 import {
@@ -34,7 +35,7 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
   template: `
     <div class="flex flex-col gap-4">
       <h1 class="text-2xl font-bold">{{ 'داشبورد' | aioTranslate }}</h1>
-      @if (stats.value()) {
+      @if (stats.hasValue()) {
         <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
           @for (tile of tiles(); track tile.label) {
             <section aioCard size="sm">
@@ -448,6 +449,106 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
           }
         </div>
       </section>
+      <section aioCard>
+        <div
+          aioCardHeading
+          [title]="'ریزش کاربران به تفکیک کانال' | aioTranslate"
+          [level]="2"
+        ></div>
+        <div aioCardContent class="flex min-w-0 flex-col gap-3">
+          <p class="text-sm text-muted-foreground">
+            {{
+              'مرورگرهای ثبت‌نام‌شده در ۹۰ روز اخیر، بر اساس اولین منبع و رسانه. هر ثبت‌نام بعد از ۱۴ روز سنجیده می‌شود: ریزش یعنی هیچ فعالیتی در ۱۴ روز اخیر؛ «هرگز فعال نشده» یعنی بعد از ثبت‌نام اصلاً فعالیتی نداشته است.'
+                | aioTranslate
+            }}
+          </p>
+          @if (churn.isLoading()) {
+            <div aioSkeletonRows [count]="4" itemClass="h-10"></div>
+          } @else if (churn.hasValue()) {
+            @let report = churn.value();
+            @if (report.rows.length) {
+              <div
+                aioTableContainer
+                class="max-w-full overflow-x-auto"
+                tabindex="0"
+                [attr.aria-label]="'ریزش کاربران به تفکیک کانال' | aioTranslate"
+              >
+                <table aioTable>
+                  <thead aioTHead>
+                    <tr aioTr>
+                      <th aioTh scope="col">
+                        {{ 'منبع / رسانه' | aioTranslate }}
+                      </th>
+                      <th aioTh scope="col">
+                        {{ 'ثبت‌نام‌ها' | aioTranslate }}
+                      </th>
+                      <th aioTh scope="col">
+                        {{ 'سنجیده‌شده (۱۴+ روز)' | aioTranslate }}
+                      </th>
+                      <th aioTh scope="col">{{ 'ریزش' | aioTranslate }}</th>
+                      <th aioTh scope="col">
+                        {{ 'هرگز فعال نشده' | aioTranslate }}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody aioTBody>
+                    @for (row of churnRows(); track row.key) {
+                      <tr aioTr>
+                        <th aioTh scope="row">
+                          @if (row.total) {
+                            {{ 'جمع همهٔ کانال‌ها' | aioTranslate }}
+                          } @else {
+                            <bdi dir="ltr" lang="en"
+                              >{{ row.source }} / {{ row.medium }}</bdi
+                            >
+                          }
+                        </th>
+                        <td aioTd>{{ fa(row.signups) }}</td>
+                        <td aioTd>{{ fa(row.mature) }}</td>
+                        <td aioTd>
+                          @if (row.mature) {
+                            <bdi>{{
+                              retentionRate(row.churned, row.mature)
+                            }}</bdi>
+                            <bdi class="text-muted-foreground"
+                              >({{ fa(row.churned) }}/{{ fa(row.mature) }})</bdi
+                            >
+                          } @else {
+                            —
+                          }
+                        </td>
+                        <td aioTd>
+                          @if (row.mature) {
+                            <bdi>{{
+                              retentionRate(row.neverActive, row.mature)
+                            }}</bdi>
+                          } @else {
+                            —
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p>
+                {{ 'هنوز ثبت‌نامی برای سنجش ریزش نیست.' | aioTranslate }}
+              </p>
+            }
+          } @else {
+            <button
+              aioBtn
+              type="button"
+              variant="outline"
+              class="self-start"
+              (click)="churn.reload()"
+            >
+              {{ 'دریافت دوباره آمار ریزش' | aioTranslate }}
+            </button>
+          }
+        </div>
+      </section>
       <admin-campaign-report />
       <web-api-status />
     </div>
@@ -469,6 +570,24 @@ export class Dashboard {
   protected readonly cohorts = httpResource<GrowthRetentionCohort[]>(
     () => `${this.api}/growth/retention-cohorts`,
   );
+  protected readonly churn = httpResource<GrowthChurnReport>(
+    () => `${this.api}/growth/churn`,
+  );
+  /** Channels, then the total row (only when there is more than one channel). */
+  protected readonly churnRows = computed(() => {
+    if (!this.churn.hasValue()) return [];
+    const { rows, totals } = this.churn.value();
+    return [
+      ...rows.map((row) => ({
+        ...row,
+        key: `${row.source}\u0000${row.medium}`,
+        total: false,
+      })),
+      ...(rows.length > 1
+        ? [{ ...totals, source: '', medium: '', key: 'total', total: true }]
+        : []),
+    ];
+  });
   protected readonly growth = httpResource<GrowthSummary>(
     () => `${this.api}/growth/summary`,
   );
@@ -523,8 +642,9 @@ export class Dashboard {
       : [];
   });
   protected readonly tiles = computed(() => {
+    // value() throws in the error state, which would stop the whole dashboard from updating.
+    if (!this.stats.hasValue()) return [];
     const s = this.stats.value();
-    if (!s) return [];
     return [
       { label: 'کاربران', value: s.users },
       { label: 'کاربران جدید این هفته', value: s.newUsersThisWeek },

@@ -131,6 +131,36 @@ export interface GrowthCampaignReport {
   })[];
 }
 
+/** Days without activity after which a signed-up browser counts as churned. */
+export const GROWTH_CHURN_DAYS = 14;
+
+export interface GrowthChurnMetrics {
+  /** Browsers that completed signup in the retained 90 days. */
+  signups: number;
+  /** Of those, signed up at least GROWTH_CHURN_DAYS days ago (old enough to judge). */
+  mature: number;
+  /** Mature browsers with no active day in the last GROWTH_CHURN_DAYS days. */
+  churned: number;
+  /** Mature browsers never active after signing up. */
+  neverActive: number;
+}
+
+export interface GrowthChurnRow extends GrowthChurnMetrics {
+  /** First observed utm_source / utm_medium; 'direct' / 'unknown' when missing. */
+  source: string;
+  medium: string;
+}
+
+export interface GrowthChurnReport {
+  inactiveDays: number;
+  /** Signup days covered (Tehran, inclusive). */
+  from: string;
+  to: string;
+  totals: GrowthChurnMetrics;
+  /** Top 20 channels by signups. */
+  rows: GrowthChurnRow[];
+}
+
 export interface GrowthRetentionCohort {
   week: string;
   signups: number;

@@ -57,6 +57,13 @@ export class GrowthController {
   }
 
   @Roles('ADMIN')
+  @Get('churn')
+  churn() {
+    this.requireEnabled();
+    return this.growth.churn();
+  }
+
+  @Roles('ADMIN')
   @Get('summary')
   summary() {
     this.requireEnabled();

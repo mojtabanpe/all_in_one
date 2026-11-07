@@ -46,6 +46,18 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['مرورهای فلش‌کارت', 'Flashcard reviews'],
   ['وعده‌های ثبت‌شده', 'Logged meals'],
   ['نگهداشت به تفکیک هفتهٔ ثبت‌نام', 'Retention by signup week'],
+  ['ریزش کاربران به تفکیک کانال', 'Churn by channel'],
+  [
+    'مرورگرهای ثبت‌نام‌شده در ۹۰ روز اخیر، بر اساس اولین منبع و رسانه. هر ثبت‌نام بعد از ۱۴ روز سنجیده می‌شود: ریزش یعنی هیچ فعالیتی در ۱۴ روز اخیر؛ «هرگز فعال نشده» یعنی بعد از ثبت‌نام اصلاً فعالیتی نداشته است.',
+    'Browsers that signed up in the last 90 days, by first source and medium. Each signup is judged after 14 days: churned means no activity in the last 14 days; “never active” means no activity at all after signing up.',
+  ],
+  ['منبع / رسانه', 'Source / medium'],
+  ['سنجیده‌شده (۱۴+ روز)', 'Judged (14+ days)'],
+  ['ریزش', 'Churn'],
+  ['جمع همهٔ کانال‌ها', 'All channels'],
+  ['هرگز فعال نشده', 'Never active'],
+  ['هنوز ثبت‌نامی برای سنجش ریزش نیست.', 'No signups to judge churn yet.'],
+  ['دریافت دوباره آمار ریزش', 'Reload churn figures'],
   [
     'مرورگرهای ثبت‌نام‌شده در ۹۰ روز اخیر، گروه‌بندی‌شده از شنبه. فقط روزهای کامل در نرخ بازگشت حساب می‌شوند.',
     'Browsers that signed up in the last 90 days, grouped into weeks starting Saturday. Return rates count only complete days.',

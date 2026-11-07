@@ -6,7 +6,10 @@ import type {
   GrowthCampaignReport,
   GrowthSummary,
   GrowthRetentionCohort,
+  GrowthChurnMetrics,
+  GrowthChurnReport,
 } from '@all-in-one/shared/schemas';
+import { GROWTH_CHURN_DAYS } from '@all-in-one/shared/schemas';
 
 const WINDOW_DAYS = 30;
 const dayAt = (date: Date) =>
@@ -198,6 +201,85 @@ export class GrowthService {
       cohorts.set(row.week, cohort);
     }
     return [...cohorts.values()];
+  }
+
+  /**
+   * Churn by acquisition channel: browsers that signed up in the retained 90 days, grouped by their first
+   * observed source/medium (QA traffic excluded). A browser is judged once it signed up at least
+   * GROWTH_CHURN_DAYS days ago: churned when it had no active day in the last GROWTH_CHURN_DAYS days (today
+   * included), never active when it had none at all after signing up. Browsers, not people or accounts.
+   */
+  async churn(now = new Date()): Promise<GrowthChurnReport> {
+    const today = dayAt(now);
+    const since = dayAt(new Date(now.getTime() - 89 * 86_400_000));
+    const rows = await this.prisma.$queryRaw<
+      {
+        level: number;
+        source: string | null;
+        medium: string | null;
+        signups: bigint;
+        mature: bigint;
+        churned: bigint;
+        never: bigint;
+      }[]
+    >`
+      WITH first_touch AS (
+        SELECT DISTINCT ON ("visitorId") "visitorId",
+          COALESCE(NULLIF(campaign->>'utm_source', ''), 'direct') AS source,
+          COALESCE(NULLIF(campaign->>'utm_medium', ''), 'unknown') AS medium
+        FROM growth_events WHERE day <= ${today}
+        ORDER BY "visitorId", "createdAt", id
+      ), signups AS (
+        SELECT e."visitorId", MIN(e.day::date) AS day
+        FROM growth_events e
+        WHERE e.name = 'signup_completed' AND e.day BETWEEN ${since} AND ${today}
+          AND NOT EXISTS (
+            SELECT 1 FROM growth_events qa WHERE qa."visitorId" = e."visitorId"
+              AND LOWER(qa.campaign->>'utm_source') IN ('qa', 'test', 'roadmap_check')
+          )
+        GROUP BY e."visitorId"
+      ), judged AS (
+        SELECT f.source, f.medium,
+          s.day <= ${today}::date - ${GROWTH_CHURN_DAYS}::int AS mature,
+          EXISTS (
+            SELECT 1 FROM growth_events a WHERE a."visitorId" = s."visitorId"
+              AND a.name = 'active_day' AND a.day::date >= s.day AND a.day <= ${today}
+          ) AS ever,
+          EXISTS (
+            SELECT 1 FROM growth_events a WHERE a."visitorId" = s."visitorId"
+              AND a.name = 'active_day' AND a.day <= ${today}
+              AND a.day::date > ${today}::date - ${GROWTH_CHURN_DAYS}::int
+          ) AS recent
+        FROM signups s JOIN first_touch f ON f."visitorId" = s."visitorId"
+      )
+      SELECT GROUPING(source, medium) AS level, source, medium,
+        COUNT(*) AS signups,
+        COUNT(*) FILTER (WHERE mature) AS mature,
+        COUNT(*) FILTER (WHERE mature AND NOT recent) AS churned,
+        COUNT(*) FILTER (WHERE mature AND NOT ever) AS never
+      FROM judged
+      GROUP BY GROUPING SETS ((source, medium), ())
+      ORDER BY level DESC, signups DESC, source, medium LIMIT 21
+    `;
+    const metrics = (row?: (typeof rows)[number]): GrowthChurnMetrics => ({
+      signups: Number(row?.signups ?? 0),
+      mature: Number(row?.mature ?? 0),
+      churned: Number(row?.churned ?? 0),
+      neverActive: Number(row?.never ?? 0),
+    });
+    return {
+      inactiveDays: GROWTH_CHURN_DAYS,
+      from: since,
+      to: today,
+      totals: metrics(rows.find((row) => row.level === 3)),
+      rows: rows
+        .filter((row) => row.level === 0)
+        .map((row) => ({
+          source: row.source ?? 'direct',
+          medium: row.medium ?? 'unknown',
+          ...metrics(row),
+        })),
+    };
   }
 
   async summary(): Promise<GrowthSummary> {
