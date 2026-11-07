@@ -93,7 +93,7 @@
   admin-managed in `/admin/billing` and nothing is seeded. Only a server-side Zibal verify of an owned order activates,
   once, under a per-account row lock (`activate`/`adjust`); manual changes always write a `billing_adjustments` row.
   `BillingService.isPaid(userId)` is the entitlement check. Customer page `/app/billing` is the gateway's return URL.
-- Before pushing: `pnpm nx run-many -t lint test build typecheck`.
+- Before pushing: `pnpm nx format:check` and `pnpm nx run-many -t lint test build typecheck`.
 
 # User directives (binding — given by the project owner)
 
@@ -571,3 +571,6 @@ origin master` and read the index and the roadmap; after work, update its status
      claims an item (commit + push of the status line) before starting, and writes requests for the other lane there
      instead of editing that lane's files. Owner-only items (decisions, logins, devices, Iranian network) are listed
      there too.
+
+113. **Check formatting before every push.** Run `pnpm nx format:check` before sending any commits.
+     In a master-only checkout, use `NX_BASE=origin/master` so Nx compares against the remote branch.

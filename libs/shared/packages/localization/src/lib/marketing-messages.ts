@@ -182,4 +182,100 @@ export const MARKETING_MESSAGES: readonly (readonly [string, string])[] = [
   ['پرسش‌های رایج دربارهٔ این مسیر', 'Common questions about this path'],
   ['مسیرهای دیگر را هم ببین', 'Explore other paths'],
   ['همهٔ امکانات برنامه', 'All app features'],
+  [
+    'تمرین در خانه را با یک جلسهٔ کوتاه شروع کن',
+    'Start with a short home workout',
+  ],
+  [
+    'تمرین در خانه برای شروع | Poshtetgarm',
+    'Home workouts for beginners | Poshtetgarm',
+  ],
+  [
+    'برای تمرین در خانه چند حرکت ساده انتخاب کن، یک جلسهٔ کوتاه بساز و تمرین‌هایت را در بخش سلامت Poshtetgarm ثبت کن.',
+    'Choose a few simple exercises, plan a short home workout and log your sessions in Poshtetgarm Health.',
+  ],
+  [
+    'برای جلسهٔ اول وقت کوتاهی کنار بگذار و فضای دوروبرت را خالی کن. چند حرکت آشنا را انتخاب کن تا جلسهٔ بعد هم بتوانی همان روال را تکرار کنی.',
+    'Set aside a little time for your first session and clear some space around you. Pick a few familiar movements so you can repeat the routine next time.',
+  ],
+  [
+    'نمونهٔ بخش سلامت برای مرور تمرین‌ها و فعالیت هفته',
+    'Sample Health screen showing workouts and weekly activity',
+  ],
+  ['فضا و حرکت‌ها را انتخاب کن', 'Choose your space and exercises'],
+  [
+    'با حرکتی مثل بلند شدن از صندلی ثابت یا شنا روی دیوار شروع کن. حرکت را آرام انجام بده و با تعداد کمی تکرار شروع کن.',
+    'Start with a movement such as standing up from a stable chair or doing a wall push-up. Move slowly and begin with a few repetitions.',
+  ],
+  ['جلسه را در بخش تمرین بچین', 'Plan your session in Workouts'],
+  [
+    'در بخش سلامت، تمرین را باز کن و یک برنامهٔ خانگی انتخاب کن یا برنامهٔ شخصی‌ات را بساز. برای جلسهٔ اول حرکت‌هایی را انتخاب کن که با آن‌ها راحتی.',
+    'Open Workouts in Health and choose a home routine or build your own. For your first session, pick exercises you feel comfortable doing.',
+  ],
+  ['جلسه را ثبت کن', 'Log the session'],
+  [
+    'پس از پایان، تمرینت را ثبت کن. هفتهٔ بعد به سابقه نگاه کن و اگر جلسه برایت راحت بود، به‌تدریج یک تکرار اضافه کن.',
+    'Log your workout when you finish. Next week, check your history and gradually add a repetition if the session felt comfortable.',
+  ],
+  [
+    'برای شروع تمرین در خانه وسیله لازم است؟',
+    'Do I need equipment to start working out at home?',
+  ],
+  [
+    'برای حرکت‌هایی مثل شنا روی دیوار و بلند شدن از صندلی، دیوار و یک صندلی محکم و بدون چرخ کافی‌اند.',
+    'For exercises like wall push-ups and sit-to-stands, a wall and a sturdy chair without wheels are enough.',
+  ],
+  [
+    'اگر حین تمرین درد یا احساس ناخوشی داشتم چه کنم؟',
+    'What should I do if I feel pain or feel unwell during exercise?',
+  ],
+  [
+    'تمرین را متوقف کن. اگر آسیب‌دیدگی یا بیماری داری یا دربارهٔ مناسب بودن حرکت مطمئن نیستی، قبل از ادامه با متخصص سلامت مشورت کن.',
+    'Stop exercising. If you have an injury or health condition, or are unsure whether the exercise is suitable, talk to a healthcare professional before continuing.',
+  ],
+  [
+    'عادت روزانه را با یک رفتار کوچک بساز',
+    'Build a daily habit with one small action',
+  ],
+  [
+    'ساخت عادت روزانه و پیگیری آن | Poshtetgarm',
+    'Build and track daily habits | Poshtetgarm',
+  ],
+  [
+    'یک عادت کوچک انتخاب کن، آن را به کاری آشنا در روزت وصل کن و روزهای انجام را در برنامه‌ریز Poshtetgarm ثبت کن.',
+    'Pick a small habit, tie it to something you already do and track the days you complete it in Poshtetgarm Planner.',
+  ],
+  [
+    'رفتاری انتخاب کن که در یک روز شلوغ هم شدنی باشد. مثلاً بعد از چای صبح، دو صفحه بخوان. ثبت همان قدم کوچک کمک می‌کند آخر هفته ببینی چه روالی با زندگی‌ات جور است.',
+    'Pick an action you can do even on a busy day. For example, read two pages after your morning tea. At the end of the week, use your check-ins to see what fits your day.',
+  ],
+  [
+    'نمونهٔ برنامه‌ریز برای پیگیری کارها و روال روزانه',
+    'Sample Planner screen for managing tasks and daily routines',
+  ],
+  ['رفتار و زمانش را روشن بنویس', 'Write down what you will do and when'],
+  [
+    'به‌جای هدف کلی «بیشتر مطالعه کنم»، بنویس «بعد از چای صبح، دو صفحه می‌خوانم». کتاب را از شب قبل نزدیک فنجان بگذار.',
+    'Turn a broad goal like reading more into a plan to read two pages after morning tea. Put the book near your cup the night before.',
+  ],
+  ['روزهای انجام را مشخص کن', 'Choose the days you will do it'],
+  [
+    'در برنامه‌ریز، بخش عادت‌ها را باز کن و عادت را برای روزهایی بساز که چای صبح می‌خوری. اگر لازم است، برای همان روزها یادآور بگذار.',
+    'Open Habits in Planner and schedule the habit for the days you have morning tea. Add a reminder for those days if you need one.',
+  ],
+  ['ثبت کن و آخر هفته مرور کن', 'Check in and review your week'],
+  [
+    'وقتی انجامش دادی، همان روز ثبتش کن. آخر هفته ببین کدام روزها راحت‌تر بود. اگر چند بار جا افتاد، رفتار را کوچک‌تر کن یا زمانش را عوض کن.',
+    'Check in on the day you do it. At the end of the week, see which days felt easier. If you missed it several times, make the action smaller or try a different time.',
+  ],
+  ['اگر یک روز عادت را انجام ندادم، چه کنم؟', 'What if I miss a day?'],
+  [
+    'در نوبت بعدی به همان رفتار کوچک برگرد. اگر مرتب جا می‌افتد، زمان یا نشانه‌ای را انتخاب کن که بیشتر در روزت تکرار می‌شود.',
+    'Return to the same small action at the next opportunity. If you keep missing it, choose a time or cue that occurs more reliably in your day.',
+  ],
+  ['برای عادت‌ها می‌توانم یادآور بگذارم؟', 'Can I set reminders for habits?'],
+  [
+    'بله. در جزئیات عادت می‌توانی ساعت یادآوری را برای روزهای برنامه‌ریزی‌شده مشخص کنی. برای دریافت آن، اعلان‌ها را روی دستگاهت فعال کن.',
+    'Yes. In the habit details, set a reminder time for your scheduled days. Enable notifications on your device to receive it.',
+  ],
 ];
