@@ -1,7 +1,10 @@
 name: Deploy
 
-# After CI passes on master: build the images on GitHub (amd64, Docker Hub reachable),
-# then load and start them on the server through its self-hosted runner (label "aio").
+# After CI passes on master: build the images on GitHub (amd64, Docker Hub reachable) and push them to GHCR,
+# then the server's self-hosted runner (label "aio") pulls them and starts the release.
+# A pull only transfers the layers the server does not have yet (the dependencies layer changes only with the
+# lockfile), and Docker checks every layer's digest. If GHCR cannot be reached from the server, the images are
+# bundled as per-image artifacts instead and downloaded with resume, retries and a checksum check.
 on:
   workflow_run:
     workflows: [CI]
@@ -17,10 +20,16 @@ concurrency:
   group: deploy-production
   cancel-in-progress: false
 
+env:
+  REGISTRY: ghcr.io/${{ github.repository_owner }}
+
 jobs:
   build:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     outputs:
       release: ${{ steps.release.outputs.release }}
     steps:
@@ -38,27 +47,155 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
-      - name: Build images
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push images
         env:
           RELEASE: ${{ steps.release.outputs.release }}
         run: |
           for t in api public web; do
             docker buildx build -f deploy/images.dockerfile --target "$t" \
               --cache-from type=gha,scope=aio --cache-to type=gha,scope=aio,mode=max \
-              --load -t "all-in-one-$t:$RELEASE" .
+              --provenance=false --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+              --push -t "$REGISTRY/all-in-one-$t:$RELEASE" .
           done
-          docker save "all-in-one-api:$RELEASE" "all-in-one-public:$RELEASE" "all-in-one-web:$RELEASE" \
-            | gzip -1 > images.tar.gz
 
-      - uses: actions/upload-artifact@v4
+      - name: Report image sizes
+        env:
+          RELEASE: ${{ steps.release.outputs.release }}
+        run: |
+          for t in api public web; do
+            docker buildx imagetools inspect --raw "$REGISTRY/all-in-one-$t:$RELEASE" \
+              | jq -r --arg t "$t" '"\($t): \(([.layers[].size] | add) / 1048576 | floor) MiB compressed; layers (MiB): \([.layers[].size / 1048576 | . * 10 | floor / 10] | join(", "))"'
+          done
+
+      - name: Prune old registry versions
+        continue-on-error: true
+        uses: actions/delete-package-versions@v5
         with:
-          name: images
-          path: images.tar.gz
+          package-name: all-in-one-api
+          package-type: container
+          min-versions-to-keep: 15
+      - continue-on-error: true
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: all-in-one-public
+          package-type: container
+          min-versions-to-keep: 15
+      - continue-on-error: true
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: all-in-one-web
+          package-type: container
+          min-versions-to-keep: 15
+
+  # Pull from GHCR on the server. Never fails the run by itself: "pulled" tells the next jobs which path to take.
+  pull:
+    needs: build
+    runs-on: [self-hosted, aio]
+    permissions:
+      packages: read
+    outputs:
+      pulled: ${{ steps.pull.outputs.pulled }}
+    steps:
+      - id: pull
+        env:
+          RELEASE: ${{ needs.build.outputs.release }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -u
+          export DOCKER_CONFIG="$RUNNER_TEMP/ghcr-auth"
+          mkdir -p "$DOCKER_CONFIG"
+          trap 'rm -rf "$DOCKER_CONFIG"' EXIT
+          pulled=false
+          if echo "$GHCR_TOKEN" | timeout 60 docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin >/dev/null; then
+            pulled=true
+            for t in api public web; do
+              ref="$REGISTRY/all-in-one-$t:$RELEASE"
+              ok=false
+              for attempt in 1 2 3; do
+                start=$(date +%s)
+                # Finished layers stay on the server, so a retry continues where the last attempt stopped.
+                if timeout 1200 docker pull "$ref"; then
+                  echo "Pulled $t in $(($(date +%s) - start))s"
+                  ok=true
+                  break
+                fi
+                echo "::warning::Pulling $ref failed (attempt $attempt)"
+                sleep 15
+              done
+              if [ "$ok" != true ]; then
+                pulled=false
+                break
+              fi
+              docker tag "$ref" "all-in-one-$t:$RELEASE"
+              docker image rm "$ref" >/dev/null # only the registry name; the layers stay with the local tag
+            done
+          else
+            echo "::warning::Cannot log in to ghcr.io from the server"
+          fi
+          [ "$pulled" = true ] || echo "::warning::GHCR pull failed; falling back to artifacts"
+          echo "pulled=$pulled" >> "$GITHUB_OUTPUT"
+
+  # Fallback only: per-image artifacts built from the pushed images.
+  bundle:
+    needs: [build, pull]
+    if: ${{ !cancelled() && needs.build.result == 'success' && needs.pull.outputs.pulled != 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      api: ${{ steps.api.outputs.artifact-id }}:${{ steps.api.outputs.artifact-digest }}
+      public: ${{ steps.public.outputs.artifact-id }}:${{ steps.public.outputs.artifact-digest }}
+      web: ${{ steps.web.outputs.artifact-id }}:${{ steps.web.outputs.artifact-digest }}
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Save images
+        env:
+          RELEASE: ${{ needs.build.outputs.release }}
+        run: |
+          for t in api public web; do
+            docker pull -q "$REGISTRY/all-in-one-$t:$RELEASE"
+            docker tag "$REGISTRY/all-in-one-$t:$RELEASE" "all-in-one-$t:$RELEASE"
+            docker save "all-in-one-$t:$RELEASE" | gzip -1 > "$t.tar.gz"
+          done
+          ls -l *.tar.gz
+
+      - id: api
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-api
+          path: api.tar.gz
+          retention-days: 1
+          compression-level: 0
+      - id: public
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-public
+          path: public.tar.gz
+          retention-days: 1
+          compression-level: 0
+      - id: web
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-web
+          path: web.tar.gz
           retention-days: 1
           compression-level: 0
 
   deploy:
-    needs: build
+    needs: [build, pull, bundle]
+    if: ${{ !cancelled() && needs.build.result == 'success' && (needs.pull.outputs.pulled == 'true' || needs.bundle.result == 'success') }}
     runs-on: [self-hosted, aio]
     environment:
       name: production
@@ -68,12 +205,12 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: images
-
-      - name: Load images
-        run: gunzip -c images.tar.gz | docker load && rm images.tar.gz
+      - name: Download images (fallback)
+        if: needs.pull.outputs.pulled != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ARTIFACTS: api=${{ needs.bundle.outputs.api }} public=${{ needs.bundle.outputs.public }} web=${{ needs.bundle.outputs.web }}
+        run: sh deploy/fetch-images.sh $ARTIFACTS
 
       - name: Start release
         env:

@@ -4,12 +4,17 @@
 #   docker build -f deploy/images.dockerfile --target public -t all-in-one-public:$RELEASE .
 #   docker build -f deploy/images.dockerfile --target web    -t all-in-one-web:$RELEASE .
 
-FROM node:24-bookworm-slim AS build
+# Dependencies alone, so the api's node_modules layer stays byte-identical until the lockfile changes:
+# the registry and the server then reuse it and a release only transfers the small app layers.
+FROM node:24-bookworm-slim AS deps
 WORKDIR /app
-ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH NX_DAEMON=false NX_NO_CLOUD=true CI=true
+ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true
 RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml* ./
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+
+FROM deps AS build
+ENV NX_DAEMON=false NX_NO_CLOUD=true
 COPY . .
 RUN pnpm nx run api-db:prisma-generate \
  && pnpm nx run-many -t build -p api public customer admin --configuration=production
@@ -21,8 +26,8 @@ ENV NODE_ENV=production
 RUN groupadd -g 10001 app && useradd -u 10001 -g app -s /usr/sbin/nologin app \
  && mkdir -p /app/data/exercise-videos \
  && chown -R app:app /app/data
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./package.json
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/package.json ./package.json
 COPY --from=build /app/dist/apps/api ./dist/apps/api
 COPY --from=build /app/libs/api/db/prisma ./libs/api/db/prisma
 COPY --from=build /app/libs/api/db/prisma.config.ts ./libs/api/db/prisma.config.ts
