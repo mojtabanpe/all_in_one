@@ -386,4 +386,15 @@ export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
   ['مدت این سفارش از دسترسی پولی', "This order's time in paid access"],
   ['کم شود', 'Remove'],
   ['بماند', 'Keep'],
+  ['آخرین روز آزمایشی', 'Last day of your trial'],
+  ['{0} روز آزمایشی مانده', '{0} trial days left'],
+  [
+    'دورهٔ آزمایشی هفت‌روزه‌ات در {0} تمام شد.',
+    'Your seven-day trial ended on {0}.',
+  ],
+  [
+    'برنامه‌ریز، فلش‌کارت‌ها و سلامت رایگان می‌مانند. برای هوش مصنوعی یک پلن فعال کن.',
+    'The planner, flashcards and health stay free. Activate a plan for AI.',
+  ],
+  ['مدیریت اشتراک', 'Manage subscription'],
 ];

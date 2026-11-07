@@ -1,6 +1,9 @@
 import { Component, inject } from '@angular/core';
 import { httpResource } from '@angular/common/http';
-import type { BillingRewardOffer } from '@all-in-one/shared/schemas';
+import type {
+  BillingAccessState,
+  BillingRewardOffer,
+} from '@all-in-one/shared/schemas';
 import { API_BASE_URL } from '@all-in-one/web/shared';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
@@ -49,6 +52,14 @@ export function pushRoute(url: unknown): string | null {
       [title]="'دسترسی به هوش مصنوعی' | aioTranslate"
     >
       <ng-template aioDialogBody>
+        @if (trialEnded(); as ended) {
+          <p class="mb-2 font-medium">
+            {{
+              'دورهٔ آزمایشی هفت‌روزه‌ات در {0} تمام شد.'
+                | aioTranslate: [locale.date(ended, { dateStyle: 'long' })]
+            }}
+          </p>
+        }
         <p>
           {{
             'با فعال کردن یک پلن، می‌توانی از امکانات هوش مصنوعی Poshtetgarm استفاده کنی.'
@@ -95,6 +106,14 @@ export class App {
   private readonly offers = httpResource<BillingRewardOffer[]>(() =>
     this.paywall.open() ? `${this.api}/billing/reward-offers` : undefined,
   );
+  private readonly access = httpResource<BillingAccessState>(() =>
+    this.paywall.open() ? `${this.api}/billing/access` : undefined,
+  );
+  protected readonly trialEnded = () => {
+    if (!this.access.hasValue()) return null;
+    const { tier, trialUntil } = this.access.value();
+    return tier === 'free' && trialUntil ? trialUntil : null;
+  };
   protected readonly canEarn = () =>
     this.offers.hasValue() &&
     this.offers.value().some((offer) => offer.status === 'available');

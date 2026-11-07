@@ -1,6 +1,7 @@
 import { httpResource, HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import type {
+  BillingAccessState,
   ProgressNotificationSettings,
   WeeklyProgress,
 } from '@all-in-one/shared/schemas';
@@ -8,7 +9,7 @@ import { API_BASE_URL } from '../api/api-base-url';
 import { Location } from '@angular/common';
 import { extractGrowthCampaign } from '@all-in-one/shared/schemas';
 import { PushSettings } from './push-settings';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, input, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   AioLanguageSwitcher,
@@ -320,6 +321,7 @@ export class VerifyEmailPage implements OnInit {
 @Component({
   selector: 'web-account-page',
   imports: [
+    RouterLink,
     AioButton,
     AioSwitch,
     AioCardDirectives,
@@ -339,6 +341,85 @@ export class VerifyEmailPage implements OnInit {
           {{ auth.user()?.email }}
         </p>
       </header>
+      @if (billing()) {
+        <section aioCard>
+          <div
+            aioCardHeading
+            [title]="'اشتراک' | aioTranslate"
+            [level]="2"
+          ></div>
+          <div aioCardContent class="flex min-h-11 flex-col gap-1">
+            @if (access.hasValue()) {
+              @let state = access.value();
+              <p class="font-medium">
+                @switch (state.tier) {
+                  @case ('paid') {
+                    {{
+                      'اشتراکت تا {0} فعال است.'
+                        | aioTranslate: [longDate(state.paidUntil)]
+                    }}
+                  }
+                  @case ('trial') {
+                    {{
+                      'دورهٔ آزمایشی تا {0} فعال است.'
+                        | aioTranslate: [longDate(state.trialUntil)]
+                    }}
+                  }
+                  @case ('earned') {
+                    {{
+                      'هدیهٔ هوش مصنوعی تا {0} فعال است.'
+                        | aioTranslate: [longDate(state.earnedUntil)]
+                    }}
+                  }
+                  @case ('staff') {
+                    {{
+                      'حساب مدیر است؛ هوش مصنوعی همیشه فعال است.' | aioTranslate
+                    }}
+                  }
+                  @default {
+                    {{ 'اشتراک فعالی نداری.' | aioTranslate }}
+                  }
+                }
+              </p>
+              @if (state.tier === 'free') {
+                <p class="text-muted-foreground text-sm">
+                  {{
+                    'برنامه‌ریز، فلش‌کارت‌ها و سلامت رایگان می‌مانند. برای هوش مصنوعی یک پلن فعال کن.'
+                      | aioTranslate
+                  }}
+                </p>
+              }
+            } @else if (access.error()) {
+              <p class="text-muted-foreground text-sm" role="alert">
+                {{ 'وضعیت اشتراک دریافت نشد.' | aioTranslate }}
+              </p>
+            } @else {
+              <p class="text-muted-foreground text-sm" role="status">
+                {{ 'در حال دریافت…' | aioTranslate }}
+              </p>
+            }
+          </div>
+          <div aioCardFooter>
+            <a
+              aioBtn
+              [variant]="
+                access.hasValue() && access.value().tier === 'free'
+                  ? 'default'
+                  : 'outline'
+              "
+              class="min-h-11"
+              routerLink="/billing"
+            >
+              {{
+                (access.hasValue() && access.value().tier === 'free'
+                  ? 'دیدن پلن‌ها'
+                  : 'مدیریت اشتراک'
+                ) | aioTranslate
+              }}
+            </a>
+          </div>
+        </section>
+      }
       <section aioCard>
         <div
           aioCardHeading
@@ -601,6 +682,14 @@ export class AccountPage implements OnInit {
   protected readonly locale = inject(AioLocale);
   private readonly api = inject(API_BASE_URL);
   private readonly http = inject(HttpClient);
+  /** Route data `{ billing: true }` (customer app): show the subscription card. */
+  readonly billing = input<boolean | undefined>();
+  protected readonly access = httpResource<BillingAccessState>(() =>
+    this.billing() ? `${this.api}/billing/access` : undefined,
+  );
+  protected longDate(iso: string | null): string {
+    return this.locale.date(iso, { dateStyle: 'long' });
+  }
   protected readonly weekly = httpResource<WeeklyProgress>(
     () => `${this.api}/push/weekly-progress`,
   );

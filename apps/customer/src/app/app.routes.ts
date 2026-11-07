@@ -30,7 +30,12 @@ export const appRoutes: Route[] = [
     loadComponent: () => import('./layout').then((m) => m.Layout),
     canActivate: [authGuard()],
     children: [
-      { path: 'account', component: AccountPage, title: 'حساب کاربری' },
+      {
+        path: 'account',
+        component: AccountPage,
+        title: 'حساب کاربری',
+        data: { billing: true },
+      },
       {
         path: 'billing',
         loadComponent: () => import('./billing/billing').then((m) => m.Billing),

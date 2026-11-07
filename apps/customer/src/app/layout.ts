@@ -1,4 +1,5 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, effect, inject } from '@angular/core';
+import { httpResource } from '@angular/common/http';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
 import {
@@ -22,11 +23,15 @@ import {
   provideIcons,
   AioSkeletonLines,
 } from '@all-in-one/ui';
-import { Assistant, AuthStore } from '@all-in-one/web/shared';
-import type { AssistantContext } from '@all-in-one/shared/schemas';
+import { API_BASE_URL, Assistant, AuthStore } from '@all-in-one/web/shared';
+import type {
+  AssistantContext,
+  BillingAccessState,
+} from '@all-in-one/shared/schemas';
 import { Pwa } from './pwa';
 import {
   lucideCalendarCheck,
+  lucideCrown,
   lucideDownload,
   lucideHeartPulse,
   lucideHouse,
@@ -35,6 +40,9 @@ import {
   lucideUserRound,
   lucideSparkles,
 } from '@ng-icons/lucide';
+
+/** The trial reminder appears in the header this many days before it ends. */
+const TRIAL_NOTICE_DAYS = 3;
 
 /** Signed-in layout: shell with the applets in the navigation. */
 @Component({
@@ -53,6 +61,7 @@ import {
   providers: [
     provideIcons({
       lucideCalendarCheck,
+      lucideCrown,
       lucideDownload,
       lucideHeartPulse,
       lucideHouse,
@@ -83,6 +92,21 @@ import {
             (english() ? 'Install' : 'نصب') | aioTranslate
           }}</span>
         </button>
+      }
+      @if (upgrade(); as label) {
+        <a
+          aioShellActions
+          aioBtn
+          variant="outline"
+          class="h-11 min-w-11 px-3"
+          routerLink="/billing"
+          [attr.aria-label]="label | aioTranslate: upgradeValues()"
+        >
+          <aio-icon name="lucideCrown" size="sm" />
+          <span class="hidden sm:inline" aria-hidden="true">{{
+            label | aioTranslate: upgradeValues()
+          }}</span>
+        </a>
       }
       <a
         aioShellActions
@@ -196,6 +220,31 @@ export class Layout {
   ];
 
   protected readonly english = this.locale.english;
+  private readonly api = inject(API_BASE_URL);
+  private readonly access = httpResource<BillingAccessState>(
+    () => `${this.api}/billing/access`,
+  );
+  /** Whole days of trial left, counting today; null when not on a trial. */
+  private readonly trialDays = computed(() => {
+    if (!this.access.hasValue()) return null;
+    const { tier, trialUntil } = this.access.value();
+    if (tier !== 'trial' || !trialUntil) return null;
+    return Math.max(
+      1,
+      Math.ceil((Date.parse(trialUntil) - Date.now()) / 86_400_000),
+    );
+  });
+  /** A way to the plans before the paywall: on the free tier, or near the trial's end. */
+  protected readonly upgrade = computed(() => {
+    if (!this.access.hasValue()) return null;
+    if (this.access.value().tier === 'free') return 'دیدن پلن‌ها';
+    const days = this.trialDays();
+    if (days === null || days > TRIAL_NOTICE_DAYS) return null;
+    return days === 1 ? 'آخرین روز آزمایشی' : '{0} روز آزمایشی مانده';
+  });
+  protected readonly upgradeValues = computed(() => [
+    this.locale.number(this.trialDays() ?? 0),
+  ]);
   protected readonly navigation = computed(() =>
     this.english()
       ? this.nav.map((item, i) => ({
@@ -204,6 +253,17 @@ export class Layout {
         }))
       : this.nav,
   );
+
+  constructor() {
+    // A payment or reward changes access on the billing page; refresh the header after leaving it.
+    let previous = this.url();
+    effect(() => {
+      const url = this.url();
+      if (previous.startsWith('/billing') && !url.startsWith('/billing'))
+        this.access.reload();
+      previous = url;
+    });
+  }
 
   protected async logout() {
     await this.auth.logout();
