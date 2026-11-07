@@ -31,6 +31,10 @@ describe('Growth data boundaries', () => {
   });
   it('rejects arbitrary/personal payload fields and fabricated completion events', () => {
     expect(growthEventSchema.safeParse(event).success).toBe(true);
+    for (const name of ['pwa_install_prompt', 'pwa_installed'])
+      expect(growthEventSchema.safeParse({ ...event, name }).success).toBe(
+        true,
+      );
     for (const input of [
       { ...event, email: 'private@example.com' },
       { ...event, name: 'payment_verified' },
@@ -110,7 +114,11 @@ describe('Growth data boundaries', () => {
   it('returns only aggregate counts and labels the 30-day window', async () => {
     const query = vi
       .fn()
-      .mockResolvedValueOnce([{ name: 'landing_view', visitors: 12n }])
+      .mockResolvedValueOnce([
+        { name: 'landing_view', visitors: 12n },
+        { name: 'pwa_install_prompt', visitors: 2n },
+        { name: 'pwa_installed', visitors: 1n },
+      ])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         { daily: 0n, weekly: 0n, monthly: 0n, eligible: 0n, retained: 0n },
@@ -145,6 +153,8 @@ describe('Growth data boundaries', () => {
       completedSignupVisitors: 0,
       firstTaskVisitors: 0,
       firstReviewVisitors: 0,
+      pwaPromptVisitors: 2,
+      pwaInstalledVisitors: 1,
       channels: [],
     });
   });

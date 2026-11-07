@@ -1,7 +1,12 @@
 import type { OnboardingGoal } from './onboarding';
 import * as z from 'zod/mini';
 
-export const GROWTH_EVENTS = ['landing_view', 'signup_started'] as const;
+export const GROWTH_EVENTS = [
+  'landing_view',
+  'signup_started',
+  'pwa_install_prompt',
+  'pwa_installed',
+] as const;
 const campaignValue = z.string().check(
   z.minLength(1),
   z.maxLength(200),
@@ -83,6 +88,8 @@ export interface GrowthSummary {
   completedSignupVisitors: number;
   firstTaskVisitors: number;
   firstReviewVisitors: number;
+  pwaPromptVisitors: number;
+  pwaInstalledVisitors: number;
   channels: GrowthChannel[];
 }
 

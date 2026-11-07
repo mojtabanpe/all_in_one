@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { SwUpdate } from '@angular/service-worker';
+import { GrowthAnalytics } from '@all-in-one/web/shared';
 import { Pwa } from './pwa';
 
 describe('PWA installation', () => {
@@ -14,19 +15,21 @@ describe('PWA installation', () => {
       navigator: { userAgent, maxTouchPoints, onLine: true },
       matchMedia: () => media,
     });
+    const track = vi.fn().mockResolvedValue(undefined);
     TestBed.configureTestingModule({
       providers: [
         { provide: DOCUMENT, useValue: { defaultView: win } },
         { provide: SwUpdate, useValue: { isEnabled: false } },
+        { provide: GrowthAnalytics, useValue: { track } },
       ],
     });
-    return { pwa: TestBed.inject(Pwa), win, media };
+    return { pwa: TestBed.inject(Pwa), win, media, track };
   }
 
   afterEach(() => TestBed.resetTestingModule());
 
   it('captures installation before login and prompts only once', async () => {
-    const { pwa, win } = setup();
+    const { pwa, win, track } = setup();
     const prompt = vi.fn().mockResolvedValue(undefined);
     const event = Object.assign(
       new Event('beforeinstallprompt', { cancelable: true }),
@@ -35,24 +38,31 @@ describe('PWA installation', () => {
     win.dispatchEvent(event);
     expect(event.defaultPrevented).toBe(true);
     expect(pwa.installAvailable()).toBe(true);
+    expect(track).not.toHaveBeenCalled();
     await pwa.install();
     expect(prompt).toHaveBeenCalledTimes(1);
     expect(pwa.canInstall()).toBe(false);
+    expect(track.mock.calls).toEqual([['pwa_install_prompt']]);
     win.dispatchEvent(new Event('appinstalled'));
     expect(pwa.installAvailable()).toBe(false);
     await pwa.install();
     expect(prompt).toHaveBeenCalledTimes(1);
     expect(pwa.installGuideOpen()).toBe(false);
+    expect(track.mock.calls).toEqual([
+      ['pwa_install_prompt'],
+      ['pwa_installed'],
+    ]);
   });
 
   it('offers manual installation on iPhone and iPad without a browser prompt', async () => {
-    const { pwa } = setup(
+    const { pwa, track } = setup(
       'Mozilla/5.0 (iPhone) AppleWebKit/605.1 Safari/604.1',
     );
     expect(pwa.manualInstall()).toBe('ios');
     expect(pwa.installAvailable()).toBe(true);
     await pwa.install();
     expect(pwa.installGuideOpen()).toBe(true);
+    expect(track).not.toHaveBeenCalled();
     TestBed.resetTestingModule();
     expect(
       setup(
@@ -82,12 +92,13 @@ describe('PWA installation', () => {
   });
 
   it('opens manual recovery if the native install prompt fails', async () => {
-    const { pwa, win } = setup();
+    const { pwa, win, track } = setup();
     const event = Object.assign(new Event('beforeinstallprompt'), {
       prompt: vi.fn().mockRejectedValue(new Error('unavailable')),
     });
     win.dispatchEvent(event);
     await pwa.install();
     expect(pwa.installGuideOpen()).toBe(true);
+    expect(track).not.toHaveBeenCalled();
   });
 });

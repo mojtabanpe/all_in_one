@@ -81,7 +81,7 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
           </p>
         </div>
         @if (growth.hasValue()) {
-          <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             @for (tile of growthTiles(); track tile.label) {
               <section aioCard size="sm">
                 <div
@@ -94,6 +94,12 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
               </section>
             }
           </div>
+          <p class="text-sm text-muted-foreground">
+            {{
+              'آمار نصب فقط از مرورگرهایی می‌آید که رویداد نصب را گزارش می‌کنند. باز کردن راهنمای نصب دستی در این شمارش نمی‌آید.'
+                | aioTranslate
+            }}
+          </p>
           <h2 class="mt-4 text-xl font-semibold">
             {{ 'شروع کار بر اساس هدف' | aioTranslate }}
           </h2>
@@ -360,11 +366,11 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
             </div>
           </section>
         } @else {
-          <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div
               aioSkeletonRows
               class="contents"
-              [count]="5"
+              [count]="7"
               itemClass="h-24 rounded-3xl"
             ></div>
           </div>
@@ -680,6 +686,11 @@ export class Dashboard {
           {
             label: 'اولین مرور کارت در مرورگر',
             value: data.firstReviewVisitors,
+          },
+          { label: 'نمایش درخواست نصب وب‌اپ', value: data.pwaPromptVisitors },
+          {
+            label: 'نصب وب‌اپ تأییدشده توسط مرورگر',
+            value: data.pwaInstalledVisitors,
           },
         ]
       : [];

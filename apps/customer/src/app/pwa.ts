@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
+import { GrowthAnalytics } from '@all-in-one/web/shared';
 import {
   AioTranslate,
   AioAlertDirectives,
@@ -37,6 +38,7 @@ const UPDATE_CHECK_MS = 30 * 60 * 1000;
 export class Pwa {
   private readonly updates = inject(SwUpdate);
   private readonly document = inject(DOCUMENT);
+  private readonly growth = inject(GrowthAnalytics);
   private installEvent: InstallPromptEvent | null = null;
 
   /** A new version is downloaded and used after a reload. */
@@ -95,6 +97,7 @@ export class Pwa {
       this.installGuideOpen.set(false);
       this.installEvent = null;
       this.canInstall.set(false);
+      void this.growth.track('pwa_installed');
     });
     if (!this.updates.isEnabled) return;
     const ready = this.updates.versionUpdates.subscribe((event) => {
@@ -126,7 +129,13 @@ export class Pwa {
     }
     this.installEvent = null;
     this.canInstall.set(false);
-    await event.prompt().catch(() => this.installGuideOpen.set(true));
+    try {
+      await event.prompt();
+    } catch {
+      this.installGuideOpen.set(true);
+      return;
+    }
+    void this.growth.track('pwa_install_prompt');
   }
 
   async reload() {
