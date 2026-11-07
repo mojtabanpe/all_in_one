@@ -10,17 +10,20 @@ import {
   Put,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { Roles } from '@all-in-one/api/auth';
+import { type AuthUser, CurrentUser, Roles } from '@all-in-one/api/auth';
 import {
   type AiKind,
   type SaveAiPresetInput,
   saveAiPresetSchema,
   testAiSchema,
+  testAiScopeSchema,
+  type TestAiScopeInput,
   type UpdateAiSettingsInput,
   updateAiSettingsSchema,
 } from '@all-in-one/shared/schemas';
 import { AiGateway } from './ai-gateway.service';
 import { AiSettingsService } from './ai-settings.service';
+import { AiScopeGuard } from './ai-scope';
 
 /** The signed-in user's AI services (profile page). Keys are write-only. */
 @Roles('ADMIN')
@@ -29,7 +32,19 @@ export class AiAdminController {
   constructor(
     private readonly settings: AiSettingsService,
     private readonly gateway: AiGateway,
+    private readonly scope: AiScopeGuard,
   ) {}
+
+  /** Try a sentence against the current scope check (decision model). */
+  @Post('scope-test')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  scopeTest(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: testAiScopeSchema }) input: TestAiScopeInput,
+  ) {
+    return this.scope.decide(user.id, input.text, 'assistant');
+  }
 
   @Get()
   view() {

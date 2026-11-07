@@ -12,6 +12,8 @@ import type {
   AiTestResult,
   UpdateAiSettingsInput,
   AiPresetView,
+  AiScopeProvider,
+  AiScopeTestResult,
 } from '@all-in-one/shared/schemas';
 import { DEFAULT_AI_PROXY } from '@all-in-one/shared/schemas';
 import {
@@ -27,6 +29,8 @@ import {
   AioNotifications,
   AioTableDirectives,
   AioCheckbox,
+  AioNativeSelect,
+  AioNativeSelectOption,
 } from '@all-in-one/ui';
 import {
   lucideCircleCheck,
@@ -89,6 +93,8 @@ const SERVICES: {
     AioSkeletonRows,
     AioTranslate,
     AioCheckbox,
+    AioNativeSelect,
+    AioNativeSelectOption,
   ],
   providers: [
     provideIcons({
@@ -446,6 +452,7 @@ const SERVICES: {
       </div>
     </section>
     @if (settings.hasValue()) {
+      @let sc = scope();
       <section aioCard class="mt-6" aria-labelledby="ai-scope-heading">
         <div aioCardHeader>
           <h2 aioCardTitle id="ai-scope-heading">
@@ -469,38 +476,120 @@ const SERVICES: {
           >
             <aio-checkbox
               inputId="ai-scope-on"
-              [checked]="scope().on"
-              (checkedChange)="scope.set({ on: $event, model: scope().model })"
+              [checked]="sc.on"
+              (checkedChange)="patchScope({ on: $event })"
             />
             {{ 'بررسی حوزه روشن باشد' | aioTranslate }}
           </label>
           <aio-form-field
             [label]="'مدل تصمیم‌گیر' | aioTranslate"
-            controlId="ai-scope-model"
+            controlId="ai-scope-provider"
           >
-            <input
-              aioInput
-              id="ai-scope-model"
-              dir="ltr"
-              lang="en"
-              autocomplete="off"
-              maxlength="100"
-              [placeholder]="settings.value().chat.model || 'gpt-4o-mini'"
-              [value]="scope().model"
-              (input)="
-                scope.set({
-                  on: scope().on,
-                  model: $any($event.target).value,
-                })
-              "
-            />
+            <aio-native-select
+              selectId="ai-scope-provider"
+              [value]="sc.provider"
+              (valueChange)="patchScope({ provider: $any($event) })"
+            >
+              <option aioNativeSelectOption value="jev">
+                {{ 'Jev (TypeSafe)، ارزان و سریع' | aioTranslate }}
+              </option>
+              <option aioNativeSelectOption value="chat">
+                {{ 'یک مدل روی سرویس گفتگو' | aioTranslate }}
+              </option>
+            </aio-native-select>
           </aio-form-field>
-          <p class="text-muted-foreground -mt-2 text-xs">
-            {{
-              'روی همان سرویس گفتگو؛ خالی = همان مدل گفتگو. یک مدل کوچک و ارزان کافی است.'
-                | aioTranslate
-            }}
-          </p>
+          @if (sc.provider === 'jev') {
+            <p class="text-muted-foreground -mt-2 text-xs">
+              {{
+                'Jev متن تولید نمی‌کند؛ فقط احتمال «در حوزه بودن» را برمی‌گرداند و فقط توکن ورودی حساب می‌شود. کلید را از typesafe.ai بگیر.'
+                  | aioTranslate
+              }}
+            </p>
+            <aio-form-field
+              [label]="'کلید API' | aioTranslate"
+              controlId="ai-scope-key"
+            >
+              <input
+                aioInput
+                id="ai-scope-key"
+                type="password"
+                dir="ltr"
+                lang="en"
+                autocomplete="off"
+                [placeholder]="
+                  settings.value().scope.hasKey
+                    ? ('ذخیره شده؛ برای تغییر بنویس' | aioTranslate)
+                    : ''
+                "
+                [value]="sc.key"
+                (input)="patchScope({ key: $any($event.target).value })"
+              />
+            </aio-form-field>
+            <aio-form-field
+              [label]="'نشانی (URL)' | aioTranslate"
+              controlId="ai-scope-url"
+            >
+              <input
+                aioInput
+                id="ai-scope-url"
+                type="url"
+                dir="ltr"
+                lang="en"
+                placeholder="https://api.typesafe.ai"
+                [value]="sc.url"
+                (input)="patchScope({ url: $any($event.target).value })"
+              />
+            </aio-form-field>
+            <label
+              class="flex min-h-11 w-fit cursor-pointer items-center gap-2 text-sm font-medium"
+              for="ai-scope-proxy-on"
+            >
+              <aio-checkbox
+                inputId="ai-scope-proxy-on"
+                [checked]="sc.proxy"
+                (checkedChange)="patchScope({ proxy: $event })"
+              />
+              {{ 'پراکسی' | aioTranslate }}
+            </label>
+            @if (sc.proxy) {
+              <aio-form-field
+                [label]="'نشانی پراکسی' | aioTranslate"
+                controlId="ai-scope-proxy"
+              >
+                <input
+                  aioInput
+                  id="ai-scope-proxy"
+                  dir="ltr"
+                  lang="en"
+                  [value]="sc.proxyUrl"
+                  (input)="patchScope({ proxyUrl: $any($event.target).value })"
+                />
+              </aio-form-field>
+            }
+          } @else {
+            <aio-form-field
+              [label]="'مدل' | aioTranslate"
+              controlId="ai-scope-model"
+            >
+              <input
+                aioInput
+                id="ai-scope-model"
+                dir="ltr"
+                lang="en"
+                autocomplete="off"
+                maxlength="100"
+                [placeholder]="settings.value().chat.model || 'gpt-4o-mini'"
+                [value]="sc.model"
+                (input)="patchScope({ model: $any($event.target).value })"
+              />
+            </aio-form-field>
+            <p class="text-muted-foreground -mt-2 text-xs">
+              {{
+                'روی همان سرویس گفتگو؛ خالی = همان مدل گفتگو. یک مدل کوچک و ارزان کافی است.'
+                  | aioTranslate
+              }}
+            </p>
+          }
           <button
             aioAsyncButton
             type="submit"
@@ -508,6 +597,45 @@ const SERVICES: {
             [busy]="savingScope()"
             [label]="'ذخیرهٔ بررسی حوزه' | aioTranslate"
           ></button>
+        </form>
+        <form
+          aioCardFooter
+          class="flex flex-col items-stretch gap-3"
+          (submit)="$event.preventDefault(); testScope(probe.value)"
+        >
+          <aio-form-field
+            [label]="'یک جمله را امتحان کن' | aioTranslate"
+            controlId="ai-scope-probe"
+          >
+            <input
+              aioInput
+              #probe
+              id="ai-scope-probe"
+              maxlength="2000"
+              required
+              [placeholder]="'مثلاً: یک کد پایتون بنویس' | aioTranslate"
+            />
+          </aio-form-field>
+          <button
+            aioAsyncButton
+            type="submit"
+            class="min-h-11 self-start"
+            [busy]="probing()"
+            [label]="'بررسی' | aioTranslate"
+          ></button>
+          @if (probeResult(); as r) {
+            <p role="status" class="text-sm font-medium">
+              {{
+                (r.inScope ? 'در حوزهٔ اپ است' : 'بیرون از حوزه؛ رد می‌شود')
+                  | aioTranslate
+              }}
+              @if (r.probability !== null) {
+                <span dir="ltr" lang="en" class="text-muted-foreground">
+                  ({{ (r.probability * 100).toFixed(0) }}%)</span
+                >
+              }
+            </p>
+          }
         </form>
       </section>
     }
@@ -524,11 +652,25 @@ export class AiSettingsPage {
   protected readonly busy = signal<AiKind | null>(null);
   protected readonly testing = signal<AiKind | null>(null);
   protected readonly savingScope = signal(false);
-  protected readonly scope = linkedSignal(() =>
-    this.settings.hasValue()
-      ? { ...this.settings.value().scope }
-      : { on: true, model: '' },
-  );
+  protected readonly probing = signal(false);
+  protected readonly probeResult = signal<AiScopeTestResult | null>(null);
+  /** The scope form; `key` is only what the admin typed (the stored key never comes back). */
+  protected readonly scope = linkedSignal(() => {
+    const s = this.settings.hasValue() ? this.settings.value().scope : null;
+    return {
+      on: s?.on ?? true,
+      provider: s?.provider ?? ('jev' as AiScopeProvider),
+      model: s?.model ?? '',
+      url: s?.url ?? '',
+      key: '',
+      proxy: s?.proxy ?? false,
+      proxyUrl: s?.proxyUrl || DEFAULT_AI_PROXY,
+    };
+  });
+
+  protected patchScope(change: Partial<ReturnType<typeof this.scope>>) {
+    this.scope.update((value) => ({ ...value, ...change }));
+  }
 
   protected readonly drafts = linkedSignal<Record<AiKind, Draft>>(() => {
     const s = this.settings.hasValue() ? this.settings.value() : null;
@@ -617,21 +759,46 @@ export class AiSettingsPage {
   }
 
   protected async saveScope() {
-    const { on, model } = this.scope();
+    const { key, ...form } = this.scope();
     this.savingScope.set(true);
     try {
       this.settings.set(
         await firstValueFrom(
           this.http.put<AiSettings>(this.base, {
-            scope: { on, model: model.trim() },
+            scope: {
+              ...form,
+              model: form.model.trim(),
+              url: form.url.trim(),
+              proxyUrl: form.proxyUrl.trim(),
+              ...(key.trim() ? { key: key.trim() } : {}),
+            },
           } satisfies UpdateAiSettingsInput),
         ),
       );
+      this.probeResult.set(null);
       this.notifications.success('ذخیره شد');
     } catch (error) {
       this.notifications.error(apiErrorMessage(error));
     } finally {
       this.savingScope.set(false);
+    }
+  }
+
+  protected async testScope(text: string) {
+    if (!text.trim()) return;
+    this.probing.set(true);
+    try {
+      this.probeResult.set(
+        await firstValueFrom(
+          this.http.post<AiScopeTestResult>(`${this.base}/scope-test`, {
+            text: text.trim(),
+          }),
+        ),
+      );
+    } catch (error) {
+      this.notifications.error(apiErrorMessage(error));
+    } finally {
+      this.probing.set(false);
     }
   }
 

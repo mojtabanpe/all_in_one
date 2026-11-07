@@ -68,6 +68,18 @@ export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
     'Runs on the chat service; empty = the chat model. A small, cheap model is enough.',
   ],
   ['ذخیرهٔ بررسی حوزه', 'Save scope check'],
+  ['Jev (TypeSafe)، ارزان و سریع', 'Jev (TypeSafe), cheap and fast'],
+  ['یک مدل روی سرویس گفتگو', 'A model on the chat service'],
+  [
+    'Jev متن تولید نمی‌کند؛ فقط احتمال «در حوزه بودن» را برمی‌گرداند و فقط توکن ورودی حساب می‌شود. کلید را از typesafe.ai بگیر.',
+    'Jev writes no text: it only returns the probability that a request is in scope, and only input tokens are billed. Get a key at typesafe.ai.',
+  ],
+  ['ذخیره شده؛ برای تغییر بنویس', 'Saved; type to replace'],
+  ['یک جمله را امتحان کن', 'Try a sentence'],
+  ['مثلاً: یک کد پایتون بنویس', 'e.g. Write me a Python script'],
+  ['بررسی', 'Check'],
+  ['در حوزهٔ اپ است', 'In scope'],
+  ['بیرون از حوزه؛ رد می‌شود', 'Out of scope; refused'],
   [
     'حساب مدیر است؛ هوش مصنوعی همیشه فعال است.',
     'This is an admin account; AI is always on.',

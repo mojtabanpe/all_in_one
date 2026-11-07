@@ -538,3 +538,10 @@ origin master` and read the index and the roadmap; after work, update its status
      (assistant reply, or 422 `AI_OUT_OF_SCOPE`). Admins switch it and pick its model in `/admin/ai` («بررسی حوزهٔ
      درخواست»; stored as `scopeOn`/`scopeModel` in the managed configuration, empty = the chat model). An unreadable
      verdict lets the request through (logged). A new free-text AI entry point must call it too.
+     **A real decision model, not an LLM** (owner, same day: «منظورم چیزی مثل Jev بود… این‌جوری که الان هست هزینهٔ
+     الکی داره»): the preferred provider is TypeSafe's **Jev** (non-generative; one `noul` yes/no question
+     `in_scope`, `POST https://api.typesafe.ai/v1/systemone`, Bearer key, billed per input token only). A probability
+     below `JEV_REFUSE_BELOW` (0.35) is refused. Its key is sealed in the managed configuration (`scopeKey`), with an
+     optional url and proxy; it becomes the default once a key is saved. The LLM judge stays as the «chat» fallback.
+     If Jev has no key, times out or errors, the request passes (logged) so an outage never blocks users. `/admin/ai`
+     has a box to test a sentence against the current decision model.

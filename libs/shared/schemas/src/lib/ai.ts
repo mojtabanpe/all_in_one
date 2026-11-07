@@ -38,11 +38,36 @@ export interface AiSettings {
   scope: AiScopeSettings;
 }
 
+/** Who makes the scope decision: TypeSafe's Jev decision model, or an LLM on the chat service. */
+export const AI_SCOPE_PROVIDERS = ['jev', 'chat'] as const;
+export type AiScopeProvider = (typeof AI_SCOPE_PROVIDERS)[number];
+/** Used when the Jev url is left empty. */
+export const TYPESAFE_URL = 'https://api.typesafe.ai';
+
 export interface AiScopeSettings {
   /** On by default. */
   on: boolean;
-  /** Model on the chat service; '' = the chat model. */
+  provider: AiScopeProvider;
+  /** chat: a model on the chat service, '' = the chat model; jev: '' = jev-latest. */
   model: string;
+  /** Jev only: '' = TYPESAFE_URL. */
+  url: string;
+  /** A Jev key is stored (never returned). */
+  hasKey: boolean;
+  proxy: boolean;
+  proxyUrl: string;
+}
+
+/** Try a sentence against the scope check (admin). */
+export const testAiScopeSchema = z.object({
+  text: z.string().check(z.trim(), z.minLength(1), z.maxLength(2000)),
+});
+export type TestAiScopeInput = z.infer<typeof testAiScopeSchema>;
+export interface AiScopeTestResult {
+  inScope: boolean;
+  /** Jev's probability that the request fits the app; null for the chat model. */
+  probability: number | null;
+  provider: AiScopeProvider;
 }
 
 /** A saved setup; the key never leaves the server. */
@@ -103,7 +128,17 @@ export const updateAiSettingsSchema = z.partial(
     chat: service,
     tts: z.extend(service, { model2: z.optional(model) }),
     stt: service,
-    scope: z.partial(z.object({ on: z.boolean(), model })),
+    scope: z.partial(
+      z.object({
+        on: z.boolean(),
+        provider: z.enum(AI_SCOPE_PROVIDERS),
+        model,
+        url,
+        key,
+        proxy: z.boolean(),
+        proxyUrl: url,
+      }),
+    ),
     /** Remove a model name from the remembered list of a service. */
     forgetModel: z.object({
       kind: z.enum(['chat', 'tts', 'stt']),

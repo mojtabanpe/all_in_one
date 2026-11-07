@@ -15,13 +15,32 @@ import {
   type UpdateAiSettingsInput,
   type SaveAiPresetInput,
   type AiScopeSettings,
+  type AiScopeProvider,
+  TYPESAFE_URL,
 } from '@all-in-one/shared/schemas';
 
 /** The stored managed configuration: the old per-user columns plus the scope check. */
 type ManagedSettings = Partial<UserAiSettings> & {
   scopeOn?: boolean;
+  scopeProvider?: AiScopeProvider;
   scopeModel?: string | null;
+  scopeUrl?: string | null;
+  /** Sealed Jev key. */
+  scopeKey?: string | null;
+  scopeProxyOn?: boolean;
+  scopeProxy?: string | null;
 };
+
+/** The scope check as the server uses it (Jev key opened). */
+export interface AiScopeTarget {
+  on: boolean;
+  provider: AiScopeProvider;
+  model: string;
+  /** Jev endpoint (…/v1/systemone). */
+  endpoint: string;
+  key: string | null;
+  proxy: string | null;
+}
 
 /** One service's resolved config for a request (key decrypted, server side only). */
 export interface AiTarget {
@@ -100,10 +119,37 @@ export class AiSettingsService {
     return stored?.settings as ManagedSettings | undefined;
   }
 
-  /** The scope check: on unless an admin switched it off; '' model = the chat model. */
+  /**
+   * The scope check: on unless an admin switched it off. Jev once it has a key (or when chosen), otherwise
+   * the chat model.
+   */
   async scope(): Promise<AiScopeSettings> {
     const r = await this.row();
-    return { on: r?.scopeOn !== false, model: r?.scopeModel ?? '' };
+    return {
+      on: r?.scopeOn !== false,
+      provider: r?.scopeProvider ?? (r?.scopeKey ? 'jev' : 'chat'),
+      model: r?.scopeModel ?? '',
+      url: r?.scopeUrl ?? '',
+      hasKey: !!r?.scopeKey,
+      proxy: !!r?.scopeProxyOn,
+      proxyUrl: r?.scopeProxy || DEFAULT_AI_PROXY,
+    };
+  }
+
+  async scopeTarget(): Promise<AiScopeTarget> {
+    const r = await this.row();
+    const view = await this.scope();
+    const base = (view.url.trim() || TYPESAFE_URL)
+      .replace(/\/+$/, '')
+      .replace(/\/v1(\/systemone)?$/, '');
+    return {
+      on: view.on,
+      provider: view.provider,
+      model: view.model,
+      endpoint: `${base}/v1/systemone`,
+      key: this.box.open(r?.scopeKey),
+      proxy: view.proxy ? view.proxyUrl : null,
+    };
   }
 
   async view(): Promise<AiSettings> {
@@ -271,9 +317,15 @@ export class AiSettingsService {
     preset?: { kind: AiKind; key: string | null },
   ): Promise<AiSettings> {
     const data: Omit<ManagedSettings, 'userId' | 'updatedAt'> = {};
-    if (input.scope?.on !== undefined) data.scopeOn = input.scope.on;
-    if (input.scope?.model !== undefined)
-      data.scopeModel = input.scope.model || null;
+    const scope = input.scope;
+    if (scope?.on !== undefined) data.scopeOn = scope.on;
+    if (scope?.provider !== undefined) data.scopeProvider = scope.provider;
+    if (scope?.model !== undefined) data.scopeModel = scope.model || null;
+    if (scope?.url !== undefined) data.scopeUrl = scope.url || null;
+    if (scope?.key !== undefined)
+      data.scopeKey = scope.key ? this.box.seal(scope.key) : null;
+    if (scope?.proxy !== undefined) data.scopeProxyOn = scope.proxy;
+    if (scope?.proxyUrl !== undefined) data.scopeProxy = scope.proxyUrl || null;
     const put = (
       kind: 'chat' | 'tts' | 'stt',
       value:
