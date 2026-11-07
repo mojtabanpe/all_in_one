@@ -51,3 +51,20 @@ export const reviewReminderSchema = z.object({
   time: z.string().check(z.regex(/^([01]\d|2[0-3]):[0-5]\d$/)),
 });
 export type ReviewReminderSettings = z.infer<typeof reviewReminderSchema>;
+
+export const progressNotificationSchema = z.strictObject({
+  firstWeek: z.boolean(),
+  weekly: z.boolean(),
+});
+export type ProgressNotificationSettings = z.infer<
+  typeof progressNotificationSchema
+>;
+
+export interface WeeklyProgress {
+  from: string;
+  to: string;
+  tasks: number;
+  reviews: number;
+  workouts: number;
+  meals: number;
+}

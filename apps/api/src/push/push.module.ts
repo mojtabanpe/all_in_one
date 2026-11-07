@@ -5,6 +5,8 @@ import { PrismaModule } from '@all-in-one/api/db';
 import { PlannerApiModule } from '@all-in-one/applets/planner/api';
 import {
   pushSubscriptionSchema,
+  progressNotificationSchema,
+  type ProgressNotificationSettings,
   reviewReminderSchema,
   type ReviewReminderSettings,
   removePushSchema,
@@ -25,6 +27,22 @@ class PushController {
     @Body({ schema: reviewReminderSchema }) input: ReviewReminderSettings,
   ) {
     return this.push.updateReviewSettings(user.id, input);
+  }
+  @Get('progress-settings')
+  progressSettings(@CurrentUser() user: AuthUser) {
+    return this.push.progressSettings(user.id);
+  }
+  @Put('progress-settings')
+  updateProgressSettings(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: progressNotificationSchema })
+    input: ProgressNotificationSettings,
+  ) {
+    return this.push.updateProgressSettings(user.id, input);
+  }
+  @Get('weekly-progress')
+  weeklyProgress(@CurrentUser() user: AuthUser) {
+    return this.push.weeklyProgress(user.id);
   }
   @Get('status') status() {
     return this.push.status();

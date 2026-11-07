@@ -50,6 +50,13 @@ export class GrowthController {
   }
 
   @Roles('ADMIN')
+  @Get('retention-cohorts')
+  retentionCohorts() {
+    this.requireEnabled();
+    return this.growth.retentionCohorts();
+  }
+
+  @Roles('ADMIN')
   @Get('summary')
   summary() {
     this.requireEnabled();

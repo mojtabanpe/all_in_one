@@ -5,6 +5,7 @@ import type {
   GrowthCampaignFilter,
   GrowthCampaignReport,
   GrowthSummary,
+  GrowthRetentionCohort,
 } from '@all-in-one/shared/schemas';
 
 const WINDOW_DAYS = 30;
@@ -147,6 +148,56 @@ export class GrowthService {
           ...metrics(row),
         })),
     };
+  }
+
+  async retentionCohorts(now = new Date()): Promise<GrowthRetentionCohort[]> {
+    const today = dayAt(now);
+    const since = dayAt(new Date(now.getTime() - 89 * 86_400_000));
+    const rows = await this.prisma.$queryRaw<
+      {
+        week: string;
+        day: number;
+        signups: bigint;
+        eligible: bigint;
+        returned: bigint;
+      }[]
+    >`
+      WITH signups AS (
+        SELECT e."visitorId", MIN(e.day::date) AS day
+        FROM growth_events e
+        WHERE e.name = 'signup_completed' AND e.day BETWEEN ${since} AND ${today}
+          AND NOT EXISTS (
+            SELECT 1 FROM growth_events qa WHERE qa."visitorId" = e."visitorId"
+              AND LOWER(qa.campaign->>'utm_source') IN ('qa', 'test', 'roadmap_check')
+          )
+        GROUP BY e."visitorId"
+      ), cohorts AS (
+        SELECT *, day - ((EXTRACT(DOW FROM day)::int + 1) % 7) AS week
+        FROM signups
+      )
+      SELECT c.week::text, d.day, COUNT(*) AS signups,
+        COUNT(*) FILTER (WHERE c.day + d.day < ${today}::date) AS eligible,
+        COUNT(a."visitorId") FILTER (WHERE c.day + d.day < ${today}::date) AS returned
+      FROM cohorts c CROSS JOIN (VALUES (1), (7), (30)) AS d(day)
+      LEFT JOIN growth_events a ON a."visitorId" = c."visitorId"
+        AND a.name = 'active_day' AND a.day = (c.day + d.day)::text
+      GROUP BY c.week, d.day ORDER BY c.week DESC, d.day
+    `;
+    const cohorts = new Map<string, GrowthRetentionCohort>();
+    for (const row of rows) {
+      const cohort = cohorts.get(row.week) ?? {
+        week: row.week,
+        signups: Number(row.signups),
+        days: [],
+      };
+      cohort.days.push({
+        day: row.day,
+        eligible: Number(row.eligible),
+        returned: Number(row.returned),
+      });
+      cohorts.set(row.week, cohort);
+    }
+    return [...cohorts.values()];
   }
 
   async summary(): Promise<GrowthSummary> {

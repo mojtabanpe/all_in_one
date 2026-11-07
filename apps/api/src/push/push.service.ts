@@ -20,6 +20,8 @@ import type {
   PushSubscriptionInput,
   ReviewReminderSettings,
   NativePushInput,
+  ProgressNotificationSettings,
+  WeeklyProgress,
 } from '@all-in-one/shared/schemas';
 import * as webpush from 'web-push';
 import { createHash } from 'node:crypto';
@@ -86,6 +88,122 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
       update: input,
     });
     return { enabled: settings.enabled, time: settings.time };
+  }
+
+  async progressSettings(
+    userId: string,
+  ): Promise<ProgressNotificationSettings> {
+    return (
+      (await this.db.progressNotificationSetting.findUnique({
+        where: { userId },
+        select: { firstWeek: true, weekly: true },
+      })) ?? { firstWeek: false, weekly: false }
+    );
+  }
+
+  async updateProgressSettings(
+    userId: string,
+    input: ProgressNotificationSettings,
+  ) {
+    return this.db.progressNotificationSetting.upsert({
+      where: { userId },
+      create: { userId, ...input },
+      update: input,
+      select: { firstWeek: true, weekly: true },
+    });
+  }
+
+  /** The last complete Saturday–Friday week in Tehran. */
+  async weeklyProgress(
+    userId: string,
+    now = new Date(),
+  ): Promise<WeeklyProgress> {
+    const today = isoDateIn(now, 'Asia/Tehran');
+    const weekday = new Date(today).getUTCDay();
+    const next = addDays(today, -((weekday + 1) % 7));
+    const from = addDays(next, -7);
+    const to = addDays(next, -1);
+    const date = { gte: new Date(from), lt: new Date(next) };
+    const completedAt = {
+      gte: zonedInstant(from, '00:00', 'Asia/Tehran')!,
+      lt: zonedInstant(next, '00:00', 'Asia/Tehran')!,
+    };
+    const [tasks, reviews, workouts, meals] = await Promise.all([
+      this.db.plannerTask.count({
+        where: { userId, completedAt, status: 'DONE', deletedAt: null },
+      }),
+      this.db.englishReviewDay.aggregate({
+        where: { userId, date },
+        _sum: { reviews: true },
+      }),
+      this.db.workoutLog.count({ where: { userId, date } }),
+      this.db.mealLog.count({ where: { userId, date } }),
+    ]);
+    return {
+      from,
+      to,
+      tasks,
+      reviews: reviews._sum.reviews ?? 0,
+      workouts,
+      meals,
+    };
+  }
+
+  private async sendProgress(
+    subscriptions: (Parameters<PushService['send']>[0] & { userId: string })[],
+    today: string,
+    now: Date,
+  ) {
+    if (!subscriptions.length) return;
+    // Fixed Tehran daytime slot, with a one-hour retry window. Never catch up at night.
+    const due = zonedInstant(today, '18:00', 'Asia/Tehran');
+    if (!due || now < due || now.getTime() >= due.getTime() + 3_600_000) return;
+    const isSaturday = new Date(today).getUTCDay() === 6;
+    const settings = await this.db.progressNotificationSetting.findMany({
+      where: {
+        userId: { in: [...new Set(subscriptions.map((sub) => sub.userId))] },
+        OR: [{ firstWeek: true }, ...(isSaturday ? [{ weekly: true }] : [])],
+        user: { emailVerifiedAt: { not: null }, role: 'CUSTOMER' },
+      },
+      include: { user: { select: { createdAt: true } } },
+    });
+    for (const setting of settings) {
+      const signup = isoDateIn(setting.user.createdAt, 'Asia/Tehran');
+      const firstWeek =
+        setting.firstWeek &&
+        [1, 3, 5].some((day) => addDays(signup, day) === today);
+      const weekly =
+        setting.weekly && isSaturday
+          ? await this.weeklyProgress(setting.userId, now)
+          : undefined;
+      const hasProgress =
+        weekly &&
+        weekly.tasks + weekly.reviews + weekly.workouts + weekly.meals > 0;
+      if (!firstWeek && !hasProgress) continue;
+      // At most one progress push per device/day, even if the two schedules coincide.
+      const key = `progress:${today}`;
+      for (const sub of subscriptions.filter(
+        (s) => s.userId === setting.userId,
+      )) {
+        const claimed = await this.db.pushDelivery.createMany({
+          data: [{ subscriptionId: sub.id, key }],
+          skipDuplicates: true,
+        });
+        if (!claimed.count) continue;
+        const sent = await this.send(
+          sub,
+          hasProgress
+            ? 'گزارش هفتگی‌ات آماده است'
+            : 'برای یک قدم کوچک به Poshtetgarm برگرد',
+          hasProgress ? '/app/account#weekly-progress' : '/app/',
+          key,
+        );
+        if (!sent)
+          await this.db.pushDelivery.deleteMany({
+            where: { subscriptionId: sub.id, key },
+          });
+      }
+    }
   }
 
   async subscribe(userId: string, input: PushSubscriptionInput) {
@@ -271,6 +389,17 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
       });
       const users = [...new Set(subscriptions.map((s) => s.userId))];
       const today = isoDateIn(now, 'Asia/Tehran');
+      try {
+        await this.sendProgress(
+          subscriptions.filter(
+            (sub) => sub.sessionVersion === sub.user.sessionVersion,
+          ),
+          today,
+          now,
+        );
+      } catch {
+        this.logger.error('Progress notification sweep failed');
+      }
       // Language reminders must not depend on planner queries succeeding.
       try {
         const reviewSettings = await this.db.reviewReminderSetting.findMany({

@@ -130,3 +130,13 @@ export interface GrowthCampaignReport {
     campaign: string | null;
   })[];
 }
+
+export interface GrowthRetentionCohort {
+  week: string;
+  signups: number;
+  days: {
+    day: number;
+    eligible: number;
+    returned: number;
+  }[];
+}

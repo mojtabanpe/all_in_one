@@ -34,3 +34,12 @@ model ReviewReminderSetting {
   time String @default("20:00") @db.VarChar(5)
   @@map("review_reminder_settings")
 }
+
+model ProgressNotificationSetting {
+  userId String @id @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstWeek Boolean @default(false)
+  weekly Boolean @default(false)
+
+  @@map("progress_notification_settings")
+}

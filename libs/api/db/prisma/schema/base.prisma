@@ -34,6 +34,7 @@ model User {
 
   pushSubscriptions PushSubscription[]
   reviewReminder ReviewReminderSetting?
+  progressNotification ProgressNotificationSetting?
   passwordResets     PasswordReset[]
   emailVerifications EmailVerification[]
   mcpKeys            McpKey[]

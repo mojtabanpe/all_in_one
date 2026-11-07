@@ -2,7 +2,10 @@ import { OnboardingService } from '../app/onboarding.service';
 import { observeFirstActions } from './onboarding-tools';
 import * as z from 'zod';
 import { ExerciseVideoUploadService } from './exercise-video-upload.service';
-import { reviewReminderSchema } from '@all-in-one/shared/schemas';
+import {
+  progressNotificationSchema,
+  reviewReminderSchema,
+} from '@all-in-one/shared/schemas';
 import { PushService } from '../push/push.service';
 import { Injectable } from '@nestjs/common';
 import {
@@ -118,6 +121,58 @@ export class ToolsService {
           reviewReminderSchema.parse(args),
         ),
     );
+
+    sink.tool(
+      'get_progress_notifications',
+      {
+        description:
+          'Read the user’s opt-in settings for first-week and weekly progress notifications.',
+        scope: 'planner:read',
+        kind: 'read',
+        input: {},
+      },
+      async () => this.push.progressSettings(sink.user),
+    );
+    sink.tool(
+      'set_progress_notifications',
+      {
+        description:
+          'Update first-week and weekly progress notifications. Enable an option only at the user’s explicit request. Preserve the other option unless they asked to change it. Sends at 18:00 Tehran time on subscribed devices.',
+        scope: 'planner:write',
+        kind: 'update',
+        input: { firstWeek: z.boolean(), weekly: z.boolean() },
+      },
+      async (args) =>
+        this.push.updateProgressSettings(
+          sink.user,
+          progressNotificationSchema.parse(args),
+        ),
+    );
+    for (const [area, scope, metrics] of [
+      ['planner', 'planner:read', ['tasks']],
+      ['english', 'cards:read', ['reviews']],
+      ['health', 'health:read', ['workouts', 'meals']],
+    ] as const) {
+      sink.tool(
+        `get_${area}_weekly_progress`,
+        {
+          description: `Read ${area} progress counts for the last complete Saturday–Friday week in Tehran.`,
+          scope,
+          kind: 'read',
+          input: {},
+        },
+        async () => {
+          const progress = await this.push.weeklyProgress(sink.user);
+          return {
+            from: progress.from,
+            to: progress.to,
+            ...Object.fromEntries(
+              metrics.map((metric) => [metric, progress[metric]]),
+            ),
+          };
+        },
+      );
+    }
 
     englishTools(sink, {
       decks: this.decks,

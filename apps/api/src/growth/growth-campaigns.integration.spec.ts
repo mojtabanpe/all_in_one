@@ -49,6 +49,53 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         ...(campaign ? { campaign } : {}),
       };
     };
+    it('groups Saturday cohorts and excludes incomplete return days and QA visitors', async () => {
+      const now = new Date('2030-11-13T10:00:00Z');
+      const [older, recent, qa] = Array.from({ length: 3 }, visitor);
+      const row = (
+        visitorId: string,
+        name: string,
+        day: string,
+        campaign?: object,
+      ) => ({
+        visitorId,
+        name,
+        day,
+        language: 'fa',
+        ...(campaign ? { campaign } : {}),
+      });
+      await prisma.growthEvent.createMany({
+        data: [
+          row(older, 'signup_completed', '2030-11-02'),
+          row(older, 'active_day', '2030-11-03'),
+          row(older, 'active_day', '2030-11-09'),
+          row(recent, 'signup_completed', '2030-11-12'),
+          row(recent, 'active_day', '2030-11-13'),
+          row(qa, 'signup_completed', '2030-11-02', { utm_source: 'QA' }),
+        ],
+      });
+      expect(await service.retentionCohorts(now)).toEqual([
+        {
+          week: '2030-11-09',
+          signups: 1,
+          days: [
+            { day: 1, eligible: 0, returned: 0 },
+            { day: 7, eligible: 0, returned: 0 },
+            { day: 30, eligible: 0, returned: 0 },
+          ],
+        },
+        {
+          week: '2030-11-02',
+          signups: 1,
+          days: [
+            { day: 1, eligible: 1, returned: 1 },
+            { day: 7, eligible: 1, returned: 1 },
+            { day: 30, eligible: 0, returned: 0 },
+          ],
+        },
+      ]);
+    });
+
     it('uses the requested Tehran reporting window, defaulting to 30 days', async () => {
       const campaign = `window-${randomUUID()}`;
       await prisma.growthEvent.createMany({

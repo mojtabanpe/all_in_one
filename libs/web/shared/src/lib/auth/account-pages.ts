@@ -1,3 +1,10 @@
+import { httpResource, HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import type {
+  ProgressNotificationSettings,
+  WeeklyProgress,
+} from '@all-in-one/shared/schemas';
+import { API_BASE_URL } from '../api/api-base-url';
 import { Location } from '@angular/common';
 import { extractGrowthCampaign } from '@all-in-one/shared/schemas';
 import { PushSettings } from './push-settings';
@@ -12,6 +19,7 @@ import {
   AioInput,
   AioSpinner,
   AioSwitch,
+  AioLocale,
   AioFormField,
   AioCardHeading,
   AioNotifications,
@@ -513,6 +521,78 @@ export class VerifyEmailPage implements OnInit {
           </form>
         </div>
       </section>
+      <section aioCard id="weekly-progress">
+        <div
+          aioCardHeading
+          [title]="'گزارش هفتگی' | aioTranslate"
+          [level]="2"
+        ></div>
+        <div aioCardContent class="flex flex-col gap-4">
+          @if (weekly.isLoading()) {
+            <p role="status">
+              {{ 'در حال دریافت گزارش هفتگی…' | aioTranslate }}
+            </p>
+          } @else if (weekly.hasValue()) {
+            <p>
+              {{ locale.date(weekly.value().from) }} –
+              {{ locale.date(weekly.value().to) }}
+            </p>
+            <dl class="grid grid-cols-2 gap-3">
+              @for (metric of weeklyMetrics; track metric.key) {
+                <div>
+                  <dt>{{ metric.label | aioTranslate }}</dt>
+                  <dd class="text-xl font-semibold">
+                    {{ locale.number(weekly.value()[metric.key]) }}
+                  </dd>
+                </div>
+              }
+            </dl>
+          } @else {
+            <button
+              aioBtn
+              type="button"
+              variant="outline"
+              (click)="weekly.reload()"
+            >
+              {{ 'دریافت دوباره گزارش هفتگی' | aioTranslate }}
+            </button>
+          }
+          @if (progress.hasValue()) {
+            @for (option of progressOptions; track option.key) {
+              <div class="flex min-h-11 items-center justify-between gap-3">
+                <label [attr.for]="'progress-' + option.key">{{
+                  option.label | aioTranslate
+                }}</label>
+                <aio-switch
+                  [inputId]="'progress-' + option.key"
+                  [checked]="progress.value()[option.key]"
+                  [disabled]="progressSaving() || progress.isLoading()"
+                  (checkedChange)="saveProgress(option.key, $event)"
+                />
+              </div>
+            }
+            <p class="text-muted-foreground text-sm">
+              {{
+                'اعلان‌های پیشرفت ساعت ۱۸ به وقت تهران ارسال می‌شوند. اعلان‌های دستگاه را هم فعال کن.'
+                  | aioTranslate
+              }}
+            </p>
+          } @else if (progress.isLoading()) {
+            <p role="status">
+              {{ 'در حال دریافت تنظیم یادآوری…' | aioTranslate }}
+            </p>
+          } @else {
+            <button
+              aioBtn
+              type="button"
+              variant="outline"
+              (click)="progress.reload()"
+            >
+              {{ 'دریافت دوباره تنظیمات' | aioTranslate }}
+            </button>
+          }
+        </div>
+      </section>
       <web-ai-settings />
       <web-ai-connection />
       <ng-content />
@@ -521,6 +601,53 @@ export class VerifyEmailPage implements OnInit {
 })
 export class AccountPage implements OnInit {
   protected readonly version = APP_VERSION;
+  protected readonly locale = inject(AioLocale);
+  private readonly api = inject(API_BASE_URL);
+  private readonly http = inject(HttpClient);
+  protected readonly weekly = httpResource<WeeklyProgress>(
+    () => `${this.api}/push/weekly-progress`,
+  );
+  protected readonly progress = httpResource<ProgressNotificationSettings>(
+    () => `${this.api}/push/progress-settings`,
+  );
+  protected readonly progressSaving = signal(false);
+  protected readonly progressOptions = [
+    { key: 'firstWeek', label: 'یادآوری روزهای ۱، ۳ و ۵ بعد از ثبت‌نام' },
+    { key: 'weekly', label: 'اعلان گزارش هفتگی در شنبه' },
+  ] as const;
+  protected readonly weeklyMetrics = [
+    { key: 'tasks', label: 'کارهای تکمیل‌شده' },
+    { key: 'reviews', label: 'مرورهای فلش‌کارت' },
+    { key: 'workouts', label: 'ورزش‌های ثبت‌شده' },
+    { key: 'meals', label: 'وعده‌های ثبت‌شده' },
+  ] as const;
+
+  protected async saveProgress(
+    key: keyof ProgressNotificationSettings,
+    value: boolean,
+  ) {
+    if (this.progressSaving() || !this.progress.hasValue()) return;
+    const previous = this.progress.value();
+    const next = { ...previous, [key]: value };
+    this.progressSaving.set(true);
+    this.progress.set(next);
+    try {
+      this.progress.set(
+        await firstValueFrom(
+          this.http.put<ProgressNotificationSettings>(
+            `${this.api}/push/progress-settings`,
+            next,
+          ),
+        ),
+      );
+    } catch (error) {
+      this.progress.set(previous);
+      this.notifications.error(apiErrorMessage(error));
+    } finally {
+      this.progressSaving.set(false);
+    }
+  }
+
   private readonly notifications = inject(AioNotifications);
 
   ngOnInit() {

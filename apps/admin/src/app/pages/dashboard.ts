@@ -1,7 +1,11 @@
 import { CampaignReport } from './campaign-report';
 import { httpResource } from '@angular/common/http';
 import { Component, computed, inject } from '@angular/core';
-import type { AdminStats, GrowthSummary } from '@all-in-one/shared/schemas';
+import type {
+  AdminStats,
+  GrowthRetentionCohort,
+  GrowthSummary,
+} from '@all-in-one/shared/schemas';
 import {
   AioTranslate,
   AioCardDirectives,
@@ -359,6 +363,91 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
           </div>
         }
       </section>
+      <section aioCard>
+        <div
+          aioCardHeading
+          [title]="'نگهداشت به تفکیک هفتهٔ ثبت‌نام' | aioTranslate"
+          [level]="2"
+        ></div>
+        <div aioCardContent class="flex min-w-0 flex-col gap-3">
+          <p class="text-sm text-muted-foreground">
+            {{
+              'مرورگرهای ثبت‌نام‌شده در ۹۰ روز اخیر، گروه‌بندی‌شده از شنبه. فقط روزهای کامل در نرخ بازگشت حساب می‌شوند.'
+                | aioTranslate
+            }}
+          </p>
+          @if (cohorts.isLoading()) {
+            <div aioSkeletonRows [count]="4" itemClass="h-10"></div>
+          } @else if (cohorts.hasValue()) {
+            @if (cohorts.value().length) {
+              <div
+                aioTableContainer
+                class="max-w-full overflow-x-auto"
+                tabindex="0"
+                [attr.aria-label]="
+                  'نگهداشت به تفکیک هفتهٔ ثبت‌نام' | aioTranslate
+                "
+              >
+                <table aioTable>
+                  <thead aioTHead>
+                    <tr aioTr>
+                      <th aioTh scope="col">
+                        {{ 'شروع هفته' | aioTranslate }}
+                      </th>
+                      <th aioTh scope="col">
+                        {{ 'ثبت‌نام‌ها' | aioTranslate }}
+                      </th>
+                      <th aioTh scope="col">D1</th>
+                      <th aioTh scope="col">D7</th>
+                      <th aioTh scope="col">D30</th>
+                    </tr>
+                  </thead>
+                  <tbody aioTBody>
+                    @for (cohort of cohorts.value(); track cohort.week) {
+                      <tr aioTr>
+                        <th aioTh scope="row">
+                          {{ locale.date(cohort.week) }}
+                        </th>
+                        <td aioTd>{{ fa(cohort.signups) }}</td>
+                        @for (day of cohort.days; track day.day) {
+                          <td aioTd>
+                            @if (day.eligible) {
+                              <bdi>{{
+                                retentionRate(day.returned, day.eligible)
+                              }}</bdi>
+                              <bdi class="text-muted-foreground"
+                                >({{ fa(day.returned) }}/{{
+                                  fa(day.eligible)
+                                }})</bdi
+                              >
+                            } @else {
+                              —
+                            }
+                          </td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p>
+                {{ 'هنوز داده‌ای برای نگهداشت ثبت نشده است.' | aioTranslate }}
+              </p>
+            }
+          } @else {
+            <button
+              aioBtn
+              type="button"
+              variant="outline"
+              class="self-start"
+              (click)="cohorts.reload()"
+            >
+              {{ 'دریافت دوباره آمار نگهداشت' | aioTranslate }}
+            </button>
+          }
+        </div>
+      </section>
       <admin-campaign-report />
       <web-api-status />
     </div>
@@ -377,6 +466,9 @@ export class Dashboard {
       style: 'percent',
       maximumFractionDigits: 1,
     });
+  protected readonly cohorts = httpResource<GrowthRetentionCohort[]>(
+    () => `${this.api}/growth/retention-cohorts`,
+  );
   protected readonly growth = httpResource<GrowthSummary>(
     () => `${this.api}/growth/summary`,
   );

@@ -520,3 +520,165 @@ describe('language review reminders', () => {
     expect(send.mock.calls[0][3]).toBe('review:2026-10-31');
   });
 });
+
+describe('progress notifications', () => {
+  it('only sends in the Tehran evening window, skips stale devices and deduplicates a successful retry', async () => {
+    const keys = new Set<string>();
+    const claim = vi.fn(async ({ data: [row] }) => {
+      if (keys.has(row.key)) return { count: 0 };
+      keys.add(row.key);
+      return { count: 1 };
+    });
+    const db = {
+      progressNotificationSetting: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            userId: 'u1',
+            firstWeek: true,
+            weekly: false,
+            user: { createdAt: new Date('2026-11-06T12:00:00Z') },
+          },
+        ]),
+      },
+      reviewReminderSetting: { findMany: vi.fn().mockResolvedValue([]) },
+      plannerHabit: { findMany: vi.fn().mockResolvedValue([]) },
+      pushSubscription: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: 'current',
+            userId: 'u1',
+            sessionVersion: 1,
+            user: { sessionVersion: 1 },
+          },
+          {
+            id: 'stale',
+            userId: 'u1',
+            sessionVersion: 0,
+            user: { sessionVersion: 1 },
+          },
+        ]),
+      },
+      pushDelivery: {
+        createMany: claim,
+        deleteMany: vi.fn(async ({ where }) => ({
+          count: Number(keys.delete(where.key)),
+        })),
+      },
+    };
+    const service = new PushService(
+      db as unknown as PrismaService,
+      new ConfigService(),
+      { filter: vi.fn().mockResolvedValue([]) } as unknown as TasksService,
+    );
+    const send = vi
+      .spyOn(service, 'send')
+      .mockResolvedValueOnce(false)
+      .mockResolvedValue(true);
+    await service.tick(new Date('2026-11-07T14:29:00Z'));
+    expect(db.progressNotificationSetting.findMany).not.toHaveBeenCalled();
+    const slot = new Date('2026-11-07T14:30:00Z');
+    await service.tick(slot);
+    await service.tick(slot);
+    await service.tick(slot);
+    await service.tick(new Date('2026-11-07T15:30:00Z'));
+    await service.tick(new Date('2026-11-08T14:30:00Z'));
+    expect(
+      send.mock.calls.map(([device, , url, key]) => [device.id, url, key]),
+    ).toEqual([
+      ['current', '/app/', 'progress:2026-11-07'],
+      ['current', '/app/', 'progress:2026-11-07'],
+    ]);
+  });
+
+  it('sends a Saturday digest only when the completed week has activity', async () => {
+    const db = {
+      progressNotificationSetting: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            userId: 'u1',
+            firstWeek: false,
+            weekly: true,
+            user: { createdAt: new Date('2026-10-01T12:00:00Z') },
+          },
+        ]),
+      },
+      reviewReminderSetting: { findMany: vi.fn().mockResolvedValue([]) },
+      plannerHabit: { findMany: vi.fn().mockResolvedValue([]) },
+      pushSubscription: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: 'current',
+            userId: 'u1',
+            sessionVersion: 1,
+            user: { sessionVersion: 1 },
+          },
+        ]),
+      },
+      pushDelivery: { createMany: vi.fn().mockResolvedValue({ count: 1 }) },
+    };
+    const service = new PushService(
+      db as unknown as PrismaService,
+      new ConfigService(),
+      { filter: vi.fn().mockResolvedValue([]) } as unknown as TasksService,
+    );
+    const digest = {
+      from: '2026-10-31',
+      to: '2026-11-06',
+      tasks: 0,
+      reviews: 0,
+      workouts: 0,
+      meals: 0,
+    };
+    vi.spyOn(service, 'weeklyProgress')
+      .mockResolvedValueOnce(digest)
+      .mockResolvedValueOnce({ ...digest, reviews: 1 });
+    const send = vi.spyOn(service, 'send').mockResolvedValue(true);
+    const slot = new Date('2026-11-07T14:30:00Z');
+    await service.tick(slot);
+    expect(send).not.toHaveBeenCalled();
+    await service.tick(slot);
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'current' }),
+      'گزارش هفتگی‌ات آماده است',
+      '/app/account#weekly-progress',
+      'progress:2026-11-07',
+    );
+  });
+
+  it('builds the digest for the last complete Tehran week', async () => {
+    const db = {
+      plannerTask: { count: vi.fn().mockResolvedValue(3) },
+      englishReviewDay: {
+        aggregate: vi.fn().mockResolvedValue({ _sum: { reviews: 5 } }),
+      },
+      workoutLog: { count: vi.fn().mockResolvedValue(2) },
+      mealLog: { count: vi.fn().mockResolvedValue(4) },
+    };
+    const service = new PushService(
+      db as unknown as PrismaService,
+      new ConfigService(),
+      {} as TasksService,
+    );
+    expect(
+      await service.weeklyProgress('u1', new Date('2026-11-07T14:30:00Z')),
+    ).toEqual({
+      from: '2026-10-31',
+      to: '2026-11-06',
+      tasks: 3,
+      reviews: 5,
+      workouts: 2,
+      meals: 4,
+    });
+    expect(db.plannerTask.count).toHaveBeenCalledWith({
+      where: {
+        userId: 'u1',
+        status: 'DONE',
+        deletedAt: null,
+        completedAt: {
+          gte: new Date('2026-10-30T20:30:00Z'),
+          lt: new Date('2026-11-06T20:30:00Z'),
+        },
+      },
+    });
+  });
+});
