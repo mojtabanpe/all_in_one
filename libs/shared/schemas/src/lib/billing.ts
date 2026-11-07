@@ -43,7 +43,8 @@ export interface BillingSubscriptionState {
   active: boolean;
 }
 
-export type BillingOrderStatus = 'PENDING' | 'PAID' | 'FAILED';
+/** `REFUNDED`: the whole amount went back; a partial refund leaves the order `PAID` with `refundedRial`. */
+export type BillingOrderStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
 
 export interface BillingOrderSummary {
   id: string;
@@ -54,13 +55,15 @@ export interface BillingOrderSummary {
   refNumber: string | null;
   createdAt: string;
   paidAt: string | null;
+  /** Money returned for this order, if any. */
+  refundedRial: number | null;
 }
 
 /** Where the callback sends the browser back to: `/billing?payment=…`. */
 export type BillingReturnStatus = 'paid' | 'failed' | 'pending';
 
 export const billingAdminOrdersQuerySchema = z.strictObject({
-  status: z.optional(z.enum(['PENDING', 'PAID', 'FAILED'])),
+  status: z.optional(z.enum(['PENDING', 'PAID', 'FAILED', 'REFUNDED'])),
   page: z.optional(
     z.coerce.number().check(z.int(), z.minimum(1), z.maximum(10_000)),
   ),
@@ -80,6 +83,9 @@ export interface BillingAdminOverview {
   /** Last 30 days. */
   paidOrders: number;
   paidRial: number;
+  /** Refunds recorded in the last 30 days, whichever month the order was paid. */
+  refunds: number;
+  refundedRial: number;
   /** Orders created in the last 30 days with a gateway tracking ID. */
   gatewayOrders: number;
   failedOrders: number;
@@ -116,7 +122,7 @@ export type BillingAdjustmentInput = z.infer<typeof billingAdjustmentSchema>;
 
 export interface BillingAdjustmentSummary {
   id: string;
-  action: 'EXTEND' | 'END';
+  action: 'EXTEND' | 'END' | 'REFUND';
   days: number | null;
   reason: string;
   adminEmail: string;
@@ -124,6 +130,23 @@ export interface BillingAdjustmentSummary {
   newUntil: string;
   createdAt: string;
 }
+
+/**
+ * Admin: record money returned for a paid order (once per order). `remove` takes the order's months back
+ * from the paid access (never before now); `keep` leaves access as it is (e.g. a goodwill partial refund).
+ */
+export const billingRefundSchema = z.strictObject({
+  orderId: z.uuid(),
+  amountRial: z
+    .number()
+    .check(z.int(), z.minimum(10), z.maximum(2_000_000_000), z.multipleOf(10)),
+  access: z.enum(['remove', 'keep']),
+  reason: adjustmentReason,
+  reference: z.optional(
+    z.string().check(z.trim(), z.maxLength(64), z.regex(/^[\w./-]*$/)),
+  ),
+});
+export type BillingRefundInput = z.infer<typeof billingRefundSchema>;
 
 export const BILLING_REWARD_CAMPAIGNS = [
   'TELEGRAM_JOIN',
@@ -175,4 +198,14 @@ export interface BillingAccount {
   orders: BillingOrderSummary[];
   adjustments: BillingAdjustmentSummary[];
   rewards: BillingRewardSummary[];
+  refunds: BillingRefundSummary[];
+}
+
+export interface BillingRefundSummary {
+  orderId: string;
+  amountRial: number;
+  reason: string;
+  reference: string | null;
+  adminEmail: string;
+  createdAt: string;
 }

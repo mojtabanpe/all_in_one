@@ -32,7 +32,7 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
       <h2 id="orders-title" class="text-xl font-semibold">
         {{ 'پرداخت‌ها' | aioTranslate }}
       </h2>
-      <dl class="grid grid-cols-2 gap-3 lg:grid-cols-3">
+      <dl class="grid grid-cols-2 gap-3 lg:grid-cols-4">
         @for (metric of metrics(); track metric.label) {
           <div
             aioMetric
@@ -99,6 +99,13 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
                       <span aioBadge [variant]="badge[order.status]">{{
                         label[order.status] | aioTranslate
                       }}</span>
+                      @if (order.refundedRial && order.status === 'PAID') {
+                        <span class="block text-xs text-muted-foreground">{{
+                          'بازپرداخت {0} تومان'
+                            | aioTranslate
+                              : [locale.number(order.refundedRial / 10)]
+                        }}</span>
+                      }
                     </td>
                     <td aioTd>
                       {{
@@ -176,16 +183,19 @@ export class BillingOrders {
     { label: 'پرداخت‌شده', status: 'PAID' },
     { label: 'در انتظار تأیید', status: 'PENDING' },
     { label: 'ناموفق', status: 'FAILED' },
+    { label: 'بازپرداخت‌شده', status: 'REFUNDED' },
   ] as const;
   protected readonly label = {
     PAID: 'پرداخت‌شده',
     PENDING: 'در انتظار تأیید',
     FAILED: 'ناموفق',
+    REFUNDED: 'بازپرداخت‌شده',
   } as const;
   protected readonly badge = {
     PAID: 'default',
     PENDING: 'secondary',
     FAILED: 'destructive',
+    REFUNDED: 'outline',
   } as const;
 
   protected metrics() {
@@ -210,6 +220,11 @@ export class BillingOrders {
       },
       { label: 'پرداخت ناموفق در ۳۰ روز', value: n(overview?.failedOrders) },
       { label: 'در انتظار تأیید', value: n(overview?.pendingOrders) },
+      { label: 'بازپرداخت در ۳۰ روز', value: n(overview?.refunds) },
+      {
+        label: 'مبلغ بازپرداخت ۳۰ روز (تومان)',
+        value: n(overview && overview.refundedRial / 10),
+      },
     ];
   }
 }

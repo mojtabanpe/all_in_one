@@ -25,6 +25,7 @@ import {
   billingAdminOrdersQuerySchema,
   billingCheckoutSchema,
   billingPlanInputSchema,
+  billingRefundSchema,
   billingRewardSchema,
   billingRewardRequestSchema,
   type BillingRewardRequestInput,
@@ -34,6 +35,7 @@ import {
   type BillingAdminOrdersQuery,
   type BillingCheckoutInput,
   type BillingPlanInput,
+  type BillingRefundInput,
 } from '@all-in-one/shared/schemas';
 import { BillingService } from './billing.service';
 
@@ -126,6 +128,15 @@ export class BillingController {
     @Body({ schema: billingAdjustmentSchema }) input: BillingAdjustmentInput,
   ) {
     return this.billing.adjust(admin.id, input);
+  }
+
+  @Roles('ADMIN')
+  @Post('admin/refunds')
+  refund(
+    @CurrentUser() admin: AuthUser,
+    @Body({ schema: billingRefundSchema }) input: BillingRefundInput,
+  ) {
+    return this.billing.refund(admin.id, input);
   }
 
   @Roles('ADMIN')

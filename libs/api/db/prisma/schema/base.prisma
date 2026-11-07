@@ -45,6 +45,7 @@ model User {
   billingRewardRequests BillingRewardRequest[]
   billingAdjustments  BillingAdjustment[] @relation("BillingAdjustmentUser")
   billingAdjustmentsMade BillingAdjustment[] @relation("BillingAdjustmentAdmin")
+  billingRefundsMade     BillingRefund[]     @relation("BillingRefundAdmin")
 
   // Applets (each applet's models live in its own schema file)
   plannerTasks          PlannerTask[]          @relation("PlannerTaskCreator")

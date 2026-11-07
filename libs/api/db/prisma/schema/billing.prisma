@@ -19,6 +19,8 @@ enum BillingOrderStatus {
   PENDING
   PAID
   FAILED
+  /// The whole amount was returned (see BillingRefund).
+  REFUNDED
 }
 
 /// One checkout. Plan, months and amount are copied at creation so a later price change never alters it.
@@ -38,6 +40,7 @@ model BillingOrder {
   paidAt     DateTime?
   createdAt  DateTime           @default(now())
   updatedAt  DateTime           @updatedAt
+  refund     BillingRefund?
 
   @@index([userId, createdAt])
   @@map("billing_orders")
@@ -56,6 +59,27 @@ model BillingSubscription {
 enum BillingAdjustmentAction {
   EXTEND
   END
+  /// Paid time taken back because its order was refunded.
+  REFUND
+}
+
+/// Money returned for a paid order, at most once per order (whole or partial). Zibal has no refund API we
+/// rely on: the admin returns the money in the Zibal panel or by bank transfer and records it here with its
+/// reference. Any change to paid access is written as a REFUND row of billing_adjustments. Never edited.
+model BillingRefund {
+  id            String       @id @default(uuid(7)) @db.Uuid
+  orderId       String       @unique @db.Uuid
+  order         BillingOrder @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  adminId       String       @db.Uuid
+  admin         User         @relation("BillingRefundAdmin", fields: [adminId], references: [id], onDelete: Restrict)
+  amountRial    Int
+  reason        String       @db.VarChar(200)
+  /// Zibal panel or bank tracking number.
+  reference     String?      @db.VarChar(64)
+  createdAt     DateTime     @default(now())
+
+  @@index([createdAt])
+  @@map("billing_refunds")
 }
 
 /// Audit trail of an admin changing someone's paid access by hand. Rows are never edited or deleted.

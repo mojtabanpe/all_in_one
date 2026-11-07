@@ -412,6 +412,12 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
                     "
                     >{{ statusLabel[order.status] | aioTranslate }}</span
                   >
+                  @if (order.refundedRial && order.status === 'PAID') {
+                    <span class="text-sm text-muted-foreground">{{
+                      'بازپرداخت {0} تومان'
+                        | aioTranslate: [locale.number(order.refundedRial / 10)]
+                    }}</span>
+                  }
                   @if (order.status === 'PENDING') {
                     <button
                       aioAsyncButton
@@ -533,6 +539,7 @@ export class Billing {
     PAID: 'پرداخت‌شده',
     PENDING: 'در انتظار تأیید',
     FAILED: 'ناموفق',
+    REFUNDED: 'بازپرداخت‌شده',
   } as const;
 
   protected planTitle(plan: BillingPlan): string {

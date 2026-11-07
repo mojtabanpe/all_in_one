@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import {
   BadGatewayException,
+  ConflictException,
   NotFoundException,
   UnprocessableEntityException,
   ServiceUnavailableException,
@@ -13,6 +14,7 @@ import {
   billingAdjustmentSchema,
   billingCheckoutSchema,
   billingPlanInputSchema,
+  billingRefundSchema,
 } from '@all-in-one/shared/schemas';
 import { BillingController, PaymentsController } from './billing.controller';
 import { addMonths, BillingService, TRIAL_LAUNCH } from './billing.service';
@@ -44,6 +46,7 @@ describe('Billing rules', () => {
       billing.adminOrders,
       billing.account,
       billing.adjust,
+      billing.refund,
     ])
       expect(reflector.get(ROLES, handler)).toEqual(['ADMIN']);
     expect(reflector.get(IS_PUBLIC, billing.plans)).toBe(true);
@@ -84,6 +87,30 @@ describe('Billing rules', () => {
       { ...base, action: 'pause' },
     ])
       expect(billingAdjustmentSchema.safeParse(input).success).toBe(false);
+  });
+
+  it('accepts a refund only for an order, in whole Toman, with a reason and a safe reference', () => {
+    const base = {
+      orderId: randomUUID(),
+      amountRial: 990_000,
+      access: 'remove',
+      reason: 'customer asked',
+    };
+    expect(billingRefundSchema.safeParse(base).success).toBe(true);
+    expect(
+      billingRefundSchema.safeParse({ ...base, reference: 'ZB-1234/5' })
+        .success,
+    ).toBe(true);
+    for (const input of [
+      { ...base, amountRial: 0 },
+      { ...base, amountRial: 990_005 },
+      { ...base, access: 'end' },
+      { ...base, reason: 'x' },
+      { ...base, orderId: 'order-1' },
+      { ...base, reference: '<script>' },
+      { ...base, email: 'a@example.invalid' },
+    ])
+      expect(billingRefundSchema.safeParse(input).success).toBe(false);
   });
 
   it('accepts only a plan code at checkout and whole-Toman Rial prices', () => {
@@ -158,6 +185,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
     });
     afterAll(async () => {
       if (prisma) {
+        await prisma.billingRefund.deleteMany({ where: { order: { userId } } });
         await prisma.billingAdjustment.deleteMany({ where: { userId } });
         await prisma.billingOrder.deleteMany({ where: { userId } });
         await prisma.billingPlan.deleteMany({ where: { code } });
@@ -773,6 +801,155 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         expect(
           await service().isPaid(userId, new Date(until.getTime() + 1)),
         ).toBe(false);
+      });
+
+      it('records refunds once, takes paid time back on request and closes fully refunded orders', async () => {
+        const admin = await prisma.user.create({
+          data: {
+            email: `billing-admin-${randomUUID()}@example.invalid`,
+            passwordHash: 'synthetic-integration-fixture',
+            role: 'ADMIN',
+          },
+        });
+        try {
+          const partial = trackOf(
+            (await service().checkout(userId, code)).paymentUrl,
+          );
+          expect(await service().settle(partial)).toBe('paid');
+          const partialOrder = await orderOf(partial);
+          const kept = (await service().subscription(userId)).paidUntil;
+          const afterPartial = await service().refund(admin.id, {
+            orderId: partialOrder.id,
+            amountRial: 490_000,
+            access: 'keep',
+            reason: 'goodwill',
+            reference: 'ZB-1',
+          });
+          expect(afterPartial.subscription.paidUntil).toBe(kept);
+          expect(
+            afterPartial.orders.find((o) => o.id === partialOrder.id),
+          ).toMatchObject({ status: 'PAID', refundedRial: 490_000 });
+          expect(afterPartial.refunds[0]).toMatchObject({
+            orderId: partialOrder.id,
+            amountRial: 490_000,
+            reference: 'ZB-1',
+            adminEmail: admin.email,
+          });
+          await expect(
+            service().refund(admin.id, {
+              orderId: partialOrder.id,
+              amountRial: 10,
+              access: 'keep',
+              reason: 'again',
+            }),
+          ).rejects.toBeInstanceOf(ConflictException);
+
+          const full = trackOf(
+            (await service().checkout(userId, code)).paymentUrl,
+          );
+          expect(await service().settle(full)).toBe('paid');
+          const fullOrder = await orderOf(full);
+          const before = (await service().subscription(userId))
+            .paidUntil as string;
+          await expect(
+            service().refund(admin.id, {
+              orderId: fullOrder.id,
+              amountRial: 990_010,
+              access: 'remove',
+              reason: 'too much',
+            }),
+          ).rejects.toBeInstanceOf(UnprocessableEntityException);
+          // Concurrent submissions: exactly one refund is recorded.
+          const results = await Promise.allSettled(
+            [1, 2].map(() =>
+              service().refund(admin.id, {
+                orderId: fullOrder.id,
+                amountRial: 990_000,
+                access: 'remove',
+                reason: 'cancelled within a day',
+              }),
+            ),
+          );
+          expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(
+            1,
+          );
+          const account = await service().account(email);
+          expect(account.subscription.paidUntil).toBe(
+            addMonths(new Date(before), -1).toISOString(),
+          );
+          expect(account.adjustments[0]).toMatchObject({
+            action: 'REFUND',
+            previousUntil: before,
+            reason: 'cancelled within a day',
+          });
+          expect((await orderOf(full)).status).toBe('REFUNDED');
+          gateway.verify.mockClear();
+          expect(await service().settle(full)).toBe('failed');
+          expect(gateway.verify).not.toHaveBeenCalled();
+          await expect(
+            service().refund(admin.id, {
+              orderId: fullOrder.id,
+              amountRial: 10,
+              access: 'keep',
+              reason: 'closed',
+            }),
+          ).rejects.toBeInstanceOf(UnprocessableEntityException);
+          await expect(
+            service().refund(admin.id, {
+              orderId: randomUUID(),
+              amountRial: 10,
+              access: 'keep',
+              reason: 'unknown',
+            }),
+          ).rejects.toBeInstanceOf(NotFoundException);
+
+          const page = await service().adminOrders({ status: 'REFUNDED' });
+          expect(page.orders.some((o) => o.id === fullOrder.id)).toBe(true);
+          expect(page.overview.refunds).toBeGreaterThanOrEqual(2);
+          expect(page.overview.refundedRial).toBeGreaterThanOrEqual(1_480_000);
+
+          // Taking back more than is left ends access now, never in the past.
+          const plan = await prisma.billingPlan.findUniqueOrThrow({
+            where: { code },
+          });
+          const short = await prisma.billingOrder.create({
+            data: {
+              userId,
+              planId: plan.id,
+              months: 12,
+              amountRial: 990_000,
+              status: 'PAID',
+              paidAt: new Date(),
+            },
+          });
+          const now = new Date();
+          await prisma.billingSubscription.update({
+            where: { userId },
+            data: { paidUntil: new Date(now.getTime() + 5 * 86_400_000) },
+          });
+          const ended = await service().refund(
+            admin.id,
+            {
+              orderId: short.id,
+              amountRial: 990_000,
+              access: 'remove',
+              reason: 'refund',
+            },
+            now,
+          );
+          expect(ended.subscription).toEqual({
+            paidUntil: now.toISOString(),
+            active: false,
+          });
+        } finally {
+          await prisma.billingRefund.deleteMany({
+            where: { adminId: admin.id },
+          });
+          await prisma.billingAdjustment.deleteMany({
+            where: { adminId: admin.id },
+          });
+          await prisma.user.delete({ where: { id: admin.id } });
+        }
       });
     });
   },

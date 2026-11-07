@@ -21,6 +21,7 @@ import type {
   BillingOrderSummary,
   BillingPlan,
   BillingPlanInput,
+  BillingRefundInput,
   BillingReturnStatus,
   BillingSubscriptionState,
 } from '@all-in-one/shared/schemas';
@@ -185,13 +186,15 @@ export class BillingService {
         createdAt: true,
         paidAt: true,
         plan: { select: { code: true } },
+        refund: { select: { amountRial: true } },
       },
     });
-    return rows.map(({ plan, createdAt, paidAt, ...row }) => ({
+    return rows.map(({ plan, createdAt, paidAt, refund, ...row }) => ({
       ...row,
       plan: plan.code,
       createdAt: createdAt.toISOString(),
       paidAt: paidAt?.toISOString() ?? null,
+      refundedRial: refund?.amountRial ?? null,
     }));
   }
 
@@ -211,6 +214,7 @@ export class BillingService {
       gatewayOrders,
       failedOrders,
       pendingOrders,
+      refunds,
     ] = await Promise.all([
       this.prisma.billingOrder.findMany({
         where,
@@ -228,14 +232,16 @@ export class BillingService {
           paidAt: true,
           plan: { select: { code: true } },
           user: { select: { email: true } },
+          refund: { select: { amountRial: true } },
         },
       }),
       this.prisma.billingOrder.count({ where }),
       this.prisma.billingSubscription.count({
         where: { paidUntil: { gt: now } },
       }),
+      // A refunded order was still paid; the money returned is reported on its own.
       this.prisma.billingOrder.aggregate({
-        where: { status: 'PAID', paidAt: { gte: since } },
+        where: { status: { in: ['PAID', 'REFUNDED'] }, paidAt: { gte: since } },
         _count: true,
         _sum: { amountRial: true },
       }),
@@ -246,20 +252,28 @@ export class BillingService {
         where: { status: 'FAILED', ...recent },
       }),
       this.prisma.billingOrder.count({ where: { status: 'PENDING' } }),
+      this.prisma.billingRefund.aggregate({
+        where: { createdAt: { gte: since } },
+        _count: true,
+        _sum: { amountRial: true },
+      }),
     ]);
     return {
-      orders: rows.map(({ plan, user, createdAt, paidAt, ...row }) => ({
+      orders: rows.map(({ plan, user, createdAt, paidAt, refund, ...row }) => ({
         ...row,
         plan: plan.code,
         email: user.email,
         createdAt: createdAt.toISOString(),
         paidAt: paidAt?.toISOString() ?? null,
+        refundedRial: refund?.amountRial ?? null,
       })),
       total,
       overview: {
         activeSubscribers,
         paidOrders: paid._count,
         paidRial: paid._sum.amountRial ?? 0,
+        refunds: refunds._count,
+        refundedRial: refunds._sum.amountRial ?? 0,
         gatewayOrders,
         failedOrders,
         pendingOrders,
@@ -274,21 +288,28 @@ export class BillingService {
       select: { id: true, email: true, name: true },
     });
     if (!user) throw new NotFoundException('Account not found');
-    const [subscription, orders, adjustments, rewards] = await Promise.all([
-      this.subscription(user.id, now),
-      this.orders(user.id),
-      this.prisma.billingAdjustment.findMany({
-        where: { userId: user.id },
-        orderBy: { createdAt: 'desc' },
-        take: 20,
-        include: { admin: { select: { email: true } } },
-      }),
-      this.prisma.billingReward.findMany({
-        where: { userId: user.id },
-        orderBy: { startsAt: 'asc' },
-        include: { admin: { select: { email: true } } },
-      }),
-    ]);
+    const [subscription, orders, adjustments, rewards, refunds] =
+      await Promise.all([
+        this.subscription(user.id, now),
+        this.orders(user.id),
+        this.prisma.billingAdjustment.findMany({
+          where: { userId: user.id },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+          include: { admin: { select: { email: true } } },
+        }),
+        this.prisma.billingReward.findMany({
+          where: { userId: user.id },
+          orderBy: { startsAt: 'asc' },
+          include: { admin: { select: { email: true } } },
+        }),
+        this.prisma.billingRefund.findMany({
+          where: { order: { userId: user.id } },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+          include: { admin: { select: { email: true } } },
+        }),
+      ]);
     return {
       email: user.email,
       name: user.name,
@@ -300,6 +321,14 @@ export class BillingService {
         expiresAt: row.expiresAt.toISOString(),
         reason: row.reason,
         adminEmail: row.admin.email,
+      })),
+      refunds: refunds.map((row) => ({
+        orderId: row.orderId,
+        amountRial: row.amountRial,
+        reason: row.reason,
+        reference: row.reference,
+        adminEmail: row.admin.email,
+        createdAt: row.createdAt.toISOString(),
       })),
       adjustments: adjustments.map((row) => ({
         id: row.id,
@@ -502,6 +531,87 @@ export class BillingService {
     return this.account(input.email, now);
   }
 
+  /**
+   * Records money returned for a paid order, once. The order and the account are locked like activation, so a
+   * refund and a payment of the same account never interleave. `remove` takes the order's months back from paid
+   * access (never before now) and writes a REFUND adjustment row; a full refund marks the order REFUNDED.
+   */
+  async refund(
+    adminId: string,
+    input: BillingRefundInput,
+    now = new Date(),
+  ): Promise<BillingAccount> {
+    const email = await this.prisma.$transaction(async (tx) => {
+      const [order] = await tx.$queryRaw<
+        {
+          userId: string;
+          status: string;
+          amountRial: number;
+          months: number;
+        }[]
+      >`SELECT "userId", status::text AS status, "amountRial", months FROM billing_orders
+        WHERE id = ${input.orderId}::uuid FOR UPDATE`;
+      if (!order) throw new NotFoundException('سفارش پیدا نشد.');
+      if (order.status !== 'PAID')
+        throw new UnprocessableEntityException(
+          'فقط سفارش پرداخت‌شده بازپرداخت می‌شود.',
+        );
+      if (input.amountRial > order.amountRial)
+        throw new UnprocessableEntityException(
+          'مبلغ بازپرداخت از مبلغ پرداخت‌شده بیشتر است.',
+        );
+      if (
+        await tx.billingRefund.findUnique({ where: { orderId: input.orderId } })
+      )
+        throw new ConflictException('این سفارش قبلاً بازپرداخت شده است.');
+      await tx.$executeRaw`SELECT 1 FROM "users" WHERE "id" = ${order.userId}::uuid FOR UPDATE`;
+      const reason = input.reason.trim();
+      await tx.billingRefund.create({
+        data: {
+          orderId: input.orderId,
+          adminId,
+          amountRial: input.amountRial,
+          reason,
+          reference: input.reference?.trim() || null,
+        },
+      });
+      if (input.amountRial === order.amountRial)
+        await tx.billingOrder.update({
+          where: { id: input.orderId },
+          data: { status: 'REFUNDED' },
+        });
+      if (input.access === 'remove') {
+        const current = await tx.billingSubscription.findUnique({
+          where: { userId: order.userId },
+        });
+        if (current && current.paidUntil > now) {
+          const back = addMonths(current.paidUntil, -order.months);
+          const newUntil = back > now ? back : now;
+          await tx.billingSubscription.update({
+            where: { userId: order.userId },
+            data: { paidUntil: newUntil },
+          });
+          await tx.billingAdjustment.create({
+            data: {
+              userId: order.userId,
+              adminId,
+              action: 'REFUND',
+              reason,
+              previousUntil: current.paidUntil,
+              newUntil,
+            },
+          });
+        }
+      }
+      const user = await tx.user.findUniqueOrThrow({
+        where: { id: order.userId },
+        select: { email: true },
+      });
+      return user.email;
+    });
+    return this.account(email, now);
+  }
+
   /** Creates an owned order with the plan's current price, then asks Zibal for a payment page. */
   async checkout(
     userId: string,
@@ -545,8 +655,9 @@ export class BillingService {
     const order = await this.prisma.billingOrder.findUnique({
       where: { trackId },
     });
-    if (!order || order.status === 'FAILED') return 'failed';
-    if (order.status === 'PAID') return 'paid';
+    if (order?.status === 'PAID') return 'paid';
+    // Failed or refunded orders are closed: never verified or activated again.
+    if (order?.status !== 'PENDING') return 'failed';
     let refNumber: string | null;
     try {
       ({ refNumber } = await this.gateway.verify(

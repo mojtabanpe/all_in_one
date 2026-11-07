@@ -14,12 +14,14 @@ import {
   maxLength,
   min,
   minLength,
+  pattern,
   required,
   submit,
 } from '@angular/forms/signals';
 import {
   BILLING_REWARD_CAMPAIGNS,
   type BillingAccount,
+  type BillingOrderSummary,
   type BillingPendingReward,
   type BillingRewardCampaign,
 } from '@all-in-one/shared/schemas';
@@ -276,6 +278,202 @@ type Action = 'extend' | 'end';
 
           <section
             class="border-border flex min-w-0 flex-col gap-3 border-t pt-4"
+            aria-labelledby="account-orders-title"
+          >
+            <h3 id="account-orders-title" class="font-semibold">
+              {{ 'سفارش‌ها و بازپرداخت' | aioTranslate }}
+            </h3>
+            <p class="text-muted-foreground text-sm">
+              {{
+                'اول پول را از پنل زیبال یا با انتقال بانکی برگردان، بعد اینجا ثبت کن. هر سفارش یک بار بازپرداخت می‌شود.'
+                  | aioTranslate
+              }}
+            </p>
+            @for (order of acc.orders; track order.id) {
+              <div
+                class="border-border flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-xl border p-3 text-sm"
+              >
+                <div class="min-w-0">
+                  <p class="font-medium tabular-nums">
+                    {{
+                      '{0} تومان'
+                        | aioTranslate: [locale.number(order.amountRial / 10)]
+                    }}
+                  </p>
+                  <p class="text-muted-foreground">
+                    {{
+                      'اشتراک {0} ماهه'
+                        | aioTranslate: [locale.number(order.months)]
+                    }}
+                  </p>
+                  <p class="text-muted-foreground">
+                    {{
+                      order.paidAt ?? order.createdAt
+                        | aioDate: { dateStyle: 'medium' }
+                    }}
+                  </p>
+                  @if (order.refundedRial) {
+                    <p class="text-muted-foreground">
+                      {{
+                        'بازپرداخت {0} تومان'
+                          | aioTranslate
+                            : [locale.number(order.refundedRial / 10)]
+                      }}
+                    </p>
+                  }
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <span aioBadge [variant]="orderBadges[order.status]">{{
+                    orderLabels[order.status] | aioTranslate
+                  }}</span>
+                  @if (order.status === 'PAID' && order.refundedRial === null) {
+                    <button
+                      aioBtn
+                      type="button"
+                      variant="outline"
+                      class="min-h-11"
+                      [attr.aria-expanded]="refundOrder()?.id === order.id"
+                      aria-controls="refund-form"
+                      (click)="startRefund(order)"
+                    >
+                      {{ 'بازپرداخت' | aioTranslate }}
+                    </button>
+                  }
+                </div>
+              </div>
+            } @empty {
+              <p class="text-muted-foreground text-sm">
+                {{ 'سفارشی ثبت نشده است.' | aioTranslate }}
+              </p>
+            }
+            @if (refundOrder(); as order) {
+              <form
+                id="refund-form"
+                class="border-border grid gap-4 rounded-xl border p-3 sm:grid-cols-2"
+                [formRoot]="refundForm"
+                (submit)="$event.preventDefault(); refund()"
+              >
+                <p class="font-medium sm:col-span-2">
+                  {{
+                    'بازپرداخت سفارش {0} تومانی'
+                      | aioTranslate: [locale.number(order.amountRial / 10)]
+                  }}
+                </p>
+                <aio-number-field
+                  label="مبلغ بازپرداخت (تومان)"
+                  controlId="refund-amount"
+                  [field]="refundForm.amountToman"
+                  [showErrors]="true"
+                />
+                <aio-form-field
+                  label="شمارهٔ پیگیری بازپرداخت (اختیاری)"
+                  controlId="refund-reference"
+                >
+                  <input
+                    aioInput
+                    id="refund-reference"
+                    dir="ltr"
+                    lang="en"
+                    autocomplete="off"
+                    [formField]="refundForm.reference"
+                  />
+                  <aio-form-errors [errors]="refundForm.reference().errors()" />
+                </aio-form-field>
+                <div class="flex flex-col gap-2 sm:col-span-2">
+                  <p id="refund-access-label" class="text-sm font-medium">
+                    {{ 'مدت این سفارش از دسترسی پولی' | aioTranslate }}
+                  </p>
+                  <div
+                    aioToggleGroup
+                    type="single"
+                    variant="outline"
+                    class="self-start"
+                    [value]="refundModel().access"
+                    (valueChange)="setRefundAccess($event)"
+                    aria-labelledby="refund-access-label"
+                  >
+                    <button
+                      aioToggleGroupItem
+                      type="button"
+                      value="remove"
+                      class="min-h-11 px-4"
+                    >
+                      {{ 'کم شود' | aioTranslate }}
+                    </button>
+                    <button
+                      aioToggleGroupItem
+                      type="button"
+                      value="keep"
+                      class="min-h-11 px-4"
+                    >
+                      {{ 'بماند' | aioTranslate }}
+                    </button>
+                  </div>
+                </div>
+                <aio-form-field
+                  class="sm:col-span-2"
+                  label="دلیل (در سابقه می‌ماند)"
+                  controlId="refund-reason"
+                >
+                  <input
+                    aioInput
+                    id="refund-reason"
+                    [formField]="refundForm.reason"
+                  />
+                  <aio-form-errors [errors]="refundForm.reason().errors()" />
+                </aio-form-field>
+                <div class="flex flex-wrap gap-2 sm:col-span-2">
+                  <button
+                    aioAsyncButton
+                    type="submit"
+                    variant="destructive"
+                    class="min-h-11"
+                    label="ثبت بازپرداخت"
+                    busyLabel="در حال ذخیره"
+                    [busy]="refunding()"
+                  ></button>
+                  <button
+                    aioBtn
+                    type="button"
+                    variant="ghost"
+                    class="min-h-11"
+                    [disabled]="refunding()"
+                    (click)="refundOrder.set(null)"
+                  >
+                    {{ 'انصراف' | aioTranslate }}
+                  </button>
+                </div>
+              </form>
+            }
+            @for (row of acc.refunds; track row.orderId) {
+              <div class="border-border rounded-xl border p-3 text-sm">
+                <p class="font-medium tabular-nums">
+                  {{
+                    'بازپرداخت {0} تومان'
+                      | aioTranslate: [locale.number(row.amountRial / 10)]
+                  }}
+                </p>
+                <p>
+                  {{
+                    row.createdAt
+                      | aioDate: { dateStyle: 'medium', timeStyle: 'short' }
+                  }}
+                </p>
+                <p class="break-words">{{ row.reason }}</p>
+                @if (row.reference) {
+                  <p dir="ltr" class="break-all text-end">
+                    {{ row.reference }}
+                  </p>
+                }
+                <p dir="ltr" class="text-muted-foreground break-all text-xs">
+                  {{ row.adminEmail }}
+                </p>
+              </div>
+            }
+          </section>
+
+          <section
+            class="border-border flex min-w-0 flex-col gap-3 border-t pt-4"
             aria-labelledby="reward-title"
           >
             <h3 id="reward-title" class="font-semibold">
@@ -364,12 +562,16 @@ type Action = 'extend' | 'end';
                           <span
                             aioBadge
                             [variant]="
-                              row.action === 'END' ? 'destructive' : 'secondary'
+                              row.action === 'EXTEND'
+                                ? 'secondary'
+                                : 'destructive'
                             "
                             >{{
                               (row.action === 'END'
                                 ? 'پایان دستی'
-                                : '{0} روز تمدید'
+                                : row.action === 'REFUND'
+                                  ? 'کسر بابت بازپرداخت'
+                                  : '{0} روز تمدید'
                               ) | aioTranslate: [locale.number(row.days ?? 0)]
                             }}</span
                           >
@@ -503,6 +705,95 @@ export class BillingAccountPanel {
   }
 
   protected readonly saving = signal(false);
+
+  protected readonly orderLabels = {
+    PAID: 'پرداخت‌شده',
+    PENDING: 'در انتظار تأیید',
+    FAILED: 'ناموفق',
+    REFUNDED: 'بازپرداخت‌شده',
+  } as const;
+  protected readonly orderBadges = {
+    PAID: 'default',
+    PENDING: 'secondary',
+    FAILED: 'destructive',
+    REFUNDED: 'outline',
+  } as const;
+
+  protected readonly refunding = signal(false);
+  protected readonly refundOrder = signal<BillingOrderSummary | null>(null);
+  protected readonly refundModel = signal<{
+    amountToman: number;
+    reference: string;
+    access: 'remove' | 'keep';
+    reason: string;
+  }>({ amountToman: 0, reference: '', access: 'remove', reason: '' });
+  protected readonly refundForm = form(this.refundModel, (path) => {
+    min(path.amountToman, 1, { message: 'مبلغ را وارد کن' });
+    max(path.amountToman, () => (this.refundOrder()?.amountRial ?? 0) / 10, {
+      message: 'بیشتر از مبلغ پرداخت‌شده نمی‌شود',
+    });
+    maxLength(path.reference, 64);
+    pattern(path.reference, /^[\w./-]*$/, {
+      message: 'فقط حروف انگلیسی، عدد و - / .',
+    });
+    required(path.reason, { message: 'دلیل را بنویس' });
+    minLength(path.reason, 3, { message: 'دلیل را بنویس' });
+    maxLength(path.reason, 200);
+  });
+
+  protected startRefund(order: BillingOrderSummary): void {
+    this.refundOrder.set(order);
+    this.refundModel.set({
+      amountToman: order.amountRial / 10,
+      reference: '',
+      access: 'remove',
+      reason: '',
+    });
+    this.refundForm().reset();
+  }
+
+  protected setRefundAccess(value: unknown): void {
+    if (value === 'remove' || value === 'keep')
+      this.refundModel.update((model) => ({ ...model, access: value }));
+  }
+
+  protected refund(): void {
+    const account = this.account();
+    const order = this.refundOrder();
+    if (!account || !order || this.refunding()) return;
+    submit(this.refundForm, async () => {
+      const { amountToman, reference, access, reason } = this.refundModel();
+      const ok = await this.confirm.ask({
+        title: 'بازپرداخت ثبت شود؟',
+        description:
+          access === 'remove'
+            ? 'ثبت بازپرداخت قابل برگشت نیست و مدت این سفارش از دسترسی پولی کم می‌شود.'
+            : 'ثبت بازپرداخت قابل برگشت نیست. دسترسی پولی تغییر نمی‌کند.',
+        confirmText: 'ثبت بازپرداخت',
+        destructive: true,
+      });
+      if (!ok || this.account()?.email !== account.email) return;
+      this.refunding.set(true);
+      try {
+        const updated = await firstValueFrom(
+          this.http.post<BillingAccount>(`${this.api}/billing/admin/refunds`, {
+            orderId: order.id,
+            amountRial: Math.round(amountToman) * 10,
+            access,
+            reason: reason.trim(),
+            ...(reference.trim() ? { reference: reference.trim() } : {}),
+          }),
+        );
+        if (this.account()?.email === account.email) this.account.set(updated);
+        this.refundOrder.set(null);
+        this.notifications.success('بازپرداخت ثبت شد');
+      } catch (error) {
+        this.notifications.error('بازپرداخت ثبت نشد', apiErrorMessage(error));
+      } finally {
+        this.refunding.set(false);
+      }
+    });
+  }
 
   protected readonly findModel = signal({ email: '' });
   protected readonly findForm = form(this.findModel, (path) => {
