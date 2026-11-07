@@ -17,7 +17,16 @@ describe('aiCostUsd', () => {
     expect(aiCostUsd(prices, 'tts', 2_000_000)).toBeCloseTo(30);
     expect(aiCostUsd(prices, 'stt', 10)).toBeCloseTo(0.06);
   });
-  it('is zero until prices are set', () => {
-    expect(aiCostUsd(DEFAULT_AI_PRICES, 'chat', 1_000_000, 10)).toBe(0);
+  it('is zero for a free service', () => {
+    const free = { ...prices, chatInput: 0, chatOutput: 0 };
+    expect(aiCostUsd(free, 'chat', 1_000_000, 10)).toBe(0);
+  });
+  it('starts from the DeepSeek and Deepgram prices', () => {
+    // 900k input + 100k output tokens at $0.30 / $1.20 per million.
+    expect(
+      aiCostUsd(DEFAULT_AI_PRICES, 'chat', 1_000_000, 100_000),
+    ).toBeCloseTo(0.39);
+    expect(aiCostUsd(DEFAULT_AI_PRICES, 'tts', 1_000)).toBeCloseTo(0.03);
+    expect(aiCostUsd(DEFAULT_AI_PRICES, 'stt', 100)).toBeCloseTo(0.43);
   });
 });

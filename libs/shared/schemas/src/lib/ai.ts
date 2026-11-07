@@ -161,8 +161,8 @@ export const aiQuotasSchema = z.object({
 });
 
 /**
- * What the AI services cost us, in US dollars as providers bill them (0 = not set). Chat per million input and
- * output tokens, text-to-speech per million characters, speech-to-text per recording; `usdToToman` turns the
+ * What the AI services cost us, in US dollars as providers bill them (0 = free or unknown). Chat per million input
+ * and output tokens, text-to-speech per million characters, speech-to-text per recording; `usdToToman` turns the
  * totals into Toman for pricing plans.
  */
 export interface AiPrices {
@@ -172,12 +172,18 @@ export interface AiPrices {
   stt: number;
   usdToToman: number;
 }
+/**
+ * Starting prices until an admin saves their own (owner, 2026-11-08: «فعلا از دیپ سیک و دیپ گرام بردار»), read
+ * on 2026-11-08 and rounded up so costs are not underestimated: DeepSeek `deepseek-flash` at its peak rate (cache
+ * misses; off-peak and cache hits are cheaper), Deepgram Aura-2 ($0.030 per 1,000 characters) and Nova-3
+ * ($0.0043 per minute, counted as one minute per recording), and the Tehran open-market dollar (~271,000 Toman).
+ */
 export const DEFAULT_AI_PRICES: AiPrices = {
-  chatInput: 0,
-  chatOutput: 0,
-  tts: 0,
-  stt: 0,
-  usdToToman: 0,
+  chatInput: 0.3,
+  chatOutput: 1.2,
+  tts: 30,
+  stt: 0.0043,
+  usdToToman: 271_000,
 };
 const price = z.number().check(z.minimum(0), z.maximum(1_000_000));
 export const aiPricesSchema = z.object({
