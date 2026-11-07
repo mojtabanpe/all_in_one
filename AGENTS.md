@@ -560,3 +560,9 @@ origin master` and read the index and the roadmap; after work, update its status
      only when `AI_SCOPE_LOCAL_MODEL=on` is set in the server's env, lazily on the first checked request, with one
      ONNX thread; otherwise requests pass unchecked (logged once) and only the assistant prompt declines off-topic.
      Turn it on only after checking the server's free memory (~400 MB needed).
+
+## PWA updates (2026-11-07)
+
+111. **Preserve the current customer PWA behavior.** The owner confirmed that installation and updates work
+     as expected with `index.html` in the service-worker asset list. Keep that entry and the current
+     network-first navigation policy. Offline startup is outside the growth roadmap.
