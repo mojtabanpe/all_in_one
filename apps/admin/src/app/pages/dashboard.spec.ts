@@ -66,5 +66,28 @@ describe('Dashboard churn by channel', () => {
     expect(fixture.nativeElement.textContent).toContain(
       'دریافت دوباره آمار نگهداشت',
     );
+
+    const select = (
+      fixture.nativeElement as HTMLElement
+    ).querySelector<HTMLSelectElement>('#retention-channel')!;
+    select.value = 'source=telegram&medium=social';
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    TestBed.tick();
+    http
+      .expectOne((request) =>
+        request.url.endsWith(
+          '/growth/retention-cohorts?source=telegram&medium=social',
+        ),
+      )
+      .flush([]);
+
+    select.value = '';
+    select.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    TestBed.tick();
+    http
+      .expectOne((request) => request.url.endsWith('/growth/retention-cohorts'))
+      .flush([]);
   });
 });

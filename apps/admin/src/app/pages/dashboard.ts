@@ -1,6 +1,6 @@
 import { CampaignReport } from './campaign-report';
 import { httpResource } from '@angular/common/http';
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import type {
   AdminStats,
   GrowthRetentionCohort,
@@ -16,6 +16,9 @@ import {
   AioButton,
   AioTableDirectives,
   AioEmptyState,
+  AioFormField,
+  AioNativeSelect,
+  AioNativeSelectOption,
 } from '@all-in-one/ui';
 import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
 
@@ -31,6 +34,9 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
     AioButton,
     AioTableDirectives,
     AioEmptyState,
+    AioFormField,
+    AioNativeSelect,
+    AioNativeSelectOption,
   ],
   template: `
     <div class="flex flex-col gap-4">
@@ -377,6 +383,32 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
                 | aioTranslate
             }}
           </p>
+          @if (cohortChannels().length) {
+            <aio-form-field
+              label="کانال جذب برای گزارش نگهداشت"
+              controlId="retention-channel"
+              class="w-full max-w-sm"
+            >
+              <aio-native-select
+                selectId="retention-channel"
+                [value]="cohortChannel()"
+                (valueChange)="cohortChannel.set($event)"
+              >
+                <option aioNativeSelectOption value="">
+                  {{ 'جمع همهٔ کانال‌ها' | aioTranslate }}
+                </option>
+                @for (channel of cohortChannels(); track channel.query) {
+                  <option
+                    aioNativeSelectOption
+                    [value]="channel.query"
+                    dir="ltr"
+                  >
+                    {{ channel.source }} / {{ channel.medium }}
+                  </option>
+                }
+              </aio-native-select>
+            </aio-form-field>
+          }
           @if (cohorts.isLoading()) {
             <div aioSkeletonRows [count]="4" itemClass="h-10"></div>
           } @else if (cohorts.hasValue()) {
@@ -567,12 +599,23 @@ export class Dashboard {
       style: 'percent',
       maximumFractionDigits: 1,
     });
-  protected readonly cohorts = httpResource<GrowthRetentionCohort[]>(
-    () => `${this.api}/growth/retention-cohorts`,
-  );
   protected readonly churn = httpResource<GrowthChurnReport>(
     () => `${this.api}/growth/churn`,
   );
+  protected readonly cohortChannel = signal('');
+  protected readonly cohortChannels = computed(() =>
+    (this.churn.hasValue() ? this.churn.value().rows : []).map(
+      ({ source, medium }) => ({
+        source,
+        medium,
+        query: new URLSearchParams({ source, medium }).toString(),
+      }),
+    ),
+  );
+  protected readonly cohorts = httpResource<GrowthRetentionCohort[]>(() => {
+    const channel = this.cohortChannel();
+    return `${this.api}/growth/retention-cohorts${channel ? '?' + channel : ''}`;
+  });
   /** Channels, then the total row (only when there is more than one channel). */
   protected readonly churnRows = computed(() => {
     if (!this.churn.hasValue()) return [];

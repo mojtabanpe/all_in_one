@@ -113,6 +113,12 @@ export const growthCampaignFilterSchema = z
     ),
   );
 export type GrowthCampaignFilter = z.infer<typeof growthCampaignFilterSchema>;
+export const growthRetentionFilterSchema = z.strictObject({
+  source: z.optional(campaignValue),
+  medium: z.optional(campaignValue),
+});
+export type GrowthRetentionFilter = z.infer<typeof growthRetentionFilterSchema>;
+
 export interface GrowthCampaignMetrics {
   landingVisitors: number;
   signupVisitors: number;

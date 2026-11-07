@@ -13,8 +13,10 @@ import { Public, Roles } from '@all-in-one/api/auth';
 import {
   growthEventSchema,
   growthCampaignFilterSchema,
+  growthRetentionFilterSchema,
   type GrowthCampaignFilter,
   type GrowthEventInput,
+  type GrowthRetentionFilter,
 } from '@all-in-one/shared/schemas';
 import { GrowthService } from './growth.service';
 
@@ -51,9 +53,12 @@ export class GrowthController {
 
   @Roles('ADMIN')
   @Get('retention-cohorts')
-  retentionCohorts() {
+  retentionCohorts(
+    @Query({ schema: growthRetentionFilterSchema })
+    filter: GrowthRetentionFilter = {},
+  ) {
     this.requireEnabled();
-    return this.growth.retentionCohorts();
+    return this.growth.retentionCohorts(filter);
   }
 
   @Roles('ADMIN')

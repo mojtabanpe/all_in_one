@@ -6,6 +6,7 @@ import type {
   GrowthCampaignReport,
   GrowthSummary,
   GrowthRetentionCohort,
+  GrowthRetentionFilter,
   GrowthChurnMetrics,
   GrowthChurnReport,
 } from '@all-in-one/shared/schemas';
@@ -153,7 +154,10 @@ export class GrowthService {
     };
   }
 
-  async retentionCohorts(now = new Date()): Promise<GrowthRetentionCohort[]> {
+  async retentionCohorts(
+    filter: GrowthRetentionFilter = {},
+    now = new Date(),
+  ): Promise<GrowthRetentionCohort[]> {
     const today = dayAt(now);
     const since = dayAt(new Date(now.getTime() - 89 * 86_400_000));
     const rows = await this.prisma.$queryRaw<
@@ -175,8 +179,20 @@ export class GrowthService {
           )
         GROUP BY e."visitorId"
       ), cohorts AS (
-        SELECT *, day - ((EXTRACT(DOW FROM day)::int + 1) % 7) AS week
-        FROM signups
+        SELECT s.*, s.day - ((EXTRACT(DOW FROM s.day)::int + 1) % 7) AS week
+        FROM signups s
+        WHERE (${filter.source ?? null}::text IS NULL AND ${filter.medium ?? null}::text IS NULL)
+          OR EXISTS (
+            SELECT 1 FROM (
+              SELECT e.campaign FROM growth_events e
+              WHERE e."visitorId" = s."visitorId" AND e.day <= ${today}
+              ORDER BY e."createdAt", e.id LIMIT 1
+            ) first_touch
+            WHERE (${filter.source ?? null}::text IS NULL
+                OR COALESCE(NULLIF(campaign->>'utm_source', ''), 'direct') = ${filter.source ?? null})
+              AND (${filter.medium ?? null}::text IS NULL
+                OR COALESCE(NULLIF(campaign->>'utm_medium', ''), 'unknown') = ${filter.medium ?? null})
+          )
       )
       SELECT c.week::text, d.day, COUNT(*) AS signups,
         COUNT(*) FILTER (WHERE c.day + d.day < ${today}::date) AS eligible,
