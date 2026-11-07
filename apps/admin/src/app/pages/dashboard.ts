@@ -105,7 +105,7 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
           </h2>
           <p class="text-sm leading-7 text-muted-foreground">
             {{
-              'وضعیت فعلی حساب‌های مشتری ساخته‌شده در ۳۰ روز اخیر بر اساس روزهای تهران؛ شامل حساب‌های منتظر تأیید ایمیل. انتخاب دوبارهٔ هدف جای انتخاب قبلی را می‌گیرد و تکمیل قدم اول از نو سنجیده می‌شود. این گزارش، سابقهٔ تغییر هدف یا نرخ تکمیل در مهلت ثابت نیست.'
+              'وضعیت فعلی حساب‌های مشتری ساخته‌شده در ۳۰ روز اخیر بر اساس روزهای تهران؛ شامل حساب‌های منتظر تأیید ایمیل. انتخاب دوبارهٔ هدف جای انتخاب قبلی را می‌گیرد و تکمیل قدم اول از نو سنجیده می‌شود. ستون هفت‌روزه فقط حساب‌هایی را می‌شمارد که دست‌کم هفت روز از ساختشان گذشته است.'
                 | aioTranslate
             }}
           </p>
@@ -147,6 +147,9 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
                   <th aioTh scope="col">
                     {{ 'در انتظار قدم اول' | aioTranslate }}
                   </th>
+                  <th aioTh scope="col">
+                    {{ 'قدم اول در هفت روز' | aioTranslate }}
+                  </th>
                 </tr>
               </thead>
               <tbody aioTBody>
@@ -159,6 +162,20 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
                     <td aioTd>{{ fa(row.completedAccounts) }}</td>
                     <td aioTd>
                       {{ fa(row.selectedAccounts - row.completedAccounts) }}
+                    </td>
+                    <td aioTd>
+                      @if (row.firstWeekEligibleAccounts) {
+                        <bdi>{{
+                          '{0} از {1}'
+                            | aioTranslate
+                              : [
+                                  fa(row.firstWeekCompletedAccounts),
+                                  fa(row.firstWeekEligibleAccounts),
+                                ]
+                        }}</bdi>
+                      } @else {
+                        —
+                      }
                     </td>
                   </tr>
                 }

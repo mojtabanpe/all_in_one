@@ -97,7 +97,8 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       await prisma.$transaction(
         async (tx) => {
           const growth = new GrowthService(tx as never);
-          const before = (await growth.summary()).onboarding;
+          const now = new Date();
+          const before = (await growth.summary(now)).onboarding;
           const day = (date: Date) =>
             date.toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' });
           const start = new Date(
@@ -110,7 +111,11 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
           const samples = [
             { onboardingGoal: 'planner', onboardingCompletedAt: new Date() },
             { onboardingGoal: 'english' },
-            { onboardingGoal: 'health', onboardingCompletedAt: new Date() },
+            {
+              createdAt: new Date(now.getTime() - 7 * 86_400_000),
+              onboardingGoal: 'health',
+              onboardingCompletedAt: now,
+            },
             {},
             { onboardingSkipped: true },
             {
@@ -122,7 +127,13 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
               createdAt: new Date(start.getTime() - 1),
               onboardingGoal: 'planner',
             },
-            { createdAt: start, onboardingGoal: 'planner' },
+            {
+              createdAt: start,
+              onboardingGoal: 'planner',
+              onboardingCompletedAt: new Date(
+                start.getTime() + 7 * 86_400_000 + 1,
+              ),
+            },
             { createdAt: nextDay, onboardingGoal: 'planner' },
           ];
           const fixtureEmails: string[] = [];
@@ -135,7 +146,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
             });
             if (index === 0) plannerId = user.id;
           }
-          const after = (await growth.summary()).onboarding;
+          const after = (await growth.summary(now)).onboarding;
           expect(after.accounts).toBe(before.accounts + 6);
           expect(after.unselectedAccounts).toBe(before.unselectedAccounts + 1);
           expect(after.skippedAccounts).toBe(before.skippedAccounts + 1);
@@ -147,14 +158,23 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
               baseline.selectedAccounts + (goal.goal === 'planner' ? 2 : 1),
             );
             expect(goal.completedAccounts).toBe(
-              baseline.completedAccounts + (goal.goal === 'english' ? 0 : 1),
+              baseline.completedAccounts +
+                (goal.goal === 'planner' ? 2 : goal.goal === 'health' ? 1 : 0),
+            );
+            expect(goal.firstWeekEligibleAccounts).toBe(
+              baseline.firstWeekEligibleAccounts +
+                (goal.goal === 'english' ? 0 : 1),
+            );
+            expect(goal.firstWeekCompletedAccounts).toBe(
+              baseline.firstWeekCompletedAccounts +
+                (goal.goal === 'health' ? 1 : 0),
             );
           }
           // Changing a goal moves the same account and resets completion.
           await new OnboardingService(tx as never).choose(plannerId, {
             goal: 'health',
           });
-          const changed = (await growth.summary()).onboarding;
+          const changed = (await growth.summary(now)).onboarding;
           expect(changed.accounts).toBe(after.accounts);
           expect(
             changed.goals.find((row) => row.goal === 'planner')!

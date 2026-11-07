@@ -69,6 +69,8 @@ export interface GrowthSummary {
       goal: OnboardingGoal;
       selectedAccounts: number;
       completedAccounts: number;
+      firstWeekEligibleAccounts: number;
+      firstWeekCompletedAccounts: number;
     }[];
   };
   retention: {

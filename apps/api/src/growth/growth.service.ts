@@ -324,9 +324,14 @@ export class GrowthService {
     };
   }
 
-  async summary(): Promise<GrowthSummary> {
-    const since = dayAt(new Date(Date.now() - (WINDOW_DAYS - 1) * 86_400_000));
-    const until = dayAt(new Date());
+  async summary(now = new Date()): Promise<GrowthSummary> {
+    const since = dayAt(
+      new Date(now.getTime() - (WINDOW_DAYS - 1) * 86_400_000),
+    );
+    const until = dayAt(now);
+    const firstWeekCutoff = new Date(
+      now.getTime() - 7 * 86_400_000,
+    ).toISOString();
     // Aggregate in the database; no visitor identifiers leave this service.
     const rows = await this.prisma.$queryRaw<
       { name: string; visitors: bigint }[]
@@ -423,6 +428,8 @@ export class GrowthService {
         bucket: string;
         accounts: bigint;
         completed: bigint;
+        eligible: bigint;
+        completed_in_week: bigint;
       }[]
     >`
       SELECT CASE
@@ -431,7 +438,14 @@ export class GrowthService {
         ELSE 'unselected' END AS bucket,
         COUNT(*) AS accounts,
         COUNT(*) FILTER (WHERE "onboardingCompletedAt" IS NOT NULL
-          AND NOT "onboardingSkipped" AND "onboardingGoal" IN ('planner', 'english', 'health')) AS completed
+          AND NOT "onboardingSkipped" AND "onboardingGoal" IN ('planner', 'english', 'health')) AS completed,
+        COUNT(*) FILTER (
+          WHERE "createdAt" <= (${firstWeekCutoff}::timestamptz AT TIME ZONE 'UTC')
+        ) AS eligible,
+        COUNT(*) FILTER (
+          WHERE "createdAt" <= (${firstWeekCutoff}::timestamptz AT TIME ZONE 'UTC')
+            AND "onboardingCompletedAt" BETWEEN "createdAt" AND "createdAt" + INTERVAL '168 hours'
+        ) AS completed_in_week
       FROM users
       WHERE role = 'CUSTOMER'
         AND "createdAt" >= ((${since}::date::timestamp AT TIME ZONE 'Asia/Tehran') AT TIME ZONE 'UTC')
@@ -448,13 +462,16 @@ export class GrowthService {
         ),
         skippedAccounts: bucketCount('skipped'),
         unselectedAccounts: bucketCount('unselected'),
-        goals: (['planner', 'english', 'health'] as const).map((goal) => ({
-          goal,
-          selectedAccounts: bucketCount(goal),
-          completedAccounts: Number(
-            onboarding.find((row) => row.bucket === goal)?.completed ?? 0,
-          ),
-        })),
+        goals: (['planner', 'english', 'health'] as const).map((goal) => {
+          const row = onboarding.find((row) => row.bucket === goal);
+          return {
+            goal,
+            selectedAccounts: Number(row?.accounts ?? 0),
+            completedAccounts: Number(row?.completed ?? 0),
+            firstWeekEligibleAccounts: Number(row?.eligible ?? 0),
+            firstWeekCompletedAccounts: Number(row?.completed_in_week ?? 0),
+          };
+        }),
       },
       retention: retention.map((row) => ({
         day: row.day,

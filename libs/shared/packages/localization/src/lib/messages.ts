@@ -128,8 +128,8 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ...MARKETING_MESSAGES,
   ['شروع کار بر اساس هدف', 'Getting started by goal'],
   [
-    'وضعیت فعلی حساب‌های مشتری ساخته‌شده در ۳۰ روز اخیر بر اساس روزهای تهران؛ شامل حساب‌های منتظر تأیید ایمیل. انتخاب دوبارهٔ هدف جای انتخاب قبلی را می‌گیرد و تکمیل قدم اول از نو سنجیده می‌شود. این گزارش، سابقهٔ تغییر هدف یا نرخ تکمیل در مهلت ثابت نیست.',
-    'Current state of customer accounts created in the last 30 Tehran calendar days, including accounts awaiting email verification. Choosing a goal again replaces the previous choice and resets first-step completion. This report does not show goal history or completion within a fixed deadline.',
+    'وضعیت فعلی حساب‌های مشتری ساخته‌شده در ۳۰ روز اخیر بر اساس روزهای تهران؛ شامل حساب‌های منتظر تأیید ایمیل. انتخاب دوبارهٔ هدف جای انتخاب قبلی را می‌گیرد و تکمیل قدم اول از نو سنجیده می‌شود. ستون هفت‌روزه فقط حساب‌هایی را می‌شمارد که دست‌کم هفت روز از ساختشان گذشته است.',
+    'Current state of customer accounts created in the last 30 Tehran calendar days, including accounts awaiting email verification. Choosing a goal again replaces the previous choice and resets first-step completion. The seven-day column only includes accounts created at least seven days ago.',
   ],
   [
     'قدم اول فقط پس از فعالیت موفق مرتبط با هدف کامل می‌شود. باز کردن صفحه کافی نیست. همهٔ اعداد این بخش بر اساس حساب هستند.',
@@ -139,6 +139,7 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['انتخاب‌کنندگان', 'Selected'],
   ['قدم اول کامل', 'First step completed'],
   ['در انتظار قدم اول', 'Awaiting first step'],
+  ['قدم اول در هفت روز', 'First step within seven days'],
   ['حساب‌های مشتری تازه', 'New customer accounts'],
   ['هنوز هدف انتخاب نکرده‌اند', 'No goal selected yet'],
   ['راهنما را رد کرده‌اند', 'Skipped the guide'],
