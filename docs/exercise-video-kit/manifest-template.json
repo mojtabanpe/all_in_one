@@ -95,11 +95,11 @@
       "timed": false,
       "english_name": "Prone W scapular retraction",
       "prompt_file": "prompts/07-prone-w.txt",
-      "filename": "prone-w--aio-coach-v1--v001.mp4",
-      "status": "pending",
-      "public_url": "",
+      "filename": "prone-w--aio-coach-v1--v002.mp4",
+      "status": "published",
+      "public_url": "https://poshtetgarm.ir/api/exercise-videos/prone-w-d0d24fde-e82c-4b97-ad9c-8163281a688f.mp4",
       "storage_uri": "",
-      "review_notes": ""
+      "review_notes": "Owner approved v2 2026-11-07 as an interim clip: forehead leaves the towel and chest lifts at the peak. Replace with v3 (prompt 07 updated). Uploaded via MCP; public download verified."
     },
     {
       "slug": "dead-bug",

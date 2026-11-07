@@ -5,12 +5,12 @@ Use the attached approved reference images of AIO Coach v1 as the identity sourc
 
 Use a clean light-gray studio, matte floor, soft even lighting and a subtle ground shadow. Fixed camera, entire body and all working equipment visible with generous margins. No cuts, zooms, camera orbit, dramatic effects, music, speech, captions, anatomy overlays or text. Prioritize accurate exercise mechanics and clear joint positions. Natural spinal curves are allowed; neutral spine does not mean a permanently vertical torso. No extra limbs, sliding feet, impossible joints, body morphing, floating weights or discontinuous equipment. Target 8 seconds, landscape 16:9, 1080p when supported; if the available generator cannot deliver these settings, report actual settings rather than claiming compliance. Export MP4 when supported; retain the original output.
 
-CAMERA: elevated rear three-quarter.
+CAMERA: fixed high front three-quarter, looking down from just off the head end so both elbows, both hands, and forehead contact with the towel are visible.
 
-ACTION: Lie prone with forehead resting on a folded towel. Bend elbows into a W. Gently draw shoulder blades together and slightly lift arms without lifting the head or arching the lower back, then release. Keep shoulders away from ears.
+ACTION: Start face down with the forehead supported by a folded towel, chest and pelvis resting on the floor, and both arms bent symmetrically in a W. Keep forehead, chest, pelvis, and legs supported throughout the entire clip. Gently draw both shoulder blades together and lift only the bent arms a few centimeters, preserving the W and keeping shoulders away from the ears. Pause briefly, then lower the arms to their original position. No head lift, chest lift, or back extension.
 
-TIMING: Show one or two complete slow repetitions. If alternating sides are requested, show one repetition per side. If a single side is specified, do not rush to switch sides.
+TIMING: Show one complete slow repetition with a clear start, brief peak, and return to the same resting pose.
 
 EQUIPMENT: Show only the equipment needed for this exercise, with mechanically coherent support, contact points and load paths. Use light demonstration loads where applicable.
 
-Save the delivered clip as prone-w--aio-coach-v1--v001.mp4 if file saving is available. If persistent character-reference conditioning is unavailable, say so; do not promise identical identity from text alone. Do not upload or claim a public URL as part of video generation; publication is a separate step after the clip passes review.
+Save the delivered clip as prone-w--aio-coach-v1--v003.mp4 if file saving is available. If persistent character-reference conditioning is unavailable, say so; do not promise identical identity from text alone. Do not upload or claim a public URL as part of video generation; publication is a separate step after the clip passes review.
