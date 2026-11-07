@@ -2738,6 +2738,7 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['راهنمای حرکت دریافت نشد.', 'Motion instructions not received.'],
   ['راهنمای اجرای حرکت', 'Movement implementation guide'],
   ['دیدن ویدئوی آموزش (پنجره جدید)', 'Watch the training video (new window)'],
+  ['ویدئوی آموزش {0}', 'Training video: {0}'],
   ['این ست را انجام دادم', 'I did this set'],
   ['ست‌ها تمام شد؛ حالا سرد کن', 'The sets are over; Now cool it'],
   ['بعد از سرد کردن، جلسه را ثبت کن.', 'After cooling, record the session.'],

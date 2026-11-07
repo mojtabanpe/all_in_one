@@ -66,7 +66,7 @@ describe('guided training session', () => {
     Element.prototype.scrollIntoView = vi.fn();
   });
 
-  async function setup(plan = routine, dayIndex = '0') {
+  async function setup(plan = routine, dayIndex = '0', movement = exercise) {
     const ask = vi.fn().mockResolvedValue(false);
     TestBed.configureTestingModule({
       providers: [
@@ -89,7 +89,7 @@ describe('guided training session', () => {
     http.expectOne(`/api/health/routines/${id}`).flush(plan);
     await settle();
     const requests = http.match(`/api/health/exercises/${exercise.slug}`);
-    requests.forEach((r) => r.flush(exercise));
+    requests.forEach((r) => r.flush(movement));
     await settle();
     const el = fixture.nativeElement as HTMLElement;
     const click = async (label: string) => {
@@ -181,6 +181,23 @@ describe('guided training session', () => {
     retry.flush({});
     await settle();
     expect(el.textContent).toContain('خسته نباشی!');
+  });
+
+  it('plays an uploaded clip inline and falls back to the link if it fails', async () => {
+    const clip = '/api/exercise-videos/trx-squat-0c523ba6.mp4';
+    const { el, click, settle } = await setup(routine, '0', {
+      ...exercise,
+      videoUrl: clip,
+    });
+    await click('گرم کردم');
+    const video = el.querySelector('video');
+    expect(video?.getAttribute('src')).toBe(clip);
+    expect(video?.hasAttribute('playsinline')).toBe(true);
+    expect(el.querySelector(`a[href="${clip}"]`)).toBeNull();
+    video?.dispatchEvent(new Event('error'));
+    await settle();
+    expect(el.querySelector('video')).toBeNull();
+    expect(el.querySelector(`a[href="${clip}"]`)).not.toBeNull();
   });
 
   it('shows a missing session without offering a start action', async () => {

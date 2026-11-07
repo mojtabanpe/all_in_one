@@ -92,6 +92,31 @@ export const exerciseFilterSchema = z.object({
   level: z.optional(z.enum(TRAINING_LEVELS)),
 });
 export type ExerciseFilter = z.infer<typeof exerciseFilterSchema>;
+/** Approved clips uploaded with the exercise-video tool are served by the api under this path. */
+export const EXERCISE_CLIP_PATH = '/api/exercise-videos/';
+
+/**
+ * Where an exercise's `videoUrl` plays. Uploaded clips are stored as site-relative
+ * paths (`/api/exercise-videos/<slug>-<uuid>.mp4`), so they are parsed against a base.
+ */
+export function exerciseVideoSource(
+  url: string,
+): 'clip' | 'aparat' | 'youtube' | 'other' {
+  if (url.startsWith(EXERCISE_CLIP_PATH) && url.endsWith('.mp4')) return 'clip';
+  let host: string;
+  try {
+    host = new URL(url, 'https://poshtetgarm.ir').hostname.replace(
+      /^www\./,
+      '',
+    );
+  } catch {
+    return 'other';
+  }
+  if (host === 'aparat.com') return 'aparat';
+  if (host === 'youtube.com' || host === 'youtu.be') return 'youtube';
+  return 'other';
+}
+
 export const exerciseVideoSchema = z.object({
   videoUrl: z.nullable(
     z.url().check(

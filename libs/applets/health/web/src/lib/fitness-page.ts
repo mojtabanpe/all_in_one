@@ -16,6 +16,7 @@ import {
   TRAINING_GOALS,
   TRAINING_GOAL_LABELS,
   TRAINING_LEVELS,
+  exerciseVideoSource,
   generateRoutineSchema,
   saveRoutineSchema,
   type GenerateRoutineInput,
@@ -898,7 +899,23 @@ type CategoryFilter = ActivityCategory | 'all';
             @for (mistake of e.mistakes; track mistake) {
               <p class="text-sm">{{ mistake | aioTranslate }}</p>
             }
-            @if (e.videoUrl) {
+            @if (
+              e.videoUrl &&
+              exerciseVideoSource(e.videoUrl) === 'clip' &&
+              failedClip() !== e.videoUrl
+            ) {
+              <video
+                class="aspect-video w-full rounded-lg bg-black object-contain"
+                [src]="e.videoUrl"
+                [attr.aria-label]="'ویدئوی آموزش {0}' | aioTranslate: [e.name]"
+                controls
+                muted
+                loop
+                playsinline
+                preload="metadata"
+                (error)="failedClip.set(e.videoUrl)"
+              ></video>
+            } @else if (e.videoUrl) {
               @let site = videoSite(e.videoUrl);
               <a
                 aioBtn
@@ -1261,11 +1278,14 @@ export class FitnessPage {
         equipment: value.filter((e): e is Equipment => EQUIPMENT.includes(e)),
       }));
   }
+  protected readonly exerciseVideoSource = exerciseVideoSource;
+  /** A clip that failed to load falls back to the plain link. */
+  protected readonly failedClip = signal<string | null>(null);
   /** YouTube needs a VPN in Iran, so the button names where the video plays. */
   protected videoSite(url: string): 'آپارات' | 'یوتیوب' | null {
-    const host = new URL(url).hostname.replace(/^www\./, '');
-    if (host === 'aparat.com') return 'آپارات';
-    if (host === 'youtube.com' || host === 'youtu.be') return 'یوتیوب';
+    const source = exerciseVideoSource(url);
+    if (source === 'aparat') return 'آپارات';
+    if (source === 'youtube') return 'یوتیوب';
     return null;
   }
   protected exerciseName(slug: string) {

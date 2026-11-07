@@ -1,5 +1,6 @@
 import {
   buildRoutine,
+  exerciseVideoSource,
   generateRoutineSchema,
   logSessionSchema,
   routineExerciseSchema,
@@ -206,5 +207,24 @@ describe('meal constraints and shopping', () => {
       amountPerServing: 'یک پیمانه',
       servings: 2,
     });
+  });
+});
+
+describe('exerciseVideoSource', () => {
+  it('recognises uploaded clips stored as site-relative paths', () => {
+    expect(
+      exerciseVideoSource(
+        '/api/exercise-videos/body-squat-ae35f560-0679-4873-86c2-ced5703ba91c.mp4',
+      ),
+    ).toBe('clip');
+  });
+  it('names the external sites and never throws', () => {
+    expect(exerciseVideoSource('https://www.aparat.com/v/4GRKD')).toBe(
+      'aparat',
+    );
+    expect(exerciseVideoSource('https://youtu.be/x')).toBe('youtube');
+    expect(exerciseVideoSource('https://example.com/a.mp4')).toBe('other');
+    expect(exerciseVideoSource('/api/exercise-videos/notes.txt')).toBe('other');
+    expect(exerciseVideoSource('http://[bad')).toBe('other');
   });
 });

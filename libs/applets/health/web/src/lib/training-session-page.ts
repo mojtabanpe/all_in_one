@@ -13,6 +13,7 @@ import {
 import { RouterLink } from '@angular/router';
 import {
   EQUIPMENT_LABELS,
+  exerciseVideoSource,
   type CompletedSet,
   type Exercise,
   type WorkoutRoutine,
@@ -255,7 +256,25 @@ import { prescribedSet, trainingSessionSteps } from './training-session-steps';
                       </aio-accordion-content>
                     </div>
                   </div>
-                  @if (movement.videoUrl) {
+                  @if (
+                    movement.videoUrl &&
+                    exerciseVideoSource(movement.videoUrl) === 'clip' &&
+                    failedClip() !== movement.videoUrl
+                  ) {
+                    <video
+                      class="aspect-video w-full rounded-lg bg-black object-contain"
+                      [src]="movement.videoUrl"
+                      [attr.aria-label]="
+                        'ویدئوی آموزش {0}' | aioTranslate: [movement.name]
+                      "
+                      controls
+                      muted
+                      loop
+                      playsinline
+                      preload="metadata"
+                      (error)="failedClip.set(movement.videoUrl)"
+                    ></video>
+                  } @else if (movement.videoUrl) {
                     <a
                       aioBtn
                       variant="outline"
@@ -351,6 +370,9 @@ export class TrainingSessionPage {
   protected readonly fa = (value: number, options?: Intl.NumberFormatOptions) =>
     this.locale.number(value, options);
   protected readonly equipmentLabels = EQUIPMENT_LABELS;
+  protected readonly exerciseVideoSource = exerciseVideoSource;
+  /** A clip that failed to load falls back to the plain link. */
+  protected readonly failedClip = signal<string | null>(null);
   protected readonly phase = signal<
     'warmup' | 'exercise' | 'rest' | 'cooldown' | 'done'
   >('warmup');
