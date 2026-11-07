@@ -56,10 +56,12 @@ jobs:
       - name: Build and push images
         env:
           RELEASE: ${{ steps.release.outputs.release }}
+        # One cache scope per image: a shared scope is overwritten by the next target, the api's
+        # COPY --from=deps then reruns and the 320 MB node_modules layer gets a new digest every release.
         run: |
           for t in api public web; do
             docker buildx build -f deploy/images.dockerfile --target "$t" \
-              --cache-from type=gha,scope=aio --cache-to type=gha,scope=aio,mode=max \
+              --cache-from "type=gha,scope=aio-$t" --cache-to "type=gha,scope=aio-$t,mode=max" \
               --provenance=false --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
               --push -t "$REGISTRY/all-in-one-$t:$RELEASE" .
           done
