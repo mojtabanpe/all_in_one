@@ -136,8 +136,8 @@ Evidence: `apps/admin/src/app/pages/dashboard.ts` already shows basic user/conte
 ## P1 — Iranian payment gateway and Freemium
 
 - Owner decision (2026-11-07): seven days of trial access for new customers, followed by offers based on observed product usage. Verified actions can each add a week, for example joining the official Telegram or Instagram community. The free tier remains usable after expiry. AI requires current trial, earned or paid access. A locked AI action opens the shared plan-selection sheet.
-- Implemented base entitlement state in authenticated `GET /api/billing/access`. Trial starts on email confirmation and expires after seven full days. An active paid subscription takes precedence. Server-side AI access now uses this entitlement; earned extensions remain open.
-- Separate trial, earned and paid access in entitlement and revenue reporting. A verified offer should be redeemable once per customer and campaign, extend from the current access end or now, and preserve purchase history. Define usage bands, stacking limits and evidence for each social offer before issuing rewards.
+- Implemented base entitlement state in authenticated `GET /api/billing/access`. Trial starts on email confirmation and expires after seven full days. An active paid subscription takes precedence. Server-side AI access accepts paid, trial and earned access.
+- Admin support can grant the two verified social rewards once each per account, for one week each, with an audit note. The grant queues after current access and uses a separate ledger from purchases. The customer subscription page shows active trial or earned access. User-facing usage-based offers and automatic membership evidence remain open.
 - Owner decision: Poshtetgarm supplies all AI. Customers never provide an AI service or key. Plan pricing and free-tier limits beyond AI remain open.
 
 - [x] `DONE` Owner-supplied Enamad verification link/seal added to the shared public-page footer (2026-11-06); original URLs, code and origin referrer policy preserved, bilingual accessible labels and new-tab isolation added. Public lint/build passed (2/2); mobile footer stayed within 390px viewport. External seal image did not load in localhost browser verification; validate image delivery and seal status on the production domain after deployment. This does not establish payment-provider approval or active payment integration.
@@ -175,7 +175,8 @@ Evidence: `libs/web/shared/src/lib/auth/ai-settings.ts` currently allows users t
 - [x] `DONE` Admin-only AI settings and encrypted presets at `/admin/ai`. Includes chat, TTS, STT, proxy, second voice, model history and connection testing. Active preset matching includes the key without exposing it.
 - [ ] `TODO` Verify real chat, TTS and STT calls using the imported operator configuration. Add provider fallback, budgets and monitoring.
 - [ ] `TODO` Define per-plan AI quotas and rate limits, including audio duration, token budgets, concurrency and abuse controls. Show remaining allowance.
-- [ ] `TODO` Connect earned extensions to the entitlement, test provider outages and expiry with real devices, and finalize the legacy key deletion policy.
+- [x] `DONE` Verified weekly rewards unlock AI only during their recorded window, after trial or existing access.
+- [ ] `TODO` Test provider outages and expiry with real devices, and finalize the legacy key deletion policy.
 
 ## 90-day marketing experiments (after P0 instrumentation)
 

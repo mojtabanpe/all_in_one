@@ -40,6 +40,8 @@ model User {
   mcpKeys            McpKey[]
   billingOrders       BillingOrder[]
   billingSubscription BillingSubscription?
+  billingRewards BillingReward[] @relation("BillingRewardUser")
+  billingRewardsGranted BillingReward[] @relation("BillingRewardAdmin")
   billingAdjustments  BillingAdjustment[] @relation("BillingAdjustmentUser")
   billingAdjustmentsMade BillingAdjustment[] @relation("BillingAdjustmentAdmin")
 

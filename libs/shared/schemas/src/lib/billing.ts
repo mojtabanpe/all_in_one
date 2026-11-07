@@ -30,8 +30,9 @@ export type BillingPlanInput = z.infer<typeof billingPlanInputSchema>;
 export type BillingPlan = BillingPlanInput;
 
 export interface BillingAccessState {
-  tier: 'free' | 'trial' | 'paid';
+  tier: 'free' | 'trial' | 'earned' | 'paid';
   trialUntil: string | null;
+  earnedUntil: string | null;
   paidUntil: string | null;
 }
 
@@ -121,10 +122,32 @@ export interface BillingAdjustmentSummary {
   createdAt: string;
 }
 
+export const BILLING_REWARD_CAMPAIGNS = [
+  'TELEGRAM_JOIN',
+  'INSTAGRAM_FOLLOW',
+] as const;
+export type BillingRewardCampaign = (typeof BILLING_REWARD_CAMPAIGNS)[number];
+
+export const billingRewardSchema = z.strictObject({
+  email: z.email(),
+  campaign: z.enum(BILLING_REWARD_CAMPAIGNS),
+  reason: adjustmentReason,
+});
+export type BillingRewardInput = z.infer<typeof billingRewardSchema>;
+
+export interface BillingRewardSummary {
+  campaign: BillingRewardCampaign;
+  startsAt: string;
+  expiresAt: string;
+  reason: string;
+  adminEmail: string;
+}
+
 export interface BillingAccount {
   email: string;
   name: string | null;
   subscription: BillingSubscriptionState;
   orders: BillingOrderSummary[];
   adjustments: BillingAdjustmentSummary[];
+  rewards: BillingRewardSummary[];
 }

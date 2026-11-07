@@ -106,7 +106,7 @@ describe('api-ai', () => {
     ).rejects.toMatchObject({ status: 402 });
     expect(targets).not.toHaveBeenCalled();
 
-    for (const tier of ['trial', 'paid']) {
+    for (const tier of ['trial', 'earned', 'paid']) {
       access.mockResolvedValue({ tier });
       await expect(
         gateway.speechTarget('user', 'primary'),

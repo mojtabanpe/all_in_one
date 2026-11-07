@@ -6,7 +6,7 @@ import type {
   BillingOrderSummary,
   BillingPlan,
   BillingReturnStatus,
-  BillingSubscriptionState,
+  BillingAccessState,
 } from '@all-in-one/shared/schemas';
 import {
   AioAlertDirectives,
@@ -112,14 +112,30 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
           </h2>
         </div>
         <div aioCardContent>
-          @if (subscription.hasValue()) {
-            @let state = subscription.value();
-            @if (state.active) {
+          @if (access.hasValue()) {
+            @let state = access.value();
+            @if (state.tier === 'paid') {
               <p class="text-lg font-semibold">
                 {{
                   'اشتراکت تا {0} فعال است.'
                     | aioTranslate
                       : [state.paidUntil | aioDate: { dateStyle: 'long' }]
+                }}
+              </p>
+            } @else if (state.tier === 'trial' || state.tier === 'earned') {
+              <p class="text-lg font-semibold">
+                {{
+                  (state.tier === 'trial'
+                    ? 'دورهٔ آزمایشی تا {0} فعال است.'
+                    : 'هدیهٔ هوش مصنوعی تا {0} فعال است.'
+                  )
+                    | aioTranslate
+                      : [
+                          (state.tier === 'trial'
+                            ? state.trialUntil
+                            : state.earnedUntil
+                          ) | aioDate: { dateStyle: 'long' },
+                        ]
                 }}
               </p>
             } @else if (state.paidUntil) {
@@ -133,7 +149,7 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
             } @else {
               <p>{{ 'اشتراک فعالی نداری.' | aioTranslate }}</p>
             }
-          } @else if (subscription.error()) {
+          } @else if (access.error()) {
             <p role="alert">
               {{ 'وضعیت اشتراک دریافت نشد.' | aioTranslate }}
             </p>
@@ -170,11 +186,7 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
                     <button
                       aioAsyncButton
                       class="min-h-11 w-full"
-                      [label]="
-                        subscription.value()?.active
-                          ? 'پرداخت و تمدید'
-                          : 'پرداخت و فعال‌سازی'
-                      "
+                      [label]="paid() ? 'پرداخت و تمدید' : 'پرداخت و فعال‌سازی'"
                       busyLabel="در حال رفتن به درگاه"
                       [busy]="paying() === plan.code"
                       [disabled]="!!paying()"
@@ -306,8 +318,11 @@ export class Billing {
   protected readonly plans = httpResource<BillingPlan[]>(
     () => `${this.api}/billing/plans`,
   );
-  protected readonly subscription = httpResource<BillingSubscriptionState>(
-    () => `${this.api}/billing/subscription`,
+  protected readonly access = httpResource<BillingAccessState>(
+    () => `${this.api}/billing/access`,
+  );
+  protected readonly paid = computed(
+    () => this.access.hasValue() && this.access.value().tier === 'paid',
   );
   protected readonly orders = httpResource<BillingOrderSummary[]>(
     () => `${this.api}/billing/orders`,
@@ -362,7 +377,7 @@ export class Billing {
       );
       this.checked.set(status);
       this.orders.reload();
-      this.subscription.reload();
+      this.access.reload();
     } catch (error) {
       this.notifications.error('بررسی پرداخت ممکن نشد', apiErrorMessage(error));
     } finally {

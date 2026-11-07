@@ -7,12 +7,17 @@ import {
   FormField,
   FormRoot,
   max,
+  maxLength,
   min,
   minLength,
   required,
   submit,
 } from '@angular/forms/signals';
-import type { BillingAccount } from '@all-in-one/shared/schemas';
+import {
+  BILLING_REWARD_CAMPAIGNS,
+  type BillingAccount,
+  type BillingRewardCampaign,
+} from '@all-in-one/shared/schemas';
 import {
   AioAsyncButton,
   AioBadge,
@@ -25,6 +30,7 @@ import {
   AioLocale,
   AioNotifications,
   AioNumberField,
+  AioSelectField,
   AioTableDirectives,
   AioToggleGroupDirectives,
   AioTranslate,
@@ -45,6 +51,7 @@ type Action = 'extend' | 'end';
     AioFormField,
     AioInput,
     AioNumberField,
+    AioSelectField,
     AioTableDirectives,
     AioToggleGroupDirectives,
     AioTranslate,
@@ -199,6 +206,67 @@ type Action = 'extend' | 'end';
             </div>
           </form>
 
+          <section
+            class="border-border flex min-w-0 flex-col gap-3 border-t pt-4"
+            aria-labelledby="reward-title"
+          >
+            <h3 id="reward-title" class="font-semibold">
+              {{ 'هدیه‌های دسترسی' | aioTranslate }}
+            </h3>
+            <p class="text-muted-foreground text-sm">
+              {{
+                'بعد از تأیید عضویت، یک هفته دسترسی هوش مصنوعی ثبت کن. هر هدیه فقط یک بار قابل ثبت است.'
+                  | aioTranslate
+              }}
+            </p>
+            <form
+              class="grid gap-3 sm:grid-cols-2"
+              [formRoot]="rewardForm"
+              (submit)="$event.preventDefault(); grantReward()"
+            >
+              <aio-select-field
+                label="نوع هدیه"
+                controlId="reward-campaign"
+                [value]="rewardModel().campaign"
+                [options]="rewardCampaigns"
+                [optionLabels]="rewardLabels"
+                (valueChange)="setRewardCampaign($event)"
+              />
+              <aio-form-field label="دلیل تأیید" controlId="reward-reason">
+                <input
+                  aioInput
+                  id="reward-reason"
+                  [formField]="rewardForm.reason"
+                />
+                <aio-form-errors [errors]="rewardForm.reason().errors()" />
+              </aio-form-field>
+              <div class="sm:col-span-2">
+                <button
+                  aioAsyncButton
+                  type="submit"
+                  label="ثبت یک هفته هدیه"
+                  [busy]="rewardSaving()"
+                  [disabled]="rewardAlreadyGranted(acc) || finding()"
+                ></button>
+              </div>
+            </form>
+            @for (reward of acc.rewards; track reward.campaign) {
+              <div class="border-border rounded-xl border p-3 text-sm">
+                <p class="font-medium">
+                  {{ rewardLabels[reward.campaign] | aioTranslate }}
+                </p>
+                <p>
+                  {{ reward.startsAt | aioDate: { dateStyle: 'medium' } }} –
+                  {{ reward.expiresAt | aioDate: { dateStyle: 'medium' } }}
+                </p>
+                <p class="break-words">{{ reward.reason }}</p>
+                <p dir="ltr" class="text-muted-foreground break-all text-xs">
+                  {{ reward.adminEmail }}
+                </p>
+              </div>
+            }
+          </section>
+
           @if (acc.adjustments.length) {
             <div class="flex flex-col gap-2">
               <h3 class="font-semibold">
@@ -271,6 +339,68 @@ export class BillingAccountPanel {
 
   protected readonly account = signal<BillingAccount | null>(null);
   protected readonly finding = signal(false);
+  protected readonly rewardSaving = signal(false);
+  protected readonly rewardCampaigns = BILLING_REWARD_CAMPAIGNS;
+  protected readonly rewardLabels = {
+    TELEGRAM_JOIN: 'عضویت در تلگرام',
+    INSTAGRAM_FOLLOW: 'دنبال‌کردن در اینستاگرام',
+  } as const;
+  protected readonly rewardModel = signal<{
+    campaign: BillingRewardCampaign;
+    reason: string;
+  }>({
+    campaign: 'TELEGRAM_JOIN',
+    reason: '',
+  });
+  protected readonly rewardForm = form(this.rewardModel, (path) => {
+    required(path.reason, { message: 'دلیل را بنویس' });
+    minLength(path.reason, 3, { message: 'دلیل را بنویس' });
+    maxLength(path.reason, 200);
+  });
+
+  protected setRewardCampaign(value: string): void {
+    if (value === 'TELEGRAM_JOIN' || value === 'INSTAGRAM_FOLLOW')
+      this.rewardModel.update((model) => ({ ...model, campaign: value }));
+  }
+
+  protected rewardAlreadyGranted(account: BillingAccount): boolean {
+    return account.rewards.some(
+      (reward) => reward.campaign === this.rewardModel().campaign,
+    );
+  }
+
+  protected grantReward(): void {
+    const account = this.account();
+    if (!account || this.rewardSaving() || this.rewardAlreadyGranted(account))
+      return;
+    submit(this.rewardForm, async () => {
+      const { campaign, reason } = this.rewardModel();
+      const ok = await this.confirm.ask({
+        title: 'هدیه ثبت شود؟',
+        description: 'فقط اگر عضویت این حساب را بررسی کرده‌ای، هدیه را ثبت کن.',
+        confirmText: 'ثبت یک هفته هدیه',
+      });
+      if (!ok || this.account()?.email !== account.email) return;
+      this.rewardSaving.set(true);
+      try {
+        const updated = await firstValueFrom(
+          this.http.post<BillingAccount>(`${this.api}/billing/admin/rewards`, {
+            email: account.email,
+            campaign,
+            reason: reason.trim(),
+          }),
+        );
+        if (this.account()?.email === account.email) this.account.set(updated);
+        this.rewardModel.update((model) => ({ ...model, reason: '' }));
+        this.notifications.success('هدیه ثبت شد.');
+      } catch (error) {
+        this.notifications.error('تغییر ثبت نشد', apiErrorMessage(error));
+      } finally {
+        this.rewardSaving.set(false);
+      }
+    });
+  }
+
   protected readonly saving = signal(false);
 
   protected readonly findModel = signal({ email: '' });

@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
@@ -7,6 +8,7 @@ import {
 import { PrismaService } from '@all-in-one/api/db';
 import type {
   BillingAccessState,
+  BillingRewardInput,
   BillingAccount,
   BillingAdjustmentInput,
   BillingAdminOrderPage,
@@ -18,6 +20,9 @@ import type {
   BillingSubscriptionState,
 } from '@all-in-one/shared/schemas';
 import { ZibalGateway } from './zibal.gateway';
+
+const WEEK_MS = 7 * 86_400_000;
+const trialEnd = (verifiedAt: Date) => new Date(verifiedAt.getTime() + WEEK_MS);
 
 const planFields = {
   code: true,
@@ -100,25 +105,35 @@ export class BillingService {
 
   /** Trial time starts after email confirmation, when the account can sign in. */
   async access(userId: string, now = new Date()): Promise<BillingAccessState> {
-    const [user, subscription] = await Promise.all([
-      this.prisma.user.findUnique({
-        where: { id: userId },
-        select: { role: true, emailVerifiedAt: true },
-      }),
-      this.subscription(userId, now),
-    ]);
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        role: true,
+        emailVerifiedAt: true,
+        billingSubscription: { select: { paidUntil: true } },
+        billingRewards: {
+          where: { startsAt: { lte: now }, expiresAt: { gt: now } },
+          orderBy: { expiresAt: 'desc' },
+          take: 1,
+          select: { expiresAt: true },
+        },
+      },
+    });
     const trialUntil =
       user?.role === 'CUSTOMER' && user.emailVerifiedAt
-        ? new Date(user.emailVerifiedAt.getTime() + 7 * 86_400_000)
+        ? trialEnd(user.emailVerifiedAt)
         : null;
+    const paidUntil = user?.billingSubscription?.paidUntil ?? null;
+    const earnedUntil = user?.billingRewards[0]?.expiresAt ?? null;
+    let tier: BillingAccessState['tier'] = 'free';
+    if (paidUntil && paidUntil > now) tier = 'paid';
+    else if (earnedUntil) tier = 'earned';
+    else if (trialUntil && trialUntil > now) tier = 'trial';
     return {
-      tier: subscription.active
-        ? 'paid'
-        : trialUntil && trialUntil > now
-          ? 'trial'
-          : 'free',
+      tier,
       trialUntil: trialUntil?.toISOString() ?? null,
-      paidUntil: subscription.paidUntil,
+      earnedUntil: earnedUntil?.toISOString() ?? null,
+      paidUntil: paidUntil?.toISOString() ?? null,
     };
   }
 
@@ -219,7 +234,7 @@ export class BillingService {
       select: { id: true, email: true, name: true },
     });
     if (!user) throw new NotFoundException('Account not found');
-    const [subscription, orders, adjustments] = await Promise.all([
+    const [subscription, orders, adjustments, rewards] = await Promise.all([
       this.subscription(user.id, now),
       this.orders(user.id),
       this.prisma.billingAdjustment.findMany({
@@ -228,12 +243,24 @@ export class BillingService {
         take: 20,
         include: { admin: { select: { email: true } } },
       }),
+      this.prisma.billingReward.findMany({
+        where: { userId: user.id },
+        orderBy: { startsAt: 'asc' },
+        include: { admin: { select: { email: true } } },
+      }),
     ]);
     return {
       email: user.email,
       name: user.name,
       subscription,
       orders,
+      rewards: rewards.map((row) => ({
+        campaign: row.campaign,
+        startsAt: row.startsAt.toISOString(),
+        expiresAt: row.expiresAt.toISOString(),
+        reason: row.reason,
+        adminEmail: row.admin.email,
+      })),
       adjustments: adjustments.map((row) => ({
         id: row.id,
         action: row.action,
@@ -245,6 +272,57 @@ export class BillingService {
         createdAt: row.createdAt.toISOString(),
       })),
     };
+  }
+
+  async grantReward(
+    adminId: string,
+    input: BillingRewardInput,
+    now = new Date(),
+  ): Promise<BillingAccount> {
+    const email = input.email.trim().toLowerCase();
+    await this.prisma.$transaction(async (tx) => {
+      const [user] = await tx.$queryRaw<
+        { id: string; role: string; emailVerifiedAt: Date | null }[]
+      >`
+        SELECT id, role, "emailVerifiedAt" FROM users WHERE email = ${email} FOR UPDATE
+      `;
+      if (!user) throw new NotFoundException('Account not found');
+      if (user.role !== 'CUSTOMER' || !user.emailVerifiedAt) {
+        throw new UnprocessableEntityException(
+          'هدیه فقط برای حساب کاربری تأییدشده فعال می‌شود.',
+        );
+      }
+      const rewards = await tx.billingReward.findMany({
+        where: { userId: user.id },
+        select: { campaign: true, expiresAt: true },
+      });
+      if (rewards.some((reward) => reward.campaign === input.campaign)) {
+        throw new ConflictException(
+          'این هدیه قبلاً برای این حساب ثبت شده است.',
+        );
+      }
+      const paid = await tx.billingSubscription.findUnique({
+        where: { userId: user.id },
+        select: { paidUntil: true },
+      });
+      const start = Math.max(
+        now.getTime(),
+        trialEnd(user.emailVerifiedAt).getTime(),
+        paid?.paidUntil.getTime() ?? 0,
+        ...rewards.map((reward) => reward.expiresAt.getTime()),
+      );
+      await tx.billingReward.create({
+        data: {
+          userId: user.id,
+          adminId,
+          campaign: input.campaign,
+          reason: input.reason,
+          startsAt: new Date(start),
+          expiresAt: new Date(start + WEEK_MS),
+        },
+      });
+    });
+    return this.account(email, now);
   }
 
   /**

@@ -189,6 +189,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         const end = new Date('2026-11-14T12:00:00.000Z');
         expect(await service().access(customer.id, verified)).toEqual({
           tier: 'trial',
+          earnedUntil: null,
           trialUntil: end.toISOString(),
           paidUntil: null,
         });
@@ -207,6 +208,101 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
           where: { userId: customer.id },
         });
         await prisma.user.delete({ where: { id: customer.id } });
+      }
+    });
+
+    it('grants each verified reward once, stacks weeks and does not activate paid access', async () => {
+      const now = new Date('2026-11-07T12:00:00.000Z');
+      const customer = await prisma.user.create({
+        data: {
+          email: `reward-${randomUUID()}@example.test`,
+          passwordHash: 'fixture',
+        },
+      });
+      const admin = await prisma.user.create({
+        data: {
+          email: `operator-${randomUUID()}@example.test`,
+          passwordHash: 'fixture',
+          role: 'ADMIN',
+        },
+      });
+      try {
+        const telegram = {
+          email: customer.email,
+          campaign: 'TELEGRAM_JOIN' as const,
+          reason: 'Membership verified',
+        };
+        await expect(
+          service().grantReward(admin.id, telegram, now),
+        ).rejects.toMatchObject({ status: 422 });
+        await prisma.user.update({
+          where: { id: customer.id },
+          data: { emailVerifiedAt: now },
+        });
+
+        const claims = await Promise.allSettled([
+          service().grantReward(admin.id, telegram, now),
+          service().grantReward(admin.id, telegram, now),
+        ]);
+        expect(
+          claims.filter((claim) => claim.status === 'fulfilled'),
+        ).toHaveLength(1);
+        expect(
+          claims.find((claim) => claim.status === 'rejected'),
+        ).toMatchObject({ reason: { status: 409 } });
+        const account = await service().grantReward(
+          admin.id,
+          {
+            ...telegram,
+            campaign: 'INSTAGRAM_FOLLOW',
+          },
+          now,
+        );
+        expect(account.rewards).toEqual([
+          {
+            campaign: 'TELEGRAM_JOIN',
+            startsAt: '2026-11-14T12:00:00.000Z',
+            expiresAt: '2026-11-21T12:00:00.000Z',
+            reason: telegram.reason,
+            adminEmail: admin.email,
+          },
+          {
+            campaign: 'INSTAGRAM_FOLLOW',
+            startsAt: '2026-11-21T12:00:00.000Z',
+            expiresAt: '2026-11-28T12:00:00.000Z',
+            reason: telegram.reason,
+            adminEmail: admin.email,
+          },
+        ]);
+        expect((await service().access(customer.id, now)).tier).toBe('trial');
+        expect(
+          (
+            await service().access(
+              customer.id,
+              new Date('2026-11-14T12:00:00.000Z'),
+            )
+          ).tier,
+        ).toBe('earned');
+        expect(
+          (
+            await service().access(
+              customer.id,
+              new Date('2026-11-21T12:00:00.000Z'),
+            )
+          ).tier,
+        ).toBe('earned');
+        expect(
+          (
+            await service().access(
+              customer.id,
+              new Date('2026-11-28T12:00:00.000Z'),
+            )
+          ).tier,
+        ).toBe('free');
+        expect(await service().isPaid(customer.id, now)).toBe(false);
+      } finally {
+        await prisma.user.delete({ where: { id: customer.id } });
+        await prisma.user.delete({ where: { id: admin.id } });
       }
     });
 

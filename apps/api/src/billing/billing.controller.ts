@@ -23,6 +23,8 @@ import {
   billingAdminOrdersQuerySchema,
   billingCheckoutSchema,
   billingPlanInputSchema,
+  billingRewardSchema,
+  type BillingRewardInput,
   type BillingAccountQuery,
   type BillingAdjustmentInput,
   type BillingAdminOrdersQuery,
@@ -105,6 +107,15 @@ export class BillingController {
     @Body({ schema: billingAdjustmentSchema }) input: BillingAdjustmentInput,
   ) {
     return this.billing.adjust(admin.id, input);
+  }
+
+  @Roles('ADMIN')
+  @Post('admin/rewards')
+  grantReward(
+    @CurrentUser() admin: AuthUser,
+    @Body({ schema: billingRewardSchema }) input: BillingRewardInput,
+  ) {
+    return this.billing.grantReward(admin.id, input);
   }
 
   @Roles('ADMIN')

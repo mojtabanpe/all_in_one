@@ -1,6 +1,32 @@
 /** Subscription page, admin plans and payment errors. */
 export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
   ['اشتراک', 'Subscription'],
+  ['هدیه‌های دسترسی', 'Access rewards'],
+  [
+    'بعد از تأیید عضویت، یک هفته دسترسی هوش مصنوعی ثبت کن. هر هدیه فقط یک بار قابل ثبت است.',
+    'Grant a week of AI access after verifying membership. Each reward can be granted once.',
+  ],
+  ['نوع هدیه', 'Reward type'],
+  ['دلیل تأیید', 'Verification note'],
+  ['ثبت یک هفته هدیه', 'Grant one week'],
+  ['عضویت در تلگرام', 'Join Telegram'],
+  ['دنبال‌کردن در اینستاگرام', 'Follow on Instagram'],
+  ['هدیه ثبت شود؟', 'Grant this reward?'],
+  [
+    'فقط اگر عضویت این حساب را بررسی کرده‌ای، هدیه را ثبت کن.',
+    'Grant the reward after checking this account’s membership.',
+  ],
+  ['هدیه ثبت شد.', 'Reward granted.'],
+  [
+    'هدیه فقط برای حساب کاربری تأییدشده فعال می‌شود.',
+    'Rewards are available for verified customer accounts.',
+  ],
+  [
+    'این هدیه قبلاً برای این حساب ثبت شده است.',
+    'This account already received this reward.',
+  ],
+  ['دورهٔ آزمایشی تا {0} فعال است.', 'Your trial is active until {0}.'],
+  ['هدیهٔ هوش مصنوعی تا {0} فعال است.', 'Your AI reward is active until {0}.'],
   ['دسترسی به هوش مصنوعی', 'AI access'],
   ['مدیریت هوش مصنوعی', 'Manage AI'],
   ['در حال دریافت تنظیمات هوش مصنوعی', 'Loading AI settings'],
