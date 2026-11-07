@@ -2,7 +2,7 @@
 
 **Purpose:** produce, medically/biomechanically review, upload, connect and verify exercise demonstration videos in Poshtetgarm.  
 **Status:** IN_PROGRESS — 8 of 62 clips published (tracker), in-app inline playback added 2026-11-07; next clip to
-generate is `plank` (09); `dead-bug` (08) approved, awaiting upload. Production playback of the newest build still needs a check from a network that reaches
+generate is `wall-slide` (10); `dead-bug` (08) and `plank` (09) approved, awaiting upload. Production playback of the newest build still needs a check from a network that reaches
 poshtetgarm.ir.
 
 ## Summary (2026-11-07)
@@ -48,9 +48,9 @@ Prior conversations mention video review/approval for Squat, Push-up, Glute Brid
 
 1. After deploy, open an exercise with a clip (e.g. «اسکات با وزن بدن») on a phone and in the PWA; confirm inline playback
    and record it here.
-2. Upload `dead-bug` (owner-approved trimmed v001, `reviewed` in the tracker) through the MCP tool from a client
-   connected to the app, then record its public URL.
-3. Owner: generate `plank` (09) with the revised prompt (still hold, loops cleanly).
+2. Upload `dead-bug` and `plank` (owner-approved, `reviewed` in the tracker) through the MCP tool from a client
+   connected to the app, then record their public URLs.
+3. Owner: generate `wall-slide` (10) with the revised prompt (back to wall, goalpost to Y, two reps).
 4. Owner: generate `prone-w` v3 and replace the interim clip.
 
 Last updated: 2026-11-07.

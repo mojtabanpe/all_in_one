@@ -240,11 +240,12 @@ Use the attached approved reference images of AIO Coach v1 as the identity sourc
 
 Use a clean light-gray studio, matte floor, soft even lighting and a subtle ground shadow. Fixed camera, entire body and all working equipment visible with generous margins. No cuts, zooms, camera orbit, dramatic effects, music, speech, captions, anatomy overlays or text. Prioritize accurate exercise mechanics and clear joint positions. Natural spinal curves are allowed; neutral spine does not mean a permanently vertical torso. No extra limbs, sliding feet, impossible joints, body morphing, floating weights or discontinuous equipment. Target 8 seconds, landscape 16:9, 1080p when supported; if the available generator cannot deliver these settings, report actual settings rather than claiming compliance. Export MP4 when supported; retain the original output.
 
-CAMERA: front three-quarter showing wall contact.
+CAMERA: fixed front three-quarter view at chest height, about 30 degrees off center, so both arms, the head and back touching the wall, and the gap between the lower back and the wall are clearly visible.
 
-ACTION: Stand with the back near a wall and knees soft. Slide forearms upward only through a comfortable range, then lower. Keep ribs stacked over pelvis without arching the lower back or forcing wrists against the wall.
+ACTION: Stand with the back against a plain wall, feet about one foot-length in front of the wall and hip-width apart, knees slightly soft. The back of the head, upper back and buttocks touch the wall; the lower back keeps only its small natural curve. Start with both arms in a goalpost position against the wall: upper arms at shoulder height, elbows bent to 90 degrees, forearms pointing straight up, backs of the forearms and hands lightly touching the wall.
+Slowly slide both arms up the wall together and symmetrically into a wide Y, stopping before the elbows fully straighten, the forearms leave the wall or the lower back starts to arch. Pause briefly, then slowly slide back down to the goalpost start. The arms move only along the wall surface; shoulders stay down away from the ears; ribs stay stacked over the pelvis. Head, back, hips, knees and feet do not move; no shrugging, no leaning forward, no going up on the toes.
 
-TIMING: Show one or two complete slow repetitions. If alternating sides are requested, show one repetition per side. If a single side is specified, do not rush to switch sides.
+TIMING: Show exactly two complete slow repetitions in one continuous shot (about 4 seconds each: up, brief pause, down), starting and ending in the same goalpost pose so the clip loops cleanly.
 
 EQUIPMENT: Show only the equipment needed for this exercise, with mechanically coherent support, contact points and load paths. Use light demonstration loads where applicable.
 
