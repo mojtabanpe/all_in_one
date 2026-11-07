@@ -80,6 +80,8 @@ export interface BillingAdminOverview {
   /** Last 30 days. */
   paidOrders: number;
   paidRial: number;
+  /** Orders created in the last 30 days with a gateway tracking ID. */
+  gatewayOrders: number;
   failedOrders: number;
   pendingOrders: number;
 }

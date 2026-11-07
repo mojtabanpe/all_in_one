@@ -203,40 +203,50 @@ export class BillingService {
     const where = query.status ? { status: query.status } : {};
     const since = new Date(now.getTime() - 30 * 86_400_000);
     const recent = { createdAt: { gte: since } };
-    const [rows, total, activeSubscribers, paid, failedOrders, pendingOrders] =
-      await Promise.all([
-        this.prisma.billingOrder.findMany({
-          where,
-          orderBy: { createdAt: 'desc' },
-          skip: ((query.page ?? 1) - 1) * 50,
-          take: 50,
-          select: {
-            id: true,
-            months: true,
-            amountRial: true,
-            status: true,
-            refNumber: true,
-            trackId: true,
-            createdAt: true,
-            paidAt: true,
-            plan: { select: { code: true } },
-            user: { select: { email: true } },
-          },
-        }),
-        this.prisma.billingOrder.count({ where }),
-        this.prisma.billingSubscription.count({
-          where: { paidUntil: { gt: now } },
-        }),
-        this.prisma.billingOrder.aggregate({
-          where: { status: 'PAID', paidAt: { gte: since } },
-          _count: true,
-          _sum: { amountRial: true },
-        }),
-        this.prisma.billingOrder.count({
-          where: { status: 'FAILED', ...recent },
-        }),
-        this.prisma.billingOrder.count({ where: { status: 'PENDING' } }),
-      ]);
+    const [
+      rows,
+      total,
+      activeSubscribers,
+      paid,
+      gatewayOrders,
+      failedOrders,
+      pendingOrders,
+    ] = await Promise.all([
+      this.prisma.billingOrder.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: ((query.page ?? 1) - 1) * 50,
+        take: 50,
+        select: {
+          id: true,
+          months: true,
+          amountRial: true,
+          status: true,
+          refNumber: true,
+          trackId: true,
+          createdAt: true,
+          paidAt: true,
+          plan: { select: { code: true } },
+          user: { select: { email: true } },
+        },
+      }),
+      this.prisma.billingOrder.count({ where }),
+      this.prisma.billingSubscription.count({
+        where: { paidUntil: { gt: now } },
+      }),
+      this.prisma.billingOrder.aggregate({
+        where: { status: 'PAID', paidAt: { gte: since } },
+        _count: true,
+        _sum: { amountRial: true },
+      }),
+      this.prisma.billingOrder.count({
+        where: { ...recent, trackId: { not: null } },
+      }),
+      this.prisma.billingOrder.count({
+        where: { status: 'FAILED', ...recent },
+      }),
+      this.prisma.billingOrder.count({ where: { status: 'PENDING' } }),
+    ]);
     return {
       orders: rows.map(({ plan, user, createdAt, paidAt, ...row }) => ({
         ...row,
@@ -250,6 +260,7 @@ export class BillingService {
         activeSubscribers,
         paidOrders: paid._count,
         paidRial: paid._sum.amountRial ?? 0,
+        gatewayOrders,
         failedOrders,
         pendingOrders,
       },

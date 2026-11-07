@@ -273,6 +273,15 @@ export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
   ['پرداخت‌ها دریافت نشدند.', 'Could not load the payments.'],
   ['مشترک فعال', 'Active subscribers'],
   ['درآمد ۳۰ روز (تومان)', 'Revenue, 30 days (toman)'],
+  [
+    'سفارش‌های دارای شناسهٔ درگاه در ۳۰ روز',
+    'Orders with a gateway ID, 30 days',
+  ],
+  ['پرداخت‌های تأییدشده در ۳۰ روز', 'Verified payments, 30 days'],
+  [
+    'سفارش‌های درگاه بر اساس زمان ایجاد سفارش و پرداخت‌های تأییدشده بر اساس زمان تأیید شمرده می‌شوند.',
+    'Gateway orders are counted by order creation time. Verified payments are counted by verification time.',
+  ],
   ['پرداخت ناموفق در ۳۰ روز', 'Failed payments, 30 days'],
   ['زیبال {0}', 'Zibal {0}'],
   // Admin manual changes

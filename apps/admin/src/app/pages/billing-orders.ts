@@ -32,7 +32,7 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
       <h2 id="orders-title" class="text-xl font-semibold">
         {{ 'پرداخت‌ها' | aioTranslate }}
       </h2>
-      <dl class="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <dl class="grid grid-cols-2 gap-3 lg:grid-cols-3">
         @for (metric of metrics(); track metric.label) {
           <div
             aioMetric
@@ -44,6 +44,12 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
           ></div>
         }
       </dl>
+      <p class="text-sm text-muted-foreground">
+        {{
+          'سفارش‌های درگاه بر اساس زمان ایجاد سفارش و پرداخت‌های تأییدشده بر اساس زمان تأیید شمرده می‌شوند.'
+            | aioTranslate
+        }}
+      </p>
       <div
         class="flex flex-wrap gap-2"
         role="group"
@@ -183,7 +189,9 @@ export class BillingOrders {
   } as const;
 
   protected metrics() {
-    const overview = this.list.value()?.overview;
+    const overview = this.list.hasValue()
+      ? this.list.value().overview
+      : undefined;
     const n = (value: number | undefined) =>
       value === undefined ? '—' : this.locale.number(value);
     return [
@@ -191,6 +199,14 @@ export class BillingOrders {
       {
         label: 'درآمد ۳۰ روز (تومان)',
         value: n(overview && overview.paidRial / 10),
+      },
+      {
+        label: 'سفارش‌های دارای شناسهٔ درگاه در ۳۰ روز',
+        value: n(overview?.gatewayOrders),
+      },
+      {
+        label: 'پرداخت‌های تأییدشده در ۳۰ روز',
+        value: n(overview?.paidOrders),
       },
       { label: 'پرداخت ناموفق در ۳۰ روز', value: n(overview?.failedOrders) },
       { label: 'در انتظار تأیید', value: n(overview?.pendingOrders) },

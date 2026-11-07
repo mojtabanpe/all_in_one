@@ -537,6 +537,48 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       expect(page.total).toBeGreaterThanOrEqual(2);
     });
 
+    it('counts gateway orders by creation and verified payments by settlement', async () => {
+      const now = new Date();
+      const recent = new Date(now.getTime() - 60_000);
+      const old = new Date(now.getTime() - 31 * 86_400_000);
+      const plan = await prisma.billingPlan.findUniqueOrThrow({
+        where: { code },
+      });
+      const base = { userId, planId: plan.id, months: 1, amountRial: 990_000 };
+      const before = (await service().adminOrders({}, now)).overview;
+      const orders = await prisma.billingOrder.createManyAndReturn({
+        data: [
+          {
+            ...base,
+            createdAt: recent,
+            status: 'FAILED',
+            trackId: String(++track),
+          },
+          { ...base, createdAt: recent, status: 'FAILED' },
+          {
+            ...base,
+            createdAt: old,
+            status: 'PAID',
+            paidAt: recent,
+            trackId: String(++track),
+          },
+        ],
+        select: { id: true },
+      });
+      try {
+        const { overview } = await service().adminOrders(
+          { status: 'PAID' },
+          now,
+        );
+        expect(overview.gatewayOrders).toBe(before.gatewayOrders + 1);
+        expect(overview.paidOrders).toBe(before.paidOrders + 1);
+      } finally {
+        await prisma.billingOrder.deleteMany({
+          where: { id: { in: orders.map((order) => order.id) } },
+        });
+      }
+    });
+
     it('extends or ends access by hand and records who, why and what changed', async () => {
       const now = new Date();
       const before = new Date(
