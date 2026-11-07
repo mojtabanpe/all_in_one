@@ -239,6 +239,7 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['اولین مرور کارت در مرورگر', 'First card review in browser'],
   ['نمایش درخواست نصب وب‌اپ', 'Web app install prompts shown'],
   ['نصب وب‌اپ تأییدشده توسط مرورگر', 'Browser-confirmed web app installs'],
+  ['مشاهدهٔ پنجرهٔ ارتقای هوش مصنوعی', 'AI upgrade prompt views'],
   [
     'آمار نصب فقط از مرورگرهایی می‌آید که رویداد نصب را گزارش می‌کنند. باز کردن راهنمای نصب دستی در این شمارش نمی‌آید.',
     'Install counts come from browsers that report installation events. Opening the manual install guide does not count.',

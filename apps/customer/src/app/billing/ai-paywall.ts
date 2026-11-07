@@ -3,12 +3,19 @@ import {
   type HttpInterceptorFn,
 } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { API_BASE_URL } from '@all-in-one/web/shared';
+import { API_BASE_URL, GrowthAnalytics } from '@all-in-one/web/shared';
 import { tap } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class AiPaywall {
+  private readonly growth = inject(GrowthAnalytics);
   readonly open = signal(false);
+
+  show(): void {
+    if (this.open()) return;
+    this.open.set(true);
+    void this.growth.track('paywall_viewed');
+  }
 }
 
 export const aiPaywallInterceptor: HttpInterceptorFn = (request, next) => {
@@ -20,7 +27,7 @@ export const aiPaywallInterceptor: HttpInterceptorFn = (request, next) => {
       error: (error: unknown) => {
         // Audio endpoints request a Blob and also receive their error body as a Blob.
         if (error instanceof HttpErrorResponse && error.status === 402)
-          paywall.open.set(true);
+          paywall.show();
       },
     }),
   );

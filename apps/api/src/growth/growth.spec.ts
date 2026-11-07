@@ -31,7 +31,11 @@ describe('Growth data boundaries', () => {
   });
   it('rejects arbitrary/personal payload fields and fabricated completion events', () => {
     expect(growthEventSchema.safeParse(event).success).toBe(true);
-    for (const name of ['pwa_install_prompt', 'pwa_installed'])
+    for (const name of [
+      'pwa_install_prompt',
+      'pwa_installed',
+      'paywall_viewed',
+    ])
       expect(growthEventSchema.safeParse({ ...event, name }).success).toBe(
         true,
       );
@@ -118,6 +122,7 @@ describe('Growth data boundaries', () => {
         { name: 'landing_view', visitors: 12n },
         { name: 'pwa_install_prompt', visitors: 2n },
         { name: 'pwa_installed', visitors: 1n },
+        { name: 'paywall_viewed', visitors: 3n },
       ])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
@@ -155,6 +160,7 @@ describe('Growth data boundaries', () => {
       firstReviewVisitors: 0,
       pwaPromptVisitors: 2,
       pwaInstalledVisitors: 1,
+      paywallVisitors: 3,
       channels: [],
     });
   });

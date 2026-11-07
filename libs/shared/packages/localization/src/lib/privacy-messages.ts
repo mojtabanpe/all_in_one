@@ -22,8 +22,8 @@ export const PRIVACY_MESSAGES: readonly (readonly [string, string])[] = [
   ],
   ['آمارگیری خودکار', 'Automatic analytics'],
   [
-    'بازدید صفحهٔ معرفی، شروع ثبت‌نام، ساخت حساب، اولین ساخت کار یا مرور موفق کارت، روزهای فعالیت موفق و رویدادهای نمایش درخواست نصب و تأیید نصب وب‌اپ در مرورگرهای پشتیبان با شناسهٔ تصادفی مرورگر، زبان و منبع کمپین ثبت می‌شوند. رویدادهای آمار شامل ایمیل، رمز، متن کارها یا جزئیات سلامت نیستند. رکوردهای آماری قدیمی‌تر از ۹۰ روز در پاک‌سازی خودکار حذف می‌شوند.',
-    'Landing visits, registration starts, account creation, the first successful task creation or card review, active days, and web app install prompts and confirmations in supported browsers are recorded with a random browser ID, language and campaign source. These analytics events do not include your email, password, task text or health details. Records older than 90 days are removed automatically.',
+    'بازدید صفحهٔ معرفی، شروع ثبت‌نام، ساخت حساب، اولین ساخت کار یا مرور موفق کارت، روزهای فعالیت موفق و رویدادهای نمایش درخواست نصب و تأیید نصب وب‌اپ در مرورگرهای پشتیبان و مشاهدهٔ پنجرهٔ ارتقای هوش مصنوعی با شناسهٔ تصادفی مرورگر، زبان و منبع کمپین ثبت می‌شوند. رویدادهای آمار شامل ایمیل، رمز، متن کارها یا جزئیات سلامت نیستند. رکوردهای آماری قدیمی‌تر از ۹۰ روز در پاک‌سازی خودکار حذف می‌شوند.',
+    'Landing visits, registration starts, account creation, the first successful task creation or card review, active days, web app install prompts and confirmations in supported browsers, and AI upgrade prompt views are recorded with a random browser ID, language and campaign source. These analytics events do not include your email, password, task text or health details. Records older than 90 days are removed automatically.',
   ],
   ['سرویس‌های بیرونی', 'External services'],
   [

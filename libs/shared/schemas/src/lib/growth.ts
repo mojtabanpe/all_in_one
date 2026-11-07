@@ -6,6 +6,7 @@ export const GROWTH_EVENTS = [
   'signup_started',
   'pwa_install_prompt',
   'pwa_installed',
+  'paywall_viewed',
 ] as const;
 const campaignValue = z.string().check(
   z.minLength(1),
@@ -90,6 +91,7 @@ export interface GrowthSummary {
   firstReviewVisitors: number;
   pwaPromptVisitors: number;
   pwaInstalledVisitors: number;
+  paywallVisitors: number;
   channels: GrowthChannel[];
 }
 

@@ -476,6 +476,7 @@ export class GrowthService {
       firstReviewVisitors: count('first_review_completed'),
       pwaPromptVisitors: count('pwa_install_prompt'),
       pwaInstalledVisitors: count('pwa_installed'),
+      paywallVisitors: count('paywall_viewed'),
       channels: channelRows.map((row) => ({
         source: row.source,
         medium: row.medium,

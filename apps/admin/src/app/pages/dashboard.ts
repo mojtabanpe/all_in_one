@@ -370,7 +370,7 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
             <div
               aioSkeletonRows
               class="contents"
-              [count]="7"
+              [count]="8"
               itemClass="h-24 rounded-3xl"
             ></div>
           </div>
@@ -691,6 +691,10 @@ export class Dashboard {
           {
             label: 'نصب وب‌اپ تأییدشده توسط مرورگر',
             value: data.pwaInstalledVisitors,
+          },
+          {
+            label: 'مشاهدهٔ پنجرهٔ ارتقای هوش مصنوعی',
+            value: data.paywallVisitors,
           },
         ]
       : [];
