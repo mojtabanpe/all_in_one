@@ -47,6 +47,11 @@ export class BillingController {
     return this.billing.subscription(user.id);
   }
 
+  @Get('access')
+  access(@CurrentUser() user: AuthUser) {
+    return this.billing.access(user.id);
+  }
+
   @Get('orders')
   orders(@CurrentUser() user: AuthUser) {
     return this.billing.orders(user.id);

@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@all-in-one/api/db';
 import type {
+  BillingAccessState,
   BillingAccount,
   BillingAdjustmentInput,
   BillingAdminOrderPage,
@@ -94,6 +95,30 @@ export class BillingService {
     return {
       paidUntil: row?.paidUntil.toISOString() ?? null,
       active: !!row && row.paidUntil > now,
+    };
+  }
+
+  /** Trial time starts after email confirmation, when the account can sign in. */
+  async access(userId: string, now = new Date()): Promise<BillingAccessState> {
+    const [user, subscription] = await Promise.all([
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true, emailVerifiedAt: true },
+      }),
+      this.subscription(userId, now),
+    ]);
+    const trialUntil =
+      user?.role === 'CUSTOMER' && user.emailVerifiedAt
+        ? new Date(user.emailVerifiedAt.getTime() + 7 * 86_400_000)
+        : null;
+    return {
+      tier: subscription.active
+        ? 'paid'
+        : trialUntil && trialUntil > now
+          ? 'trial'
+          : 'free',
+      trialUntil: trialUntil?.toISOString() ?? null,
+      paidUntil: subscription.paidUntil,
     };
   }
 

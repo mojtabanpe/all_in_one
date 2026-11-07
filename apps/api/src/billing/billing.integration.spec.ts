@@ -170,6 +170,46 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       gateway.verify.mockClear();
     });
 
+    it('starts a seven-day trial at email confirmation and gives active payment priority', async () => {
+      const verified = new Date('2026-11-07T12:00:00.000Z');
+      const customer = await prisma.user.create({
+        data: {
+          email: `trial-${randomUUID()}@example.test`,
+          passwordHash: 'fixture',
+        },
+      });
+      try {
+        expect((await service().access(customer.id, verified)).tier).toBe(
+          'free',
+        );
+        await prisma.user.update({
+          where: { id: customer.id },
+          data: { emailVerifiedAt: verified },
+        });
+        const end = new Date('2026-11-14T12:00:00.000Z');
+        expect(await service().access(customer.id, verified)).toEqual({
+          tier: 'trial',
+          trialUntil: end.toISOString(),
+          paidUntil: null,
+        });
+        expect((await service().access(customer.id, end)).tier).toBe('free');
+        await prisma.billingSubscription.create({
+          data: {
+            userId: customer.id,
+            paidUntil: new Date('2026-12-01T00:00:00.000Z'),
+          },
+        });
+        expect((await service().access(customer.id, verified)).tier).toBe(
+          'paid',
+        );
+      } finally {
+        await prisma.billingSubscription.deleteMany({
+          where: { userId: customer.id },
+        });
+        await prisma.user.delete({ where: { id: customer.id } });
+      }
+    });
+
     it('activates once for concurrent callbacks and extends from the current end', async () => {
       const first = trackOf(
         (await service().checkout(userId, code)).paymentUrl,

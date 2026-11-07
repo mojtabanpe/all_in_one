@@ -29,6 +29,12 @@ export const billingPlanInputSchema = z.strictObject({
 export type BillingPlanInput = z.infer<typeof billingPlanInputSchema>;
 export type BillingPlan = BillingPlanInput;
 
+export interface BillingAccessState {
+  tier: 'free' | 'trial' | 'paid';
+  trialUntil: string | null;
+  paidUntil: string | null;
+}
+
 export interface BillingSubscriptionState {
   /** ISO time; null when the account never paid. */
   paidUntil: string | null;
