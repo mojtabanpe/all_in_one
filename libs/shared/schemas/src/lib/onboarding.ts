@@ -1,5 +1,7 @@
 import * as z from 'zod/mini';
 
+export const ONBOARDING_COMPLETED_HEADER = 'X-Poshtetgarm-Onboarding-Completed';
+
 export const onboardingGoalSchema = z.enum(['planner', 'english', 'health']);
 export type OnboardingGoal = z.infer<typeof onboardingGoalSchema>;
 /** Null skips the guide; selecting a goal reopens it. */

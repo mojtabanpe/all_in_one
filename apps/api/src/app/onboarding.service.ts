@@ -58,8 +58,8 @@ export class OnboardingService {
   }
 
   /** Only a successful matching action completes the chosen first step. */
-  async complete(userId: string, goal: OnboardingGoal): Promise<void> {
-    await this.prisma.user.updateMany({
+  async complete(userId: string, goal: OnboardingGoal): Promise<boolean> {
+    const { count } = await this.prisma.user.updateMany({
       where: {
         id: userId,
         onboardingGoal: goal,
@@ -68,5 +68,6 @@ export class OnboardingService {
       },
       data: { onboardingCompletedAt: new Date() },
     });
+    return count > 0;
   }
 }

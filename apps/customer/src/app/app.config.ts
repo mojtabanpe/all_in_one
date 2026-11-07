@@ -20,6 +20,7 @@ import { provideServiceWorker } from '@angular/service-worker';
 import { authInterceptor } from '@all-in-one/web/shared';
 import { aiPaywallInterceptor } from './billing/ai-paywall';
 import { appRoutes } from './app.routes';
+import { onboardingFeedbackInterceptor } from './onboarding-feedback';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -36,7 +37,11 @@ export const appConfig: ApplicationConfig = {
     ),
     provideHttpClient(
       withFetch(),
-      withInterceptors([authInterceptor, aiPaywallInterceptor]),
+      withInterceptors([
+        authInterceptor,
+        aiPaywallInterceptor,
+        onboardingFeedbackInterceptor,
+      ]),
     ),
     // PWA (install on phone, offline shell, updates); production builds only.
     provideServiceWorker('ngsw-worker.js', {

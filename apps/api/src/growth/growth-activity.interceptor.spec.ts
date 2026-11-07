@@ -1,4 +1,5 @@
 import { firstValueFrom, of, throwError } from 'rxjs';
+import { ONBOARDING_COMPLETED_HEADER } from '@all-in-one/shared/schemas';
 import { GrowthActivityInterceptor } from './growth-activity.interceptor';
 
 describe('Successful activity observer', () => {
@@ -9,7 +10,8 @@ describe('Successful activity observer', () => {
     cookie = `aio_growth_visitor=${visitor}`,
     enabled = true,
   ) {
-    const complete = vi.fn().mockResolvedValue(undefined);
+    const complete = vi.fn().mockResolvedValue(false);
+    const setHeader = vi.fn();
     const recordActivity = vi.fn().mockResolvedValue(undefined);
     const interceptor = new GrowthActivityInterceptor(
       { recordActivity } as never,
@@ -19,6 +21,7 @@ describe('Successful activity observer', () => {
     const context = {
       getType: () => 'http',
       switchToHttp: () => ({
+        getResponse: () => ({ setHeader }),
         getRequest: () => ({
           method: 'POST',
           originalUrl: path,
@@ -30,6 +33,7 @@ describe('Successful activity observer', () => {
     return {
       recordActivity,
       complete,
+      setHeader,
       run: (handler = { handle: () => of({ id: 'created' }) }) =>
         firstValueFrom(interceptor.intercept(context, handler)),
     };
@@ -92,8 +96,15 @@ describe('Successful activity observer', () => {
       { id: 'user' },
       'aio_growth_preference=denied',
     );
+    fixture.complete.mockResolvedValueOnce(true);
     await fixture.run();
     expect(fixture.complete).toHaveBeenCalledWith('user', 'planner');
+    expect(fixture.setHeader).toHaveBeenCalledWith(
+      ONBOARDING_COMPLETED_HEADER,
+      '1',
+    );
+    await fixture.run();
+    expect(fixture.setHeader).toHaveBeenCalledTimes(1);
     expect(fixture.recordActivity).not.toHaveBeenCalled();
   });
   it('keeps onboarding operational when analytics is disabled', async () => {

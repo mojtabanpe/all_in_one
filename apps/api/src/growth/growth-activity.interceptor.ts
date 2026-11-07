@@ -7,6 +7,8 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ONBOARDING_COMPLETED_HEADER } from '@all-in-one/shared/schemas';
+import type { Response } from 'express';
 import { mergeMap } from 'rxjs';
 import * as z from 'zod/mini';
 import { GrowthService } from './growth.service';
@@ -52,7 +54,7 @@ export class GrowthActivityInterceptor implements NestInterceptor {
     return next.handle().pipe(
       mergeMap(async (result) => {
         try {
-          await this.onboarding.complete(
+          const completed = await this.onboarding.complete(
             req.user.id,
             name === 'first_task_created'
               ? 'planner'
@@ -60,6 +62,11 @@ export class GrowthActivityInterceptor implements NestInterceptor {
                 ? 'english'
                 : 'health',
           );
+          if (completed)
+            context
+              .switchToHttp()
+              .getResponse<Response>()
+              .setHeader(ONBOARDING_COMPLETED_HEADER, '1');
         } catch {
           this.logger.warn('First-action progress could not be recorded');
         }

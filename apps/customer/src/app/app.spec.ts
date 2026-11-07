@@ -10,9 +10,12 @@ import {
 } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
+import { ONBOARDING_COMPLETED_HEADER } from '@all-in-one/shared/schemas';
+import { AioNotifications } from '@all-in-one/ui';
 import { API_BASE_URL, GrowthAnalytics } from '@all-in-one/web/shared';
 import { App } from './app';
 import { AiPaywall, aiPaywallInterceptor } from './billing/ai-paywall';
+import { onboardingFeedbackInterceptor } from './onboarding-feedback';
 
 describe('App', () => {
   it('renders the router outlet and the toaster', async () => {
@@ -58,6 +61,34 @@ describe('App', () => {
     paywall.open.set(false);
     fail('/api/ai/status', 402);
     expect(track).toHaveBeenCalledTimes(2);
+    http.verify();
+  });
+
+  it('shows first-step feedback only for a matching successful API response', () => {
+    const success = vi.fn();
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptors([onboardingFeedbackInterceptor])),
+        provideHttpClientTesting(),
+        { provide: API_BASE_URL, useValue: '/api' },
+        { provide: AioNotifications, useValue: { success } },
+      ],
+    });
+    const client = TestBed.inject(HttpClient);
+    const http = TestBed.inject(HttpTestingController);
+    const headers = { [ONBOARDING_COMPLETED_HEADER]: '1' };
+    const path = '/api/planner/tasks';
+    client.post(path, {}).subscribe();
+    http.expectOne(path).flush({});
+    client.post(path, {}).subscribe({ error: () => undefined });
+    http
+      .expectOne(path)
+      .flush(null, { headers, status: 500, statusText: 'Error' });
+    expect(success).not.toHaveBeenCalled();
+
+    client.post(path, {}).subscribe();
+    http.expectOne(path).flush({}, { headers });
+    expect(success).toHaveBeenCalledOnce();
     http.verify();
   });
 });

@@ -73,10 +73,11 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       );
       await service.complete(ids[0], 'health');
       expect((await service.state(ids[0])).completed).toBe(false);
-      await Promise.all([
+      const completions = await Promise.all([
         service.complete(ids[0], 'planner'),
         service.complete(ids[0], 'planner'),
       ]);
+      expect(completions.filter(Boolean)).toHaveLength(1);
       expect((await service.state(ids[0])).completed).toBe(true);
       const completed = await prisma.user.findUniqueOrThrow({
         where: { id: ids[0] },
