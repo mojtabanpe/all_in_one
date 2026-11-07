@@ -68,6 +68,11 @@
   etc.). Dialogs/sheets are portalled to `<body>`, so pass the same class as `aio-dialog contentClass`. Duolingo-style
   chunky buttons: `aioBtn class="btn-3d"` (`btn-3d-quiet` for outline). Recolour one button by overriding `--primary`
   on it (`[--primary:var(--gem)]`); keep such class strings literal in source so Tailwind finds them.
+- Translations (`@all-in-one/localization`): the message table is a lazy chunk (`loadMessages()`), kept out of the
+  customer app's 1.2 MB initial budget. `provideAioLocale()` in each app config makes English and SSR wait for it;
+  Persian renders at once. Server code calls `await loadMessages()` before `translateMessage`.
+- Directional icons (arrows/chevrons) flip with the page: drawn for LTR → `class="rtl:-scale-x-100"`, drawn for
+  RTL → `class="ltr:-scale-x-100"`.
 - spartan `aioProgress`: `[value]` is a percentage (0–100); `max` is ignored by the indicator.
 - Don't use `·` as a separator next to Persian digits (it reads as ۰); use the Persian comma `،`.
 - Touch targets ≥ 44px; small round checkboxes get an invisible hit area (`after:absolute after:-inset-3`).
@@ -78,18 +83,37 @@
   single-user servers). Tools live once in `apps/api/src/tools` (`ToolsService.register(sink)`); the MCP server
   (`apps/api/src/mcp`) and the in-app assistant (`apps/api/src/assistant`, web `web-assistant` in the customer header)
   both consume them. `assistant: false` keeps bulk-destructive or sharing tools out of the assistant.
-- ChatGPT connection: `apps/api/src/mcp` (OAuth + personal tokens, tools from `apps/api/src/tools`,
+- ChatGPT/Claude connection: `apps/api/src/mcp` (OAuth + personal tokens, tools from `apps/api/src/tools`,
   validated with the contracts schemas). Mounted on Express before the CSRF check. A new applet capability that
   ChatGPT should reach gets a tool there. Docs: `docs/chatgpt-mcp.md`.
 - Production layout (`deploy/`, guide `deploy/README.fa.md`): one domain; `/` public SSR, `/app/` customer (PWA,
   `baseHref /app/`), `/admin/`, `/api/` + OAuth paths. Images come from `deploy/images.dockerfile` (not named
   `Dockerfile`: the `@nx/docker` plugin would infer a project from it). Servers listen on loopback (`API_HOST`, `HOST`).
+- Billing (`apps/api/src/billing`, schema `billing.prisma`): amounts are Rial (Zibal's unit), shown as Toman; plans are
+  admin-managed in `/admin/billing` and nothing is seeded. Only a server-side Zibal verify of an owned order activates,
+  once, under a per-account row lock (`activate`/`adjust`); manual changes always write a `billing_adjustments` row.
+  `BillingService.isPaid(userId)` is the entitlement check. Customer page `/app/billing` is the gateway's return URL.
 - Before pushing: `pnpm nx run-many -t lint test build typecheck`.
 
 # User directives (binding — given by the project owner)
 
 Every instruction the owner gives is recorded here and must be followed in every session.
 When the owner gives a new instruction, add it to this list in the same change.
+
+## One source for Claude and ChatGPT/Codex (2026-11-07)
+
+107. **The owner works on this project with both Claude (Claude Code) and ChatGPT (Codex); keep them in sync**
+     (owner: «یکاری کن که همیشه هماهنگ باشین»).
+     - `AGENTS.md` is the only instruction file. `CLAUDE.md` just imports it (`@AGENTS.md`); never write
+       instructions into `CLAUDE.md` or keep a second copy anywhere. `node tools/scripts/check-agent-docs.mjs`
+       (run in CI) fails if `CLAUDE.md` holds anything else or two directives share a number.
+     - New directive = the next number after the highest one in this file (never reuse a number). When a new
+       instruction changes an older one, add a short «superseded by N» note to the old one instead of deleting it.
+     - Roadmap state lives only in `docs/roadmaps/` (index: `docs/roadmaps/README.md`). Before working, `git pull
+origin master` and read the index and the roadmap; after work, update its status and evidence in the same
+       commit, and keep its summary, checkpoint table and index row consistent with the items below them.
+     - Both agents commit to `master` (directive 16) with a Conventional Commit message, so each sees the other's
+       work in `git log`. Never leave finished work only in a local branch or chat.
 
 ## UI components (2026-10-29)
 
@@ -181,7 +205,7 @@ When the owner gives a new instruction, add it to this list in the same change.
 
 ## AI (2026-10-30)
 
-24. **Each user brings their own AI.** In the profile («حساب کاربری ← هوش مصنوعی») every user sets an
+24. **Superseded by 86/87 (managed AI only; settings live in the admin panel).** _Original:_ **Each user brings their own AI.** In the profile («حساب کاربری ← هوش مصنوعی») every user sets an
     OpenAI-compatible chat url (+ model, key), a text-to-speech url and a speech-to-text url. Without them the AI
     features are off for that user; there is no server-wide AI gateway. Keys are stored encrypted, never shown again.
 25. **AI can do everything, everywhere.** Planner, health and English get AI features, and an in-app assistant
@@ -196,7 +220,8 @@ When the owner gives a new instruction, add it to this list in the same change.
 
 ## Memory (2026-10-29)
 
-11. Keep every owner instruction in project memory (this file). Do not drop or weaken existing ones.
+11. Keep every owner instruction in project memory (this file, `AGENTS.md`; see 107). Do not drop or weaken existing
+    ones.
 
 ## Approved custom components
 
@@ -213,7 +238,7 @@ When the owner gives a new instruction, add it to this list in the same change.
 
 26. Build our own health features, selecting useful ideas from reviewed fitness/nutrition MCPs. Do not depend on their platforms or APIs. Support home, TRX and gym routines, exercise instruction and alternatives, logged sets/progress, diet-aware meal plans and shopping lists. Exercise video links are optional and can be added later.
 
-27. **Design review (2026-10-30):** Review and improve the current Codex-designed version when needed; preserve its established design system and verify responsive behavior before changing visuals.
+27. **Design review (2026-10-30):** Review and improve the current version (built by Claude and Codex) when needed; preserve its established design system and verify responsive behavior before changing visuals.
 
 28. **Full redesign with Emil Kowalski (2026-10-30):** The owner rejected the previous UI and explicitly requested `npx skills@latest add emilkowalski/skills`. Use the installed `emil-design-eng` and relevant animation skills for a substantial app redesign. This supersedes the earlier instruction to preserve the Skeuo Next visual direction. Keep Persian RTL, Spartan wrappers, mobile bottom navigation and bottom-sheet behavior. Prefer calm surfaces, strong hierarchy and purposeful fast interactions over glossy/pillow styling.
 
@@ -238,7 +263,7 @@ When the owner gives a new instruction, add it to this list in the same change.
 
 34. Habits support one or multiple reminder times, editable per habit, delivered through PWA Web Push on the habit's scheduled weekdays.
 
-35. All app dates, including date selection controls, must use the Persian Solar Hijri (شمسی) calendar and Persian digits. Keep Gregorian ISO date values in storage and APIs; use the shared Spartan Jalali wrapper for date inputs.
+35. All app dates, including date selection controls, must use the Persian Solar Hijri (شمسی) calendar and Persian digits. Keep Gregorian ISO date values in storage and APIs; use the shared Spartan Jalali wrapper for date inputs. (In English mode dates are Gregorian: see 68 and 101.)
 
 36. Use the `better-ui` skill when refining UI details, including the shared Persian calendar/date controls.
 
@@ -347,3 +372,138 @@ When the owner gives a new instruction, add it to this list in the same change.
 87. **Admin AI configuration and presets (2026-11-07):** Move the existing AI settings experience to the admin panel only. Keep chat, TTS and STT settings, connection tests, remembered models and saved presets that administrators can apply again. Seed the managed configuration and presets once from the explicitly designated owner account; encrypted keys stay on the server and regular customers have no provider settings. This narrow import supersedes the legacy reuse prohibition in directive 86 for that account only.
 
 88. **Faraz SMS templates (2026-11-07):** Use Faraz SMS with sender line `20002178584475`. Approved pattern IDs in directive 83 order: `AUTH_CODE=55qc3IG5ba`, `PASSWORD_RESET=N7zuaY8kHN`, `PASSWORD_CHANGED=t7D480PuMg`, `SUBSCRIPTION_ACTIVATED=K1pz92FHPc`, `SUBSCRIPTION_EXPIRING=5O4Ya9gB3f`. These are template IDs, not an API key. Keep the API key in server secrets.
+
+## Recall data (2026-10-31)
+
+90. **Recall's decks, cards and texts come over** (owner, overrides the "no data import" part of directive 20).
+    `deploy/import-recall.sh <email>...` copies the chosen Recall accounts (`memnpe@gmail.com`, `admin@recall.com`)
+    with their decks, cards (SM-2 state), reading texts, keeping ids. Accounts keep their bcrypt passwords;
+    `verifyPassword` accepts them and login re-hashes to scrypt.
+
+## Deployment (2026-10-31)
+
+91. **Push to `master` deploys.** `.github/workflows/deploy.yml` runs after CI passes: images are built on GitHub,
+    then the server's self-hosted runner (`aio-server`, label `aio`, `/opt/actions-runner-aio`) loads them and
+    runs `deploy/release.sh` (health check, rollback). CI must stay green (`nx format:check` included).
+
+## Brand (2026-10-31)
+
+92. **The app is called «Poshtetgarm»**, not «همه در یک». The logo is a hand holding a warm sun:
+    porcelain hand, orange sun (`#e88329`) on the deep-teal primary (`#18514b`). Source:
+    `design-system/all-in-one/logo/poshtetgarm-1024.png`; the PWA icons and favicons are generated from it.
+
+## Glass language and closable sidebar (2026-11-01)
+
+97. **The language applet is glass and matches the rest of the app** (owner: "very different from the rest; make it
+    glass, and very cool"). No Duolingo chunky `btn-3d` / `border-b-4` there any more: English pages sit on the
+    `lx-stage` ambient light with `lx-glass` panels (`theme.css`); its accent is violet (see 99).
+98. **The desktop/tablet sidebar can be closed completely** (`collapsible="offcanvas"`, header button or Ctrl/⌘+B,
+    remembered in a cookie). The shell's `main` is `min-w-0` so wide content never slides under the sidebar.
+
+99. **Health is glass too, and the accents swapped** (2026-11-01, owner): health uses the green
+    (`--health: oklch(0.53 0.15 152)`), English moved to violet (`--english: oklch(0.52 0.2 293)`). Both applets sit
+    on `lx-stage` with their own ambient colours (`--lx-1..4` on the applet class); health keeps the companion
+    layout of directive 89, with glass cards (the `.health-calm` glass block at the end of `theme.css`).
+
+100.  **Static text follows the language, user content is never translated** (2026-11-02, owner). In English mode every
+      piece of the app's own copy is English and the layout is LTR; names, titles, units and notes the user wrote (decks,
+      texts, habits, sections, tags, tasks, checklist items) are shown exactly as written: never pipe them through
+      `aioTranslate`. Pass them as `{0}` values of a translated template instead of concatenating.
+      `aio-dialog` shows `title`/`description` as given (callers pipe fixed copy); items the app itself creates (the
+      inbox) do follow the language.
+
+101.  **Dates follow the language** (2026-11-02, owner). Persian: Solar Hijri with Persian digits; English: Gregorian,
+      English month names. Every displayed date goes through the `aioDate` pipe (`{{ iso | aioDate: { month: 'long' } }}`)
+      or `AioLocale.date()` in code; never format a date with `Intl` or `faDate` directly in UI. `aio-date-input` shows a
+      Solar Hijri picker in Persian and a Gregorian one in English; form/API values stay Gregorian ISO days. The health
+      birth year is entered in the calendar of the active language (stored Gregorian).
+
+102.  **Shadowing is checked and scored** (2026-11-02, owner). Every shadowing recording is transcribed by the user's
+      speech-to-text and compared word by word with the sentence (`checkShadowing` in the English contracts): skipped,
+      wrong and extra words are shown and listed. A finished dialogue gets a strict 0–100 session score (a missed/wrong
+      word costs 1.5 words, an extra word 0.75; unrecorded sentences count 0), saved with its date in
+      `english_shadowing_sessions` and shown on demand as a chart (spartan `chart` → `AioChartImports`). The check reads a
+      transcript, so it judges words, not accent or intonation; say so in the UI.
+      **Writing, speaking and listening are scored too** (2026-11-02, owner): writing/speaking from the mistakes in the
+      AI feedback (`writingScore`: each mistake costs 1.5 words of the answer), listening by first picks on the
+      comprehension questions (`listeningScore`). All four live in one table (`EnglishPracticeScore`, `kind`, mapped to
+      `english_shadowing_sessions`), at `/english/practice/scores`; each mode's chart shows only its own scores.
+      Tool: `list_practice_scores` (optional `kind`).
+      Pass user/learning content into translated templates as `verbatim(...)` so it is never translated.
+
+103.  **Now applies to the admin AI settings (`/admin/ai`), see 86/87; customers have no AI settings.** **AI model names are remembered** (2026-11-02, owner: "I'm afraid to change a model and forget the old one").
+      Every model name saved for chat, text-to-speech (both voices) and speech-to-text is kept per service
+      (`chatModels`/`ttsModels`/`sttModels`, most recent first, at most 15) and shown as chips under the field: tap to
+      use it again, × to forget it (`forgetModel`). Technical fields (urls, model names, keys) carry `lang="en"` so they
+      show Latin digits.
+      **Saved setups** (owner, same day: "a save button per section, url and API key saved too"): «ذخیره در فهرست» stores
+      the section's url, model(s) and key as a row of `user_ai_presets` (key sealed like the settings; an empty key
+      field = the stored key; identical rows are not duplicated; 30 per service). Each section lists its rows in a
+      spartan table (model / url, key as `…last4`, «استفاده», delete); «استفاده» makes the row current, key included,
+      copied sealed. The key itself never reaches the browser.
+      **No model chips, clear sections** (2026-11-03, owner): the saved setups hold the whole config, so the model-name
+      chips under the fields are gone from the UI (the backend still keeps the lists). Chat, text-to-speech and
+      speech-to-text each sit in their own bordered panel so the boundary between them is obvious.
+      **Proxy per service** (2026-11-03, owner): each of the three sections has a «پراکسی» checkbox; when ticked, a
+      proxy url (default `http://127.0.0.1:7890`, `DEFAULT_AI_PROXY`) is shown and that service's requests go through it
+      (undici `ProxyAgent`, `proxyAgent()` in `net-guard.ts`). On/off and the url are stored in `user_ai_settings`
+      (`<kind>ProxyOn`, `<kind>Proxy`) and in saved setups (`user_ai_presets.proxy`, null = direct).
+      **ElevenLabs** (2026-11-03, owner): text-to-speech and speech-to-text have an «ElevenLabs» checkbox next to the
+      proxy one; when ticked, that service calls the ElevenLabs api (not OpenAI-compatible): `xi-api-key` header,
+      `/v1/text-to-speech/{voice id}` (the model fields hold voice ids, `eleven_multilingual_v2`) and
+      `/v1/speech-to-text` (`model_id`, default `scribe_v1`). An empty url means `https://api.elevenlabs.io`.
+      Stored as `ttsEleven`/`sttEleven` and `user_ai_presets.elevenlabs`.
+      **Deepgram** (2026-11-03, owner): a «Deepgram» checkbox beside it (one provider at a time). `Authorization: Token`,
+      `/v1/speak?model=<voice>` (default `aura-2-thalia-en`) and `/v1/listen?model=` (raw audio body, default `nova-3`);
+      an empty url means `https://api.deepgram.com`. Stored as `ttsDeepgram`/`sttDeepgram` and
+      `user_ai_presets.deepgram`. Internally `AiTarget.provider` is `openai | elevenlabs | deepgram`.
+
+## Claude connection (2026-11-04)
+
+106. **The MCP server serves Claude too** (owner: "write the ChatGPT MCP for Claude as well, and let the token page
+     make tokens for Claude"). Same server, tools and personal tokens; OAuth always accepts the ChatGPT and Claude
+     callback hosts (`DEFAULT_REDIRECT_HOSTS`: chatgpt.com, chat.openai.com, claude.ai, claude.com; `MCP_REDIRECT_HOSTS`
+     adds more) and loopback http callbacks (Claude Code). The account card «اتصال به ChatGPT و Claude»
+     (`web-ai-connection`) has ChatGPT / Claude / Claude Code tabs with each app's steps; the Claude Code tab builds the
+     `claude mcp add … --header "Authorization: Bearer …"` command with the new token.
+
+## Health companion reference (2026-10-30)
+
+89. **Health companion reference (2026-10-30):** The owner supplied Gordool screenshots and authorized redesigning the health applet for their comfortable, everyday companion feel: light-gray canvas, white generous rounded cards, asymmetrical metric tiles, colorful line icons, short actions, visual meal detail sheets and approachable training cards. Keep the existing features functional; do not invent water/fasting/challenge data or copy another app's character. Other applets retain the shared workspace design.
+
+## Fasting and weight goal (2026-10-31)
+
+94. **Health has real fasting and a dated weight goal** (owner: "I don't see a fasting card… I can't set my goal, e.g.
+    reach 85 kg in 2 months, and my current weight"). This replaces the "do not invent fasting data" part of
+    directive 89: fasting is tracked from the user's own start/end times, never made up. The overview shows a fasting
+    card (elapsed time, target protocol, end time, history) and a weight card (current weight, target by a date,
+    weekly pace with a too-fast warning). A dated goal drives the daily calorie target (deficit ≤ 1,000 kcal,
+    surplus ≤ 500, safe floors kept). Weigh-ins are one per Tehran day; the latest is the profile weight.
+    Backend: `BodyService` (health api); tools in `apps/api/src/tools/health-body-tools.ts`.
+
+## Native task recurrence (2026-10-31)
+
+93. **Recurring tasks are native planner tasks**, including TickTick RRULE compatibility, persisted completion history, retry-safe occurrence identities, timezone-aware Today/Calendar queries, MCP CRUD/batches and existing Spartan task UI controls. Reuse the task system and preserve imported task IDs. Never insert the owner's reference schedules into production or reconcile production tasks before showing the proposed changes. Use explicit source-ID mappings and the reviewed reconciliation digest; migrations must not reset existing data. See `docs/recurring-tasks.md`.
+
+## Won't Do and assistant memory (2026-11-01)
+
+95. **Tasks can be closed as "won't do"** (owner: a task I won't do stays not done, is recorded, and no longer shows
+    as overdue). Status `WONT_DO`: `done=true, wontDo=true` in the API (closed), kept in the completed history, reopened
+    with `wontDo=false`. Exposed as `wont_do_task` / `update_task wont_do` on the ChatGPT MCP and the assistant.
+96. **The assistant must remember what it did and speak Persian dates.** Each reply carries a tool log the client sends
+    back; the system prompt has a Gregorian↔Solar Hijri table around today. It never completes a task the user asked to
+    move, and uses `list_overdue_tasks` for «عقب‌افتاده».
+
+## Floating assistant button (2026-11-03)
+
+104. **The AI assistant opens from a floating round button** (owner) in the customer app, not the header: spartan
+     `aioBtn size="icon"` (no new component), `web-assistant floating`, bottom-end corner above the phone bottom nav
+     (`bottom-[calc(5.5rem+safe-area)]`), `md:bottom-6` on larger screens.
+
+## Task links (2026-11-03)
+
+105. **Tasks have links** (owner): `PlannerTask.links String[] @default([])`, http(s) only (`taskLink`, at most
+     `TASK_LINKS_LIMIT` = 20; an update replaces the list). The task detail lists them with an open button (a plain
+     `<a target="_blank">`, so a YouTube link opens the YouTube app on phones) and a remove button, plus a field to
+     add more (a link without a scheme gets `https://`). MCP/assistant: `links` on create_task, update_task and the
+     batch tools; series pass them to their occurrences.
