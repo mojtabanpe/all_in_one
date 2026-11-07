@@ -8,7 +8,7 @@ Updated: 2026-11-07.
 | ID                | Persian name         | File                                 | State                                                                                                                                                                               |
 | ----------------- | -------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **AIO Growth v1** | رودمپ مارکتینگ       | [aio-growth-v1.md](aio-growth-v1.md) | In progress, split into lanes (Claude C1–C7, Codex X1–X6, owner O1–O9): acquisition/SEO, billing, managed AI, quotas, cost and churn on production; payments await plans and prices |
-| **AIO Coach v1**  | رودمپ ویدئوهای تمرین | [aio-coach-v1.md](aio-coach-v1.md)   | In progress: 8/62 clips published, inline playback in app; `dead-bug` and `plank` approved (upload pending), next clip `wall-slide`, production playback recheck                    |
+| **AIO Coach v1**  | رودمپ ویدئوهای تمرین | [aio-coach-v1.md](aio-coach-v1.md)   | In progress: 10/62 published; `dead-bug` and `plank` live, `wall-slide` v001 held for review, `march` next; phone/PWA playback check pending                                        |
 
 To resume in any Claude (Claude Code) or ChatGPT/Codex session: **«رودمپ مارکتینگ رو پیش ببر»** or **«رودمپ ویدئوهای تمرین رو پیش ببر»**. The agent should read this index and the linked roadmap from `master`, verify current repo/deployment state, carry out the next authorized task, then update the roadmap status and evidence. Never infer completed deployment from a merged commit.
 
