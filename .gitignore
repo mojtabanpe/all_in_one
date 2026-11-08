@@ -74,3 +74,10 @@ libs/api/db/src/generated
 
 # graphify knowledge-graph build output (local, regenerated)
 graphify-out/
+
+# local-only agent and marketing scratch (not part of the product build)
+/.codex
+/.claude/launch.json
+/marketing/promo-videos/
+/marketing/store-assets/
+/work/
