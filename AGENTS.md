@@ -643,11 +643,13 @@ origin master` and read the index and the roadmap; after work, update its status
      activation per purchase token, payload = the account). Store API credentials live only in server env; the
      public store keys are repository variables. Owner steps: `docs/android-stores.fa.md`.
 
-## Phone confirmation week (2026-11-08)
+## Second-contact week (2026-11-08)
 
-121. **An email account that confirms a mobile number by SMS code gets one week** (owner: «اگه کسی با ایمیل ثبت نام کند
-     اگه شمارشو ثبت کرد و تایید otp داد یک هفته اضافه شه»). Granted automatically when the account page's phone
-     confirmation succeeds, once per account (removing and re-adding the number earns nothing more), queued after the
-     trial, paid time and earlier weeks like the social weeks of directive 108. Accounts created by SMS sign-in
-     (directive 119) already confirmed their number and do not get it; numbers confirmed before this change do not earn
-     it retroactively. The billing page offers it as a reward card that links to the account's mobile section.
+121. **Confirming the second way to reach the account earns one week** (owner: «اگه کسی با ایمیل ثبت نام کند اگه
+     شمارشو ثبت کرد و تایید otp داد یک هفته اضافه شه» and «کسی هم که با شماره ثبت نام کرده اگه ایمیلشو تایید کرد یه هفته
+     اضافه شه»). An email account that confirms a mobile number by SMS code, and a phone-only account (directive 119)
+     that adds and confirms an email, each get one week, granted automatically at that confirmation, once per account
+     (removing and re-adding earns nothing more; an account cannot earn it both ways), queued after the trial, paid
+     time and earlier weeks like the social weeks of directive 108. Confirmations made before this change do not earn
+     it retroactively. Phone-only accounts can add an email on the account page (a confirmation link, like signup).
+     The billing page offers it as a reward card that links to the account page.
