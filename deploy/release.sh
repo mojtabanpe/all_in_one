@@ -28,6 +28,9 @@ PREVIOUS=$(cat "$CURRENT_FILE" 2>/dev/null || true)
 LIVE=$(cat "$COLOUR_FILE" 2>/dev/null || echo a)
 if [ "$LIVE" = a ]; then IDLE=b; else IDLE=a; fi
 LIVE_RELEASE=$(cat "$SHARED/release-$LIVE" 2>/dev/null || echo "${PREVIOUS:-none}")
+# The SSR site answers only for its own domain (NG_ALLOWED_HOSTS), so its health check names it.
+DOMAIN=$(sed -n 's/^APP_DOMAIN=//p' "$SHARED/compose.env" | tail -n 1 | tr -d "\"' ")
+[ -n "$DOMAIN" ] || { echo "APP_DOMAIN is missing from $SHARED/compose.env" >&2; exit 1; }
 
 # Compose reads every service's image tag; the colour not being touched keeps its own release.
 if [ "$IDLE" = a ]; then RELEASE_A=$NEW RELEASE_B=$LIVE_RELEASE; else RELEASE_A=$LIVE_RELEASE RELEASE_B=$NEW; fi
@@ -40,12 +43,13 @@ port() { # port <a|b> <api|public>
   esac
 }
 
-# wait_for <url>...: every url answers within 2 minutes (migrations run before the new api listens).
+# wait_for <url>...: every url answers within 2 minutes (migrations run before the new api listens). Requests carry
+# the site's domain as Host: the SSR site refuses any other (the api and the web router accept it too).
 wait_for() {
   i=0
   while [ $i -lt 60 ]; do
     ok=1
-    for url in "$@"; do curl -fsS -o /dev/null "$url" 2>/dev/null || ok=0; done
+    for url in "$@"; do curl -fsS -o /dev/null -H "Host: $DOMAIN" "$url" 2>/dev/null || ok=0; done
     [ $ok = 1 ] && return 0
     i=$((i + 1))
     sleep 2
