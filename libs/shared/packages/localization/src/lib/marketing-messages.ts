@@ -12,6 +12,11 @@ export const MARKETING_MESSAGES: readonly (readonly [string, string])[] = [
     'Download and open the installer. If your phone asks, allow installs from this source.',
   ],
   ['دانلود برای اندروید', 'Download for Android'],
+  ['دانلود مستقیم اندروید', 'Direct Android download'],
+  [
+    'اگر نسخهٔ مستقیم ۱.۰.۳ را داری، ابتدا آن را حذف کن، نسخهٔ جدید را نصب کن و دوباره وارد همان حساب شو.',
+    'If you have direct version 1.0.3, uninstall it, install the new version, and sign back into the same account.',
+  ],
   ['نسخهٔ {0}', 'Version {0}'],
   ['نسخهٔ گوشی‌های قدیمی', 'Older phones'],
   ['نسخهٔ شبیه‌سازها و دستگاه‌های اینتل', 'Emulators and Intel devices'],

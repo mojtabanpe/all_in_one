@@ -72,8 +72,20 @@ import { ANDROID_RELEASE } from './android-release';
           >
             <a aioBtn size="lg" [href]="customerLinks.signup()">{{
               'ساخت حساب رایگان' | aioTranslate
-            }}</a
-            ><a
+            }}</a>
+            <a
+              aioBtn
+              size="lg"
+              variant="outline"
+              routerLink="/"
+              [queryParams]="customerLinks.campaign()"
+              fragment="install"
+              class="min-h-11"
+            >
+              <aio-icon name="lucideDownload" size="sm" />
+              {{ 'نصب اپ' | aioTranslate }}
+            </a>
+            <a
               aioBtn
               size="lg"
               variant="outline"
@@ -267,10 +279,16 @@ import { ANDROID_RELEASE } from './android-release';
             </div>
             <div aioCardContent class="flex flex-col items-start gap-3">
               <a aioBtn size="lg" [href]="android.main" download>{{
-                'دانلود برای اندروید' | aioTranslate
+                'دانلود مستقیم اندروید' | aioTranslate
               }}</a>
               <p class="text-xs text-muted-foreground">
                 {{ 'نسخهٔ {0}' | aioTranslate: [android.version] }}
+              </p>
+              <p class="text-sm leading-7 text-muted-foreground">
+                {{
+                  'اگر نسخهٔ مستقیم ۱.۰.۳ را داری، ابتدا آن را حذف کن، نسخهٔ جدید را نصب کن و دوباره وارد همان حساب شو.'
+                    | aioTranslate
+                }}
               </p>
               <div class="flex flex-wrap gap-x-4">
                 @for (apk of android.others; track apk.url) {

@@ -83,7 +83,7 @@ const TRIAL_NOTICE_DAYS = 3;
           aioShellActions
           aioBtn
           variant="ghost"
-          class="hidden h-11 sm:inline-flex"
+          class="size-11 sm:w-auto"
           [attr.aria-label]="(english() ? 'Install' : 'نصب') | aioTranslate"
           (click)="pwa.install()"
         >

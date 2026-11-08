@@ -2,8 +2,8 @@
  * The Android WebView app published in this repository's GitHub Releases (directive 46, one APK per ABI, directive 57).
  * Update the tag and version together when a new native release is published.
  */
-const TAG = 'native-2026-11-01';
-const VERSION = '1.0.3';
+const TAG = 'native-2026-11-08';
+const VERSION = '1.0.4';
 const base = `https://github.com/mojtabanpe/all_in_one/releases/download/${TAG}/Poshtetgarm-${VERSION}`;
 
 export const ANDROID_RELEASE = {

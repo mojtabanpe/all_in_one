@@ -71,10 +71,13 @@ import {
                 | aioTranslate: [name() ? '، ' + name() : '']
             }}
           </h1>
+          <p class="text-muted-foreground mt-1 text-sm">
+            {{ 'فضای کوچکِ پیشرفت‌های بزرگ' | aioTranslate }}
+          </p>
         </div>
-        <span class="text-muted-foreground text-sm">{{
-          'فضای کوچکِ پیشرفت‌های بزرگ' | aioTranslate
-        }}</span>
+        <a aioBtn variant="outline" href="/#install" class="min-h-11">
+          {{ 'راهنمای نصب' | aioTranslate }}
+        </a>
       </header>
       <!-- Optional guide, for accounts that have not used the app yet: nothing while loading or on error,
            so returning users never see it flash in and out. -->
