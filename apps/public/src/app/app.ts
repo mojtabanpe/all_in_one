@@ -41,88 +41,60 @@ import {
       <footer
         class="mt-12 rounded-2xl border border-border bg-card/80 p-5 sm:p-7"
       >
-        <div class="grid gap-5 sm:grid-cols-[1fr_auto] sm:items-center">
-          <div class="flex min-w-0 flex-col gap-3">
-            <div class="flex items-center gap-3">
-              <img
-                src="brand-logo.png"
-                alt=""
-                width="40"
-                height="40"
-                class="rounded-xl"
-              />
-              <bdi dir="ltr" class="text-base font-semibold">Poshtetgarm</bdi>
-            </div>
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <a
-                aioBtn
-                variant="outline"
-                class="min-h-11"
-                routerLink="/"
-                [queryParams]="customerLinks.campaign()"
-                fragment="install"
-                >{{ 'نصب اپ' | aioTranslate }}</a
-              >
-              <a
-                aioBtn
-                variant="link"
-                class="min-h-11 px-2"
-                routerLink="/privacy"
-                [queryParams]="customerLinks.campaign()"
-                >{{ 'حریم خصوصی و داده‌ها' | aioTranslate }}</a
-              >
-              <a
-                aioBtn
-                variant="link"
-                class="min-h-11 px-2"
-                target="_blank"
-                rel="noopener"
-                href="https://t.me/poshtetgarm"
-                [attr.aria-label]="
-                  'کانال تلگرام Poshtetgarm (در زبانه جدید)' | aioTranslate
-                "
-                >{{ 'تلگرام' | aioTranslate }}</a
-              >
-              <a
-                aioBtn
-                variant="link"
-                class="min-h-11 px-2"
-                target="_blank"
-                rel="noopener"
-                href="https://www.instagram.com/poshtetgarm/"
-                [attr.aria-label]="
-                  'صفحهٔ اینستاگرام Poshtetgarm (در زبانه جدید)' | aioTranslate
-                "
-                >{{ 'اینستاگرام' | aioTranslate }}</a
-              >
-            </div>
-          </div>
-          <a
-            aioBtn
-            variant="ghost"
-            class="h-auto w-fit gap-3 rounded-xl border border-border p-3"
-            referrerpolicy="origin"
-            target="_blank"
-            rel="noopener"
-            href="https://trustseal.enamad.ir/?id=8559991&Code=fx45IyoDfirdQiX27wcCauu2mXGEzE67"
-            [attr.aria-label]="
-              'مشاهده اعتبار اینماد (در زبانه جدید)' | aioTranslate
-            "
-          >
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
             <img
-              referrerpolicy="origin"
-              loading="lazy"
-              src="https://trustseal.enamad.ir/logo.aspx?id=8559991&Code=fx45IyoDfirdQiX27wcCauu2mXGEzE67"
+              src="brand-logo.png"
               alt=""
-              width="56"
-              height="61"
-              class="object-contain"
-              code="fx45IyoDfirdQiX27wcCauu2mXGEzE67"
+              width="40"
+              height="40"
+              class="rounded-xl"
             />
-            <span class="text-sm text-muted-foreground">
-              {{ 'نماد اعتماد الکترونیکی' | aioTranslate }}
-            </span>
-          </a>
+            <bdi dir="ltr" class="text-base font-semibold">Poshtetgarm</bdi>
+          </div>
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <a
+              aioBtn
+              variant="outline"
+              class="min-h-11"
+              routerLink="/"
+              [queryParams]="customerLinks.campaign()"
+              fragment="install"
+              >{{ 'نصب اپ' | aioTranslate }}</a
+            >
+            <a
+              aioBtn
+              variant="link"
+              class="min-h-11 px-2"
+              routerLink="/privacy"
+              [queryParams]="customerLinks.campaign()"
+              >{{ 'حریم خصوصی و داده‌ها' | aioTranslate }}</a
+            >
+            <a
+              aioBtn
+              variant="link"
+              class="min-h-11 px-2"
+              target="_blank"
+              rel="noopener"
+              href="https://t.me/poshtetgarm"
+              [attr.aria-label]="
+                'کانال تلگرام Poshtetgarm (در زبانه جدید)' | aioTranslate
+              "
+              >{{ 'تلگرام' | aioTranslate }}</a
+            >
+            <a
+              aioBtn
+              variant="link"
+              class="min-h-11 px-2"
+              target="_blank"
+              rel="noopener"
+              href="https://www.instagram.com/poshtetgarm/"
+              [attr.aria-label]="
+                'صفحهٔ اینستاگرام Poshtetgarm (در زبانه جدید)' | aioTranslate
+              "
+              >{{ 'اینستاگرام' | aioTranslate }}</a
+            >
+          </div>
         </div>
       </footer>
     </aio-app-shell>

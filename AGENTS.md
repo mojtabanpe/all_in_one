@@ -348,7 +348,7 @@ origin master` and read the index and the roadmap; after work, update its status
 
 76. **Local Better skills for UI improvements (2026-11-06):** Use the accessible local Better skill collection for UI improvements, including better-layout, better-typography, better-ui, better-accessibility, better-colors and better-writing as relevant. When Better Design MCP is unavailable, continue with these local skills; do not claim MCP guidance was retrieved. Preserve Spartan wrappers, the established design system and bilingual responsive behavior.
 
-77. **Enamad footer (2026-11-06):** Display the owner-supplied Enamad seal in the public website footer for payment readiness. Preserve the official trustseal.enamad.ir verification/image URLs (id 8559991, code fx45IyoDfirdQiX27wcCauu2mXGEzE67) and origin referrer policy.
+77. **Enamad footer (2026-11-06, superseded by 122):** Display the owner-supplied Enamad seal in the public website footer for payment readiness. Preserve the official trustseal.enamad.ir verification/image URLs (id 8559991, code fx45IyoDfirdQiX27wcCauu2mXGEzE67) and origin referrer policy.
 
 78. **Automatic acquisition analytics (2026-11-06):** Record the limited first-party acquisition events automatically without an opt-in request. Keep payloads restricted to random visitor ID, event name, language and bounded campaign fields; never send account credentials, task content or health details. Retain the account opt-out, existing opt-outs and 90-day event retention. This supersedes the earlier roadmap opt-in approach; do not record fabricated consent.
 
@@ -653,3 +653,5 @@ origin master` and read the index and the roadmap; after work, update its status
      time and earlier weeks like the social weeks of directive 108. Confirmations made before this change do not earn
      it retroactively. Phone-only accounts can add an email on the account page (a confirmation link, like signup).
      The billing page offers it as a reward card that links to the account page.
+
+122. **Remove Enamad from the public footer (2026-11-08).** The owner reported that the seal does not load across networks. Remove its image and verification link from the public footer.
