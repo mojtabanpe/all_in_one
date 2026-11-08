@@ -18,6 +18,24 @@ import { AiPaywall, aiPaywallInterceptor } from './billing/ai-paywall';
 import { onboardingFeedbackInterceptor } from './onboarding-feedback';
 
 describe('App', () => {
+  // jsdom has no matchMedia; the spartan sonner toaster queries it after render.
+  beforeEach(() => {
+    if (typeof window.matchMedia === 'function') return;
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: (query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        dispatchEvent: () => false,
+      }),
+    });
+  });
+
   it('renders the router outlet and the toaster', async () => {
     TestBed.configureTestingModule({
       imports: [App],
