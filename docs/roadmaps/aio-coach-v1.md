@@ -2,7 +2,7 @@
 
 **Purpose:** produce, medically/biomechanically review, upload, connect and verify exercise demonstration videos in Poshtetgarm.  
 **Status:** IN_PROGRESS — 13 of 62 clips published, including `trx-row` (13).
-`wall-slide` (10) v001 approved for interim use, its MP4 unavailable and v002 needs revision; `trx-chest` (14) is the next new clip.
+`wall-slide` (10) v001 approved for interim use, its MP4 unavailable and v003 preview awaits review; `trx-chest` (14) is the next new clip.
 Anonymous MP4 delivery verified for all 13 published clips; inline playback on a phone/PWA still needs verification.
 
 ## Summary (2026-11-08)
@@ -43,7 +43,9 @@ Anonymous MP4 delivery verified for all 13 published clips; inline playback on a
       below shoulder height at the bottom and forearm contact is hard to verify. The owner approved the interim cut
       on 2026-11-08. The original attachment path no longer contains the approved MP4. The production catalog
       still returns the existing Aparat link. The replacement v002 needs revision: the elbows drop below shoulder
-      height at the bottom, stay bent at the top, and the hands move away from the wall on the second descent.
+      height at the bottom, stay bent at the top, and the hands move away from the wall on the second descent. The first 10 seconds of v003 visually repeat v002. A silent 11–19 s
+      preview isolates the later repetition with a clearer Y. The elbows still finish below shoulder height, and
+      continuous forearm contact is unclear. The preview awaits owner review.
 - [x] `DONE` `march` v001 was approved and published via MCP on 2026-11-08 (silent, 1280×720, 10 s).
 - [x] `DONE` `trx-squat` v002 was approved and published via MCP on 2026-11-08 (silent, 1280×720, 10 s).
 - [x] `DONE` `trx-row` v002 was approved and published via MCP on 2026-11-08 (silent, 1280×720, 10 s).
@@ -57,8 +59,7 @@ Prior conversations mention video review/approval for Squat, Push-up, Glute Brid
 ## Next action
 
 1. Open `dead-bug` or `plank` on a phone and in the installed PWA; confirm inline playback in the exercise sheet and guided session.
-2. Generate a revised `wall-slide` clip. Verify shoulder-height elbows at the bottom, a wide Y at the top,
-   and visible wall contact on the return.
+2. Review the trimmed `wall-slide` v003 preview. A new cut or explicit interim approval is needed before upload.
 3. Generate `trx-chest` with [prompt 14](../exercise-video-kit/prompts/14-trx-chest.txt) and the approved coach reference.
    Generate `prone-w` v3 with prompt 07.
 
