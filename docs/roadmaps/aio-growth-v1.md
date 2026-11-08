@@ -99,6 +99,15 @@ response an `aio_growth_visitor` cookie (or set it from a tiny inline pre-hydrat
 CTA carry the allowlisted UTMs for that request (server-side rewrite of the `/app/login` hrefs, or an inline script
 that rewrites them before hydration). Verify by clicking the CTA at `commit` in a Chromium probe and confirming the
 resulting `signup_started` still has `utm_campaign`. Owner-visible effect: paid posts look like they bring no accounts.
+**Implemented locally 2026-11-09 (Claude, not deployed):** `apps/public/src/growth-inject.ts` +
+a middleware in `apps/public/src/server.ts`. For a request that carries an allow-listed `utm_*`, the
+server reads the prerendered page, tags every `/app/login…` href (keeping `mode=register`), sets
+`aio_growth_visitor` when the request has none, and answers `Cache-Control: no-store`; requests
+without a campaign fall through byte-identically. Verified on the built server: `/`, `/daily-planner`,
+`/daily-english` and `/about` keep their own content, untagged responses are byte-identical to the
+prerendered files, only the hrefs differ when tagged, canonical/JSON-LD/H1 counts unchanged, the
+cookie is reused, and robots/sitemap/assets are untouched. 9 unit tests (`growth-inject.spec.ts`).
+Pending: one payment-gateway-free release and a production check clicking the CTA at `commit`.
 
 ### ChatGPT (Codex) lane: acquisition, activation and retention
 

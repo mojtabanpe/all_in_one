@@ -5,8 +5,16 @@ import {
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
 import express from 'express';
+import { randomUUID } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  injectCampaign,
+  isVisitorId,
+  VISITOR_COOKIE,
+  visitorCookie,
+} from './growth-inject';
 
 const serverDistFolder = dirname(fileURLToPath(import.meta.url));
 const browserDistFolder = resolve(serverDistFolder, '../browser');
@@ -36,6 +44,65 @@ app.use(
     redirect: false,
   }),
 );
+
+/**
+ * A paid link's campaign (`?utm_…`) has to reach the served HTML: the prerendered page is shared by
+ * every visitor and the client only tags its links after hydration, which a fast tap on a phone
+ * skips. So for a request that carries a campaign, the page is read from disk, its customer links
+ * are tagged, and a visitor cookie is set — the same identity the client would create anyway.
+ * Requests without a campaign fall through untouched (static file or the Angular engine).
+ */
+const pageFor = (requestPath: string): string | null => {
+  // `resolve` would restart at the filesystem root for a leading slash, so strip both ends.
+  const clean = requestPath.replace(/^\/+|\/+$/g, '');
+  if (clean.includes('..')) return null;
+  return clean === ''
+    ? resolve(browserDistFolder, 'index.html')
+    : resolve(browserDistFolder, clean, 'index.html');
+};
+
+/** The requested page, from the untouched URL: a mounted wildcard rewrites `req.path`. */
+const pagePath = (originalUrl: string): string => {
+  const path = originalUrl.split('?')[0] ?? '/';
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return path;
+  }
+};
+
+const cookieValue = (
+  header: string | undefined,
+  name: string,
+): string | undefined =>
+  header
+    ?.split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${name}=`))
+    ?.slice(name.length + 1);
+
+app.use(async (req, res, next) => {
+  if (req.method !== 'GET' || !req.accepts('html')) return next();
+  const query = new URLSearchParams(req.originalUrl.split('?')[1] ?? '');
+  if (![...query.keys()].some((key) => key.startsWith('utm_'))) return next();
+  const file = pageFor(pagePath(req.originalUrl));
+  if (!file) return next();
+  let page: string;
+  try {
+    page = await readFile(file, 'utf8');
+  } catch {
+    return next(); // not a prerendered page: let the engine answer as usual
+  }
+  const { html, campaign } = injectCampaign(page, query);
+  if (Object.keys(campaign).length === 0) return next();
+  if (!isVisitorId(cookieValue(req.headers.cookie, VISITOR_COOKIE))) {
+    const secure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    res.setHeader('Set-Cookie', visitorCookie(randomUUID(), secure));
+  }
+  // Never let a proxy cache one visitor's tagged copy.
+  res.setHeader('Cache-Control', 'no-store');
+  res.type('html').send(html);
+});
 
 /**
  * Handle all other requests by rendering the Angular application.
