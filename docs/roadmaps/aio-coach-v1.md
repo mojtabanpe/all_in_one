@@ -1,20 +1,20 @@
 # AIO Coach v1 — رودمپ تولید و آپلود ویدئوهای تمرین
 
 **Purpose:** produce, medically/biomechanically review, upload, connect and verify exercise demonstration videos in Poshtetgarm.  
-**Status:** IN_PROGRESS — 12 of 62 clips published, including `trx-squat` (12).
-`wall-slide` (10) v001 approved for interim use, upload pending; `trx-row` (13) is the next new clip.
-Anonymous MP4 delivery verified for `dead-bug`, `plank`, `march` and `trx-squat`; inline playback on a phone/PWA still needs verification.
+**Status:** IN_PROGRESS — 13 of 62 clips published, including `trx-row` (13).
+`wall-slide` (10) v001 approved for interim use, upload pending; `trx-chest` (14) is the next new clip.
+Anonymous MP4 delivery verified for `dead-bug`, `plank`, `march`, `trx-squat` and `trx-row`; inline playback on a phone/PWA still needs verification.
 
 ## Summary (2026-11-08)
 
 | Checkpoint                        | State         | Evidence                                                                                                                                                                                                                                                                                                                                                                      |
 | --------------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Upload pipeline and storage       | `DONE`        | `apps/api/src/tools/exercise-video-upload.service.ts` (admin only, MP4 `ftyp` check, 8 MiB), served from `/api/exercise-videos` (volume `exercise-videos` in `deploy/compose.yml`)                                                                                                                                                                                            |
-| Approved clips published          | `IN_PROGRESS` | 12/62 `published` in `production-tracker.csv`: body-squat, reverse-lunge, wall-pushup, pushup, glute-bridge, bird-dog, prone-w (interim v2), jumping-jack, dead-bug, plank, march, trx-squat                                                                                                                                                                                  |
+| Approved clips published          | `IN_PROGRESS` | 13/62 `published` in `production-tracker.csv`: body-squat, reverse-lunge, wall-pushup, pushup, glute-bridge, bird-dog, prone-w (interim v2), jumping-jack, dead-bug, plank, march, trx-squat, trx-row                                                                                                                                                                         |
 | Catalog mapping safe from re-seed | `DONE`        | `libs/applets/health/api/src/lib/seed.ts` only fills `videoUrl` where it is `null`, so uploaded clips survive deploys                                                                                                                                                                                                                                                         |
 | In-app playback                   | `DONE` (code) | Uploaded clips play inline (`<video controls muted loop playsinline preload="metadata">`, 16:9) in the exercise sheet and guided session; a failed clip falls back to the link. Fixed: the exercise sheet called `new URL()` on the site-relative clip path and threw. Tests: `exerciseVideoSource` (health-contracts), clip/fallback test in `training-session-page.spec.ts` |
-| Anonymous production playback     | `VERIFY`      | 2026-11-07: anonymous range GET for `dead-bug` and `plank` returned HTTP 206 and `video/mp4` for both files; On 2026-11-08, a separate catalog lookup and anonymous HTTP 206 confirmed the `march` (1,565,048 bytes) and `trx-squat` (1,340,108 bytes) MP4s. Inline phone/PWA playback is still unverified.                                                                   |
-| Remaining 50 clips                | `TODO`        | Owner generates in Gemini with the reference images; agent reviews, uploads via MCP and updates the tracker                                                                                                                                                                                                                                                                   |
+| Anonymous production playback     | `VERIFY`      | 2026-11-07: anonymous range GET for `dead-bug` and `plank` returned HTTP 206 and `video/mp4` for both files; On 2026-11-08, a separate catalog lookup and anonymous HTTP 206 confirmed the `march` (1,565,048 bytes), `trx-squat` (1,340,108 bytes) and `trx-row` (1,204,088 bytes) MP4s. Inline phone/PWA playback is still unverified.                                      |
+| Remaining 49 clips                | `TODO`        | Owner generates in Gemini with the reference images; agent reviews, uploads via MCP and updates the tracker                                                                                                                                                                                                                                                                   |
 
 ## Existing source of truth
 
@@ -28,7 +28,7 @@ Anonymous MP4 delivery verified for `dead-bug`, `plank`, `march` and `trx-squat`
 
 - [x] `DONE` Upload path: MCP tool `upload_exercise_video` → `ExerciseVideoUploadService` (admin, MP4 ≤ 8 MiB) →
       `data/exercise-videos` volume → public `/api/exercise-videos/<slug>-<uuid>.mp4`; `videoUrl` set on the catalog row.
-- [x] `DONE` Inventory: tracker rows for the 12 published clips carry the public URL and review notes (2026-11-06–08).
+- [x] `DONE` Inventory: tracker rows for the 13 published clips carry the public URL and review notes (2026-11-06–08).
 - [ ] `IN_PROGRESS` Coach visual reference `aio-coach-v1` is in use for the published clips; qualified review still
       needed for complex/advanced exercises before they are generated.
 - [x] `DONE` Attach by stable slug: the upload writes `videoUrl` for that slug; seed never overwrites a set `videoUrl`.
@@ -43,7 +43,8 @@ Anonymous MP4 delivery verified for `dead-bug`, `plank`, `march` and `trx-squat`
       on 2026-11-08. Upload the approved MP4 when available.
 - [x] `DONE` `march` v001 was approved and published via MCP on 2026-11-08 (silent, 1280×720, 10 s).
 - [x] `DONE` `trx-squat` v002 was approved and published via MCP on 2026-11-08 (silent, 1280×720, 10 s).
-- [ ] `TODO` Continue the TRX batch (13–18), starting with `trx-row`. Per clip: owner generates → agent/owner review
+- [x] `DONE` `trx-row` v002 was approved and published via MCP on 2026-11-08 (silent, 1280×720, 10 s).
+- [ ] `TODO` Continue the TRX batch (14–18), starting with `trx-chest`. Per clip: owner generates → agent/owner review
       (tracker `generated` → `reviewed`) → MCP upload → `published` with URL.
 
 ## Historical handoff — NOT verified as uploaded
@@ -54,6 +55,6 @@ Prior conversations mention video review/approval for Squat, Push-up, Glute Brid
 
 1. Open `dead-bug` or `plank` on a phone and in the installed PWA; confirm inline playback in the exercise sheet and guided session.
 2. Upload the approved `wall-slide` v001 trim when the MP4 is available.
-3. Generate `trx-row` with prompt 13 and `prone-w` v3 with prompt 07.
+3. Generate `trx-chest` with prompt 14 and `prone-w` v3 with prompt 07.
 
 Last updated: 2026-11-08.
