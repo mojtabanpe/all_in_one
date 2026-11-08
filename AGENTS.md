@@ -642,3 +642,12 @@ origin master` and read the index and the roadmap; after work, update its status
      has checked it with the store's developer API and activated it through the same locked `activate` as Zibal (one
      activation per purchase token, payload = the account). Store API credentials live only in server env; the
      public store keys are repository variables. Owner steps: `docs/android-stores.fa.md`.
+
+## Phone confirmation week (2026-11-08)
+
+121. **An email account that confirms a mobile number by SMS code gets one week** (owner: «اگه کسی با ایمیل ثبت نام کند
+     اگه شمارشو ثبت کرد و تایید otp داد یک هفته اضافه شه»). Granted automatically when the account page's phone
+     confirmation succeeds, once per account (removing and re-adding the number earns nothing more), queued after the
+     trial, paid time and earlier weeks like the social weeks of directive 108. Accounts created by SMS sign-in
+     (directive 119) already confirmed their number and do not get it; numbers confirmed before this change do not earn
+     it retroactively. The billing page offers it as a reward card that links to the account's mobile section.
