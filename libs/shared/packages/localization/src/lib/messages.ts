@@ -4610,6 +4610,15 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['ذخیره', 'Save'],
   ['آماده', 'Ready'],
   ['شمارهٔ موبایل', 'Mobile number'],
+  ['روش ورود', 'How to sign in'],
+  [
+    'فقط شمارهٔ موبایل؛ کد ورود برایت پیامک می‌شود.',
+    'Just your mobile number; the code arrives by SMS.',
+  ],
+  [
+    'فقط ایمیل و یک رمز؛ نام را بعداً در حساب کاربری می‌گذاری.',
+    'Just an email and a password; you can add your name later in the account page.',
+  ],
   [
     'برای بازیابی رمز با پیامک و خبر تمدید یا پایان اشتراک.',
     'For password reset by SMS and subscription notices.',
