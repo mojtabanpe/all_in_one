@@ -1,21 +1,21 @@
 EXERCISE: TRX chest press
 CATALOG ID: trx-chest
 
-Create a silent, 8-second, 16:9 3D animation. Match the attached AIO Coach v1 reference: same face, body, teal shirt, charcoal joggers and white shoes. Use a plain light-gray studio. Use one fixed three-quarter side shot with both hands visible. Keep the full body, shoes, anchor and entire length of both straps inside the frame.
+Create a silent, 8-second, 16:9 3D demonstration of one standing TRX chest press for Poshtetgarm. Match the attached AIO Coach v1 character reference: same face, proportions, teal shirt, charcoal joggers and white shoes. Use the exercise references for equipment and technique.
 
-BUILD THE FIRST FRAME BEFORE ANIMATING
-- Screen left: one visible, fixed overhead anchor, behind the coach.
-- Center-right: the coach faces screen right, away from the anchor. Both feet are on the floor. His body leans slightly forward, with shoulders, hips and ankles aligned.
-- In front of his chest: two real cylindrical handles, one physically enclosed in each hand. Both arms reach forward at chest height, with elbows almost straight.
-- The anchor has exactly two nonelastic straps. Trace strap 1 continuously from the anchor to the handle inside the left hand. Trace strap 2 continuously from the same anchor to the handle inside the right hand. Both straps run diagonally backward and upward from the hands to the anchor, outside the torso.
+CAMERA AND EQUIPMENT
+Use a fixed three-quarter side view at chest height in a plain light-gray studio. Frame the full body, both hands, both feet, the overhead anchor and both straps. The coach faces screen right. One fixed anchor sits high behind him at screen left. Exactly two taut straps run from that anchor to the two cylindrical grips, one inside each closed hand. Each strap stays physically attached to its grip and clear of the torso for the entire clip.
 
-KEEP THESE CONNECTIONS IN EVERY FRAME
-Each hand stays closed around its own handle. Each handle moves with that hand and remains attached to its strap. The straps stay straight and taut, with the anchor fixed in place. There are exactly two handles total. No separate hanging loops, duplicate grips, gaps between handles and straps, or straps passing through the body. If a hand moves, the end of its strap moves with it immediately.
+BUILD TWO KEY POSES BEFORE ANIMATING
+A — Top. Both feet are planted hip-width apart. The coach leans slightly forward with shoulders, hips and ankles aligned. Both arms reach forward at mid-chest height, with elbows almost straight and softly unlocked. Show clear space between the chest and the grips.
+B — Bottom. The straight body leans a little farther forward as the elbows bend to about 90 degrees, angled diagonally down and back. Both grips sit beside the outer chest, level with the mid-chest and clearly above the waist. Keep the wrists straight and both feet planted. From the camera, the grips should read as beside the chest, never beside the hips.
 
-ANIMATE ONE REPETITION
-- 0–1 s: Hold the first frame so both hand-to-handle connections are easy to see.
-- 1–4 s: Slowly bend both elbows diagonally back as the chest approaches the handles. Keep the handles beside the chest at the bottom, above the waist. The body moves as one unit. Feet stay planted.
-- 4–7 s: Press both handles forward together until the elbows are almost straight and the original starting pose is restored.
-- 7–8 s: Hold the starting pose. Both hands are still visibly gripping their connected handles.
+ANIMATE A → B → A
+- 0–1 s: Hold pose A.
+- 1–4 s: Lower smoothly into pose B. Bend the elbows as the chest approaches the grips. Keep both grips in the chest-height band throughout.
+- 4–7 s: Press both grips forward relative to the chest. Visibly open both elbows back to near full extension and restore pose A. Keep the grips at mid-chest height through the finish.
+- 7–8 s: Hold the exact opening pose A. Match the first frame's hand position, elbow angle, body lean and foot placement.
 
-Export as trx-chest--aio-coach-v1--v003.mp4. Use 1080p if supported. No audio, text, cuts or camera motion.
+Before rendering, compare the first, bottom and final poses. The first and final frames must match. The bottom pose must show bent elbows and both grips beside the chest. Avoid rocking with a fixed elbow angle, a downward sweep of the hands, straps crossing through the body, and extra or detached grips.
+
+Export as trx-chest--aio-coach-v1--v005.mp4. Use 1080p if supported. No audio, text, cuts or camera motion.

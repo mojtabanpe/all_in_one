@@ -668,6 +668,8 @@ origin master` and read the index and the roadmap; after work, update its status
      together in one release. This supersedes the "push immediately" part of 16 and 91; it does not change what goes
      into a commit.
 
+125. **Full Gemini exercise-video prompts (2026-11-09).** Always give the owner the full standalone prompt for every Gemini exercise-video take, including revisions after review. Include the references, setup, movement, acceptance criteria and export settings so it can be pasted into a fresh Gemini chat.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
