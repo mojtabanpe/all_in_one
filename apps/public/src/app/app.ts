@@ -51,6 +51,30 @@ import {
             [queryParams]="customerLinks.campaign()"
             >{{ 'حریم خصوصی و داده‌ها' | aioTranslate }}</a
           >
+          <div class="flex flex-wrap gap-x-4">
+            <a
+              aioBtn
+              variant="link"
+              target="_blank"
+              rel="noopener"
+              href="https://t.me/poshtetgarm"
+              [attr.aria-label]="
+                'کانال تلگرام Poshtetgarm (در زبانه جدید)' | aioTranslate
+              "
+              >{{ 'تلگرام' | aioTranslate }}</a
+            >
+            <a
+              aioBtn
+              variant="link"
+              target="_blank"
+              rel="noopener"
+              href="https://www.instagram.com/poshtetgarm/"
+              [attr.aria-label]="
+                'صفحهٔ اینستاگرام Poshtetgarm (در زبانه جدید)' | aioTranslate
+              "
+              >{{ 'اینستاگرام' | aioTranslate }}</a
+            >
+          </div>
           <p class="text-sm text-muted-foreground">
             {{ 'نماد اعتماد الکترونیکی' | aioTranslate }}
           </p>

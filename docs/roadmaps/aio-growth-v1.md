@@ -112,17 +112,17 @@ campaign content in `docs/roadmaps/*pilot*`.
 
 Agents cannot do these: they need the owner's decision, login, devices or an Iranian network.
 
-| ID  | Task                                                                                                                                        | Unblocks          | Status                                                  |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ------------------------------------------------------- |
-| O1  | Define plans and prices (Toman) in `/admin/billing`, and which features are paid besides AI (decided 2026-11-08, directive 116; enter them) | C3 copy, payments | DONE (entered inactive; activation waits for the owner) |
-| O2  | `/admin/ai`: connection test for chat, TTS, STT; check the starting prices and save them; confirm daily limits per tier                     | C5, C7, AI launch | DONE                                                    |
-| O3  | Check free memory on the server (`free -m`); if ≥ 400 MB spare, set `AI_SCOPE_LOCAL_MODEL=on`                                               | scope check       | DONE (Claude, 2026-11-08)                               |
-| O4  | Put the Faraz API key into the server secrets                                                                                               | C6 real delivery  | DONE                                                    |
-| O5  | From an Iranian network: Enamad seal loads; PageSpeed for home and `/daily-english`; Search Console ownership + submit the sitemap          | SEO items         | TODO                                                    |
-| O6  | Install the PWA on a real Android (Chrome) and iPhone (Safari): offline reopen, then update                                                 | PWA item          | TODO                                                    |
-| O7  | Create the official Telegram/Instagram pages, then turn on `BILLING_*_OFFER_ENABLED`; publish the English pilot when ready                  | social weeks, X6  | TODO                                                    |
-| O8  | After O1: Zibal sandbox, then one real low-amount payment; with your admin login, open the growth/AI reports on production and note issues  | payments, reports | TODO                                                    |
-| O9  | Talk to 5–20 users (pilot interview questions) and write the findings here                                                                  | experiments       | TODO                                                    |
+| ID  | Task                                                                                                                                        | Unblocks          | Status                                                                                                                                                  |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| O1  | Define plans and prices (Toman) in `/admin/billing`, and which features are paid besides AI (decided 2026-11-08, directive 116; enter them) | C3 copy, payments | DONE (entered inactive; activation waits for the owner)                                                                                                 |
+| O2  | `/admin/ai`: connection test for chat, TTS, STT; check the starting prices and save them; confirm daily limits per tier                     | C5, C7, AI launch | DONE                                                                                                                                                    |
+| O3  | Check free memory on the server (`free -m`); if ≥ 400 MB spare, set `AI_SCOPE_LOCAL_MODEL=on`                                               | scope check       | DONE (Claude, 2026-11-08)                                                                                                                               |
+| O4  | Put the Faraz API key into the server secrets                                                                                               | C6 real delivery  | DONE                                                                                                                                                    |
+| O5  | From an Iranian network: Enamad seal loads; PageSpeed for home and `/daily-english`; Search Console ownership + submit the sitemap          | SEO items         | TODO                                                                                                                                                    |
+| O6  | Install the PWA on a real Android (Chrome) and iPhone (Safari): offline reopen, then update                                                 | PWA item          | TODO                                                                                                                                                    |
+| O7  | Create the official Telegram/Instagram pages, then turn on `BILLING_*_OFFER_ENABLED`; publish the English pilot when ready                  | social weeks, X6  | IN_PROGRESS (pages t.me/poshtetgarm and instagram.com/poshtetgarm exist; both offers on and footer links added 2026-11-08; English pilot still owner's) |
+| O8  | After O1: Zibal sandbox, then one real low-amount payment; with your admin login, open the growth/AI reports on production and note issues  | payments, reports | TODO                                                                                                                                                    |
+| O9  | Talk to 5–20 users (pilot interview questions) and write the findings here                                                                  | experiments       | TODO                                                                                                                                                    |
 
 ## North star and KPIs
 
@@ -219,6 +219,11 @@ Evidence: `apps/admin/src/app/pages/dashboard.ts` already shows basic user/conte
 - [ ] `IN_PROGRESS` Admin-only global AI provider settings, health checks, budgets, quotas, model/provider fallback and monitoring.
   - `DONE` Admin-only provider settings, presets and connection test at `/admin/ai` (see the managed AI section).
   - `DONE` Quotas (earlier) and fallback, monitoring and the budget alert (C5, see the managed AI section).
+
+## Social pages and earned weeks
+
+- `DONE` (2026-11-08) The owner created https://t.me/poshtetgarm and https://www.instagram.com/poshtetgarm/ (the URLs `SOCIAL_OFFERS` in `billing.service.ts` already used). Claude set `BILLING_TELEGRAM_OFFER_ENABLED=true` and `BILLING_INSTAGRAM_OFFER_ENABLED=true` in `/opt/all-in-one/shared/.env` (backup kept) and added Telegram and Instagram links to the public footer (new tab, 44px targets, bilingual labels; checked at 375px, no overflow). A customer sends their handle from `/app/billing`; support checks membership and grants the week in `/admin/billing` (reward requests). `VERIFY` after the next release: the offers show on `/app/billing` and a request reaches the admin list.
+- Bios suggested for both pages carry `utm_source=instagram|telegram`, `utm_medium=social`, `utm_content=bio|about`.
 
 ## SMS templates — Faraz SMS
 

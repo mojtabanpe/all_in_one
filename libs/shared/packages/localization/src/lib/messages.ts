@@ -328,6 +328,16 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'متن‌خوانی و تمرین نوشتن، شنیدن و تلفظ',
     'Reading, writing, listening and pronunciation practice',
   ],
+  ['تلگرام', 'Telegram'],
+  ['اینستاگرام', 'Instagram'],
+  [
+    'کانال تلگرام Poshtetgarm (در زبانه جدید)',
+    'Poshtetgarm on Telegram (opens in a new tab)',
+  ],
+  [
+    'صفحهٔ اینستاگرام Poshtetgarm (در زبانه جدید)',
+    'Poshtetgarm on Instagram (opens in a new tab)',
+  ],
   ['نماد اعتماد الکترونیکی', 'Electronic trust seal'],
   ['نماد اعتماد الکترونیکی Poshtetgarm', 'Poshtetgarm electronic trust seal'],
   [
