@@ -594,3 +594,14 @@ origin master` and read the index and the roadmap; after work, update its status
      Edge refuses Faraz keys. The owner allowed Claude to write `FARAZ_SMS_API_KEY` into the server's
      `/opt/all-in-one/shared/.env` over `ssh flashcard`, like directive 81 for Zibal: back up the file, keep its owner
      and mode, never print the key. Check a key read-only with `GET /ws/v1/account/balance`, which sends nothing.
+
+## Plan prices, AI limits and shared speech cache (2026-11-08)
+
+116. **Plans, prices and AI limits are decided** (owner: «قیمت ها تایید، سقف هارو خودت بذار، کش رو هم پیاده کن»).
+     Plans in Toman: monthly 249,000; three months 649,000; yearly 1,990,000; no automatic renewal; planner, flashcards
+     and health stay free forever, AI is the paid part (with trial and earned weeks, directive 108). Plans are entered
+     in `/admin/billing` (directive: plans are admin-managed, nothing seeded). Daily AI limits (`DEFAULT_AI_QUOTAS`):
+     trial and earned 200k chat tokens, 5,000 speech characters, 30 recordings; paid 600k, 15,000, 60. Speech audio is
+     cached for all accounts (`speechCacheKey` without the user), so a text is paid for once; access is still checked
+     before the cache. Watch the cost per paid user in `/admin/ai` and revisit prices or limits if it passes about
+     100,000 Toman a month.

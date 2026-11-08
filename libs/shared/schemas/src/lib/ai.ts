@@ -143,13 +143,15 @@ export type AiDailyLimits = Record<AiKind, number>;
 export type AiQuotas = Record<AiQuotaTier, AiDailyLimits>;
 
 /**
- * Used until an admin sets quotas in /admin/ai. An assistant message costs a few thousand tokens (the tools are
- * sent with every step), so 300k tokens is a busy day of use; at small-model prices a full day stays cents.
+ * Used until an admin sets quotas in /admin/ai (owner, 2026-11-08). An assistant message is about 40k tokens (the
+ * tools are sent with every step, mostly as prompt-cache hits), so 200k is about 5 messages and 600k about 15.
+ * Speech is the expensive part (Deepgram Aura-2, about 8,000 Toman per 1,000 characters), hence the low tts limits;
+ * cached audio does not count.
  */
 export const DEFAULT_AI_QUOTAS: AiQuotas = {
-  trial: { chat: 300_000, tts: 30_000, stt: 60 },
-  earned: { chat: 300_000, tts: 30_000, stt: 60 },
-  paid: { chat: 1_000_000, tts: 100_000, stt: 200 },
+  trial: { chat: 200_000, tts: 5_000, stt: 30 },
+  earned: { chat: 200_000, tts: 5_000, stt: 30 },
+  paid: { chat: 600_000, tts: 15_000, stt: 60 },
 };
 
 const limit = z.int().check(z.minimum(0), z.maximum(100_000_000));

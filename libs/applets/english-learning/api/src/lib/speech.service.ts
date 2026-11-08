@@ -4,16 +4,19 @@ import type { SpeechVoice } from '@all-in-one/applets/english-learning/contracts
 import { AudioCacheService, type AudioResult } from './audio-cache.service';
 import { AiGateway } from '@all-in-one/api/ai';
 
+/**
+ * Shared by all accounts (owner, 2026-11-08): AI is managed, so the same text with the same voice sounds the same
+ * for everyone and is paid for once. Only the hash of the text is the key; a hit never consumes the user's quota.
+ */
 export function speechCacheKey(
-  userId: string,
   endpoint: string,
   model: string,
   text: string,
 ): string {
   return (
-    'aio:tts:v1:' +
+    'aio:tts:v2:' +
     createHash('sha256')
-      .update(JSON.stringify([userId, endpoint, model, text.trim()]))
+      .update(JSON.stringify([endpoint, model, text.trim()]))
       .digest('hex')
   );
 }
@@ -22,7 +25,7 @@ export type SpeechResult = AudioResult & {
   cacheStatus: 'HIT' | 'MISS' | 'BYPASS';
 };
 
-/** Text-to-speech with a per-user audio cache; identical requests in flight share one call. */
+/** Text-to-speech with a shared audio cache; identical requests in flight share one call. */
 @Injectable()
 export class SpeechService {
   private readonly pending = new Map<string, Promise<SpeechResult>>();
@@ -39,7 +42,7 @@ export class SpeechService {
   ): Promise<SpeechResult> {
     const { endpoint, model } = await this.gateway.speechTarget(userId, voice);
     const normalized = text.trim();
-    const key = speechCacheKey(userId, endpoint, model, normalized);
+    const key = speechCacheKey(endpoint, model, normalized);
     const running = this.pending.get(key);
     if (running) return running;
     const request = this.load(userId, key, normalized, voice);
