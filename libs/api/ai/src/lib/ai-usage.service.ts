@@ -85,13 +85,14 @@ export class AiUsageService {
 
   /**
    * Adds one call and its units (chat tokens, tts characters, one stt recording) to today's row; for chat
-   * `outputUnits` are the output tokens among them (priced apart). The tier is kept for cost per plan.
+   * `outputUnits` are the output tokens among them and `cachedUnits` the input tokens served from the provider's
+   * prompt cache (each priced apart). The tier is kept for cost per plan.
    */
   async record(
     userId: string,
     kind: AiKind,
     units: number,
-    options: { outputUnits?: number; tier?: Tier } = {},
+    options: { outputUnits?: number; cachedUnits?: number; tier?: Tier } = {},
     now = new Date(),
   ): Promise<void> {
     const day = usageDay(now);
@@ -100,14 +101,19 @@ export class AiUsageService {
       amount,
       Math.max(0, Math.round(options.outputUnits ?? 0)),
     );
+    const cached = Math.min(
+      amount - output,
+      Math.max(0, Math.round(options.cachedUnits ?? 0)),
+    );
     const tier = options.tier ?? null;
     await this.prisma.$executeRaw`
-      INSERT INTO ai_usage_days ("userId", day, kind, calls, units, "outputUnits", tier)
-      VALUES (${userId}::uuid, ${day}::date, ${kind}, 1, ${amount}, ${output}, ${tier})
+      INSERT INTO ai_usage_days ("userId", day, kind, calls, units, "outputUnits", "cachedUnits", tier)
+      VALUES (${userId}::uuid, ${day}::date, ${kind}, 1, ${amount}, ${output}, ${cached}, ${tier})
       ON CONFLICT ("userId", day, kind)
       DO UPDATE SET calls = ai_usage_days.calls + 1,
         units = ai_usage_days.units + ${amount},
         "outputUnits" = ai_usage_days."outputUnits" + ${output},
+        "cachedUnits" = ai_usage_days."cachedUnits" + ${cached},
         tier = COALESCE(${tier}, ai_usage_days.tier)
     `;
   }
@@ -116,16 +122,18 @@ export class AiUsageService {
    * What AI cost over the last `days` Tehran days (today included), per service and per access tier, with the
    * cost per account per 30 days (the figure plan prices must cover). Each day is priced with the price version
    * in effect that day (days before the first version use the first one; with no version, the current prices).
-   * Costs are estimates: chat tokens come from the service's own usage report, or a length estimate.
+   * Costs are estimates: chat tokens come from the service's own usage report, or a length estimate (then no
+   * input token counts as a cache hit).
    */
   async costs(days = 30, now = new Date()): Promise<AiCostReport> {
     const to = usageDay(now);
     const from = usageDay(new Date(now.getTime() - (days - 1) * 86_400_000));
-    const [current, versions, models] = await Promise.all([
+    const [saved, versions, models] = await Promise.all([
       this.settings.prices(),
       this.prisma.aiPriceVersion.findMany({ orderBy: { day: 'asc' } }),
       this.settings.currentModels(),
     ]);
+    const current: AiPrices = { ...DEFAULT_AI_PRICES, ...saved };
     const history: AiPriceVersionView[] = versions.map((version) => ({
       day: version.day.toISOString().slice(0, 10),
       prices: {
@@ -154,10 +162,12 @@ export class AiUsageService {
         calls: bigint;
         units: bigint;
         output: bigint;
+        cached: bigint;
       }[]
     >`
       SELECT "userId"::text AS "userId", to_char(day, 'YYYY-MM-DD') AS day, kind, tier,
-        SUM(calls) AS calls, SUM(units) AS units, SUM("outputUnits") AS output
+        SUM(calls) AS calls, SUM(units) AS units, SUM("outputUnits") AS output,
+        SUM("cachedUnits") AS cached
       FROM ai_usage_days WHERE day BETWEEN ${from}::date AND ${to}::date
       GROUP BY "userId", day, kind, tier
     `;
@@ -172,6 +182,7 @@ export class AiUsageService {
         row.kind,
         units,
         Number(row.output),
+        Number(row.cached),
       );
       kinds[row.kind].calls += Number(row.calls);
       kinds[row.kind].units += units;
@@ -196,7 +207,12 @@ export class AiUsageService {
       from,
       to,
       priced:
-        prices.chatInput + prices.chatOutput + prices.tts + prices.stt > 0,
+        prices.chatInput +
+          prices.chatCached +
+          prices.chatOutput +
+          prices.tts +
+          prices.stt >
+        0,
       usdToToman: prices.usdToToman,
       totalUsd: AI_KINDS.reduce((sum, kind) => sum + kinds[kind].usd, 0),
       kinds,

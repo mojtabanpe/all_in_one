@@ -93,6 +93,10 @@ export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
     'Chat: dollars per million input tokens',
   ],
   [
+    'گفتگو: دلار برای هر میلیون توکن ورودیِ کش‌شده',
+    'Chat: dollars per million cached input tokens',
+  ],
+  [
     'گفتگو: دلار برای هر میلیون توکن خروجی',
     'Chat: dollars per million output tokens',
   ],
@@ -475,5 +479,5 @@ export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
   ],
   ['از روز', 'From'],
   ['مدل گفتگو', 'Chat model'],
-  ['ورودی / خروجی', 'Input / output'],
+  ['ورودی / کش‌شده / خروجی', 'Input / cached / output'],
 ];

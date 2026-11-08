@@ -188,12 +188,12 @@ export class AiGateway {
     kind: AiKind,
     units: number,
     tier: BillingAccessState['tier'],
-    outputUnits = 0,
+    parts: { outputUnits?: number; cachedUnits?: number } = {},
   ) {
     if (userId === OPERATOR_TEST || !this.usage) return;
     // Metering must never turn a successful answer into an error.
     await this.usage
-      .record(userId, kind, units, { outputUnits, tier })
+      .record(userId, kind, units, { ...parts, tier })
       .catch(() => undefined);
   }
 
@@ -317,6 +317,10 @@ export class AiGateway {
         total_tokens?: unknown;
         prompt_tokens?: unknown;
         completion_tokens?: unknown;
+        /** DeepSeek: input tokens served from its prompt cache. */
+        prompt_cache_hit_tokens?: unknown;
+        /** OpenAI and compatible services: the same, nested. */
+        prompt_tokens_details?: { cached_tokens?: unknown } | null;
       };
     };
     const message = body.choices?.[0]?.message;
@@ -326,17 +330,28 @@ export class AiGateway {
       const usage = body.usage;
       const counted = (value: unknown) =>
         typeof value === 'number' && Number.isFinite(value) ? value : null;
-      const input =
-        counted(usage?.prompt_tokens) ?? roughTokens(JSON.stringify(messages));
+      const reported = counted(usage?.prompt_tokens);
+      const input = reported ?? roughTokens(JSON.stringify(messages));
       const output =
         counted(usage?.completion_tokens) ??
         roughTokens(JSON.stringify(message));
+      // The repeated system prompt and tool definitions are mostly cache hits, billed far lower; only a reported
+      // input count can hold them.
+      const cached =
+        reported === null
+          ? 0
+          : Math.min(
+              reported,
+              counted(usage?.prompt_cache_hit_tokens) ??
+                counted(usage?.prompt_tokens_details?.cached_tokens) ??
+                0,
+            );
       await this.meter(
         userId,
         'chat',
         counted(usage?.total_tokens) ?? input + output,
         target.tier,
-        output,
+        { outputUnits: output, cachedUnits: cached },
       );
     }
     return {

@@ -96,6 +96,8 @@ model AiUsageDay {
   units  Int      @default(0)
   /// chat only: the output (completion) tokens included in `units`, priced apart.
   outputUnits Int  @default(0)
+  /// chat only: the input tokens in `units` the provider served from its prompt cache (billed far lower).
+  cachedUnits Int  @default(0)
   /// Access tier at the latest recorded call (trial | earned | paid | staff), for cost per plan.
   tier   String?  @db.VarChar(10)
 

@@ -1030,7 +1030,7 @@ const SERVICES: {
                         {{ 'مدل گفتگو' | aioTranslate }}
                       </th>
                       <th aioTh scope="col">
-                        {{ 'ورودی / خروجی' | aioTranslate }}
+                        {{ 'ورودی / کش‌شده / خروجی' | aioTranslate }}
                       </th>
                       <th aioTh scope="col">
                         {{ 'متن به گفتار' | aioTranslate }}
@@ -1053,6 +1053,7 @@ const SERVICES: {
                         </td>
                         <td aioTd dir="ltr" lang="en" class="text-start">
                           {{ version.prices.chatInput }} /
+                          {{ version.prices.chatCached }} /
                           {{ version.prices.chatOutput }}
                         </td>
                         <td aioTd dir="ltr" lang="en" class="text-start">
@@ -1148,6 +1149,10 @@ export class AiSettingsPage {
   protected readonly savingQuotas = signal(false);
   protected readonly priceFields: { id: keyof AiPrices; label: string }[] = [
     { id: 'chatInput', label: 'گفتگو: دلار برای هر میلیون توکن ورودی' },
+    {
+      id: 'chatCached',
+      label: 'گفتگو: دلار برای هر میلیون توکن ورودیِ کش‌شده',
+    },
     { id: 'chatOutput', label: 'گفتگو: دلار برای هر میلیون توکن خروجی' },
     { id: 'tts', label: 'متن به گفتار: دلار برای هر میلیون کاراکتر' },
     { id: 'stt', label: 'گفتار به متن: دلار برای هر ضبط' },

@@ -27,6 +27,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         quotas: async () => quotas,
         prices: async () => ({
           chatInput: 0.15,
+          chatCached: 0.0375,
           chatOutput: 0.6,
           tts: 15,
           stt: 0.006,
@@ -107,18 +108,26 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       expect(overview.kinds.chat.users).toBeGreaterThanOrEqual(1);
     });
 
-    it('prices 30 days of use per service and per tier, output tokens apart', async () => {
+    it('prices 30 days of use per service and per tier, output and cached tokens apart', async () => {
       const later = new Date('2026-12-20T10:00:00Z');
       const other = await prisma.user.create({
         data: { email: `cost-${randomUUID()}@example.test`, passwordHash: 'x' },
       });
       try {
-        // 1M tokens of which 200k output: 0.8M × 0.15 + 0.2M × 0.6 = $0.24.
+        // 1M tokens of which 200k output and 600k cached input (in two calls):
+        // 0.2M × 0.15 + 0.6M × 0.0375 + 0.2M × 0.6 = $0.1725.
         await service().record(
           userId,
           'chat',
-          1_000_000,
-          { outputUnits: 200_000, tier: 'paid' },
+          600_000,
+          { outputUnits: 100_000, cachedUnits: 400_000, tier: 'paid' },
+          later,
+        );
+        await service().record(
+          userId,
+          'chat',
+          400_000,
+          { outputUnits: 100_000, cachedUnits: 200_000, tier: 'paid' },
           later,
         );
         // 100k characters at $15 a million: $1.5; 50 recordings at $0.006: $0.3.
@@ -148,15 +157,15 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
           priced: true,
           usdToToman: 100_000,
         });
-        expect(report.kinds.chat.usd).toBeCloseTo(0.24);
+        expect(report.kinds.chat.usd).toBeCloseTo(0.1725);
         expect(report.kinds.tts.usd).toBeCloseTo(1.5);
         expect(report.kinds.stt).toMatchObject({ calls: 50, units: 50 });
         expect(report.kinds.stt.usd).toBeCloseTo(0.3);
-        expect(report.totalUsd).toBeCloseTo(2.04);
+        expect(report.totalUsd).toBeCloseTo(1.9725);
         const paid = report.tiers.find((t) => t.tier === 'paid');
         const trial = report.tiers.find((t) => t.tier === 'trial');
         expect(paid).toMatchObject({ users: 1 });
-        expect(paid?.usdPerUserMonth).toBeCloseTo(0.24);
+        expect(paid?.usdPerUserMonth).toBeCloseTo(0.1725);
         expect(trial).toMatchObject({ users: 1 });
         expect(trial?.usd).toBeCloseTo(1.8);
       } finally {

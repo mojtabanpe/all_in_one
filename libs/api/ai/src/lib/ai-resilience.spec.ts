@@ -345,6 +345,7 @@ describe('fallback and price settings', () => {
     vi.spyOn(settings, 'view').mockResolvedValue({} as never);
     const prices = {
       chatInput: 0.15,
+      chatCached: 0.0375,
       chatOutput: 0.6,
       tts: 15,
       stt: 0.006,

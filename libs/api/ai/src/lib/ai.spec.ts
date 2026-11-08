@@ -121,8 +121,50 @@ describe('api-ai', () => {
     expect(usage.check).toHaveBeenCalledWith('user', 'trial', 'chat', 0);
     expect(usage.record).toHaveBeenCalledWith('user', 'chat', 321, {
       outputUnits: 21,
+      cachedUnits: 0,
       tier: 'trial',
     });
+
+    // Prompt-cache hits are recorded apart: DeepSeek's field, else OpenAI's nested one.
+    const replyWith = (usageReport: object) =>
+      fetchSpy.mockImplementationOnce(
+        async () =>
+          new Response(
+            JSON.stringify({
+              choices: [{ message: { content: 'hi' } }],
+              usage: usageReport,
+            }),
+          ) as never,
+      );
+    replyWith({
+      total_tokens: 38_300,
+      prompt_tokens: 38_000,
+      completion_tokens: 300,
+      prompt_cache_hit_tokens: 37_888,
+      prompt_cache_miss_tokens: 112,
+    });
+    await gateway.chat('user', [{ role: 'user', content: 'hello' }]);
+    expect(usage.record).toHaveBeenLastCalledWith('user', 'chat', 38_300, {
+      outputUnits: 300,
+      cachedUnits: 37_888,
+      tier: 'trial',
+    });
+    replyWith({
+      total_tokens: 1_100,
+      prompt_tokens: 1_000,
+      completion_tokens: 100,
+      prompt_tokens_details: { cached_tokens: 768 },
+    });
+    await gateway.chat('user', [{ role: 'user', content: 'hello' }]);
+    expect(usage.record).toHaveBeenLastCalledWith('user', 'chat', 1_100, {
+      outputUnits: 100,
+      cachedUnits: 768,
+      tier: 'trial',
+    });
+    // Without a reported input count nothing is taken as cached.
+    replyWith({ prompt_cache_hit_tokens: 500 });
+    await gateway.chat('user', [{ role: 'user', content: 'hello' }]);
+    expect(usage.record.mock.lastCall?.[3]).toMatchObject({ cachedUnits: 0 });
 
     // The scope check's own call is not counted.
     usage.check.mockClear();
