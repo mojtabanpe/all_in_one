@@ -334,19 +334,24 @@ Save the delivered clip as trx-row--aio-coach-v1--v001.mp4 if file saving is ava
 EXERCISE: TRX chest press
 CATALOG ID: trx-chest
 
-Use the attached approved reference images of AIO Coach v1 as the identity source. One adult MALE animated fitness instructor, approximately 30 years old, athletic but not bodybuilder-sized, realistic adult proportions, medium warm olive skin, short dark brown hair, brown eyes, clean-shaven face. Teal fitted short-sleeve crew-neck athletic T-shirt, charcoal tapered joggers, white low-profile flat training shoes with teal accents. No logos, jewelry or changing accessories. Polished stylized 3D animation with rounded friendly facial features, physically credible joints and grounded movement. Preserve exactly the same face, hair, body proportions, clothing, materials and colors as the attached references across all frames. Do not substitute a live-action human or redesign the character.
+Create a silent, 8-second, 16:9 3D animation. Match the attached AIO Coach v1 reference: same face, body, teal shirt, charcoal joggers and white shoes. Use a plain light-gray studio. Use one fixed three-quarter side shot with both hands visible. Keep the full body, shoes, anchor and entire length of both straps inside the frame.
 
-Use a clean light-gray studio, matte floor, soft even lighting and a subtle ground shadow. Fixed camera, entire body and all working equipment visible with generous margins. No cuts, zooms, camera orbit, dramatic effects, music, speech, captions, anatomy overlays or text. Prioritize accurate exercise mechanics and clear joint positions. Natural spinal curves are allowed; neutral spine does not mean a permanently vertical torso. No extra limbs, sliding feet, impossible joints, body morphing, floating weights or discontinuous equipment. Target 8 seconds, landscape 16:9, 1080p when supported; if the available generator cannot deliver these settings, report actual settings rather than claiming compliance. Export MP4 when supported; retain the original output.
+BUILD THE FIRST FRAME BEFORE ANIMATING
+- Screen left: one visible, fixed overhead anchor, behind the coach.
+- Center-right: the coach faces screen right, away from the anchor. Both feet are on the floor. His body leans slightly forward, with shoulders, hips and ankles aligned.
+- In front of his chest: two real cylindrical handles, one physically enclosed in each hand. Both arms reach forward at chest height, with elbows almost straight.
+- The anchor has exactly two nonelastic straps. Trace strap 1 continuously from the anchor to the handle inside the left hand. Trace strap 2 continuously from the same anchor to the handle inside the right hand. Both straps run diagonally backward and upward from the hands to the anchor, outside the torso.
 
-CAMERA: three-quarter side including anchor behind trainer.
+KEEP THESE CONNECTIONS IN EVERY FRAME
+Each hand stays closed around its own handle. Each handle moves with that hand and remains attached to its strap. The straps stay straight and taut, with the anchor fixed in place. There are exactly two handles total. No separate hanging loops, duplicate grips, gaps between handles and straps, or straps passing through the body. If a hand moves, the end of its strap moves with it immediately.
 
-ACTION: Face away from the anchor and lean forward slightly, handles near chest. Keep the body aligned while bending elbows diagonally backward, then press to return. Use a modest lean; avoid flared elbows and lumbar arch.
+ANIMATE ONE REPETITION
+- 0–1 s: Hold the first frame so both hand-to-handle connections are easy to see.
+- 1–4 s: Slowly bend both elbows diagonally back as the chest approaches the handles. Keep the handles beside the chest at the bottom, above the waist. The body moves as one unit. Feet stay planted.
+- 4–7 s: Press both handles forward together until the elbows are almost straight and the original starting pose is restored.
+- 7–8 s: Hold the starting pose. Both hands are still visibly gripping their connected handles.
 
-TIMING: Show one or two complete slow repetitions. If alternating sides are requested, show one repetition per side. If a single side is specified, do not rush to switch sides.
-
-EQUIPMENT: For TRX: use two continuous nonelastic suspension straps attached to one secure overhead anchor. Show the anchor or enough uninterrupted strap path to establish attachment. Handles and foot cradles must be mechanically coherent; do not depict elastic bands, detached straps or a changing anchor. Use only the contact arrangement specified below.
-
-Save the delivered clip as trx-chest--aio-coach-v1--v001.mp4 if file saving is available. If persistent character-reference conditioning is unavailable, say so; do not promise identical identity from text alone. Do not upload or claim a public URL as part of video generation; publication is a separate step after the clip passes review.
+Export as trx-chest--aio-coach-v1--v003.mp4. Use 1080p if supported. No audio, text, cuts or camera motion.
 
 
 ```

@@ -2,7 +2,7 @@
 
 **Purpose:** produce, medically/biomechanically review, upload, connect and verify exercise demonstration videos in Poshtetgarm.  
 **Status:** IN_PROGRESS — 14 of 62 clips published, including the interim `wall-slide` (10) v003.
-`trx-chest` (14) v001 needs revision before publication.
+`trx-chest` (14) v002 needs revision before publication.
 Anonymous MP4 delivery verified for all 14 published clips; inline playback on a phone/PWA still needs verification.
 
 ## Summary (2026-11-08)
@@ -47,7 +47,8 @@ Anonymous MP4 delivery verified for all 14 published clips; inline playback on a
 - [x] `DONE` `trx-squat` v002 was approved and published via MCP on 2026-11-08 (silent, 1280×720, 10 s).
 - [x] `DONE` `trx-row` v002 was approved and published via MCP on 2026-11-08 (silent, 1280×720, 10 s).
 - [ ] `IN_PROGRESS` `trx-chest` v001 reviewed on 2026-11-08. The trainer faces the anchor side, the straps run
-      upward in front of him, and the anchor is outside the frame. Regenerate with the anchor visible behind him.
+      upward in front of him, and the anchor is outside the frame. v002 fixes the direction, but detached strap handles hang behind him
+      while his hands move separate grips. Prompt 14 now defines both anchor-to-hand connections frame by frame.
 - [ ] `TODO` Continue the TRX batch (14–18), starting with `trx-chest`. Per clip: owner generates → agent/owner review
       (tracker `generated` → `reviewed`) → MCP upload → `published` with URL.
 
