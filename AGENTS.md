@@ -621,3 +621,11 @@ origin master` and read the index and the roadmap; after work, update its status
      days left and says renewal opens in the last three days (`canBuyPlan`, `BILLING_RENEW_WINDOW_MS` in the billing
      contracts, the same window as the SUBSCRIPTION_EXPIRING SMS). `BillingService.checkout` refuses earlier purchases
      with 409 `BILLING_STILL_ACTIVE`, so an old tab cannot charge twice. A renewal still starts at the current end.
+
+## SMS login (2026-11-08)
+
+119. **Sign in and sign up with an SMS code** (owner: «لاگین و ثبت نام هم میخوام با کد otp انجام شه»). The Faraz pattern
+     for it is `LOGIN_CODE=8WrT7o0zjD` (text «Poshtetgarm / کد ورود شما: %code% / اعتبار: %minutes% دقیقه / این کد را به
+     هیچ‌کس ندهید.»; `%code%` numeric 6, `%minutes%` numeric 2), alongside the directive 88 patterns. Existing email
+     accounts keep working; a confirmed phone can also sign in with a code. Whether a phone-only signup needs an email
+     too is the owner's open decision.
