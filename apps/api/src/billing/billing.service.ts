@@ -250,6 +250,19 @@ export class BillingService {
     const trialUntil = confirmedAt ? trialEnd(confirmedAt) : null;
     const paidUntil = user?.billingSubscription?.paidUntil ?? null;
     const earnedUntil = user?.billingRewards[0]?.expiresAt ?? null;
+    const lastWeek = (
+      await this.prisma.billingReward.aggregate({
+        where: { userId, expiresAt: { gt: now } },
+        _max: { expiresAt: true },
+      })
+    )._max.expiresAt;
+    const ends = [trialUntil, paidUntil, lastWeek].filter(
+      (end): end is Date => !!end && end > now,
+    );
+    const aiUntil =
+      user?.role === 'CUSTOMER' && ends.length
+        ? new Date(Math.max(...ends.map((end) => end.getTime())))
+        : null;
     let tier: BillingAccessState['tier'] = 'free';
     if (user?.role === 'ADMIN') tier = 'staff';
     else if (paidUntil && paidUntil > now) tier = 'paid';
@@ -260,6 +273,7 @@ export class BillingService {
       trialUntil: trialUntil?.toISOString() ?? null,
       earnedUntil: earnedUntil?.toISOString() ?? null,
       paidUntil: paidUntil?.toISOString() ?? null,
+      aiUntil: aiUntil?.toISOString() ?? null,
     };
   }
 

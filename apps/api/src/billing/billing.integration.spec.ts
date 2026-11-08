@@ -260,6 +260,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
           earnedUntil: null,
           trialUntil: end.toISOString(),
           paidUntil: null,
+          aiUntil: end.toISOString(),
         });
         expect((await service().access(customer.id, end)).tier).toBe('free');
         await prisma.billingSubscription.create({

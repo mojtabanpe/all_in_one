@@ -404,6 +404,15 @@ export class VerifyEmailPage implements OnInit {
                   }
                 }
               </p>
+              @if (state.aiUntil && state.aiUntil > shownEnd(state)) {
+                <!-- Weeks queued after the trial or paid time (directives 108, 121). -->
+                <p class="text-muted-foreground text-sm">
+                  {{
+                    'با هفته‌های هدیه، هوش مصنوعی تا {0} فعال است.'
+                      | aioTranslate: [longDate(state.aiUntil)]
+                  }}
+                </p>
+              }
               @if (state.tier === 'free') {
                 <p class="text-muted-foreground text-sm">
                   {{
@@ -762,6 +771,16 @@ export class AccountPage implements OnInit {
   private readonly http = inject(HttpClient);
   /** Route data `{ billing: true }` (customer app): show the subscription card. */
   readonly billing = input<boolean | undefined>();
+  /** The end the status line already shows for this tier. */
+  protected shownEnd(state: BillingAccessState): string {
+    return (
+      (state.tier === 'paid'
+        ? state.paidUntil
+        : state.tier === 'earned'
+          ? state.earnedUntil
+          : state.trialUntil) ?? ''
+    );
+  }
   protected readonly access = httpResource<BillingAccessState>(() =>
     this.billing() ? `${this.api}/billing/access` : undefined,
   );

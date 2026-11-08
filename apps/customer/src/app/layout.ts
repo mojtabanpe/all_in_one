@@ -233,8 +233,10 @@ export class Layout {
   /** Whole days of trial left, counting today; null when not on a trial. */
   private readonly trialDays = computed(() => {
     if (!this.access.hasValue()) return null;
-    const { tier, trialUntil } = this.access.value();
+    const { tier, trialUntil, aiUntil } = this.access.value();
     if (tier !== 'trial' || !trialUntil) return null;
+    // A week queued after the trial (directives 108, 121) means AI does not stop when it ends.
+    if (aiUntil && aiUntil > trialUntil) return null;
     return Math.max(
       1,
       Math.ceil((Date.parse(trialUntil) - Date.now()) / 86_400_000),

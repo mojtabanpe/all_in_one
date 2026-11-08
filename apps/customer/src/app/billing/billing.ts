@@ -185,6 +185,16 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
             } @else {
               <p>{{ 'اشتراک فعالی نداری.' | aioTranslate }}</p>
             }
+            @if (state.aiUntil && state.aiUntil > shownEnd(state)) {
+              <!-- Weeks queued after the trial or paid time (directives 108, 121). -->
+              <p class="text-muted-foreground mt-1 text-sm">
+                {{
+                  'با هفته‌های هدیه، هوش مصنوعی تا {0} فعال است.'
+                    | aioTranslate
+                      : [state.aiUntil | aioDate: { dateStyle: 'long' }]
+                }}
+              </p>
+            }
           } @else if (access.error()) {
             <p role="alert">
               {{ 'وضعیت اشتراک دریافت نشد.' | aioTranslate }}
@@ -614,6 +624,17 @@ export class Billing {
   protected readonly paid = computed(
     () => this.access.hasValue() && this.access.value().tier === 'paid',
   );
+  /** The end the status line already shows for this tier. */
+  protected shownEnd(state: BillingAccessState): string {
+    return (
+      (state.tier === 'paid'
+        ? state.paidUntil
+        : state.tier === 'earned'
+          ? state.earnedUntil
+          : state.trialUntil) ?? ''
+    );
+  }
+
   /** Paid access with more than three days left hides the buy buttons (directive 118); the server refuses too. */
   protected readonly canBuy = computed(
     () => !this.paid() || canBuyPlan(this.access.value()?.paidUntil ?? null),

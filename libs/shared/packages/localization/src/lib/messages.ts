@@ -4631,6 +4631,10 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ],
   ['کد پیامک', 'SMS code'],
   [
+    'با هفته‌های هدیه، هوش مصنوعی تا {0} فعال است.',
+    'With your free weeks, AI stays on until {0}.',
+  ],
+  [
     'این حساب با همین شماره وارد می‌شود؛ اول ایمیل اضافه کن.',
     'This account signs in with this number; add an email first.',
   ],

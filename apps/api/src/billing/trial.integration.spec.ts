@@ -137,9 +137,10 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         expect(state).toMatchObject({ phone, rewardedWeek: true });
         const [week] = await weeks(user.id);
         expect(week.adminId).toBeNull();
-        // The week is queued after the trial.
-        const { trialUntil } = await billing().access(user.id);
+        // The week is queued after the trial, and the access state shows where AI really ends.
+        const { trialUntil, aiUntil } = await billing().access(user.id);
         expect(week.startsAt.toISOString()).toBe(trialUntil);
+        expect(aiUntil).toBe(week.expiresAt.toISOString());
         expect(week.expiresAt.getTime() - week.startsAt.getTime()).toBe(
           7 * DAY_MS,
         );

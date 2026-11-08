@@ -85,6 +85,11 @@ export interface BillingAccessState {
   trialUntil: string | null;
   earnedUntil: string | null;
   paidUntil: string | null;
+  /**
+   * End of all AI access already granted, counting weeks queued after the trial or paid time (they follow one
+   * another); null without any. Lets the billing page show a week that starts later (directives 108, 121).
+   */
+  aiUntil: string | null;
 }
 
 export interface BillingSubscriptionState {
