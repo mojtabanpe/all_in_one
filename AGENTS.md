@@ -362,7 +362,7 @@ origin master` and read the index and the roadmap; after work, update its status
 
 83. **Pending SMS template IDs (2026-11-06):** Continue independent roadmap work while SMS templates await approval. The owner will supply approved template IDs in this order: AUTH_CODE, PASSWORD_RESET, PASSWORD_CHANGED, SUBSCRIPTION_ACTIVATED, SUBSCRIPTION_EXPIRING. Do not invent IDs or mark SMS delivery operational before configuration and verification.
 
-84. **Persian conversation (2026-11-06):** Talk to the owner in Persian in every chat and session: replies, short progress updates, questions and summaries. Only code, paths, commands and identifiers stay as written.
+84. **Persian conversation (2026-11-06):** Talk to the owner in Persian in every chat and session: replies, short progress updates, questions and summaries. Only code, paths, commands and identifiers stay as written. **Superseded by 123.**
 
 85. **Freemium trial and earned extensions (2026-11-07):** Give newly registered customers a seven-day free trial. Use actual product activity to decide which follow-up offers to show. Allow eligible customers to earn additional weeks through verified actions, such as joining the official Telegram or Instagram community. After trial and earned access end, keep the app usable on the free tier. AI features require active trial, earned access or a paid plan. Enforce AI access on the server and open the shared plan-selection bottom sheet when a free customer tries an AI feature. Exact offer eligibility, verification, plan prices and the AI provider model are separate decisions.
 
@@ -655,6 +655,10 @@ origin master` and read the index and the roadmap; after work, update its status
      The billing page offers it as a reward card that links to the account page.
 
 122. **Remove Enamad from the public footer (2026-11-08).** The owner reported that the seal does not load across networks. Remove its image and verification link from the public footer.
+
+123. **English conversation (2026-11-08).** Talk to the owner in English in every chat and session: replies, short
+     progress updates, questions and summaries. Only code, paths, commands and identifiers stay as written. This
+     supersedes directive 84.
 
 ## graphify
 
