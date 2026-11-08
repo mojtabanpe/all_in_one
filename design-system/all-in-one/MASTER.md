@@ -77,17 +77,18 @@ All values are OKLCH. "On" is the text colour used on that fill.
 
 ### Neutrals (cool porcelain)
 
-| Token                | Value                    | Use                                    |
-| -------------------- | ------------------------ | -------------------------------------- |
-| `--background`       | `0.965 0.006 240`        | page                                   |
-| `--card`             | `0.995 0.003 240 / 0.78` | glass cards, lists                     |
-| `--popover`          | `0.995 0.003 240 / 0.92` | popovers, sheets                       |
-| `--secondary`        | `0.93 0.008 240`         | soft buttons, chips                    |
-| `--muted`            | `0.93 0.008 240`         | wells, empty tracks                    |
-| `--muted-foreground` | `0.49 0.02 255`          | secondary text (5.0:1 on bg and muted) |
-| `--border`           | `0.9 0.008 245`          | dividers                               |
-| `--input`            | `0.88 0.01 245`          | control outlines                       |
-| `--foreground`       | `0.19 0.02 265`          | text (16.7:1)                          |
+| Token                | Value                            | Use                                                                                                 |
+| -------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `--background`       | `0.965 0.006 240`                | page                                                                                                |
+| `--card`             | `0.995 0.003 240 / 0.78`         | glass cards, lists                                                                                  |
+| `--popover`          | `0.995 0.003 240 / 0.92`         | popovers, sheets                                                                                    |
+| `--secondary`        | `0.93 0.008 240`                 | soft buttons, chips                                                                                 |
+| `--muted`            | `0.93 0.008 240`                 | wells, empty tracks                                                                                 |
+| `--muted-foreground` | `0.49 0.02 255`                  | secondary text (5.0:1 on bg and muted)                                                              |
+| `--placeholder`      | `--muted-foreground` 82% + white | placeholder hints inside inputs (3.8:1 on white: lighter than secondary text, never a filled value) |
+| `--border`           | `0.9 0.008 245`                  | dividers                                                                                            |
+| `--input`            | `0.88 0.01 245`                  | control outlines                                                                                    |
+| `--foreground`       | `0.19 0.02 265`                  | text (16.7:1)                                                                                       |
 
 ### Brand
 

@@ -124,6 +124,8 @@ html[lang='en'] *,
   --muted: #edf2f1;
   /* 0.49 (Skeuo uses 0.52) keeps 5:1 on --muted as well as on --background. */
   --muted-foreground: #586b6b;
+  /* Placeholder hints: one step lighter than secondary text, never a filled value. */
+  --placeholder: color-mix(in oklab, var(--muted-foreground) 82%, #ffffff);
   --border: #dce5e3;
   --input: #d2dedb;
 
@@ -1208,3 +1210,17 @@ textarea {
 }
 
 /* One explicit app language controls all routes and portalled surfaces. */
+
+/*
+ * Placeholder text is a hint, not content: it sits lighter than --muted-foreground so it never
+ * reads as a typed value or competes with the field label. This rule is intentionally unlayered
+ * so it wins over spartan Helm's `placeholder:text-muted-foreground` utility; the Helm code itself
+ * stays untouched (directive 19).
+ */
+input[aioInput]::placeholder,
+textarea[aioTextarea]::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: var(--placeholder);
+  opacity: 1;
+}
