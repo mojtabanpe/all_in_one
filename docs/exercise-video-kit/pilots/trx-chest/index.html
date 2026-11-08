@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" />
+  <title>TRX chest press · movement pilot</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #e4e9e9;
+    }
+    #trx-chest {
+      width: 1280px;
+      height: 720px;
+    }
+  </style>
+  <main
+    id="trx-chest"
+    data-composition-id="trx-chest"
+    data-no-timeline
+    data-width="1280"
+    data-height="720"
+    data-start="0"
+    data-duration="8"
+  >
+    <svg
+      id="movement"
+      class="clip"
+      data-start="0"
+      data-duration="8"
+      data-track-index="0"
+      width="1280"
+      height="720"
+      viewBox="0 0 1280 720"
+      role="img"
+      aria-label="TRX chest press movement pilot"
+    >
+      <defs>
+        <linearGradient id="studio" x2="0" y2="1">
+          <stop stop-color="#f3f5f4" />
+          <stop offset="1" stop-color="#dce5e4" />
+        </linearGradient>
+        <linearGradient id="shirt">
+          <stop stop-color="#165455" />
+          <stop offset=".55" stop-color="#277c79" />
+          <stop offset="1" stop-color="#42938c" />
+        </linearGradient>
+        <radialGradient id="shadow">
+          <stop stop-color="#526c6a" stop-opacity=".31" />
+          <stop offset="1" stop-color="#526c6a" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+      <path fill="url(#studio)" d="M0 0H1280V720H0z" />
+      <ellipse cx="600" cy="622" rx="143" ry="31" fill="url(#shadow)" />
+      <g id="mount">
+        <rect x="475" y="72" width="50" height="22" rx="7" fill="#465657" />
+        <circle cx="483" cy="83" r="2" fill="#b6c0bc" />
+        <circle cx="517" cy="83" r="2" fill="#b6c0bc" />
+        <path
+          d="M491 87q9 25 18 0"
+          fill="none"
+          stroke="#263336"
+          stroke-width="6"
+        />
+      </g>
+      <g stroke-linecap="round" stroke-linejoin="round">
+        <path id="far-leg" fill="none" stroke="#414c55" stroke-width="41" />
+        <path id="near-leg" fill="none" stroke="#2b353d" stroke-width="45" />
+        <path id="far-shoe" fill="none" stroke="#ebefee" stroke-width="23" />
+        <path id="near-shoe" fill="none" stroke="#fcfefd" stroke-width="25" />
+        <path id="far-arm" fill="none" stroke="#b77958" stroke-width="28" />
+        <path id="far-sleeve" fill="none" stroke="#235d5d" stroke-width="38" />
+        <path id="far-strap" fill="none" stroke="#404748" stroke-width="6" />
+        <path id="far-grip" fill="none" stroke="#db9d35" stroke-width="12" />
+        <circle id="far-hand" r="10" fill="#b77958" />
+        <path id="torso" fill="url(#shirt)" />
+        <path id="neck" fill="none" stroke="#bd7f5d" stroke-width="30" />
+        <g id="head">
+          <path
+            fill="#ca906b"
+            d="M-25 1C-29-18-22-35-4-37 16-39 29-28 28-13L34-3 28 2 27 14Q19 26 5 24C-14 21-23 13-25 1Z"
+          />
+          <path
+            fill="#283331"
+            d="M-24 1C-34-11-31-34-13-39 7-46 24-34 27-23 11-28-1-24-7-13L-13-5Q-20-12-24 1Z"
+          />
+          <path d="M20-12h4m-4 24 6-1" stroke="#69493a" stroke-width="2" />
+          <ellipse cx="-13" cy="-3" rx="4" ry="6" fill="#be815f" />
+        </g>
+        <path id="near-arm" fill="none" stroke="#d2936d" stroke-width="32" />
+        <path id="near-sleeve" fill="none" stroke="#277773" stroke-width="42" />
+        <path id="near-strap" fill="none" stroke="#283234" stroke-width="7" />
+        <path id="near-grip" fill="none" stroke="#eab64d" stroke-width="14" />
+        <circle id="near-hand" r="11" fill="#d2936d" />
+      </g>
+    </svg>
+  </main>
+  <script>
+    const add = (a, b) => a.map((value, index) => value + b[index]);
+    const sub = (a, b) => a.map((value, index) => value - b[index]);
+    const scale = (point, factor) => point.map((value) => value * factor);
+    const dot = (a, b) =>
+      a.reduce((sum, value, index) => sum + value * b[index], 0);
+    const mix = (a, b, fraction) => a + (b - a) * fraction;
+    const interpolate = (a, b, fraction) =>
+      a.map((value, index) => mix(value, b[index], fraction));
+    const unit = (vector) => scale(vector, 1 / Math.hypot(...vector));
+    const project = ([forward, up, lateral]) => [
+      590 + 220 * forward - 142 * lateral,
+      616 - 222 * up + 48 * lateral + 35 * forward,
+    ];
+    const position = (point) =>
+      project(point)
+        .map((value) => value.toFixed(2))
+        .join(' ');
+    const shape = (id, points, close = false) => {
+      document
+        .getElementById(id)
+        .setAttribute(
+          'd',
+          'M' + points.map(position).join('L') + (close ? 'Z' : ''),
+        );
+    };
+    const move = (id, point) => {
+      document
+        .getElementById(id)
+        .setAttribute('transform', 'translate(' + position(point) + ')');
+    };
+
+    function elbowBetween(shoulder, hand, side) {
+      const upper = 0.335;
+      const forearm = 0.31;
+      const axis = unit(sub(hand, shoulder));
+      const distance = Math.hypot(...sub(hand, shoulder));
+      const along =
+        (upper ** 2 - forearm ** 2 + distance ** 2) / (2 * distance);
+      const bend = Math.sqrt(Math.max(0, upper ** 2 - along ** 2));
+      const outward = [-0.25, 0.12, side];
+      const bendAxis = unit(sub(outward, scale(axis, dot(outward, axis))));
+      return add(shoulder, add(scale(axis, along), scale(bendAxis, bend)));
+    }
+
+    function draw(time) {
+      const travel = Math.max(0, Math.min(1, (time - 1) / 3, (7 - time) / 3));
+      const press = travel * travel * (3 - 2 * travel);
+      const lean = mix(0.395, 0.255, press);
+      const body = (height, lateral) => [
+        height * Math.sin(lean),
+        0.08 + height * Math.cos(lean),
+        lateral,
+      ];
+
+      for (const [side, name] of [
+        [-1, 'far'],
+        [1, 'near'],
+      ]) {
+        const hip = body(0.89, side * 0.11);
+        const knee = body(0.48, side * 0.14);
+        const ankle = [0, 0.08, side * 0.16];
+        const toe = [0.18, 0.034, side * 0.17];
+        shape(name + '-leg', [hip, knee, ankle]);
+        shape(name + '-shoe', [[-0.044, 0.036, side * 0.16], toe]);
+
+        const shoulder = body(1.43, side * 0.213);
+        const anchor = [-0.43, 2.246, side * 0.037];
+        const forward = mix(0.75, 0.982, press);
+        const lateral = side * mix(0.42, 0.31, press);
+        const drop = Math.sqrt(
+          1.69 ** 2 - (forward - anchor[0]) ** 2 - (lateral - anchor[2]) ** 2,
+        );
+        const hand = [forward, anchor[1] - drop, lateral];
+        const elbow = elbowBetween(shoulder, hand, side);
+        shape(name + '-arm', [shoulder, elbow, hand]);
+        shape(name + '-sleeve', [shoulder, interpolate(shoulder, elbow, 0.29)]);
+        shape(name + '-strap', [anchor, hand]);
+        shape(name + '-grip', [
+          add(hand, [0, 0, -0.067]),
+          add(hand, [0, 0, 0.067]),
+        ]);
+        move(name + '-hand', hand);
+      }
+
+      shape(
+        'torso',
+        [
+          body(1.44, -0.21),
+          body(1.49, -0.11),
+          body(1.49, 0.11),
+          body(1.44, 0.21),
+          body(1.13, 0.16),
+          body(0.89, 0.139),
+          body(0.87, -0.13),
+          body(1.12, -0.157),
+        ],
+        true,
+      );
+      shape('neck', [body(1.43, 0), body(1.58, 0)]);
+      move('head', body(1.65, 0));
+    }
+
+    draw(0);
+    window.addEventListener('hf-seek', (event) => draw(event.detail.time));
+  </script>
+</html>

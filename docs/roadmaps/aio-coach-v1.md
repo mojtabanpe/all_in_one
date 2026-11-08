@@ -3,6 +3,7 @@
 **Purpose:** produce, medically/biomechanically review, upload, connect and verify exercise demonstration videos in Poshtetgarm.  
 **Status:** IN_PROGRESS — 14 of 62 clips published, including the interim `wall-slide` (10) v003.
 `trx-chest` (14) v006 shows a recognizable chest press. The standalone v007 prompt addresses anchor framing and the loop seam.
+A Gemini-free HyperFrames motion pilot is available for review.
 Anonymous MP4 delivery verified for all 14 published clips; inline playback on a phone/PWA still needs verification.
 
 ## Summary (2026-11-09)
@@ -16,6 +17,7 @@ Anonymous MP4 delivery verified for all 14 published clips; inline playback on a
 | Anonymous MP4 delivery            | `DONE`        | 2026-11-08: all 14 published tracker URLs returned HTTP 206, `Content-Type: video/mp4` and `Content-Range: bytes 0-31/…` for an unauthenticated range GET.                                                                                                                                                                                                                    |
 | Inline phone/PWA playback         | `VERIFY`      | Exercise sheet and guided session still need a playback check on a phone and in the installed PWA.                                                                                                                                                                                                                                                                            |
 | TRX chest press v006              | `IN_PROGRESS` | Reviewed 2026-11-09. The grips stay above the waist and the press is visible. The mounting plate is cropped and the final hold differs slightly. Standalone v007 prompt ready.                                                                                                                                                                                                |
+| HyperFrames TRX chest press pilot | `IN_PROGRESS` | [Editable pilot and review notes](../exercise-video-kit/pilots/trx-chest/REVIEW.md). HyperFrames check passed and the 8-second, 720p MP4 rendered locally. Matching the approved coach and reviewing form are required before production.                                                                                                                                     |
 | Remaining 48 clips                | `TODO`        | Owner generates in Gemini with the reference images; agent reviews, uploads via MCP and updates the tracker                                                                                                                                                                                                                                                                   |
 
 ## Existing source of truth
@@ -64,7 +66,7 @@ Prior conversations mention video review/approval for Squat, Push-up, Glute Brid
 ## Next action
 
 1. Open `dead-bug` or `plank` on a phone and in the installed PWA; confirm inline playback in the exercise sheet and guided session.
-2. Generate `trx-chest` v007 in a fresh Gemini chat and review it against [prompt 14](../exercise-video-kit/prompts/14-trx-chest.txt).
-   Generate `prone-w` v3 with prompt 07.
+2. Review the HyperFrames `trx-chest` pilot against the [catalog reference and pose criteria](../exercise-video-kit/prompts/14-trx-chest.txt). Match the approved AIO Coach v1 character and have the form reviewed before using this workflow for more exercises. The standalone v007 Gemini prompt remains available.
+3. Generate `prone-w` v3 with prompt 07.
 
 Last updated: 2026-11-09.
