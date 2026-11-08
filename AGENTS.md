@@ -627,5 +627,6 @@ origin master` and read the index and the roadmap; after work, update its status
 119. **Sign in and sign up with an SMS code** (owner: «لاگین و ثبت نام هم میخوام با کد otp انجام شه»). The Faraz pattern
      for it is `LOGIN_CODE=8WrT7o0zjD` (text «Poshtetgarm / کد ورود شما: %code% / اعتبار: %minutes% دقیقه / این کد را به
      هیچ‌کس ندهید.»; `%code%` numeric 6, `%minutes%` numeric 2), alongside the directive 88 patterns. Existing email
-     accounts keep working; a confirmed phone can also sign in with a code. Whether a phone-only signup needs an email
-     too is the owner's open decision.
+     accounts keep working; a confirmed phone can also sign in with a code. **A phone alone is enough** (owner: «فقط
+     شماره کافیست»): a new account can be created with only a confirmed mobile number, the trial starts when that number
+     is confirmed, and an email can be added later from the account page.
