@@ -43,10 +43,11 @@ describe('SmsService (Faraz)', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('sends the approved pattern from the account line with the key as Authorization', async () => {
-    const fetchMock = reply(200, {
-      data: { message_outbox_ids: [1] },
-      meta: { status: true, message_code: '200-1' },
+  it('sends the approved pattern from the account line with the key as Api-Key', async () => {
+    const fetchMock = reply(201, {
+      status: 'success',
+      data: 1,
+      messages: null,
     });
     await service().send('SUBSCRIPTION_ACTIVATED', '+989121234567', {
       plan: 'ماهانه',
@@ -56,14 +57,15 @@ describe('SmsService (Faraz)', () => {
     expect(url).toBe(FARAZ_API);
     expect(init.headers).toEqual({
       'Content-Type': 'application/json',
-      Authorization: KEY,
+      Accept: 'application/json',
+      'Api-Key': KEY,
     });
     expect(JSON.parse(init.body)).toEqual({
-      sending_type: 'pattern',
-      from_number: '+9820002178584475',
       code: 'K1pz92FHPc',
-      recipients: ['+989121234567'],
-      params: { plan: 'ماهانه', expiry_date: '1405/09/16' },
+      attributes: { plan: 'ماهانه', expiry_date: '1405/09/16' },
+      recipient: '09121234567',
+      line_number: '20002178584475',
+      number_format: 'english',
     });
   });
 
@@ -73,8 +75,19 @@ describe('SmsService (Faraz)', () => {
       'warn',
     );
     for (const [status, body] of [
-      [401, { meta: { status: false, message_code: '400-1' } }],
-      [200, { meta: { status: false, message_code: '400-2' } }],
+      [401, { status: 'error', data: null, message: 'Unauthorized' }],
+      [
+        422,
+        {
+          status: 'error',
+          data: null,
+          messages: { recipient: ['09121234567 is invalid'] },
+        },
+      ],
+      [
+        200,
+        { status: 'error', data: null, messages: 'pattern 654321 not found' },
+      ],
     ] as const) {
       reply(status, body);
       const sms = service();
@@ -93,6 +106,9 @@ describe('SmsService (Faraz)', () => {
       expect(message).not.toContain(KEY);
       expect(message).not.toContain('654321');
       expect(message).not.toContain('912');
+      expect(message).toMatch(
+        /HTTP (401 Unauthorized|422 recipient|200 pattern)/,
+      );
     }
     warn.mockRestore();
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error(KEY)));

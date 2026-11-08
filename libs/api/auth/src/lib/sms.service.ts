@@ -5,8 +5,11 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-/** IPPanel Edge, the API behind Faraz SMS. */
-export const FARAZ_API = 'https://edge.ippanel.com/v1/api/send';
+/**
+ * Faraz SMS's own API (https://docs.iranpayamak.com/send-pattern-based-sms-13925177e0.md). Faraz keys are refused
+ * by IPPanel Edge, which this client used before (2026-11-08).
+ */
+export const FARAZ_API = 'https://api.iranpayamak.com/ws/v1/sms/pattern';
 /** The account's sender line (directive 88); `FARAZ_SMS_SENDER` can replace it. */
 export const FARAZ_SENDER = '20002178584475';
 
@@ -44,6 +47,15 @@ export function smsDate(date: Date): string {
   return `${part('year')}/${part('month')}/${part('day')}`;
 }
 
+/** Faraz's error text for the log: field names only for validation errors, digits masked so no number or code leaks. */
+function smsFailure(message: unknown): string {
+  const text =
+    message && typeof message === 'object' && !Array.isArray(message)
+      ? Object.keys(message).join(',')
+      : String(message ?? '');
+  return text.replace(/\d/g, '#').slice(0, 120);
+}
+
 /**
  * Sends pattern SMS through Faraz. Off unless `SMS_ENABLED=true` and `FARAZ_SMS_API_KEY` is set (the key lives
  * only in server secrets). Codes, numbers and the key are never logged.
@@ -63,10 +75,9 @@ export class SmsService {
   }
 
   private get sender(): string {
-    const line = (
+    return (
       this.config.get<string>('FARAZ_SMS_SENDER')?.trim() || FARAZ_SENDER
     ).replace(/^(\+98|0098)/, '');
-    return `+98${line}`;
   }
 
   /** Throws 503 when SMS is off or Faraz refuses or cannot be reached. */
@@ -84,23 +95,27 @@ export class SmsService {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: this.key,
+          Accept: 'application/json',
+          'Api-Key': this.key,
         },
         body: JSON.stringify({
-          sending_type: 'pattern',
-          from_number: this.sender,
           code: SMS_TEMPLATES[template].code,
-          recipients: [to],
-          params,
+          attributes: params,
+          // Faraz wants the local form: +989121234567 -> 09121234567.
+          recipient: to.replace(/^\+98/, '0'),
+          line_number: this.sender,
+          number_format: 'english',
         }),
         redirect: 'error',
         signal: AbortSignal.timeout(15_000),
       });
       const body = (await response.json().catch(() => null)) as {
-        meta?: { status?: unknown; message_code?: unknown };
+        status?: unknown;
+        message?: unknown;
+        messages?: unknown;
       } | null;
-      ok = response.ok && body?.meta?.status === true;
-      reason = `HTTP ${response.status} ${String(body?.meta?.message_code ?? '')}`;
+      ok = response.ok && body?.status === 'success';
+      reason = `HTTP ${response.status} ${smsFailure(body?.messages ?? body?.message)}`;
     } catch {
       // The provider's error text could echo the request; only the kind of failure is kept.
     }

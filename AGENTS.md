@@ -585,3 +585,12 @@ origin master` and read the index and the roadmap; after work, update its status
      shell is an `lx-stage` with blue `--lx-1..4` on `.applet-planner`, and the layout gives the pages outside the
      applets (home, account, subscription) `lx-stage lx-brand` (teal and the logo's sun). Keep the pastels light
      (L ≥ 0.86, as English) so text contrast does not change, and never stack two stages on one page.
+
+## Faraz SMS API (2026-11-08)
+
+115. **Faraz SMS goes through Faraz's own API** (owner sent https://docs.iranpayamak.com/ and the key with «خودت
+     بذار»). `SmsService` posts patterns to `https://api.iranpayamak.com/ws/v1/sms/pattern` with the key in the
+     `Api-Key` header (`code`, `attributes`, local `recipient` `09…`, `line_number`, `number_format: english`); IPPanel
+     Edge refuses Faraz keys. The owner allowed Claude to write `FARAZ_SMS_API_KEY` into the server's
+     `/opt/all-in-one/shared/.env` over `ssh flashcard`, like directive 81 for Zibal: back up the file, keep its owner
+     and mode, never print the key. Check a key read-only with `GET /ws/v1/account/balance`, which sends nothing.
