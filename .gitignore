@@ -71,3 +71,6 @@ libs/api/db/src/generated
 
 # local pnpm store (store-dir)
 .pnpm-store/
+
+# graphify knowledge-graph build output (local, regenerated)
+graphify-out/

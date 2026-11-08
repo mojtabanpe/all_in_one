@@ -11,3 +11,4 @@
 /libs/shared/packages/ui/src/lib/spartan
 /.codex
 /.pnpm-store
+/graphify-out
