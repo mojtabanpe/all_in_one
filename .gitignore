@@ -68,3 +68,6 @@ libs/api/db/src/generated
 
 # Uploaded exercise videos (persistent runtime data)
 /data/exercise-videos/
+
+# local pnpm store (store-dir)
+.pnpm-store/

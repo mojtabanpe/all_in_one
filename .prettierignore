@@ -9,3 +9,5 @@
 /.claude
 /libs/api/db/src/generated
 /libs/shared/packages/ui/src/lib/spartan
+/.codex
+/.pnpm-store
