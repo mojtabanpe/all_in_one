@@ -2,7 +2,7 @@
 
 **Purpose:** produce, medically/biomechanically review, upload, connect and verify exercise demonstration videos in Poshtetgarm.  
 **Status:** IN_PROGRESS — 14 of 62 clips published, including the interim `wall-slide` (10) v003.
-`trx-chest` (14) v003 was reviewed and needs revision before publication.
+`trx-chest` (14) v004 was reviewed and needs revision before publication.
 Anonymous MP4 delivery verified for all 14 published clips; inline playback on a phone/PWA still needs verification.
 
 ## Summary (2026-11-09)
@@ -15,7 +15,7 @@ Anonymous MP4 delivery verified for all 14 published clips; inline playback on a
 | In-app playback                   | `DONE` (code) | Uploaded clips play inline (`<video controls muted loop playsinline preload="metadata">`, 16:9) in the exercise sheet and guided session; a failed clip falls back to the link. Fixed: the exercise sheet called `new URL()` on the site-relative clip path and threw. Tests: `exerciseVideoSource` (health-contracts), clip/fallback test in `training-session-page.spec.ts` |
 | Anonymous MP4 delivery            | `DONE`        | 2026-11-08: all 14 published tracker URLs returned HTTP 206, `Content-Type: video/mp4` and `Content-Range: bytes 0-31/…` for an unauthenticated range GET.                                                                                                                                                                                                                    |
 | Inline phone/PWA playback         | `VERIFY`      | Exercise sheet and guided session still need a playback check on a phone and in the installed PWA.                                                                                                                                                                                                                                                                            |
-| TRX chest press v003              | `IN_PROGRESS` | Reviewed 2026-11-09. The anchor is behind the coach, but the grips stay near the waist and the elbows stay bent throughout the repetition.                                                                                                                                                                                                                                    |
+| TRX chest press v004              | `IN_PROGRESS` | Reviewed 2026-11-09. The opening pose is closer to a chest press. The grips still fall to hip height, and the final hold does not return to the opening arm extension.                                                                                                                                                                                                        |
 | Remaining 48 clips                | `TODO`        | Owner generates in Gemini with the reference images; agent reviews, uploads via MCP and updates the tracker                                                                                                                                                                                                                                                                   |
 
 ## Existing source of truth
@@ -51,6 +51,7 @@ Anonymous MP4 delivery verified for all 14 published clips; inline playback on a
       upward in front of him, and the anchor is outside the frame. v002 fixes the direction, but detached strap handles hang behind him
       while his hands move separate grips. Prompt 14 now defines both anchor-to-hand connections frame by frame.
 - [ ] `IN_PROGRESS` Retried `trx-chest` v003 in Gemini on 2026-11-09 using the existing prompt and three attached reference images. Reviewed the returned MP4 at one-second intervals. The straps appear to reach the grips, but the coach rocks forward and back with bent elbows and low hands. Regenerate with visibly extended arms at chest height at both ends of the repetition.
+- [ ] `IN_PROGRESS` Reviewed `trx-chest` v004 on 2026-11-09 at one-second intervals. The opening reach and elbow movement are clearer than v003. Around 3–4 s, the grips are beside the hips. The final hold is lower and more bent than the opening pose. Revise before publication.
 - [ ] `TODO` Continue the TRX batch (14–18), starting with `trx-chest`. Per clip: owner generates → agent/owner review
       (tracker `generated` → `reviewed`) → MCP upload → `published` with URL.
 
