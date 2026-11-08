@@ -145,13 +145,18 @@ export class AuthService {
     given?: GrowthCampaign,
   ): Promise<GrowthCampaign | undefined> {
     if (given && Object.keys(given).length) return given;
-    const events = await this.prisma.growthEvent.findMany({
-      where: { visitorId },
-      orderBy: { createdAt: 'asc' },
-      take: 10,
-      select: { campaign: true },
-    });
-    return firstTouchCampaign(events);
+    try {
+      const events = await this.prisma.growthEvent.findMany({
+        where: { visitorId },
+        orderBy: { createdAt: 'asc' },
+        take: 10,
+        select: { campaign: true },
+      });
+      return firstTouchCampaign(events);
+    } catch {
+      // An analytics read must never cost the signup event itself.
+      return undefined;
+    }
   }
 
   /**
