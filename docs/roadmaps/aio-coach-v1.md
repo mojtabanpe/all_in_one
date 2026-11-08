@@ -2,8 +2,8 @@
 
 **Purpose:** produce, medically/biomechanically review, upload, connect and verify exercise demonstration videos in Poshtetgarm.  
 **Status:** IN_PROGRESS — 13 of 62 clips published, including `trx-row` (13).
-`wall-slide` (10) v001 approved for interim use, upload pending; `trx-chest` (14) is the next new clip.
-Anonymous MP4 delivery verified for `dead-bug`, `plank`, `march`, `trx-squat` and `trx-row`; inline playback on a phone/PWA still needs verification.
+`wall-slide` (10) v001 approved for interim use, upload waiting for the approved MP4; `trx-chest` (14) is the next new clip.
+Anonymous MP4 delivery verified for all 13 published clips; inline playback on a phone/PWA still needs verification.
 
 ## Summary (2026-11-08)
 
@@ -13,7 +13,8 @@ Anonymous MP4 delivery verified for `dead-bug`, `plank`, `march`, `trx-squat` an
 | Approved clips published          | `IN_PROGRESS` | 13/62 `published` in `production-tracker.csv`: body-squat, reverse-lunge, wall-pushup, pushup, glute-bridge, bird-dog, prone-w (interim v2), jumping-jack, dead-bug, plank, march, trx-squat, trx-row                                                                                                                                                                         |
 | Catalog mapping safe from re-seed | `DONE`        | `libs/applets/health/api/src/lib/seed.ts` only fills `videoUrl` where it is `null`, so uploaded clips survive deploys                                                                                                                                                                                                                                                         |
 | In-app playback                   | `DONE` (code) | Uploaded clips play inline (`<video controls muted loop playsinline preload="metadata">`, 16:9) in the exercise sheet and guided session; a failed clip falls back to the link. Fixed: the exercise sheet called `new URL()` on the site-relative clip path and threw. Tests: `exerciseVideoSource` (health-contracts), clip/fallback test in `training-session-page.spec.ts` |
-| Anonymous production playback     | `VERIFY`      | 2026-11-07: anonymous range GET for `dead-bug` and `plank` returned HTTP 206 and `video/mp4` for both files; On 2026-11-08, a separate catalog lookup and anonymous HTTP 206 confirmed the `march` (1,565,048 bytes), `trx-squat` (1,340,108 bytes) and `trx-row` (1,204,088 bytes) MP4s. Inline phone/PWA playback is still unverified.                                      |
+| Anonymous MP4 delivery            | `DONE`        | 2026-11-08: all 13 published tracker URLs returned HTTP 206, `Content-Type: video/mp4` and `Content-Range: bytes 0-31/…` for an unauthenticated range GET.                                                                                                                                                                                                                    |
+| Inline phone/PWA playback         | `VERIFY`      | Exercise sheet and guided session still need a playback check on a phone and in the installed PWA.                                                                                                                                                                                                                                                                            |
 | Remaining 49 clips                | `TODO`        | Owner generates in Gemini with the reference images; agent reviews, uploads via MCP and updates the tracker                                                                                                                                                                                                                                                                   |
 
 ## Existing source of truth
@@ -34,13 +35,14 @@ Anonymous MP4 delivery verified for `dead-bug`, `plank`, `march`, `trx-squat` an
 - [x] `DONE` Attach by stable slug: the upload writes `videoUrl` for that slug; seed never overwrites a set `videoUrl`.
 - [x] `DONE` (code, 2026-11-07) Inline playback with controls, fixed 16:9 geometry (no layout shift), metadata-only
       preload for mobile data, and a link fallback when the clip fails to load.
-- [ ] `VERIFY` Open either new clip on a production phone and installed PWA. Anonymous MP4 byte ranges were verified on 2026-11-07.
+- [ ] `VERIFY` Open either new clip on a production phone and installed PWA. Anonymous MP4 byte ranges were verified for all 13 published clips on 2026-11-08.
 - [x] `DONE` `dead-bug` and `plank` v001 uploaded via Poshtetgarm MCP. A separate catalog lookup returned the new URLs;
       anonymous range responses reported the exact uploaded sizes (377,258 and 995,257 bytes). URLs are in the tracker.
 - [ ] `TODO` `prone-w` v3 to replace the interim v2 (prompt 07 already updated).
-- [ ] `IN_PROGRESS` `wall-slide` v001: the 3.75-second cut loops through one Y–low W–Y repetition. The elbows remain
+- [ ] `BLOCKED` `wall-slide` v001: the 3.75-second cut loops through one Y–low W–Y repetition. The elbows remain
       below shoulder height at the bottom and forearm contact is hard to verify. The owner approved the interim cut
-      on 2026-11-08. Upload the approved MP4 when available.
+      on 2026-11-08. The original attachment path no longer contains the approved MP4. The production catalog
+      still returns the existing Aparat link. Upload once the approved cut is available again.
 - [x] `DONE` `march` v001 was approved and published via MCP on 2026-11-08 (silent, 1280×720, 10 s).
 - [x] `DONE` `trx-squat` v002 was approved and published via MCP on 2026-11-08 (silent, 1280×720, 10 s).
 - [x] `DONE` `trx-row` v002 was approved and published via MCP on 2026-11-08 (silent, 1280×720, 10 s).
@@ -54,7 +56,8 @@ Prior conversations mention video review/approval for Squat, Push-up, Glute Brid
 ## Next action
 
 1. Open `dead-bug` or `plank` on a phone and in the installed PWA; confirm inline playback in the exercise sheet and guided session.
-2. Upload the approved `wall-slide` v001 trim when the MP4 is available.
-3. Generate `trx-chest` with prompt 14 and `prone-w` v3 with prompt 07.
+2. Reattach the approved `wall-slide` v001 trim (3.75 s) for upload.
+3. Generate `trx-chest` with [prompt 14](../exercise-video-kit/prompts/14-trx-chest.txt) and the approved coach reference.
+   Generate `prone-w` v3 with prompt 07.
 
 Last updated: 2026-11-08.
