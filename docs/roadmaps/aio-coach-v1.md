@@ -2,10 +2,10 @@
 
 **Purpose:** produce, medically/biomechanically review, upload, connect and verify exercise demonstration videos in Poshtetgarm.  
 **Status:** IN_PROGRESS — 14 of 62 clips published, including the interim `wall-slide` (10) v003.
-`trx-chest` (14) v002 needs revision before publication.
+`trx-chest` (14) v003 is generating in Gemini for review.
 Anonymous MP4 delivery verified for all 14 published clips; inline playback on a phone/PWA still needs verification.
 
-## Summary (2026-11-08)
+## Summary (2026-11-09)
 
 | Checkpoint                        | State         | Evidence                                                                                                                                                                                                                                                                                                                                                                      |
 | --------------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -15,6 +15,7 @@ Anonymous MP4 delivery verified for all 14 published clips; inline playback on a
 | In-app playback                   | `DONE` (code) | Uploaded clips play inline (`<video controls muted loop playsinline preload="metadata">`, 16:9) in the exercise sheet and guided session; a failed clip falls back to the link. Fixed: the exercise sheet called `new URL()` on the site-relative clip path and threw. Tests: `exerciseVideoSource` (health-contracts), clip/fallback test in `training-session-page.spec.ts` |
 | Anonymous MP4 delivery            | `DONE`        | 2026-11-08: all 14 published tracker URLs returned HTTP 206, `Content-Type: video/mp4` and `Content-Range: bytes 0-31/…` for an unauthenticated range GET.                                                                                                                                                                                                                    |
 | Inline phone/PWA playback         | `VERIFY`      | Exercise sheet and guided session still need a playback check on a phone and in the installed PWA.                                                                                                                                                                                                                                                                            |
+| TRX chest press v003              | `IN_PROGRESS` | Gemini reported generation in progress after retrying with the three reference images on 2026-11-09. Output and review are pending.                                                                                                                                                                                                                                           |
 | Remaining 48 clips                | `TODO`        | Owner generates in Gemini with the reference images; agent reviews, uploads via MCP and updates the tracker                                                                                                                                                                                                                                                                   |
 
 ## Existing source of truth
@@ -49,6 +50,7 @@ Anonymous MP4 delivery verified for all 14 published clips; inline playback on a
 - [ ] `IN_PROGRESS` `trx-chest` v001 reviewed on 2026-11-08. The trainer faces the anchor side, the straps run
       upward in front of him, and the anchor is outside the frame. v002 fixes the direction, but detached strap handles hang behind him
       while his hands move separate grips. Prompt 14 now defines both anchor-to-hand connections frame by frame.
+- [ ] `IN_PROGRESS` Retried `trx-chest` v003 in Gemini on 2026-11-09 using the existing prompt and three attached reference images. Gemini reported that it was generating the clip. Review both strap-to-grip connections and chest-height grip position when the MP4 is ready.
 - [ ] `TODO` Continue the TRX batch (14–18), starting with `trx-chest`. Per clip: owner generates → agent/owner review
       (tracker `generated` → `reviewed`) → MCP upload → `published` with URL.
 
@@ -59,7 +61,7 @@ Prior conversations mention video review/approval for Squat, Push-up, Glute Brid
 ## Next action
 
 1. Open `dead-bug` or `plank` on a phone and in the installed PWA; confirm inline playback in the exercise sheet and guided session.
-2. Regenerate `trx-chest` with [prompt 14](../exercise-video-kit/prompts/14-trx-chest.txt) and the approved coach reference.
+2. Review the generated `trx-chest` v003 against [prompt 14](../exercise-video-kit/prompts/14-trx-chest.txt).
    Generate `prone-w` v3 with prompt 07.
 
-Last updated: 2026-11-08.
+Last updated: 2026-11-09.
