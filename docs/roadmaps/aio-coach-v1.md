@@ -2,7 +2,7 @@
 
 **Purpose:** produce, medically/biomechanically review, upload, connect and verify exercise demonstration videos in Poshtetgarm.  
 **Status:** IN_PROGRESS — 14 of 62 clips published, including the interim `wall-slide` (10) v003.
-`trx-chest` (14) is the next new clip.
+`trx-chest` (14) v001 needs revision before publication.
 Anonymous MP4 delivery verified for all 14 published clips; inline playback on a phone/PWA still needs verification.
 
 ## Summary (2026-11-08)
@@ -46,6 +46,8 @@ Anonymous MP4 delivery verified for all 14 published clips; inline playback on a
 - [x] `DONE` `march` v001 was approved and published via MCP on 2026-11-08 (silent, 1280×720, 10 s).
 - [x] `DONE` `trx-squat` v002 was approved and published via MCP on 2026-11-08 (silent, 1280×720, 10 s).
 - [x] `DONE` `trx-row` v002 was approved and published via MCP on 2026-11-08 (silent, 1280×720, 10 s).
+- [ ] `IN_PROGRESS` `trx-chest` v001 reviewed on 2026-11-08. The trainer faces the anchor side, the straps run
+      upward in front of him, and the anchor is outside the frame. Regenerate with the anchor visible behind him.
 - [ ] `TODO` Continue the TRX batch (14–18), starting with `trx-chest`. Per clip: owner generates → agent/owner review
       (tracker `generated` → `reviewed`) → MCP upload → `published` with URL.
 
@@ -56,7 +58,7 @@ Prior conversations mention video review/approval for Squat, Push-up, Glute Brid
 ## Next action
 
 1. Open `dead-bug` or `plank` on a phone and in the installed PWA; confirm inline playback in the exercise sheet and guided session.
-2. Generate `trx-chest` with [prompt 14](../exercise-video-kit/prompts/14-trx-chest.txt) and the approved coach reference.
+2. Regenerate `trx-chest` with [prompt 14](../exercise-video-kit/prompts/14-trx-chest.txt) and the approved coach reference.
    Generate `prone-w` v3 with prompt 07.
 
 Last updated: 2026-11-08.
