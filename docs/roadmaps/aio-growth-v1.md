@@ -123,7 +123,7 @@ Agents cannot do these: they need the owner's decision, login, devices or an Ira
 | O6  | Install the PWA on a real Android (Chrome) and iPhone (Safari): offline reopen, then update                                                 | PWA item          | DONE (owner, 2026-11-08)                                                                  |
 | O7  | Create the official Telegram/Instagram pages, then turn on `BILLING_*_OFFER_ENABLED`; publish the English pilot when ready                  | social weeks, X6  | DONE (pages, offers, footer links and bios 2026-11-08; English pilot post when ready)     |
 | O8  | After O1: Zibal sandbox, then one real low-amount payment; with your admin login, open the growth/AI reports on production and note issues  | payments, reports | DONE (real payment and admin report review, owner 2026-11-08: fine for now)               |
-| O9  | Talk to 5–20 users (pilot interview questions) and write the findings here                                                                  | experiments       | TODO                                                                                      |
+| O9  | Talk to 5–20 users (pilot interview questions) and write the findings here                                                                  | experiments       | DROPPED (owner, 2026-11-08: not doing interviews)                                         |
 
 ## North star and KPIs
 
