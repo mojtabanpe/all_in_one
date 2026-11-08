@@ -4,13 +4,13 @@
 **Market:** Iran; Persian-speaking users  
 **Business model:** Freemium; AI features available only with paid entitlement  
 **Scope:** `apps/public`, `apps/customer`, `apps/admin`, API, billing, AI, analytics.  
-**Status:** In progress. Claude C1–C7 and Codex X1–X6 are complete. Acquisition and managed AI are live, three billing plans are active, and a real Zibal payment was verified. The owner confirmed the remaining marketing decisions on 2026-11-08 (O5, O8 and O9). C8 awaits store release approval and one verified in-app purchase per store (O11).
+**Status:** In progress. Claude C1–C7 and Codex X1–X6 are complete. Acquisition and managed AI are live, three billing plans are active, and a real Zibal payment was verified. The owner confirmed the remaining marketing decisions on 2026-11-08 (O5, O8 and O9). The owner verified attribution on the live paid-link registration flow on 2026-11-09. C8 awaits store release approval and one verified in-app purchase per store (O11).
 
-## Current checkpoint — 2026-11-08
+## Current checkpoint — 2026-11-09
 
 | Workstream                 | Current state                                                                                                                                                                                                            | Still required                                                                                            |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| Acquisition and onboarding | Landing, registration handoff, attribution, onboarding, guides and analytics deployed.                                                                                                                                   | Track campaign results during rollout.                                                                    |
+| Acquisition and onboarding | Landing, registration handoff, attribution, onboarding, guides and analytics deployed. The owner verified paid-link attribution on a fast tap.                                                                           | Track campaign results during rollout.                                                                    |
 | SEO                        | Production metadata and sitemap verified. Search Console ownership and sitemap submission complete. The owner waived the PageSpeed check (O5) and asked to remove Enamad from the public footer because it did not load. | Monitor indexing.                                                                                         |
 | Growth and AI reports      | Owner reviewed the production admin reports and accepted them for now (O8). Managed AI connection tests, prices and daily limits confirmed (O2).                                                                         | Monitor usage and costs during rollout.                                                                   |
 | Campaigns                  | Telegram and Instagram pages and earned-week offers are active. Campaign materials are ready. The owner dropped pilot interviews (O9).                                                                                   | Publish the prepared campaign posts on schedule. Linuxor: banner and caption ready; awaiting publication. |
@@ -99,7 +99,7 @@ response an `aio_growth_visitor` cookie (or set it from a tiny inline pre-hydrat
 CTA carry the allowlisted UTMs for that request (server-side rewrite of the `/app/login` hrefs, or an inline script
 that rewrites them before hydration). Verify by clicking the CTA at `commit` in a Chromium probe and confirming the
 resulting `signup_started` still has `utm_campaign`. Owner-visible effect: paid posts look like they bring no accounts.
-**Implemented locally 2026-11-09 (Claude, not deployed):** `apps/public/src/growth-inject.ts` +
+**Implemented 2026-11-09 (Claude, commit `53770b7`):** `apps/public/src/growth-inject.ts` +
 a middleware in `apps/public/src/server.ts`. For a request that carries an allow-listed `utm_*`, the
 server reads the prerendered page, tags every `/app/login…` href (keeping `mode=register`), sets
 `aio_growth_visitor` when the request has none, and answers `Cache-Control: no-store`; requests
@@ -107,7 +107,7 @@ without a campaign fall through byte-identically. Verified on the built server: 
 `/daily-english` and `/about` keep their own content, untagged responses are byte-identical to the
 prerendered files, only the hrefs differ when tagged, canonical/JSON-LD/H1 counts unchanged, the
 cookie is reused, and robots/sitemap/assets are untouched. 9 unit tests (`growth-inject.spec.ts`).
-Pending: one payment-gateway-free release and a production check clicking the CTA at `commit`.
+**DONE (owner confirmation, 2026-11-09):** The owner confirmed the production verification of the paid-link registration fix.
 
 ### ChatGPT (Codex) lane: acquisition, activation and retention
 
