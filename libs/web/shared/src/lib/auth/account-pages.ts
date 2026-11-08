@@ -364,6 +364,38 @@ export class VerifyEmailPage implements OnInit {
           {{ auth.user()?.email ?? localPhone() }}
         </p>
       </header>
+      <!-- A phone-only account is created without a name (directive 119): set it here. -->
+      <section aioCard>
+        <div
+          aioCardHeading
+          [title]="'نام نمایشی' | aioTranslate"
+          [level]="2"
+          [description]="
+            'این نام در حساب و اعلان‌ها دیده می‌شود.' | aioTranslate
+          "
+        ></div>
+        <form
+          aioCardContent
+          class="flex flex-col gap-4"
+          (submit)="$event.preventDefault(); saveName()"
+        >
+          <aio-form-field
+            [label]="'نام' | aioTranslate"
+            controlId="display-name"
+          >
+            <input
+              aioInput
+              id="display-name"
+              autocomplete="name"
+              [value]="displayName()"
+              (input)="displayName.set($any($event.target).value)"
+            />
+          </aio-form-field>
+          <button aioBtn type="submit" class="self-start" [disabled]="busy()">
+            {{ 'ذخیرهٔ نام' | aioTranslate }}
+          </button>
+        </form>
+      </section>
       @if (billing()) {
         <section aioCard>
           <div
@@ -834,6 +866,7 @@ export class AccountPage implements OnInit {
   private readonly notifications = inject(AioNotifications);
 
   ngOnInit() {
+    this.displayName.set(this.auth.user()?.name ?? '');
     void this.push.loadReview();
   }
   protected readonly push = inject(PushSettings);
@@ -846,7 +879,27 @@ export class AccountPage implements OnInit {
     const phone = this.auth.user()?.phone;
     return phone ? localMobile(phone) : '';
   });
+  protected readonly displayName = signal('');
   protected readonly busy = signal(false);
+
+  protected async saveName() {
+    const name = this.displayName().trim();
+    if (!name) {
+      this.notifications.error(this.locale.text('نام نمی‌تواند خالی باشد.'));
+      return;
+    }
+    if (this.busy()) return;
+    this.busy.set(true);
+    try {
+      await this.auth.updateName(name);
+      this.displayName.set(name);
+      this.notifications.success(this.locale.text('نام ذخیره شد.'));
+    } catch (error) {
+      this.notifications.error(apiErrorMessage(error));
+    } finally {
+      this.busy.set(false);
+    }
+  }
 
   protected async addEmail() {
     const email = this.newEmail().trim();

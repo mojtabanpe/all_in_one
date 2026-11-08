@@ -23,6 +23,8 @@ import {
   registerSchema,
   type ResetPasswordInput,
   resetPasswordSchema,
+  type UpdateProfileInput,
+  updateProfileSchema,
   type User,
   type VerifyEmailInput,
   verifyEmailSchema,
@@ -256,6 +258,17 @@ export class AuthController {
     const user = await this.auth.findById(current.id);
     if (!user) throw new NotFoundException();
     return toUser(user);
+  }
+
+  /** The display name, set or changed from the account page (phone-only accounts start without one). */
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  @HttpCode(200)
+  @Post('profile')
+  async updateProfile(
+    @CurrentUser() current: AuthUser,
+    @Body({ schema: updateProfileSchema }) input: UpdateProfileInput,
+  ): Promise<User> {
+    return toUser(await this.auth.updateProfile(current.id, input.name));
   }
 
   private async startSession(res: unknown, user: DbUser): Promise<void> {

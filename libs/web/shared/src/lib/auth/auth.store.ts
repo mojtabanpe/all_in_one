@@ -172,6 +172,15 @@ export class AuthStore {
   }
 
   /** Other devices are signed out; this session continues. */
+  /** Sets the display name; a phone-only account starts without one (directive 119). */
+  async updateName(name: string): Promise<void> {
+    const user = await firstValueFrom(
+      this.http.post<User>(`${this.api}/auth/profile`, { name }),
+    );
+    this.user.set(user);
+    remember(user);
+  }
+
   changePassword(input: ChangePasswordInput): Promise<void> {
     return firstValueFrom(
       this.http.post<void>(`${this.api}/auth/password`, input),

@@ -309,6 +309,17 @@ export class AuthService {
   }
 
   /** Changes the password and signs out every other session; returns the user for a fresh cookie. */
+  /**
+   * Sets the display name. A phone-only account (directive 119) is created without one, so this is
+   * the only place it can be added.
+   */
+  async updateProfile(userId: string, name: string): Promise<DbUser> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { name: name.trim() },
+    });
+  }
+
   async changePassword(
     userId: string,
     currentPassword: string | undefined,

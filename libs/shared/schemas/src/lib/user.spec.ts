@@ -1,4 +1,4 @@
-import { loginSchema, userSchema } from './user';
+import { loginSchema, updateProfileSchema, userSchema } from './user';
 
 describe('userSchema', () => {
   it('accepts a user from the api', () => {
@@ -44,5 +44,26 @@ describe('loginSchema', () => {
     expect(
       loginSchema.safeParse({ email: 'a@b.co', password: 'short' }).success,
     ).toBe(false);
+  });
+});
+
+describe('updateProfileSchema', () => {
+  it('trims the display name a phone-only account sets', () => {
+    const result = updateProfileSchema.safeParse({ name: '  مجتبی  ' });
+    expect(result.success && result.data.name).toBe('مجتبی');
+  });
+
+  it('rejects an empty or whitespace-only name', () => {
+    expect(updateProfileSchema.safeParse({ name: '' }).success).toBe(false);
+    expect(updateProfileSchema.safeParse({ name: '   ' }).success).toBe(false);
+  });
+
+  it('rejects a name longer than 80 characters', () => {
+    expect(
+      updateProfileSchema.safeParse({ name: 'x'.repeat(81) }).success,
+    ).toBe(false);
+    expect(
+      updateProfileSchema.safeParse({ name: 'x'.repeat(80) }).success,
+    ).toBe(true);
   });
 });

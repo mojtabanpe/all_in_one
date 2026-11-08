@@ -980,6 +980,14 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'بعد از تغییر، دستگاه‌های دیگر از حساب خارج می‌شوند.',
     'After the change, other devices will be logged out.',
   ],
+  ['نام نمایشی', 'Display name'],
+  [
+    'این نام در حساب و اعلان‌ها دیده می‌شود.',
+    'Shown on your account and in notifications.',
+  ],
+  ['ذخیرهٔ نام', 'Save name'],
+  ['نام ذخیره شد.', 'Name saved.'],
+  ['نام نمی‌تواند خالی باشد.', 'Name cannot be empty.'],
   ['رمز فعلی', 'current password'],
   ['ذخیره رمز تازه', 'Save new password'],
   [

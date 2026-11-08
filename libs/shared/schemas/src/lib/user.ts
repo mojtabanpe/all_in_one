@@ -35,6 +35,12 @@ export const registerSchema = z.object({
 });
 export type RegisterInput = z.infer<typeof registerSchema>;
 
+/** The account's display name; phone-only accounts have none until they set it here. */
+export const updateProfileSchema = z.object({
+  name: z.string().check(z.trim(), z.minLength(1), z.maxLength(80)),
+});
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+
 const password = z.string().check(z.minLength(8), z.maxLength(128));
 
 /** Signed-in password change; other sessions are signed out. */
