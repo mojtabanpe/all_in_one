@@ -11,6 +11,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { createHash, randomBytes } from 'node:crypto';
+import { growthCampaignSchema } from '@all-in-one/shared/schemas';
 import type {
   GrowthAttribution,
   LoginInput,
@@ -31,6 +32,21 @@ const VERIFY_LIFETIME = 24 * 60 * 60 * 1000;
 export const digest = (token: string) =>
   createHash('sha256').update(token).digest('hex');
 const newToken = () => randomBytes(32).toString('base64url');
+
+/**
+ * The campaign of a visitor's earliest tagged event. A paid link's campaign is lost when the URL
+ * does not survive — an installed PWA or the native shell opens without a query string — so the
+ * signup copies the first touch the same visitor already recorded. Untagged junk is ignored.
+ */
+export function firstTouchCampaign(
+  events: readonly { campaign: unknown }[],
+): GrowthCampaign | undefined {
+  for (const event of events) {
+    const parsed = growthCampaignSchema.safeParse(event.campaign);
+    if (parsed.success && Object.keys(parsed.data).length) return parsed.data;
+  }
+  return undefined;
+}
 
 export function toUser(user: DbUser): User {
   return {
@@ -121,6 +137,24 @@ export class AuthService {
   }
 
   /**
+   * The campaign to record with a signup: the one the client sent, or — when the URL lost it, as an
+   * installed PWA or the native shell does — the campaign of that visitor's earliest tagged event.
+   */
+  private async signupCampaign(
+    visitorId: string,
+    given?: GrowthCampaign,
+  ): Promise<GrowthCampaign | undefined> {
+    if (given && Object.keys(given).length) return given;
+    const events = await this.prisma.growthEvent.findMany({
+      where: { visitorId },
+      orderBy: { createdAt: 'asc' },
+      take: 10,
+      select: { campaign: true },
+    });
+    return firstTouchCampaign(events);
+  }
+
+  /**
    * Only a successfully created account can emit this event. Analytics must never turn a successful
    * registration into an error or send auth fields.
    */
@@ -131,7 +165,11 @@ export class AuthService {
     )
       return;
     try {
-      const { visitorId, language, campaign } = acquisition;
+      const { visitorId, language } = acquisition;
+      const campaign = await this.signupCampaign(
+        visitorId,
+        acquisition.campaign,
+      );
       await this.prisma.growthEvent.createMany({
         data: [
           {
