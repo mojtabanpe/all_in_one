@@ -225,6 +225,8 @@ Evidence: `apps/admin/src/app/pages/dashboard.ts` already shows basic user/conte
 
 ## Social pages and earned weeks
 
+- `DONE` (Claude, 2026-11-08, local; production after deploy) Public home has an «اپ را روی گوشی نصب کن» section (`/#install`, footer link «نصب اپ»): Android download of the GitHub Release APK (arm64 main, ARM32 and x86_64 secondary; tag/version in `apps/public/src/app/pages/android-release.ts`, update it with each native release) and PWA steps for iPhone. Checked at 375px: anchor scroll, 44px+ targets, no overflow; 14 affected projects lint/test/typecheck/build passed.
+
 - `DONE` (2026-11-08) The owner created https://t.me/poshtetgarm and https://www.instagram.com/poshtetgarm/ (the URLs `SOCIAL_OFFERS` in `billing.service.ts` already used). Claude set `BILLING_TELEGRAM_OFFER_ENABLED=true` and `BILLING_INSTAGRAM_OFFER_ENABLED=true` in `/opt/all-in-one/shared/.env` (backup kept) and added Telegram and Instagram links to the public footer (new tab, 44px targets, bilingual labels; checked at 375px, no overflow). A customer sends their handle from `/app/billing`; support checks membership and grants the week in `/admin/billing` (reward requests). `VERIFY` after the next release: the offers show on `/app/billing` and a request reaches the admin list.
 - Bios suggested for both pages carry `utm_source=instagram|telegram`, `utm_medium=social`, `utm_content=bio|about`.
 

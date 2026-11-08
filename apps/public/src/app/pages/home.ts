@@ -12,11 +12,14 @@ import {
 } from '@all-in-one/ui';
 import {
   lucideCalendarCheck,
+  lucideDownload,
   lucideHeartPulse,
   lucideLanguages,
+  lucideSmartphone,
 } from '@ng-icons/lucide';
 import { injectCustomerLinks } from '../customer-url';
 import { APPLETS } from './applets-data';
+import { ANDROID_RELEASE } from './android-release';
 
 @Component({
   selector: 'public-home',
@@ -29,7 +32,13 @@ import { APPLETS } from './applets-data';
     AioTranslate,
   ],
   providers: [
-    provideIcons({ lucideCalendarCheck, lucideHeartPulse, lucideLanguages }),
+    provideIcons({
+      lucideCalendarCheck,
+      lucideDownload,
+      lucideHeartPulse,
+      lucideLanguages,
+      lucideSmartphone,
+    }),
   ],
   template: `
     <div class="flex flex-col gap-10 md:gap-16">
@@ -227,6 +236,82 @@ import { APPLETS } from './applets-data';
         </ol>
       </section>
       <section
+        id="install"
+        class="flex scroll-mt-24 flex-col gap-6"
+        aria-labelledby="install-title"
+      >
+        <div
+          aioSectionHeading
+          headingId="install-title"
+          [title]="'اپ را روی گوشی نصب کن' | aioTranslate"
+          [description]="
+            'همان حساب و همان داده‌ها؛ روی گوشی سریع‌تر باز می‌شود و یادآورها را هم می‌گیری.'
+              | aioTranslate
+          "
+          titleClass="aio-page-title"
+          descriptionClass="mt-2 max-w-xl text-sm leading-7 text-muted-foreground"
+        ></div>
+        <div class="grid gap-4 md:grid-cols-2">
+          <article aioCard class="min-w-0">
+            <div aioCardHeader>
+              <h3 aioCardTitle class="flex items-center gap-2">
+                <aio-icon name="lucideDownload" class="text-primary" />
+                {{ 'اندروید' | aioTranslate }}
+              </h3>
+              <p aioCardDescription class="leading-7">
+                {{
+                  'فایل نصب را دانلود و باز کن. اگر گوشی پرسید، نصب از این منبع را اجازه بده.'
+                    | aioTranslate
+                }}
+              </p>
+            </div>
+            <div aioCardContent class="flex flex-col items-start gap-3">
+              <a aioBtn size="lg" [href]="android.main" download>{{
+                'دانلود برای اندروید' | aioTranslate
+              }}</a>
+              <p class="text-xs text-muted-foreground">
+                {{ 'نسخهٔ {0}' | aioTranslate: [android.version] }}
+              </p>
+              <div class="flex flex-wrap gap-x-4">
+                @for (apk of android.others; track apk.url) {
+                  <a
+                    aioBtn
+                    variant="link"
+                    class="px-0"
+                    [href]="apk.url"
+                    download
+                    >{{ apk.label | aioTranslate }}</a
+                  >
+                }
+              </div>
+            </div>
+          </article>
+          <article aioCard class="min-w-0">
+            <div aioCardHeader>
+              <h3 aioCardTitle class="flex items-center gap-2">
+                <aio-icon name="lucideSmartphone" class="text-primary" />
+                {{ 'آیفون و بقیهٔ گوشی‌ها' | aioTranslate }}
+              </h3>
+              <p aioCardDescription class="leading-7">
+                {{
+                  'اپ را در Safari باز کن، دکمهٔ اشتراک‌گذاری را بزن و «Add to Home Screen» را انتخاب کن. در Chrome اندروید هم گزینهٔ «نصب برنامه» هست.'
+                    | aioTranslate
+                }}
+              </p>
+            </div>
+            <div aioCardContent>
+              <a
+                aioBtn
+                size="lg"
+                variant="outline"
+                [href]="customerLinks.signup()"
+                >{{ 'باز کردن اپ' | aioTranslate }}</a
+              >
+            </div>
+          </article>
+        </div>
+      </section>
+      <section
         class="flex flex-wrap items-center justify-between gap-6 border-t border-border py-8"
       >
         <div
@@ -278,6 +363,7 @@ export class Home {
   }
   protected readonly customerLinks = injectCustomerLinks();
   protected readonly applets = APPLETS;
+  protected readonly android = ANDROID_RELEASE;
   protected readonly gettingStarted = [
     {
       label: 'قدم اول',

@@ -52,6 +52,9 @@ import {
             >{{ 'حریم خصوصی و داده‌ها' | aioTranslate }}</a
           >
           <div class="flex flex-wrap gap-x-4">
+            <a aioBtn variant="link" routerLink="/" fragment="install">{{
+              'نصب اپ' | aioTranslate
+            }}</a>
             <a
               aioBtn
               variant="link"

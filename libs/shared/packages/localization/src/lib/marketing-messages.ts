@@ -1,5 +1,26 @@
 export const MARKETING_MESSAGES: readonly (readonly [string, string])[] = [
   ['ورود به حساب', 'Sign in'],
+  ['نصب اپ', 'Install the app'],
+  ['اپ را روی گوشی نصب کن', 'Install the app on your phone'],
+  [
+    'همان حساب و همان داده‌ها؛ روی گوشی سریع‌تر باز می‌شود و یادآورها را هم می‌گیری.',
+    'Same account, same data; it opens faster on your phone and you get reminders.',
+  ],
+  ['اندروید', 'Android'],
+  [
+    'فایل نصب را دانلود و باز کن. اگر گوشی پرسید، نصب از این منبع را اجازه بده.',
+    'Download and open the installer. If your phone asks, allow installs from this source.',
+  ],
+  ['دانلود برای اندروید', 'Download for Android'],
+  ['نسخهٔ {0}', 'Version {0}'],
+  ['نسخهٔ گوشی‌های قدیمی', 'Older phones'],
+  ['نسخهٔ شبیه‌سازها و دستگاه‌های اینتل', 'Emulators and Intel devices'],
+  ['آیفون و بقیهٔ گوشی‌ها', 'iPhone and other phones'],
+  [
+    'اپ را در Safari باز کن، دکمهٔ اشتراک‌گذاری را بزن و «Add to Home Screen» را انتخاب کن. در Chrome اندروید هم گزینهٔ «نصب برنامه» هست.',
+    'Open the app in Safari, tap Share and choose “Add to Home Screen”. Chrome on Android also offers “Install app”.',
+  ],
+  ['باز کردن اپ', 'Open the app'],
   ['دعوت از دوستان', 'Invite friends'],
   ['لینک دعوتت را برای دوستانت بفرست.', 'Send your invite link to friends.'],
   ['لینک دعوت', 'Invite link'],
