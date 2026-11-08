@@ -15,9 +15,12 @@ import {
   billingCheckoutSchema,
   billingPlanInputSchema,
   billingRefundSchema,
+  billingStoreSku,
+  billingStoreVerifySchema,
 } from '@all-in-one/shared/schemas';
 import { BillingController, PaymentsController } from './billing.controller';
 import { addMonths, BillingService, TRIAL_LAUNCH } from './billing.service';
+import type { StoreGateway } from './store.gateway';
 import type { ZibalGateway } from './zibal.gateway';
 
 describe('Billing rules', () => {
@@ -38,6 +41,8 @@ describe('Billing rules', () => {
       billing.subscription,
       billing.orders,
       billing.recheck,
+      billing.storeIntent,
+      billing.storeVerify,
     ])
       expect(reflector.get(IS_PUBLIC, handler)).not.toBe(true);
     for (const handler of [
@@ -112,6 +117,26 @@ describe('Billing rules', () => {
       { ...base, email: 'a@example.invalid' },
     ])
       expect(billingRefundSchema.safeParse(input).success).toBe(false);
+  });
+
+  it('maps plan codes to store SKUs both ways and accepts only a store, SKU and token', () => {
+    expect(billingStoreSku('three-months')).toBe('three_months');
+    const input = {
+      store: 'bazaar',
+      sku: 'three_months',
+      purchaseToken: 'SDu7kQNDJ_C2x.9',
+    };
+    expect(billingStoreVerifySchema.safeParse(input).success).toBe(true);
+    for (const bad of [
+      { ...input, store: 'zibal' },
+      { ...input, sku: 'Monthly' },
+      { ...input, sku: 'three-months' },
+      { ...input, purchaseToken: 'short' },
+      { ...input, purchaseToken: 'a b c d e f g h' },
+      { ...input, purchaseToken: 'x'.repeat(513) },
+      { ...input, userId: randomUUID() },
+    ])
+      expect(billingStoreVerifySchema.safeParse(bad).success).toBe(false);
   });
 
   it('accepts only a plan code at checkout and whole-Toman Rial prices', () => {
@@ -1120,6 +1145,197 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
           await prisma.user.delete({ where: { id: admin.id } });
         }
       });
+    });
+  },
+);
+
+describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
+  'Store purchases (Cafe Bazaar, Myket) on PostgreSQL',
+  () => {
+    const run = randomUUID().slice(0, 8);
+    const emails = [
+      `store-a-${run}@example.invalid`,
+      `store-b-${run}@example.invalid`,
+    ];
+    const code = `s-${run}`;
+    const sku = billingStoreSku(code);
+    let prisma: PrismaService;
+    let userId: string;
+    let otherId: string;
+    const zibal = { request: vi.fn(), verify: vi.fn() };
+    const store = { verify: vi.fn() };
+    const service = () =>
+      new BillingService(
+        prisma,
+        zibal as unknown as ZibalGateway,
+        new ConfigService(),
+        undefined,
+        store as unknown as StoreGateway,
+      );
+    const purchased = (payload: string) => ({
+      kind: 'purchased' as const,
+      payload,
+      purchaseTime: Date.now(),
+    });
+    const token = () => `token-${randomUUID()}`;
+    const paidUntil = async (id = userId) =>
+      (await service().subscription(id)).paidUntil;
+
+    beforeAll(async () => {
+      const url = process.env['DATABASE_URL'];
+      if (!url || !['localhost', '127.0.0.1'].includes(new URL(url).hostname))
+        throw new Error('A local database is required');
+      prisma = new PrismaService(new ConfigService({ DATABASE_URL: url }));
+      [userId, otherId] = await Promise.all(
+        emails.map(async (email) => {
+          const user = await prisma.user.create({
+            data: { email, passwordHash: 'synthetic-integration-fixture' },
+          });
+          return user.id;
+        }),
+      );
+      await service().savePlan({
+        code,
+        titleFa: 'آزمایشی',
+        titleEn: 'Test',
+        months: 1,
+        priceRial: 2_490_000,
+        active: true,
+      });
+    });
+    afterAll(async () => {
+      if (prisma) {
+        const where = { userId: { in: [userId, otherId] } };
+        await prisma.billingOrder.deleteMany({ where });
+        await prisma.billingPlan.deleteMany({ where: { code } });
+        await prisma.user.deleteMany({ where: { email: { in: emails } } });
+        await prisma.$disconnect();
+      }
+    });
+    beforeEach(() => store.verify.mockReset());
+
+    it('hands out the SKU and payload only when a purchase is allowed', async () => {
+      expect(
+        await service().storeIntent(userId, { store: 'bazaar', plan: code }),
+      ).toEqual({ sku, payload: userId });
+      await expect(
+        service().storeIntent(userId, { store: 'myket', plan: 'no-such-plan' }),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('verifies with the store, activates once and answers a replay without a second month', async () => {
+      const purchaseToken = token();
+      store.verify.mockResolvedValue(purchased(userId));
+      const input = { store: 'bazaar' as const, sku, purchaseToken };
+      const results = await Promise.all([
+        service().storeVerify(userId, input),
+        service().storeVerify(userId, input),
+        service().storeVerify(userId, input),
+      ]);
+      expect(results).toEqual(['paid', 'paid', 'paid']);
+      expect(store.verify).toHaveBeenCalledWith('bazaar', sku, purchaseToken);
+      const until = await paidUntil();
+      expect(until).not.toBeNull();
+      store.verify.mockClear();
+      expect(await service().storeVerify(userId, input)).toBe('paid');
+      expect(store.verify).not.toHaveBeenCalled();
+      expect(await paidUntil()).toBe(until);
+      const orders = await prisma.billingOrder.findMany({
+        where: { userId, purchaseToken },
+      });
+      expect(orders).toHaveLength(1);
+      expect(orders[0]).toMatchObject({
+        status: 'PAID',
+        provider: 'BAZAAR',
+        months: 1,
+        amountRial: 2_490_000,
+      });
+      // The renewal window guards the purchase sheet, not a purchase the store already charged.
+      await expect(
+        service().storeIntent(userId, { store: 'bazaar', plan: code }),
+      ).rejects.toBeInstanceOf(ConflictException);
+      const second = token();
+      store.verify.mockResolvedValue(purchased(userId));
+      expect(
+        await service().storeVerify(userId, {
+          store: 'myket',
+          sku,
+          purchaseToken: second,
+        }),
+      ).toBe('paid');
+      expect(await paidUntil()).toBe(
+        addMonths(new Date(until as string), 1).toISOString(),
+      );
+    });
+
+    it("refuses another account's replay, the wrong payload and the wrong SKU", async () => {
+      const purchaseToken = token();
+      store.verify.mockResolvedValue(purchased(userId));
+      await service().storeVerify(userId, {
+        store: 'myket',
+        sku,
+        purchaseToken,
+      });
+      const before = await paidUntil(otherId);
+      await expect(
+        service().storeVerify(otherId, { store: 'myket', sku, purchaseToken }),
+      ).rejects.toBeInstanceOf(ConflictException);
+      // A token bought for one account and sent from another (fresh token, not yet used).
+      await expect(
+        service().storeVerify(otherId, {
+          store: 'myket',
+          sku,
+          purchaseToken: token(),
+        }),
+      ).rejects.toBeInstanceOf(UnprocessableEntityException);
+      store.verify.mockClear();
+      // A SKU that maps to no plan never reaches the store.
+      await expect(
+        service().storeVerify(otherId, {
+          store: 'bazaar',
+          sku: 'no_such_plan',
+          purchaseToken: token(),
+        }),
+      ).rejects.toBeInstanceOf(UnprocessableEntityException);
+      expect(store.verify).not.toHaveBeenCalled();
+      // The store does not know this token for this product.
+      store.verify.mockResolvedValue({ kind: 'invalid' });
+      await expect(
+        service().storeVerify(otherId, {
+          store: 'bazaar',
+          sku,
+          purchaseToken: token(),
+        }),
+      ).rejects.toBeInstanceOf(UnprocessableEntityException);
+      expect(await paidUntil(otherId)).toBe(before);
+      expect(
+        await prisma.billingOrder.count({ where: { userId: otherId } }),
+      ).toBe(0);
+    });
+
+    it('writes nothing on a store outage and activates when the purchase is sent again', async () => {
+      const purchaseToken = token();
+      const input = { store: 'bazaar' as const, sku, purchaseToken };
+      const before = await paidUntil(otherId);
+      store.verify.mockRejectedValueOnce(
+        new ServiceUnavailableException('Store billing is unavailable'),
+      );
+      await expect(
+        service().storeVerify(otherId, input),
+      ).rejects.toBeInstanceOf(ServiceUnavailableException);
+      expect(
+        await prisma.billingOrder.count({ where: { purchaseToken } }),
+      ).toBe(0);
+      expect(await paidUntil(otherId)).toBe(before);
+      store.verify.mockResolvedValueOnce(purchased(otherId));
+      expect(await service().storeVerify(otherId, input)).toBe('paid');
+      expect((await service().subscription(otherId)).active).toBe(true);
+    });
+
+    it('leaves store orders out of Zibal reconciliation', async () => {
+      const [order] = await service().orders(otherId);
+      expect(await service().recheck(otherId, order.id)).toBe('paid');
+      expect(zibal.verify).not.toHaveBeenCalled();
     });
   },
 );

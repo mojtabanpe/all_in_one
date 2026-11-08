@@ -158,6 +158,11 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
                         <span class="block text-muted-foreground">{{
                           'زیبال {0}' | aioTranslate: [verbatim(order.trackId)]
                         }}</span>
+                      } @else if (order.provider !== 'ZIBAL') {
+                        <span class="block text-muted-foreground">{{
+                          (order.provider === 'BAZAAR' ? 'کافه‌بازار' : 'مایکت')
+                            | aioTranslate
+                        }}</span>
                       }
                     </td>
                   </tr>

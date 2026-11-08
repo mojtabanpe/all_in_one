@@ -232,6 +232,42 @@ export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
   ['بررسی دوباره', 'Check again'],
   ['در حال بررسی', 'Checking'],
   ['رفتن به درگاه پرداخت ممکن نشد', 'Could not open the payment gateway'],
+  // Android store builds (Cafe Bazaar, Myket): in-app billing, never the web gateway
+  ['در حال خرید', 'Purchasing'],
+  ['خرید انجام نشد', 'Purchase failed'],
+  [
+    'این پلن هنوز در فروشگاه عرضه نشده است.',
+    'This plan is not in the store yet.',
+  ],
+  [
+    'خرید با پرداخت درون‌برنامه‌ای کافه‌بازار انجام می‌شود. تمدید از پایان اشتراک فعلی شروع می‌شود.',
+    'You pay with Cafe Bazaar in-app billing. An extension starts when your current subscription ends.',
+  ],
+  [
+    'خرید با پرداخت درون‌برنامه‌ای مایکت انجام می‌شود. تمدید از پایان اشتراک فعلی شروع می‌شود.',
+    'You pay with Myket in-app billing. An extension starts when your current subscription ends.',
+  ],
+  [
+    'فروشگاه در دسترس نیست. برنامهٔ فروشگاه را نصب کن، وارد حسابت شو و دوباره امتحان کن.',
+    'The store is unavailable. Install the store app, sign in and try again.',
+  ],
+  [
+    'خرید در فروشگاه انجام نشد. اگر مبلغی کم شده، چند دقیقه بعد دوباره همین صفحه را باز کن.',
+    'The store could not complete the purchase. If you were charged, open this page again in a few minutes.',
+  ],
+  ['اتصال به فروشگاه برقرار نشد.', 'Could not connect to the store.'],
+  [
+    'فروشگاه در دسترس نیست؛ خریدت ثبت شده و چند دقیقه بعد با باز کردن همین صفحه فعال می‌شود.',
+    'Store billing is unavailable',
+  ],
+  [
+    'خرید از فروشگاه هنوز راه‌اندازی نشده است.',
+    'Store billing is not configured',
+  ],
+  ['خرید تأیید نشد.', 'Purchase could not be verified'],
+  ['این خرید قبلاً استفاده شده است.', 'This purchase was already used'],
+  ['کافه‌بازار', 'Cafe Bazaar'],
+  ['مایکت', 'Myket'],
   ['بررسی پرداخت ممکن نشد', 'Could not check the payment'],
   // Admin plans
   ['پلن‌های اشتراک', 'Subscription plans'],

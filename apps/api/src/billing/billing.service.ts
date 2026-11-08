@@ -12,6 +12,8 @@ import { PrismaService } from '@all-in-one/api/db';
 import { SmsService, smsDate } from '@all-in-one/api/auth';
 import {
   BILLING_RENEW_WINDOW_MS,
+  billingPlanCodeFromSku,
+  billingStoreSku,
   canBuyPlan,
 } from '@all-in-one/shared/schemas';
 import type {
@@ -30,9 +32,20 @@ import type {
   BillingPlanInput,
   BillingRefundInput,
   BillingReturnStatus,
+  BillingStoreIntent,
+  BillingStoreIntentInput,
+  BillingStoreVerifyInput,
   BillingSubscriptionState,
 } from '@all-in-one/shared/schemas';
+import { StoreGateway } from './store.gateway';
 import { ZibalGateway } from './zibal.gateway';
+
+const STORE_PROVIDERS = { bazaar: 'BAZAAR', myket: 'MYKET' } as const;
+const invalidPurchase = () =>
+  new UnprocessableEntityException({
+    code: 'BILLING_STORE_INVALID',
+    message: 'Purchase could not be verified',
+  });
 
 const SOCIAL_OFFERS = [
   {
@@ -98,6 +111,7 @@ export class BillingService {
     private readonly gateway: ZibalGateway,
     private readonly config: ConfigService = new ConfigService(),
     @Optional() private readonly sms?: SmsService,
+    @Optional() private readonly store?: StoreGateway,
   ) {}
 
   /**
@@ -291,6 +305,7 @@ export class BillingService {
           status: true,
           refNumber: true,
           trackId: true,
+          provider: true,
           createdAt: true,
           paidAt: true,
           plan: { select: { code: true } },
@@ -726,18 +741,7 @@ export class BillingService {
     code: string,
     now = new Date(),
   ): Promise<{ paymentUrl: string }> {
-    const plan = await this.prisma.billingPlan.findUnique({ where: { code } });
-    if (!plan?.active) throw new NotFoundException('Plan is not available');
-    const subscription = await this.prisma.billingSubscription.findUnique({
-      where: { userId },
-      select: { paidUntil: true },
-    });
-    if (!canBuyPlan(subscription?.paidUntil ?? null, now))
-      throw new ConflictException({
-        code: 'BILLING_STILL_ACTIVE',
-        message:
-          'اشتراکت هنوز فعال است. تمدید از سه روز مانده به پایان آن ممکن می‌شود.',
-      });
+    const plan = await this.buyablePlan(userId, code, now);
     const order = await this.prisma.billingOrder.create({
       data: {
         userId,
@@ -763,6 +767,107 @@ export class BillingService {
       });
       throw error;
     }
+  }
+
+  /** An active plan the account may buy now: refused while paid access has more than three days left. */
+  private async buyablePlan(userId: string, code: string, now: Date) {
+    const plan = await this.prisma.billingPlan.findUnique({ where: { code } });
+    if (!plan?.active) throw new NotFoundException('Plan is not available');
+    const subscription = await this.prisma.billingSubscription.findUnique({
+      where: { userId },
+      select: { paidUntil: true },
+    });
+    if (!canBuyPlan(subscription?.paidUntil ?? null, now))
+      throw new ConflictException({
+        code: 'BILLING_STILL_ACTIVE',
+        message:
+          'اشتراکت هنوز فعال است. تمدید از سه روز مانده به پایان آن ممکن می‌شود.',
+      });
+    return plan;
+  }
+
+  /**
+   * Store builds call this before opening the store's purchase sheet, so directive 118 holds there too (the
+   * store charges before our server hears of it). The payload ties the purchase to this account.
+   */
+  async storeIntent(
+    userId: string,
+    input: BillingStoreIntentInput,
+    now = new Date(),
+  ): Promise<BillingStoreIntent> {
+    const plan = await this.buyablePlan(userId, input.plan, now);
+    return { sku: billingStoreSku(plan.code), payload: userId };
+  }
+
+  /**
+   * Activates a store purchase once. The token is checked with the store's developer API for this SKU and must
+   * carry this account's payload; the order is created with the plan's price and months and then goes through
+   * the same locked activation as a Zibal payment. A replay by the same account is answered `paid` without a
+   * second month; another account's replay is refused. A store outage writes nothing. The renewal window is
+   * not checked here: the store has already charged, so a late purchase extends from the current end.
+   */
+  async storeVerify(
+    userId: string,
+    input: BillingStoreVerifyInput,
+  ): Promise<BillingReturnStatus> {
+    const provider = STORE_PROVIDERS[input.store];
+    const plan = await this.prisma.billingPlan.findUnique({
+      where: { code: billingPlanCodeFromSku(input.sku) },
+    });
+    if (!plan || billingStoreSku(plan.code) !== input.sku)
+      throw invalidPurchase();
+    const key = {
+      provider_purchaseToken: {
+        provider,
+        purchaseToken: input.purchaseToken,
+      },
+    };
+    const used = () =>
+      this.prisma.billingOrder.findUnique({
+        where: key,
+        select: { id: true, userId: true, status: true, planId: true },
+      });
+    let order = await used();
+    if (order) {
+      if (order.userId !== userId || order.planId !== plan.id)
+        throw new ConflictException({
+          code: 'BILLING_PURCHASE_USED',
+          message: 'This purchase was already used',
+        });
+      if (order.status === 'PAID') return 'paid';
+      if (order.status !== 'PENDING') throw invalidPurchase();
+    }
+    if (!this.store)
+      throw new ServiceUnavailableException('Store billing is unavailable');
+    const purchase = await this.store.verify(
+      input.store,
+      input.sku,
+      input.purchaseToken,
+    );
+    if (purchase.kind !== 'purchased' || purchase.payload !== userId)
+      throw invalidPurchase();
+    if (!order) {
+      try {
+        order = await this.prisma.billingOrder.create({
+          data: {
+            userId,
+            planId: plan.id,
+            months: plan.months,
+            amountRial: plan.priceRial,
+            provider,
+            purchaseToken: input.purchaseToken,
+          },
+          select: { id: true, userId: true, status: true, planId: true },
+        });
+      } catch (error) {
+        // The same purchase verified concurrently: whichever request created the order activates it once.
+        if ((error as { code?: unknown }).code !== 'P2002') throw error;
+        order = await used();
+        if (!order || order.userId !== userId) throw invalidPurchase();
+      }
+    }
+    await this.activate(order.id, null);
+    return 'paid';
   }
 
   /**
@@ -804,9 +909,16 @@ export class BillingService {
   ): Promise<BillingReturnStatus> {
     const order = await this.prisma.billingOrder.findFirst({
       where: { id: orderId, userId },
-      select: { trackId: true, status: true, createdAt: true },
+      select: { trackId: true, status: true, createdAt: true, provider: true },
     });
     if (!order) throw new NotFoundException('Order not found');
+    // Store orders are settled by storeVerify, which the app repeats until the purchase is consumed.
+    if (order.provider !== 'ZIBAL')
+      return order.status === 'PAID'
+        ? 'paid'
+        : order.status === 'PENDING'
+          ? 'pending'
+          : 'failed';
     if (order.trackId) return this.settle(order.trackId);
     if (order.status !== 'PENDING') return 'failed';
     // Never reached the gateway. A young one may still be inside checkout, so only an old one is closed.
@@ -827,6 +939,7 @@ export class BillingService {
     const stale = await this.prisma.billingOrder.findMany({
       where: {
         status: 'PENDING',
+        provider: 'ZIBAL',
         createdAt: {
           lt: new Date(now.getTime() - RECONCILE_AFTER_MS),
           // Older ones are left for an admin, so they never starve newer orders out of the batch.

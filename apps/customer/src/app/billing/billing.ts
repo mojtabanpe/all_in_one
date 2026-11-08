@@ -1,7 +1,18 @@
 import { firstValueFrom } from 'rxjs';
 import { DOCUMENT } from '@angular/common';
-import { HttpClient, httpResource } from '@angular/common/http';
-import { Component, computed, inject, input, signal } from '@angular/core';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  httpResource,
+} from '@angular/common/http';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import type {
   BillingOrderSummary,
   BillingPlan,
@@ -14,6 +25,7 @@ import type {
 } from '@all-in-one/shared/schemas';
 import {
   billingRewardRequestSchema,
+  billingStoreSku,
   canBuyPlan,
 } from '@all-in-one/shared/schemas';
 import {
@@ -42,11 +54,15 @@ import {
   lucideClock,
   lucideReceipt,
 } from '@ng-icons/lucide';
+import { StoreBilling, StorePurchaseCanceled } from './store-billing';
 
 const RESULTS: readonly BillingReturnStatus[] = ['paid', 'failed', 'pending'];
 const GATEWAY = 'https://gateway.zibal.ir/start/';
 
-/** Plans, subscription state, Zibal checkout and the result of a return from the gateway. */
+/**
+ * Plans, subscription state, Zibal checkout and the result of a return from the gateway. The Android store
+ * builds buy through the store's in-app billing instead and never show the gateway (both stores require it).
+ */
 @Component({
   selector: 'customer-billing',
   imports: [
@@ -319,18 +335,28 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
                     </p>
                   </div>
                   @if (canBuy()) {
-                    <div aioCardFooter>
+                    <div aioCardFooter class="flex-col items-stretch gap-2">
                       <button
                         aioAsyncButton
                         class="min-h-11 w-full"
                         [label]="
                           paid() ? 'پرداخت و تمدید' : 'پرداخت و فعال‌سازی'
                         "
-                        busyLabel="در حال رفتن به درگاه"
+                        [busyLabel]="
+                          store ? 'در حال خرید' : 'در حال رفتن به درگاه'
+                        "
                         [busy]="paying() === plan.code"
-                        [disabled]="!!paying()"
+                        [disabled]="!!paying() || !sellable(plan.code)"
                         (click)="pay(plan.code)"
                       ></button>
+                      @if (!sellable(plan.code)) {
+                        <p class="text-muted-foreground text-xs">
+                          {{
+                            'این پلن هنوز در فروشگاه عرضه نشده است.'
+                              | aioTranslate
+                          }}
+                        </p>
+                      }
                     </div>
                   }
                 </article>
@@ -338,9 +364,13 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
             </div>
             <p class="text-sm text-muted-foreground">
               {{
-                (canBuy()
-                  ? 'پرداخت در درگاه زیبال انجام می‌شود. تمدید از پایان اشتراک فعلی شروع می‌شود.'
-                  : 'اشتراکت فعال است. تمدید از سه روز مانده به پایان آن ممکن می‌شود و از همان روز پایان ادامه پیدا می‌کند.'
+                (!canBuy()
+                  ? 'اشتراکت فعال است. تمدید از سه روز مانده به پایان آن ممکن می‌شود و از همان روز پایان ادامه پیدا می‌کند.'
+                  : store === 'bazaar'
+                    ? 'خرید با پرداخت درون‌برنامه‌ای کافه‌بازار انجام می‌شود. تمدید از پایان اشتراک فعلی شروع می‌شود.'
+                    : store === 'myket'
+                      ? 'خرید با پرداخت درون‌برنامه‌ای مایکت انجام می‌شود. تمدید از پایان اشتراک فعلی شروع می‌شود.'
+                      : 'پرداخت در درگاه زیبال انجام می‌شود. تمدید از پایان اشتراک فعلی شروع می‌شود.'
                 ) | aioTranslate
               }}
             </p>
@@ -454,6 +484,22 @@ export class Billing {
   private readonly http = inject(HttpClient);
   private readonly notifications = inject(AioNotifications);
   private readonly window = inject(DOCUMENT).defaultView;
+  private readonly storeBilling = inject(StoreBilling);
+  /** Set in the Android store builds: purchases go through the store, never the web gateway. */
+  protected readonly store = this.storeBilling.store;
+  /** SKUs the store offers; null until known or when the store cannot be asked (then every plan stays buyable). */
+  private readonly storeSkus = signal<Set<string> | null>(null);
+
+  constructor() {
+    if (!this.store) return;
+    // A purchase that never reached the server (closed app, outage) is activated on the next visit.
+    void this.storeBilling
+      .restore()
+      .then((count) => {
+        if (count) this.refresh();
+      })
+      .catch(() => undefined);
+  }
 
   /** `?payment=` from the gateway callback redirect. */
   readonly payment = input<string>();
@@ -555,6 +601,26 @@ export class Billing {
     REFUNDED: 'بازپرداخت‌شده',
   } as const;
 
+  protected sellable(code: string): boolean {
+    const skus = this.storeSkus();
+    return !skus || skus.has(billingStoreSku(code));
+  }
+
+  private readonly loadStoreSkus = effect(() => {
+    if (!this.store || !this.plans.hasValue()) return;
+    const skus = this.plans.value().map((plan) => billingStoreSku(plan.code));
+    void this.storeBilling.products(skus).then((sold) => {
+      // An empty answer is a store that could not list products, not one that sells nothing.
+      this.storeSkus.set(sold?.size ? sold : null);
+    });
+  });
+
+  private refresh(): void {
+    this.orders.reload();
+    this.access.reload();
+    this.usage.reload();
+  }
+
   protected planTitle(plan: BillingPlan): string {
     return this.locale.english() ? plan.titleEn : plan.titleFa;
   }
@@ -565,6 +631,7 @@ export class Billing {
   }
 
   protected async pay(plan: string): Promise<void> {
+    if (this.store) return this.buyInStore(plan);
     this.paying.set(plan);
     try {
       const { paymentUrl } = await firstValueFrom(
@@ -582,6 +649,25 @@ export class Billing {
         'رفتن به درگاه پرداخت ممکن نشد',
         apiErrorMessage(error),
       );
+    }
+  }
+
+  private async buyInStore(plan: string): Promise<void> {
+    this.paying.set(plan);
+    try {
+      this.checked.set(await this.storeBilling.buy(plan));
+      this.refresh();
+    } catch (error) {
+      if (!(error instanceof StorePurchaseCanceled))
+        this.notifications.error(
+          'خرید انجام نشد',
+          error instanceof Error && !(error instanceof HttpErrorResponse)
+            ? error.message
+            : apiErrorMessage(error),
+        );
+      this.orders.reload();
+    } finally {
+      this.paying.set(null);
     }
   }
 

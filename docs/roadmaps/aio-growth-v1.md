@@ -85,6 +85,7 @@ Owns `apps/api/src/billing`, `libs/api/ai`, `apps/api/src/admin` AI/billing part
 | C5  | AI provider fallback (second preset per service), error-rate/budget alerts in `/admin/ai`, per-user concurrency limit                                   | DONE (Claude, see managed AI section)             |
 | C6  | Faraz SMS client, phone verification and the five template flows behind an env switch, tested with a mocked provider (real delivery waits for O4)       | DONE (Claude, see SMS section; real delivery: O4) |
 | C7  | Per-model AI price history, so cost reports keep old prices after a model change                                                                        | DONE (Claude, see quotas item)                    |
+| C8  | Cafe Bazaar and Myket in-app billing: store APK flavors, WebView bridge, server-side purchase verification (owner decision 2026-11-08, directive 120)   | IN_PROGRESS (Claude, see Android stores section)  |
 
 → Codex (from Claude, 2026-11-07): with `GROWTH_DB_INTEGRATION=1`, `pnpm nx test api -- src/growth` fails 1–2 tests
 in `growth-activity.integration.spec.ts` (D1 returns, seven-day cohorts: e.g. expected 3, got 5) when the growth files
@@ -124,6 +125,8 @@ Agents cannot do these: they need the owner's decision, login, devices or an Ira
 | O7  | Create the official Telegram/Instagram pages, then turn on `BILLING_*_OFFER_ENABLED`; publish the English pilot when ready                  | social weeks, X6  | DONE (pages, offers, footer links and bios 2026-11-08; English pilot post when ready)     |
 | O8  | After O1: Zibal sandbox, then one real low-amount payment; with your admin login, open the growth/AI reports on production and note issues  | payments, reports | DONE (real payment and admin report review, owner 2026-11-08: fine for now)               |
 | O9  | Talk to 5–20 users (pilot interview questions) and write the findings here                                                                  | experiments       | DROPPED (owner, 2026-11-08: not doing interviews)                                         |
+| O10 | Release signing key in GitHub secrets; Cafe Bazaar and Myket developer accounts, apps, products and keys (`docs/android-stores.fa.md`)      | C8 store test     | TODO                                                                                      |
+| O11 | Upload the store APKs, buy one plan in each store and confirm the activation in `/app/billing` and `/admin/billing`                         | C8 done           | TODO (after O10)                                                                          |
 
 ## North star and KPIs
 
@@ -269,6 +272,39 @@ Evidence: `apps/admin/src/app/pages/dashboard.ts` already shows basic user/conte
   - `DONE` (C3, 2026-11-07, local, not deployed) Paywall entry points. Header: a crown button to `/billing` on the free tier («دیدن پلن‌ها») or in the last three trial days («۲ روز آزمایشی مانده», «آخرین روز آزمایشی»), icon-only on phones; refreshed after leaving `/billing`. Account page (customer only, route data `billing: true`): «اشتراک» card with the trial/gift/paid/free state, a line that the planner, flashcards and health stay free, and «دیدن پلن‌ها» / «مدیریت اشتراک». The AI plan sheet (402) now says when the seven-day trial ended. Works with no plans: `/billing` shows the state and offers. Evidence: 14 affected projects lint/test/typecheck/build; local Chrome at 375px with stubbed access for free (trial ended), trial with 1.5 and 6 days left and paid: header button only for free and 1.5 days, correct card text, sheet text after a forced 402, no overflow or page errors.
 - [ ] `IN_PROGRESS` Test success, cancellation, timeout, duplicate callback, amount mismatch, renewal/expiration, refund and payment-provider outage.
   - `DONE` (C1, 2026-11-07, local, not deployed) Mocked-Zibal matrix: gateway transport (`zibal.gateway.spec.ts`, 10 tests) covers cancel/declined (result 202, status 3/4/5/-1 → rejected), timeout, HTTP error, unreadable or empty reply (→ outage, order stays pending), paid-unverified status 2 and a foreign amount on an already-verified reply. PostgreSQL lifecycle (`billing.integration.spec.ts`, 23 tests with `GROWTH_DB_INTEGRATION=1`) adds: outage at callback settled once by reconciliation, already-verified reply after a lost activation, cancelled order never revived, verify with the order's own amount/months after a price change, unknown callbacks never reach Zibal, expiry drops to free and renewal counts from the payment day. **Bug fixed:** Zibal merchant errors (result 102–104) on verify used to mark a paid order `FAILED` for good; they are now an outage, so the order stays pending and is retried. `api` lint/test/typecheck/build passed (34 billing tests). Remaining: refunds (C2) and a real sandbox run (O8).
+
+## Android stores — Cafe Bazaar and Myket in-app billing (C8)
+
+- Owner decision (2026-11-08, directive 120): publish the Android app in Cafe Bazaar and Myket with each store's own
+  in-app billing (both stores' payment rules forbid an outside gateway for digital goods; Myket also requires equal
+  prices everywhere). Separate store builds, server-side verification; web/PWA and the direct APK keep Zibal. Owner
+  steps in Persian: [`docs/android-stores.fa.md`](../android-stores.fa.md).
+- [ ] `IN_PROGRESS` (Claude) C8.
+  - `DONE` (local) API: `POST /api/billing/store/intent {store, plan}` (plan active, directive 118 window, returns the
+    SKU and the account as developer payload) and `POST /api/billing/store/verify {store, sku, purchaseToken}`
+    (`StoreGateway`: Bazaar Pardakht API v2 with a Pishkhan key or OAuth refresh token, Myket server-to-server verify;
+    15 s timeout, no redirects, sanitized errors). The token must be a completed purchase of that SKU with this
+    account's payload; the order (provider `BAZAAR`/`MYKET`, unique `(provider, purchaseToken)`, plan price and months)
+    then goes through the same locked `activate` as Zibal. Same-account replay → `paid`, no second month; another
+    account → 409; unknown SKU, unknown/refunded token or wrong payload → 422; store outage → 503 and nothing written.
+    Store orders are left out of Zibal reconciliation. Additive migration `20261108112852_billing_store_purchases`.
+    Credentials only in server env (`BAZAAR_API_SECRET` or `BAZAAR_CLIENT_ID`/`_SECRET`/`_REFRESH_TOKEN`,
+    `MYKET_ACCESS_TOKEN`; `deploy/.env.example`).
+  - `DONE` (local) Customer `/app/billing`: store builds (user agent `PoshtetgarmStore/bazaar|myket`) buy through the
+    native bridge (`StoreBilling`), resend unconsumed purchases on the next visit, disable plans the store does not sell
+    and never show Zibal or gateway copy; admin orders show the store. Bilingual copy in `billing-messages.ts`.
+  - `DONE` (code) Android shell `native/poshtetgarm`: flavors `direct` (unchanged, split per ABI, debug key as installed),
+    `bazaar` (Poolakey 2.3.0) and `myket` (`ir.myket:billing:2.2`), consumable products (plans do not auto-renew,
+    directive 116), purchase consumed only after the server says `paid`; nonce-guarded `PoshtetgarmStore` bridge in the
+    trusted main frame only; `zibal.ir` blocked in store builds; store APKs signed with `ANDROID_KEYSTORE_*` when set;
+    public store keys from repository variables `BAZAAR_RSA_PUBLIC_KEY`, `MYKET_RSA_PUBLIC_KEY`. CI builds all three.
+  - Evidence (2026-11-08): `store.gateway.spec.ts` 5 tests (URLs/headers, OAuth refresh and retry, invalid vs outage,
+    no secret in errors); with `GROWTH_DB_INTEGRATION=1` on local PostgreSQL, 5 store tests in
+    `billing.integration.spec.ts` (concurrent verify → one month, replay, other account's replay, wrong payload, unknown
+    SKU never reaches the store, invalid token, outage writes nothing then succeeds, recheck without Zibal); customer
+    `store-billing.spec.ts` 4 tests (verify before consume, cancel, restore skips other accounts' purchases). Flutter
+    analyze/test and the APK builds run on GitHub (pub.dev is not reachable from the local network).
+  - `TODO` A real purchase in each store's test/live mode (owner items O10, O11), then mark C8 `DONE`.
 
 ## P0/P1 — replace user AI configuration with one reliable managed service
 

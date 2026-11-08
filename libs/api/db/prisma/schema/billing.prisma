@@ -23,6 +23,13 @@ enum BillingOrderStatus {
   REFUNDED
 }
 
+/// Where an order was paid: Zibal on the web and the direct APK, or a store's in-app billing in the store builds.
+enum BillingProvider {
+  ZIBAL
+  BAZAAR
+  MYKET
+}
+
 /// One checkout. Plan, months and amount are copied at creation so a later price change never alters it.
 /// Financial record: deleting a user with orders is refused.
 model BillingOrder {
@@ -37,11 +44,15 @@ model BillingOrder {
   /// Zibal's payment reference, set once the gateway accepts the request.
   trackId    String?            @unique @db.VarChar(32)
   refNumber  String?            @db.VarChar(64)
+  provider   BillingProvider    @default(ZIBAL)
+  /// A store purchase token (Bazaar, Myket). Unique per store, so one purchase activates at most once.
+  purchaseToken String?         @db.VarChar(512)
   paidAt     DateTime?
   createdAt  DateTime           @default(now())
   updatedAt  DateTime           @updatedAt
   refund     BillingRefund?
 
+  @@unique([provider, purchaseToken])
   @@index([userId, createdAt])
   @@map("billing_orders")
 }

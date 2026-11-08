@@ -28,6 +28,10 @@ import {
   billingRefundSchema,
   billingRewardSchema,
   billingRewardRequestSchema,
+  billingStoreIntentSchema,
+  billingStoreVerifySchema,
+  type BillingStoreIntentInput,
+  type BillingStoreVerifyInput,
   type BillingRewardRequestInput,
   type BillingRewardInput,
   type BillingAccountQuery,
@@ -87,6 +91,26 @@ export class BillingController {
     @Body({ schema: billingCheckoutSchema }) input: BillingCheckoutInput,
   ) {
     return this.billing.checkout(user.id, input.plan);
+  }
+
+  /** Store builds (Cafe Bazaar, Myket): checks the plan and renewal window before the store's purchase sheet. */
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Post('store/intent')
+  storeIntent(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: billingStoreIntentSchema }) input: BillingStoreIntentInput,
+  ) {
+    return this.billing.storeIntent(user.id, input);
+  }
+
+  /** A finished store purchase: verified with the store's developer API, then activated once. */
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @Post('store/verify')
+  async storeVerify(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: billingStoreVerifySchema }) input: BillingStoreVerifyInput,
+  ) {
+    return { status: await this.billing.storeVerify(user.id, input) };
   }
 
   @Throttle({ default: { limit: 10, ttl: 60_000 } })

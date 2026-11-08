@@ -9,6 +9,7 @@ import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 import 'app_settings.dart';
 import 'native_push.dart';
+import 'store_billing.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +40,7 @@ class PoshtetgarmWindow extends StatefulWidget {
 class _PoshtetgarmWindowState extends State<PoshtetgarmWindow>
     with WidgetsBindingObserver {
   late final _push = NativePush(navigate: (url) => _load(url));
+  final _store = StoreBilling();
   final _settings = AppSettings();
   WebViewController? _controller;
   Uri _appUrl = Uri.parse(productionUrl);
@@ -108,10 +110,21 @@ class _PoshtetgarmWindowState extends State<PoshtetgarmWindow>
         'NativePushChannel',
         onMessageReceived: (message) => unawaited(_push.handle(message)),
       );
+      final store = buildStore;
+      if (store != null) {
+        await controller.addJavaScriptChannel(
+          'StoreBillingChannel',
+          onMessageReceived: (message) => unawaited(_store.handle(message)),
+        );
+        await controller.setUserAgent(
+          storeUserAgent(await controller.getUserAgent(), store),
+        );
+      }
       await controller.setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (_) {
             _push.pageStarted();
+            _store.pageStarted();
             if (mounted) {
               setState(() {
                 _error = null;
@@ -120,7 +133,10 @@ class _PoshtetgarmWindowState extends State<PoshtetgarmWindow>
           },
           onPageFinished: (url) {
             final uri = Uri.tryParse(url);
-            if (uri != null) unawaited(_push.attach(controller, uri));
+            if (uri != null) {
+              unawaited(_push.attach(controller, uri));
+              unawaited(_store.attach(controller, uri));
+            }
             if (mounted) {
               unawaited(_history());
             }
@@ -136,6 +152,9 @@ class _PoshtetgarmWindowState extends State<PoshtetgarmWindow>
           onNavigationRequest: (request) async {
             final uri = Uri.tryParse(request.url);
             if (uri == null) return NavigationDecision.prevent;
+            if (_store.enabled && blockedInStore(uri)) {
+              return NavigationDecision.prevent;
+            }
             if (!request.isMainFrame ||
                 isAppNavigation(uri, _appUrl) ||
                 request.url == 'about:blank') {

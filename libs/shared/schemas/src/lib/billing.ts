@@ -24,6 +24,41 @@ export function canBuyPlan(
   );
 }
 
+/** Android store builds pay through the store's own in-app billing; the web and the direct APK use Zibal. */
+export const BILLING_STORES = ['bazaar', 'myket'] as const;
+export type BillingStore = (typeof BILLING_STORES)[number];
+
+/**
+ * A plan's store product ID (SKU). Store IDs allow letters, digits, `_` and `.`, so the plan code's `-` becomes
+ * `_`; plan codes never contain `_`, so the mapping is reversible.
+ */
+export function billingStoreSku(code: string): string {
+  return code.replaceAll('-', '_');
+}
+export function billingPlanCodeFromSku(sku: string): string {
+  return sku.replaceAll('_', '-');
+}
+
+/** Before opening the store's purchase sheet: checks the plan and directive 118, returns the SKU and payload. */
+export const billingStoreIntentSchema = z.strictObject({
+  store: z.enum(BILLING_STORES),
+  plan: billingPlanCodeSchema,
+});
+export type BillingStoreIntentInput = z.infer<typeof billingStoreIntentSchema>;
+export interface BillingStoreIntent {
+  sku: string;
+  /** Sent as the purchase's developer payload; the server only accepts a purchase whose payload is this account's. */
+  payload: string;
+}
+
+/** A finished store purchase, sent for server-side verification with the store's developer API. */
+export const billingStoreVerifySchema = z.strictObject({
+  store: z.enum(BILLING_STORES),
+  sku: z.string().check(z.regex(/^[a-z0-9][a-z0-9_]{0,31}$/)),
+  purchaseToken: z.string().check(z.regex(/^[A-Za-z0-9._:+/=-]{8,512}$/)),
+});
+export type BillingStoreVerifyInput = z.infer<typeof billingStoreVerifySchema>;
+
 /** Admin create/update. Prices are Rial (Zibal's unit; 10 Rial = 1 Toman), whole Toman only. */
 export const billingPlanInputSchema = z.strictObject({
   code: billingPlanCodeSchema,
@@ -86,9 +121,12 @@ export type BillingAdminOrdersQuery = z.infer<
   typeof billingAdminOrdersQuerySchema
 >;
 
+export type BillingProvider = 'ZIBAL' | 'BAZAAR' | 'MYKET';
+
 export interface BillingAdminOrder extends BillingOrderSummary {
   email: string;
   trackId: string | null;
+  provider: BillingProvider;
 }
 
 export interface BillingAdminOverview {

@@ -2,6 +2,13 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        // Store billing SDKs: Cafe Bazaar's Poolakey (JitPack) and Myket's billing client.
+        maven("https://jitpack.io") {
+            content { includeGroupByRegex("com\\.github\\.cafebazaar.*") }
+        }
+        maven("https://maven.myket.ir") {
+            content { includeGroup("ir.myket") }
+        }
     }
 }
 

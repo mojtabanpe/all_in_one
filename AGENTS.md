@@ -630,3 +630,15 @@ origin master` and read the index and the roadmap; after work, update its status
      accounts keep working; a confirmed phone can also sign in with a code. **A phone alone is enough** (owner: «فقط
      شماره کافیست»): a new account can be created with only a confirmed mobile number, the trial starts when that number
      is confirmed, and an email can be added later from the account page.
+
+## Android stores (2026-11-08)
+
+120. **Cafe Bazaar and Myket builds pay through the store** (owner chose separate store builds with each store's
+     billing; both stores forbid an outside gateway for digital goods, Myket requires equal prices everywhere). The
+     Android shell has flavors `direct` (GitHub Releases, Zibal), `bazaar` (Poolakey) and `myket` (Myket billing
+     client); store builds announce themselves in the user agent (`PoshtetgarmStore/<store>`), and in them nothing
+     mentions or opens Zibal or a web payment. Each plan is a **consumable** store product whose SKU is the plan code
+     with `-` → `_`, at the plan's exact price; the purchase is consumed only after `POST /api/billing/store/verify`
+     has checked it with the store's developer API and activated it through the same locked `activate` as Zibal (one
+     activation per purchase token, payload = the account). Store API credentials live only in server env; the
+     public store keys are repository variables. Owner steps: `docs/android-stores.fa.md`.

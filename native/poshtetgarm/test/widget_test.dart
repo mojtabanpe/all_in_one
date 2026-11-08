@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:poshtetgarm_hybrid/main.dart';
 import 'package:poshtetgarm_hybrid/app_settings.dart';
 import 'package:poshtetgarm_hybrid/native_push.dart';
+import 'package:poshtetgarm_hybrid/store_billing.dart';
 
 void main() {
   test('notification links stay inside the trusted app', () {
@@ -83,4 +84,26 @@ void main() {
       expect(find.text('http://10.0.2.2:4400'), findsOneWidget);
     },
   );
+
+  test('store builds are recognized from the flavor and never open the web gateway', () {
+    expect(storeOf('bazaar'), 'bazaar');
+    expect(storeOf('myket'), 'myket');
+    expect(storeOf('direct'), isNull);
+    expect(storeOf(null), isNull);
+    expect(
+      storeUserAgent('Mozilla/5.0 (Linux; Android 14)', 'bazaar'),
+      'Mozilla/5.0 (Linux; Android 14) PoshtetgarmStore/bazaar',
+    );
+    expect(storeUserAgent(null, 'myket'), 'PoshtetgarmStore/myket');
+    expect(
+      blockedInStore(Uri.parse('https://gateway.zibal.ir/start/1')),
+      isTrue,
+    );
+    expect(blockedInStore(Uri.parse('https://zibal.ir/')), isTrue);
+    expect(blockedInStore(Uri.parse('https://notzibal.ir/')), isFalse);
+    expect(
+      blockedInStore(Uri.parse('https://poshtetgarm.ir/app/billing')),
+      isFalse,
+    );
+  });
 }

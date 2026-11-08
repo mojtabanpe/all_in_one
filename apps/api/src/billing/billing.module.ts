@@ -5,6 +5,7 @@ import { PrismaModule } from '@all-in-one/api/db';
 import { BillingController, PaymentsController } from './billing.controller';
 import { BillingReconciler } from './billing-reconciler';
 import { BillingService } from './billing.service';
+import { StoreGateway } from './store.gateway';
 import { ZibalGateway } from './zibal.gateway';
 
 @Global()
@@ -15,6 +16,7 @@ import { ZibalGateway } from './zibal.gateway';
     BillingService,
     BillingReconciler,
     ZibalGateway,
+    StoreGateway,
     { provide: AI_ACCESS, useExisting: BillingService },
   ],
   exports: [AI_ACCESS],
