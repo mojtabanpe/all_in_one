@@ -108,6 +108,12 @@ without a campaign fall through byte-identically. Verified on the built server: 
 prerendered files, only the hrefs differ when tagged, canonical/JSON-LD/H1 counts unchanged, the
 cookie is reused, and robots/sitemap/assets are untouched. 9 unit tests (`growth-inject.spec.ts`).
 **DONE (owner confirmation, 2026-11-09):** The owner confirmed the production verification of the paid-link registration fix.
+**First-touch at signup (2026-11-09, commit `cd725f5`):** a signup whose own request carries no
+campaign copies the campaign of that visitor's earliest tagged `growth_events` row
+(`firstTouchCampaign` in `libs/api/auth`), so the flows that cannot carry the URL tags — an installed
+PWA or the native shell, which open `/app/` with no query string — still count, and the signup row
+itself no longer depends on the 90-day event retention. A different cookie jar (the native Flutter
+shell, another device) still needs a handoff that passes the campaign into the app. 4 unit tests.
 
 ### ChatGPT (Codex) lane: acquisition, activation and retention
 
