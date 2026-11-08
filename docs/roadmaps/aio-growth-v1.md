@@ -125,8 +125,8 @@ Agents cannot do these: they need the owner's decision, login, devices or an Ira
 | O7  | Create the official Telegram/Instagram pages, then turn on `BILLING_*_OFFER_ENABLED`; publish the English pilot when ready                  | social weeks, X6  | DONE (pages, offers, footer links and bios 2026-11-08; English pilot post when ready)     |
 | O8  | After O1: Zibal sandbox, then one real low-amount payment; with your admin login, open the growth/AI reports on production and note issues  | payments, reports | DONE (real payment and admin report review, owner 2026-11-08: fine for now)               |
 | O9  | Talk to 5–20 users (pilot interview questions) and write the findings here                                                                  | experiments       | DROPPED (owner, 2026-11-08: not doing interviews)                                         |
-| O10 | Release signing key in GitHub secrets; Cafe Bazaar and Myket developer accounts, apps, products and keys (`docs/android-stores.fa.md`)      | C8 store test     | TODO                                                                                      |
-| O11 | Upload the store APKs, buy one plan in each store and confirm the activation in `/app/billing` and `/admin/billing`                         | C8 done           | TODO (after O10)                                                                          |
+| O10 | Release signing key in GitHub secrets; Cafe Bazaar and Myket developer accounts, apps, products and keys (`docs/android-stores.fa.md`)      | C8 store test     | DONE (owner + Claude 2026-11-08, see C8)                                                  |
+| O11 | Upload the store APKs, buy one plan in each store and confirm the activation in `/app/billing` and `/admin/billing`                         | C8 done           | TODO (APKs 1.0.4 uploaded; buy one plan)                                                  |
 
 ## North star and KPIs
 
@@ -311,7 +311,17 @@ Evidence: `apps/admin/src/app/pages/dashboard.ts` already shows basic user/conte
     [Android APK run 42476988172](https://github.com/mojtabanpe/all_in_one/actions/runs/42476988172) built all three
     flavors (direct split per ABI 24 MB, bazaar 22 MB, myket 23 MB artifacts; the bazaar job's first attempt hit a
     GitHub 504 downloading Gradle and passed on rerun); CI green. Store builds are debug-signed until O10 adds the key.
-  - `TODO` A real purchase in each store's test/live mode (owner items O10, O11), then mark C8 `DONE`.
+  - `DONE` (owner + Claude, 2026-11-08) O10: release key in GitHub secrets (store APKs signed with SHA-256
+    `31f12182…cf27d7`); Myket and Bazaar apps `ir.poshtetgarm.poshtetgarm_hybrid` created with the three consumable
+    products; store public keys in GitHub (`MYKET_RSA_PUBLIC_KEY` variable, `BAZAAR_RSA_PUBLIC_KEY` secret; the workflow
+    reads either, `4c90c61`); version 1.0.4 (code 5, `18a662c`) built with both keys
+    ([run 42482248309](https://github.com/mojtabanpe/all_in_one/actions/runs/42482248309)) and uploaded by the owner.
+    `MYKET_ACCESS_TOKEN` and `BAZAAR_API_SECRET` written by Claude to the server env at the owner's request (backup
+    kept, owner and mode 600 unchanged, values never printed) and loaded by
+    [deploy 42484002664](https://github.com/mojtabanpe/all_in_one/actions/runs/42484002664). Live check from the api
+    container with a made-up token: Bazaar answers 404 `not_found` and Myket 400 `InvalidToken` (a wrong Myket key
+    answers 401), so both keys authenticate and `StoreGateway` maps these to "invalid purchase", not an outage.
+  - `TODO` A real purchase in each store (owner item O11), then mark C8 `DONE`.
 
 ## P0/P1 — replace user AI configuration with one reliable managed service
 
