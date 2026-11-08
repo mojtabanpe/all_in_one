@@ -1,4 +1,5 @@
 import * as z from 'zod/mini';
+import { iranMobile } from './user';
 
 /** Lowercase plan handle, e.g. `monthly`, `annual`. */
 export const billingPlanCodeSchema = z
@@ -169,7 +170,20 @@ export interface BillingAdminOrderPage {
   overview: BillingAdminOverview;
 }
 
-export const billingAccountQuerySchema = z.strictObject({ email: z.email() });
+/**
+ * Admin account key: the account's email, or its confirmed mobile for a phone-only account (directive 119). The
+ * field stays named `email` so existing admin requests keep working.
+ */
+const accountKey = z.string().check(
+  z.trim(),
+  z.maxLength(254),
+  z.refine(
+    (value) => iranMobile(value) !== null || /^\S+@\S+\.\S+$/.test(value),
+    'ایمیل یا شمارهٔ موبایل حساب را وارد کن.',
+  ),
+);
+
+export const billingAccountQuerySchema = z.strictObject({ email: accountKey });
 export type BillingAccountQuery = z.infer<typeof billingAccountQuerySchema>;
 
 const adjustmentReason = z
@@ -178,13 +192,13 @@ const adjustmentReason = z
 /** Admin: extend someone's paid access by a number of days, or end it now. A reason is always recorded. */
 export const billingAdjustmentSchema = z.discriminatedUnion('action', [
   z.strictObject({
-    email: z.email(),
+    email: accountKey,
     action: z.literal('extend'),
     days: z.number().check(z.int(), z.minimum(1), z.maximum(366)),
     reason: adjustmentReason,
   }),
   z.strictObject({
-    email: z.email(),
+    email: accountKey,
     action: z.literal('end'),
     reason: adjustmentReason,
   }),
@@ -219,21 +233,27 @@ export const billingRefundSchema = z.strictObject({
 });
 export type BillingRefundInput = z.infer<typeof billingRefundSchema>;
 
-export const BILLING_REWARD_CAMPAIGNS = [
+/** Weeks support grants after checking a membership (directive 108); customers request these. */
+export const SOCIAL_REWARD_CAMPAIGNS = [
   'TELEGRAM_JOIN',
   'INSTAGRAM_FOLLOW',
+] as const;
+/** Every week campaign; SECOND_CONTACT is granted automatically (directive 121). */
+export const BILLING_REWARD_CAMPAIGNS = [
+  ...SOCIAL_REWARD_CAMPAIGNS,
+  'SECOND_CONTACT',
 ] as const;
 export type BillingRewardCampaign = (typeof BILLING_REWARD_CAMPAIGNS)[number];
 
 export const billingRewardSchema = z.strictObject({
-  email: z.email(),
-  campaign: z.enum(BILLING_REWARD_CAMPAIGNS),
+  email: accountKey,
+  campaign: z.enum(SOCIAL_REWARD_CAMPAIGNS),
   reason: adjustmentReason,
 });
 export type BillingRewardInput = z.infer<typeof billingRewardSchema>;
 
 export const billingRewardRequestSchema = z.strictObject({
-  campaign: z.enum(BILLING_REWARD_CAMPAIGNS),
+  campaign: z.enum(SOCIAL_REWARD_CAMPAIGNS),
   handle: z.string().check(z.trim(), z.regex(/^@?[a-zA-Z0-9_.]{1,30}$/)),
 });
 export type BillingRewardRequestInput = z.infer<
@@ -242,8 +262,11 @@ export type BillingRewardRequestInput = z.infer<
 
 export interface BillingRewardOffer {
   campaign: BillingRewardCampaign;
+  /** The official page; empty for SECOND_CONTACT, which points at the account page instead. */
   url: string;
   status: 'available' | 'pending' | 'earned';
+  /** SECOND_CONTACT: what the account still has to confirm. */
+  confirm?: 'phone' | 'email';
 }
 
 export interface BillingPendingReward {

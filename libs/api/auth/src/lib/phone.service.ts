@@ -4,12 +4,14 @@ import {
   HttpException,
   Injectable,
   Logger,
+  Optional,
 } from '@nestjs/common';
 import { createHash, randomInt, timingSafeEqual } from 'node:crypto';
 import { iranMobile, type PhoneState } from '@all-in-one/shared/schemas';
 import { PrismaService } from '@all-in-one/api/db';
 import { hashPassword } from './password';
 import { SmsService } from './sms.service';
+import { ContactEvents } from './contact-events';
 
 type Purpose = 'VERIFY' | 'RESET';
 
@@ -47,6 +49,7 @@ export class PhoneService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly sms: SmsService,
+    @Optional() private readonly events?: ContactEvents,
   ) {}
 
   get enabled(): boolean {
@@ -98,10 +101,20 @@ export class PhoneService {
       // Confirmed by another account in the meantime (unique number).
       throw new ConflictException('این شماره برای حساب دیگری ثبت شده است.');
     }
-    return this.state(userId, now);
+    const rewardedWeek = (await this.events?.confirmed(userId)) ?? false;
+    return { ...(await this.state(userId, now)), rewardedWeek };
   }
 
   async remove(userId: string) {
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { email: true },
+    });
+    // A phone-only account (directive 119) signs in with this number alone.
+    if (!user.email)
+      throw new BadRequestException(
+        'این حساب با همین شماره وارد می‌شود؛ اول ایمیل اضافه کن.',
+      );
     await this.prisma.$transaction([
       this.prisma.user.update({
         where: { id: userId },

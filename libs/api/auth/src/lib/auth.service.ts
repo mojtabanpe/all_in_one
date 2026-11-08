@@ -22,6 +22,7 @@ import { PrismaService, type User as DbUser } from '@all-in-one/api/db';
 import { MailService } from './mail.service';
 import { hashPassword, isLegacyHash, verifyPassword } from './password';
 import { SmsService } from './sms.service';
+import { ContactEvents } from './contact-events';
 
 const RESET_LIFETIME = 60 * 60 * 1000;
 const VERIFY_LIFETIME = 24 * 60 * 60 * 1000;
@@ -58,6 +59,7 @@ export class AuthService {
     private readonly mail: MailService,
     private readonly config: ConfigService,
     @Optional() private readonly sms?: SmsService,
+    @Optional() private readonly events?: ContactEvents,
   ) {}
 
   /** New accounts confirm their email unless REQUIRE_EMAIL_VERIFICATION=false. */
@@ -225,29 +227,85 @@ export class AuthService {
     });
   }
 
-  /** Uses a confirmation token once. */
-  async verifyEmail(token: string): Promise<void> {
-    const confirmed = await this.prisma.$transaction(async (tx) => {
+  /**
+   * A phone-only account adds an email (directive 121): a confirmation link goes to it, and the email is stored on
+   * the account only when that link is opened.
+   */
+  async requestEmail(userId: string, input: string): Promise<void> {
+    const email = input.trim().toLowerCase();
+    if (!this.mail.enabled)
+      throw new ServiceUnavailableException('ایمیل فعلاً در دسترس نیست.');
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
+    if (user.email)
+      throw new BadRequestException('ایمیل این حساب قبلاً ثبت شده است.');
+    if (await this.prisma.user.findUnique({ where: { email } }))
+      throw new ConflictException('این ایمیل برای حساب دیگری ثبت شده است.');
+    const token = newToken();
+    await this.prisma.emailVerification.deleteMany({
+      where: { OR: [{ expiresAt: { lte: new Date() } }, { userId }] },
+    });
+    await this.prisma.emailVerification.create({
+      data: {
+        tokenHash: digest(token),
+        userId,
+        email,
+        expiresAt: new Date(Date.now() + VERIFY_LIFETIME),
+      },
+    });
+    await this.mail.send({
+      to: email,
+      subject: 'ایمیلت را در «Poshtetgarm» تأیید کن',
+      text: [
+        'برای افزودن این ایمیل به حسابت در «Poshtetgarm»، روی لینک زیر بزن',
+        '(لینک یک بار و تا ۲۴ ساعت کار می‌کند):',
+        this.mail.link('verify-email', token),
+        '',
+        'اگر خودت نخواسته‌ای، این ایمیل را نادیده بگیر.',
+      ].join('\n'),
+    });
+  }
+
+  /**
+   * Uses a confirmation token once. A link from «add email» also stores that email on the account. Returns whether
+   * the confirmation earned the second-contact week (directive 121).
+   */
+  async verifyEmail(token: string): Promise<{ rewardedWeek: boolean }> {
+    const userId = await this.prisma.$transaction(async (tx) => {
       const row = await tx.emailVerification.findFirst({
         where: { tokenHash: digest(token), expiresAt: { gt: new Date() } },
       });
-      if (!row) return false;
+      if (!row) return null;
       const used = await tx.emailVerification.deleteMany({
         where: { tokenHash: row.tokenHash },
       });
-      if (!used.count) return false;
+      if (!used.count) return null;
       const user = await tx.user.findUniqueOrThrow({
         where: { id: row.userId },
       });
-      if (!user.emailVerifiedAt)
+      if (row.email) {
+        if (user.email) return null;
+        const taken = await tx.user.findUnique({
+          where: { email: row.email },
+          select: { id: true },
+        });
+        if (taken)
+          throw new ConflictException('این ایمیل برای حساب دیگری ثبت شده است.');
+        await tx.user.update({
+          where: { id: user.id },
+          data: { email: row.email, emailVerifiedAt: new Date() },
+        });
+      } else if (!user.emailVerifiedAt)
         await tx.user.update({
           where: { id: user.id },
           data: { emailVerifiedAt: new Date() },
         });
-      return true;
+      return user.id;
     });
-    if (!confirmed)
+    if (!userId)
       throw new BadRequestException('این لینک تأیید نامعتبر است یا منقضی شده.');
+    return { rewardedWeek: (await this.events?.confirmed(userId)) ?? false };
   }
 
   /** Changes the password and signs out every other session; returns the user for a fresh cookie. */

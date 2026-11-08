@@ -140,6 +140,8 @@ model SmsLoginCode {
 model EmailVerification {
   tokenHash String   @id
   userId    String   @db.Uuid
+  /// Set when a phone-only account adds this email (directive 121); the link then stores it on the account.
+  email     String?
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
 

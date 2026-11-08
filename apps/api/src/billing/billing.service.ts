@@ -8,13 +8,14 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '@all-in-one/api/db';
+import { Prisma, PrismaService } from '@all-in-one/api/db';
 import { SmsService, smsDate } from '@all-in-one/api/auth';
 import {
   BILLING_RENEW_WINDOW_MS,
   billingPlanCodeFromSku,
   billingStoreSku,
   canBuyPlan,
+  iranMobile,
 } from '@all-in-one/shared/schemas';
 import type {
   BillingAccessState,
@@ -36,6 +37,7 @@ import type {
   BillingStoreIntentInput,
   BillingStoreVerifyInput,
   BillingSubscriptionState,
+  BillingRewardCampaign,
 } from '@all-in-one/shared/schemas';
 import { StoreGateway } from './store.gateway';
 import { ZibalGateway } from './zibal.gateway';
@@ -79,6 +81,11 @@ const firstConfirmed = (user: {
   return dates.length
     ? new Date(Math.min(...dates.map((date) => date.getTime())))
     : null;
+};
+/** Admin account key: a confirmed mobile for phone-only accounts, otherwise the email (directive 119). */
+const accountWhere = (key: string) => {
+  const phone = iranMobile(key);
+  return phone ? { phone } : { email: key.trim().toLowerCase() };
 };
 const trialEnd = (verifiedAt: Date) =>
   new Date(Math.max(verifiedAt.getTime(), TRIAL_LAUNCH.getTime()) + WEEK_MS);
@@ -416,10 +423,10 @@ export class BillingService {
   }
 
   /** Support view of one account: paid access, latest orders and every manual change. */
-  async account(email: string, now = new Date()): Promise<BillingAccount> {
+  async account(key: string, now = new Date()): Promise<BillingAccount> {
     const user = await this.prisma.user.findUnique({
-      where: { email: email.trim().toLowerCase() },
-      select: { id: true, email: true, name: true },
+      where: accountWhere(key),
+      select: { id: true, email: true, phone: true, name: true },
     });
     if (!user) throw new NotFoundException('Account not found');
     const [subscription, orders, adjustments, rewards, refunds] =
@@ -445,7 +452,8 @@ export class BillingService {
         }),
       ]);
     return {
-      email: user.email ?? '',
+      // The key admin actions send back: the email, or the mobile of a phone-only account.
+      email: user.email ?? user.phone ?? '',
       name: user.name,
       subscription,
       orders,
@@ -454,7 +462,8 @@ export class BillingService {
         startsAt: row.startsAt.toISOString(),
         expiresAt: row.expiresAt.toISOString(),
         reason: row.reason,
-        adminEmail: row.admin.email ?? '',
+        // Empty for an automatic week (SECOND_CONTACT).
+        adminEmail: row.admin?.email ?? '',
       })),
       refunds: refunds.map((row) => ({
         orderId: row.orderId,
@@ -484,11 +493,10 @@ export class BillingService {
     const offers = SOCIAL_OFFERS.filter(
       ({ flag }) => this.config.get(flag) === 'true',
     );
-    if (!offers.length) return [];
     // Every confirmed customer can earn each week once, from signup on (directive 108); the week is
     // queued after the trial, paid time and earlier rewards.
     if (!(await this.access(userId, now)).trialUntil) return [];
-    const [grants, requests] = await Promise.all([
+    const [grants, requests, user] = await Promise.all([
       this.prisma.billingReward.findMany({
         where: { userId },
         select: { campaign: true },
@@ -497,8 +505,12 @@ export class BillingService {
         where: { userId },
         select: { campaign: true },
       }),
+      this.prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { emailVerifiedAt: true, phoneVerifiedAt: true },
+      }),
     ]);
-    return offers.map(({ campaign, url }) => ({
+    const social: BillingRewardOffer[] = offers.map(({ campaign, url }) => ({
       campaign,
       url,
       status: grants.some((item) => item.campaign === campaign)
@@ -507,6 +519,23 @@ export class BillingService {
           ? 'pending'
           : 'available',
     }));
+    // The second-contact week (directive 121): offered while one contact is missing, shown once earned. An
+    // account that confirmed both before this week existed is not offered it.
+    const contact: BillingRewardOffer[] = grants.some(
+      (item) => item.campaign === 'SECOND_CONTACT',
+    )
+      ? [{ campaign: 'SECOND_CONTACT', url: '', status: 'earned' }]
+      : !user.phoneVerifiedAt || !user.emailVerifiedAt
+        ? [
+            {
+              campaign: 'SECOND_CONTACT',
+              url: '',
+              status: 'available',
+              confirm: user.phoneVerifiedAt ? 'email' : 'phone',
+            },
+          ]
+        : [];
+    return [...contact, ...social];
   }
 
   async requestReward(
@@ -515,6 +544,7 @@ export class BillingService {
     now = new Date(),
   ) {
     const eligible = (await this.rewardOffers(userId, now)).find(
+      // The request schema only takes the social campaigns; SECOND_CONTACT is never requested.
       ({ campaign }) => campaign === input.campaign,
     );
     if (!eligible || eligible.status === 'earned')
@@ -564,53 +594,102 @@ export class BillingService {
     input: BillingRewardInput,
     now = new Date(),
   ): Promise<BillingAccount> {
-    const email = input.email.trim().toLowerCase();
+    const found = await this.prisma.user.findUnique({
+      where: accountWhere(input.email),
+      select: { id: true },
+    });
+    if (!found) throw new NotFoundException('Account not found');
     await this.prisma.$transaction(async (tx) => {
-      const [user] = await tx.$queryRaw<
-        { id: string; role: string; emailVerifiedAt: Date | null }[]
-      >`
-        SELECT id, role, "emailVerifiedAt" FROM users WHERE email = ${email} FOR UPDATE
-      `;
-      if (!user) throw new NotFoundException('Account not found');
-      if (user.role !== 'CUSTOMER' || !user.emailVerifiedAt) {
+      const granted = await this.queueWeek(tx, found.id, input.campaign, {
+        adminId,
+        reason: input.reason,
+        now,
+      });
+      if (granted === 'unconfirmed')
         throw new UnprocessableEntityException(
           'هدیه فقط برای حساب کاربری تأییدشده فعال می‌شود.',
         );
-      }
-      const rewards = await tx.billingReward.findMany({
-        where: { userId: user.id },
-        select: { campaign: true, expiresAt: true },
-      });
-      if (rewards.some((reward) => reward.campaign === input.campaign)) {
+      if (granted === 'exists')
         throw new ConflictException(
           'این هدیه قبلاً برای این حساب ثبت شده است.',
         );
-      }
-      const paid = await tx.billingSubscription.findUnique({
-        where: { userId: user.id },
-        select: { paidUntil: true },
-      });
-      const start = Math.max(
-        now.getTime(),
-        trialEnd(user.emailVerifiedAt).getTime(),
-        paid?.paidUntil.getTime() ?? 0,
-        ...rewards.map((reward) => reward.expiresAt.getTime()),
-      );
-      await tx.billingReward.create({
-        data: {
-          userId: user.id,
-          adminId,
-          campaign: input.campaign,
-          reason: input.reason,
-          startsAt: new Date(start),
-          expiresAt: new Date(start + WEEK_MS),
-        },
-      });
       await tx.billingRewardRequest.deleteMany({
-        where: { userId: user.id, campaign: input.campaign },
+        where: { userId: found.id, campaign: input.campaign },
       });
     });
-    return this.account(email, now);
+    return this.account(input.email, now);
+  }
+
+  /**
+   * The second-contact week (directive 121): once per account, when it has both a confirmed email and a confirmed
+   * mobile. Called right after a confirmation, so earlier confirmations never earn it. Returns whether it was granted.
+   */
+  async grantSecondContact(userId: string, now = new Date()): Promise<boolean> {
+    const granted = await this.prisma.$transaction((tx) =>
+      this.queueWeek(tx, userId, 'SECOND_CONTACT', {
+        adminId: null,
+        reason: 'Confirmed a second contact (directive 121)',
+        now,
+        needsBothContacts: true,
+      }),
+    );
+    return granted === 'granted';
+  }
+
+  /**
+   * Adds one week after the trial, paid time and earlier weeks, under the account lock that payments use. Only
+   * customers whose account is confirmed earn weeks; each campaign once per account.
+   */
+  private async queueWeek(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    campaign: BillingRewardCampaign,
+    options: {
+      adminId: string | null;
+      reason: string;
+      now: Date;
+      needsBothContacts?: boolean;
+    },
+  ): Promise<'granted' | 'exists' | 'unconfirmed'> {
+    await tx.$executeRaw`SELECT 1 FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
+    const user = await tx.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { role: true, emailVerifiedAt: true, phoneVerifiedAt: true },
+    });
+    const confirmedAt = firstConfirmed(user);
+    if (
+      user.role !== 'CUSTOMER' ||
+      !confirmedAt ||
+      (options.needsBothContacts &&
+        (!user.emailVerifiedAt || !user.phoneVerifiedAt))
+    )
+      return 'unconfirmed';
+    const rewards = await tx.billingReward.findMany({
+      where: { userId },
+      select: { campaign: true, expiresAt: true },
+    });
+    if (rewards.some((reward) => reward.campaign === campaign)) return 'exists';
+    const paid = await tx.billingSubscription.findUnique({
+      where: { userId },
+      select: { paidUntil: true },
+    });
+    const start = Math.max(
+      options.now.getTime(),
+      trialEnd(confirmedAt).getTime(),
+      paid?.paidUntil.getTime() ?? 0,
+      ...rewards.map((reward) => reward.expiresAt.getTime()),
+    );
+    await tx.billingReward.create({
+      data: {
+        userId,
+        adminId: options.adminId,
+        campaign,
+        reason: options.reason,
+        startsAt: new Date(start),
+        expiresAt: new Date(start + WEEK_MS),
+      },
+    });
+    return 'granted';
   }
 
   /**
@@ -623,7 +702,7 @@ export class BillingService {
     now = new Date(),
   ): Promise<BillingAccount> {
     const user = await this.prisma.user.findUnique({
-      where: { email: input.email.trim().toLowerCase() },
+      where: accountWhere(input.email),
       select: { id: true },
     });
     if (!user) throw new NotFoundException('Account not found');
@@ -739,9 +818,9 @@ export class BillingService {
       }
       const user = await tx.user.findUniqueOrThrow({
         where: { id: order.userId },
-        select: { email: true },
+        select: { email: true, phone: true },
       });
-      return user.email ?? '';
+      return user.email ?? user.phone ?? '';
     });
     return this.account(email, now);
   }

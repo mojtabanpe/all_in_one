@@ -131,4 +131,6 @@ export interface PhoneState {
   phone: string | null;
   /** A code was sent to this number and waits for confirmation. */
   pending: string | null;
+  /** Set by a confirmation that earned the second-contact week (directive 121). */
+  rewardedWeek?: boolean;
 }

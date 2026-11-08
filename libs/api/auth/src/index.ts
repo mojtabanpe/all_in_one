@@ -6,3 +6,4 @@ export * from './lib/password';
 export * from './lib/mail.service';
 export * from './lib/sms.service';
 export * from './lib/phone.service';
+export * from './lib/contact-events';

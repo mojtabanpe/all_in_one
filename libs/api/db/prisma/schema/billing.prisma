@@ -116,6 +116,8 @@ model BillingAdjustment {
 enum BillingRewardCampaign {
   TELEGRAM_JOIN
   INSTAGRAM_FOLLOW
+  /// Automatic: the account confirmed its second contact, a phone for email accounts or an email for phone-only ones (directive 121).
+  SECOND_CONTACT
 }
 
 /// A verified non-payment reward. Each account can earn each campaign once.
@@ -123,8 +125,9 @@ model BillingReward {
   id        String @id @default(uuid(7)) @db.Uuid
   userId    String @db.Uuid
   user      User @relation("BillingRewardUser", fields: [userId], references: [id], onDelete: Cascade)
-  adminId   String @db.Uuid
-  admin     User @relation("BillingRewardAdmin", fields: [adminId], references: [id], onDelete: Restrict)
+  /// Null for an automatic week (SECOND_CONTACT).
+  adminId   String? @db.Uuid
+  admin     User? @relation("BillingRewardAdmin", fields: [adminId], references: [id], onDelete: Restrict)
   campaign  BillingRewardCampaign
   reason    String @db.VarChar(200)
   startsAt  DateTime

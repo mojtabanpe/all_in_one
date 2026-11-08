@@ -74,10 +74,12 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       await expect(phones().confirm(user.id, wrong)).rejects.toMatchObject({
         status: 400,
       });
+      // No billing listener here, so no week (directive 121 is tested in the api's trial spec).
       expect(await phones().confirm(user.id, code)).toEqual({
         enabled: true,
         phone,
         pending: null,
+        rewardedWeek: false,
       });
       // A used code does not work again.
       await expect(phones().confirm(user.id, code)).rejects.toMatchObject({
@@ -245,6 +247,19 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         const result = await signIn(phone, lastCode());
         expect(result.created).toBe(false);
         expect(result.user.id).toBe(user.id);
+      });
+
+      it('never lets a phone-only account remove the number it signs in with', async () => {
+        const phone = number();
+        const { user } = await auth().signInByPhone(phone);
+        ids.push(user.id);
+        await expect(phones().remove(user.id)).rejects.toMatchObject({
+          status: 400,
+        });
+        expect(
+          (await prisma.user.findUniqueOrThrow({ where: { id: user.id } }))
+            .phone,
+        ).toBe(phone);
       });
 
       it('makes one account when two right codes race for a new number', async () => {

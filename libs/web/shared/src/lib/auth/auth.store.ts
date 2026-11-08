@@ -94,6 +94,13 @@ export class AuthStore {
     return user;
   }
 
+  /** A phone-only account adds an email; it is stored once the emailed link is opened (directive 121). */
+  addEmail(email: string): Promise<void> {
+    return firstValueFrom(
+      this.http.post<void>(`${this.api}/auth/email`, { email }),
+    );
+  }
+
   /** Sends a sign-in code by SMS (directive 119); the same answer for any valid number. */
   requestSmsLogin(phone: string): Promise<void> {
     return firstValueFrom(
@@ -139,9 +146,13 @@ export class AuthStore {
     );
   }
 
-  verifyEmail(token: string): Promise<void> {
+  /** Returns whether the confirmation earned the second-contact week (directive 121). */
+  verifyEmail(token: string): Promise<{ rewardedWeek: boolean }> {
     return firstValueFrom(
-      this.http.post<void>(`${this.api}/auth/verify-email`, { token }),
+      this.http.post<{ rewardedWeek: boolean }>(
+        `${this.api}/auth/verify-email`,
+        { token },
+      ),
     );
   }
 

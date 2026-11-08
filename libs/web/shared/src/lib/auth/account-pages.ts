@@ -283,6 +283,15 @@ export class ResetPasswordPage {
             }
             @case ('done') {
               <p>{{ 'ایمیلت تأیید شد. حالا وارد شو.' | aioTranslate }}</p>
+              @if (rewardedWeek()) {
+                <p
+                  class="bg-accent text-accent-foreground rounded-2xl p-3 text-sm"
+                >
+                  {{
+                    'یک هفته هوش مصنوعی هدیه به حسابت اضافه شد.' | aioTranslate
+                  }}
+                </p>
+              }
               <a aioBtn size="lg" [href]="loginHref">
                 {{ 'ورود' | aioTranslate }}
               </a>
@@ -313,11 +322,13 @@ export class VerifyEmailPage implements OnInit {
   protected readonly page = PAGE;
   protected readonly state = signal<'working' | 'done' | 'failed'>('working');
   protected readonly error = signal('');
+  protected readonly rewardedWeek = signal(false);
 
   async ngOnInit() {
     const token = this.route.snapshot.queryParamMap.get('token') ?? '';
     try {
-      await this.auth.verifyEmail(token);
+      const { rewardedWeek } = await this.auth.verifyEmail(token);
+      this.rewardedWeek.set(rewardedWeek);
       this.state.set('done');
     } catch (error) {
       this.error.set(
@@ -467,20 +478,22 @@ export class VerifyEmailPage implements OnInit {
             class="flex flex-col gap-4"
             (submit)="$event.preventDefault(); change()"
           >
-            <aio-form-field
-              [label]="'رمز فعلی' | aioTranslate"
-              controlId="current-password"
-            >
-              <input
-                aioInput
-                id="current-password"
-                type="password"
-                dir="ltr"
-                autocomplete="current-password"
-                [value]="current()"
-                (input)="current.set($any($event.target).value)"
-              />
-            </aio-form-field>
+            @if (auth.user()?.hasPassword) {
+              <aio-form-field
+                [label]="'رمز فعلی' | aioTranslate"
+                controlId="current-password"
+              >
+                <input
+                  aioInput
+                  id="current-password"
+                  type="password"
+                  dir="ltr"
+                  autocomplete="current-password"
+                  [value]="current()"
+                  (input)="current.set($any($event.target).value)"
+                />
+              </aio-form-field>
+            }
             <aio-form-field
               [label]="'رمز تازه' | aioTranslate"
               controlId="new-password"
@@ -502,6 +515,54 @@ export class VerifyEmailPage implements OnInit {
         </section>
       }
       <web-phone-settings />
+      @if (auth.user() && !auth.user()?.email) {
+        <!-- Phone-only accounts add an email; confirming it earns one week (directive 121). -->
+        <section aioCard>
+          <div
+            aioCardHeading
+            [title]="'افزودن ایمیل' | aioTranslate"
+            [level]="2"
+            [description]="
+              'با تأیید ایمیل، یک هفته هوش مصنوعی هدیه می‌گیری.' | aioTranslate
+            "
+          ></div>
+          <form
+            aioCardContent
+            class="flex flex-col gap-4"
+            (submit)="$event.preventDefault(); addEmail()"
+          >
+            @if (emailSentTo()) {
+              <p
+                class="bg-accent text-accent-foreground rounded-2xl p-3 text-sm"
+                role="status"
+              >
+                {{
+                  'لینک تأیید به {0} فرستاده شد. ایمیلت را باز کن و روی لینک بزن.'
+                    | aioTranslate: [emailSentTo()]
+                }}
+              </p>
+            }
+            <aio-form-field
+              [label]="'ایمیل' | aioTranslate"
+              controlId="add-email"
+            >
+              <input
+                aioInput
+                id="add-email"
+                type="email"
+                dir="ltr"
+                lang="en"
+                autocomplete="email"
+                [value]="newEmail()"
+                (input)="newEmail.set($any($event.target).value)"
+              />
+            </aio-form-field>
+            <button aioBtn type="submit" class="self-start" [disabled]="busy()">
+              {{ 'فرستادن لینک تأیید' | aioTranslate }}
+            </button>
+          </form>
+        </section>
+      }
       <section aioCard>
         <div
           aioCardHeading
@@ -760,11 +821,30 @@ export class AccountPage implements OnInit {
   protected readonly auth = inject(AuthStore);
   protected readonly current = signal('');
   protected readonly next = signal('');
+  protected readonly newEmail = signal('');
+  protected readonly emailSentTo = signal('');
   protected readonly localPhone = computed(() => {
     const phone = this.auth.user()?.phone;
     return phone ? localMobile(phone) : '';
   });
   protected readonly busy = signal(false);
+
+  protected async addEmail() {
+    const email = this.newEmail().trim();
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      this.notifications.error('ایمیل معتبر وارد کن.');
+      return;
+    }
+    this.busy.set(true);
+    try {
+      await this.auth.addEmail(email);
+      this.emailSentTo.set(email);
+    } catch (error) {
+      this.notifications.error(apiErrorMessage(error));
+    } finally {
+      this.busy.set(false);
+    }
+  }
 
   protected async change() {
     if (this.next().length < 8) {
@@ -774,9 +854,15 @@ export class AccountPage implements OnInit {
     this.busy.set(true);
     try {
       await this.auth.changePassword({
-        currentPassword: this.current(),
+        // A phone-only account that added an email sets its first password (directive 121).
+        currentPassword: this.auth.user()?.hasPassword
+          ? this.current()
+          : undefined,
         newPassword: this.next(),
       });
+      this.auth.user.update((user) =>
+        user ? { ...user, hasPassword: true } : user,
+      );
       this.current.set('');
       this.next.set('');
       this.notifications.success('رمز عوض شد و دستگاه‌های دیگر خارج شدند.');

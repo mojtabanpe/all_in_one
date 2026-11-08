@@ -1,5 +1,6 @@
 import { firstValueFrom } from 'rxjs';
 import { DOCUMENT } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import {
   HttpClient,
   HttpErrorResponse,
@@ -79,6 +80,7 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
     AioProgressDirectives,
     AioSkeletonRows,
     AioTranslate,
+    RouterLink,
   ],
   providers: [
     provideIcons({
@@ -244,7 +246,14 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
                 class="border-border flex min-w-0 flex-col gap-3 rounded-xl border p-3"
               >
                 <h3 class="font-semibold">
-                  {{ rewardLabels[offer.campaign] | aioTranslate }}
+                  {{
+                    (offer.campaign === 'SECOND_CONTACT'
+                      ? offer.confirm === 'email'
+                        ? 'تأیید ایمیل'
+                        : 'تأیید شمارهٔ موبایل'
+                      : rewardLabels[offer.campaign]
+                    ) | aioTranslate
+                  }}
                 </h3>
                 @switch (offer.status) {
                   @case ('earned') {
@@ -256,53 +265,73 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
                     </p>
                   }
                   @case ('available') {
-                    <a
-                      aioBtn
-                      variant="outline"
-                      class="min-h-11 self-start"
-                      [href]="offer.url"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {{ 'باز کردن صفحهٔ رسمی' | aioTranslate }}
-                    </a>
-                    <form
-                      class="flex flex-col gap-3"
-                      (submit)="
-                        $event.preventDefault();
-                        requestReward(offer.campaign, handle.value)
-                      "
-                    >
-                      <aio-form-field
-                        label="نام کاربری شبکهٔ اجتماعی"
-                        [controlId]="'offer-' + offer.campaign"
-                      >
-                        <input
-                          aioInput
-                          #handle
-                          [id]="'offer-' + offer.campaign"
-                          type="text"
-                          dir="ltr"
-                          autocomplete="off"
-                          maxlength="31"
-                          required
-                        />
-                      </aio-form-field>
-                      <p class="text-muted-foreground text-xs">
+                    @if (offer.campaign === 'SECOND_CONTACT') {
+                      <!-- Automatic week (directive 121): nothing to request, only to confirm. -->
+                      <p class="text-muted-foreground text-sm">
                         {{
-                          'بعد از عضویت، نام کاربری را برای بررسی بفرست.'
-                            | aioTranslate
+                          (offer.confirm === 'email'
+                            ? 'ایمیلت را در حساب کاربری اضافه و تأیید کن؛ یک هفته خودکار اضافه می‌شود.'
+                            : 'شمارهٔ موبایلت را در حساب کاربری با کد پیامکی تأیید کن؛ یک هفته خودکار اضافه می‌شود.'
+                          ) | aioTranslate
                         }}
                       </p>
-                      <button
-                        aioAsyncButton
-                        type="submit"
-                        label="درخواست هدیه"
+                      <a
+                        aioBtn
+                        variant="outline"
                         class="min-h-11 self-start"
-                        [busy]="requesting() === offer.campaign"
-                        [disabled]="requesting() !== null"
-                      ></button>
-                    </form>
+                        routerLink="/account"
+                      >
+                        {{ 'رفتن به حساب کاربری' | aioTranslate }}
+                      </a>
+                    } @else {
+                      <a
+                        aioBtn
+                        variant="outline"
+                        class="min-h-11 self-start"
+                        [href]="offer.url"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {{ 'باز کردن صفحهٔ رسمی' | aioTranslate }}
+                      </a>
+                      <form
+                        class="flex flex-col gap-3"
+                        (submit)="
+                          $event.preventDefault();
+                          requestReward(offer.campaign, handle.value)
+                        "
+                      >
+                        <aio-form-field
+                          label="نام کاربری شبکهٔ اجتماعی"
+                          [controlId]="'offer-' + offer.campaign"
+                        >
+                          <input
+                            aioInput
+                            #handle
+                            [id]="'offer-' + offer.campaign"
+                            type="text"
+                            dir="ltr"
+                            autocomplete="off"
+                            maxlength="31"
+                            required
+                          />
+                        </aio-form-field>
+                        <p class="text-muted-foreground text-xs">
+                          {{
+                            'بعد از عضویت، نام کاربری را برای بررسی بفرست.'
+                              | aioTranslate
+                          }}
+                        </p>
+                        <button
+                          aioAsyncButton
+                          type="submit"
+                          label="درخواست هدیه"
+                          class="min-h-11 self-start"
+                          [busy]="requesting() === offer.campaign"
+                          [disabled]="requesting() !== null"
+                        ></button>
+                      </form>
+                    }
                   }
                 }
               </article>
@@ -552,6 +581,7 @@ export class Billing {
   protected readonly rewardLabels = {
     TELEGRAM_JOIN: 'عضویت در تلگرام',
     INSTAGRAM_FOLLOW: 'دنبال‌کردن در اینستاگرام',
+    SECOND_CONTACT: 'تأیید راه دوم ارتباط',
   } as const;
 
   protected async requestReward(

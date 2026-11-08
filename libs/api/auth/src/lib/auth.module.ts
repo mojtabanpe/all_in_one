@@ -9,6 +9,7 @@ import { AuthService } from './auth.service';
 import { MailService } from './mail.service';
 import { SmsService } from './sms.service';
 import { PhoneService } from './phone.service';
+import { ContactEvents } from './contact-events';
 
 @Module({
   imports: [
@@ -28,9 +29,10 @@ import { PhoneService } from './phone.service';
     MailService,
     SmsService,
     PhoneService,
+    ContactEvents,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: AuthGuard },
   ],
-  exports: [AuthService, MailService, SmsService],
+  exports: [AuthService, MailService, SmsService, ContactEvents],
 })
 export class AuthModule {}

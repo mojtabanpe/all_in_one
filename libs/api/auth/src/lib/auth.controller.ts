@@ -163,12 +163,23 @@ export class AuthController {
 
   @Public()
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
-  @HttpCode(204)
+  @HttpCode(200)
   @Post('verify-email')
-  async verifyEmail(
+  verifyEmail(
     @Body({ schema: verifyEmailSchema }) input: VerifyEmailInput,
+  ): Promise<{ rewardedWeek: boolean }> {
+    return this.auth.verifyEmail(input.token);
+  }
+
+  /** A phone-only account adds an email; it is stored once the emailed link is opened (directive 121). */
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  @HttpCode(202)
+  @Post('email')
+  async addEmail(
+    @CurrentUser() current: AuthUser,
+    @Body({ schema: emailOnlySchema }) input: EmailOnlyInput,
   ): Promise<void> {
-    await this.auth.verifyEmail(input.token);
+    await this.auth.requestEmail(current.id, input.email);
   }
 
   @Public()

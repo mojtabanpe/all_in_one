@@ -4630,6 +4630,56 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'If this number is confirmed for an account, a 6-digit code was sent to {0}. It works for 10 minutes.',
   ],
   ['کد پیامک', 'SMS code'],
+  [
+    'این حساب با همین شماره وارد می‌شود؛ اول ایمیل اضافه کن.',
+    'This account signs in with this number; add an email first.',
+  ],
+  ['تأیید شمارهٔ موبایل', 'Confirm your mobile'],
+  [
+    'ایمیلت را در حساب کاربری اضافه و تأیید کن؛ یک هفته خودکار اضافه می‌شود.',
+    'Add and confirm your email on the account page; a week is added automatically.',
+  ],
+  [
+    'شمارهٔ موبایلت را در حساب کاربری با کد پیامکی تأیید کن؛ یک هفته خودکار اضافه می‌شود.',
+    'Confirm your mobile with an SMS code on the account page; a week is added automatically.',
+  ],
+  ['رفتن به حساب کاربری', 'Go to your account'],
+  ['تأیید راه دوم ارتباط', 'Second contact confirmed'],
+  [
+    'شماره تأیید شد و یک هفته هوش مصنوعی هدیه به حسابت اضافه شد.',
+    'Number confirmed, and a free week of AI was added to your account.',
+  ],
+  [
+    'یک هفته هوش مصنوعی هدیه به حسابت اضافه شد.',
+    'A free week of AI was added to your account.',
+  ],
+  [
+    'با تأیید شماره، یک هفته هوش مصنوعی هدیه می‌گیری.',
+    'Confirm your number to get a free week of AI.',
+  ],
+  ['افزودن ایمیل', 'Add an email'],
+  [
+    'با تأیید ایمیل، یک هفته هوش مصنوعی هدیه می‌گیری.',
+    'Confirm your email to get a free week of AI.',
+  ],
+  [
+    'لینک تأیید به {0} فرستاده شد. ایمیلت را باز کن و روی لینک بزن.',
+    'A confirmation link was sent to {0}. Open your email and tap the link.',
+  ],
+  ['فرستادن لینک تأیید', 'Send confirmation link'],
+  ['ایمیل یا موبایل کاربر', "User's email or mobile"],
+  ['ایمیل یا موبایل را وارد کن', 'Enter an email or mobile'],
+  ['ایمیل یا موبایل معتبر وارد کن.', 'Enter a valid email or mobile.'],
+  ['تأیید راه دوم ارتباط (خودکار)', 'Second contact confirmed (automatic)'],
+  ['ایمیل این حساب قبلاً ثبت شده است.', 'This account already has an email.'],
+  [
+    'این ایمیل برای حساب دیگری ثبت شده است.',
+    'This email belongs to another account.',
+  ],
+  [
+    'ایمیل یا شمارهٔ موبایل حساب را وارد کن.',
+    "Enter the account's email or mobile.",
+  ],
   ['ورود یا ثبت‌نام', 'Sign in or sign up'],
   [
     'با شمارهٔ موبایل؛ کد ورود برایت پیامک می‌شود.',

@@ -429,14 +429,27 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         campaign: 'TELEGRAM_JOIN' as const,
         handle: '@fixture_user',
       };
+      // The automatic second-contact week (directive 121) is offered whatever the social switches say.
+      const social = async (billing: BillingService) =>
+        (await billing.rewardOffers(customer.id, now)).filter(
+          (offer) => offer.campaign !== 'SECOND_CONTACT',
+        );
       try {
-        expect(await service().rewardOffers(customer.id, now)).toEqual([]);
+        expect(await social(service())).toEqual([]);
+        expect(await service().rewardOffers(customer.id, now)).toEqual([
+          {
+            campaign: 'SECOND_CONTACT',
+            url: '',
+            status: 'available',
+            confirm: 'phone',
+          },
+        ]);
         await expect(
           offers.requestReward(admin.id, input, now),
         ).rejects.toMatchObject({ status: 403 });
         // Still inside the trial and without any activity: the offer is already open.
         expect((await offers.access(customer.id, now)).tier).toBe('trial');
-        expect(await offers.rewardOffers(customer.id, now)).toEqual([
+        expect(await social(offers)).toEqual([
           {
             campaign: 'TELEGRAM_JOIN',
             url: 'https://t.me/poshtetgarm',
@@ -471,9 +484,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
             where: { userId: customer.id },
           }),
         ).toBe(0);
-        expect((await offers.rewardOffers(customer.id, now))[0]?.status).toBe(
-          'earned',
-        );
+        expect((await social(offers))[0]?.status).toBe('earned');
       } finally {
         await prisma.user.delete({ where: { id: customer.id } });
         await prisma.user.delete({ where: { id: admin.id } });

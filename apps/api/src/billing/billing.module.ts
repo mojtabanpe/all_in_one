@@ -5,6 +5,7 @@ import { PrismaModule } from '@all-in-one/api/db';
 import { BillingController, PaymentsController } from './billing.controller';
 import { BillingReconciler } from './billing-reconciler';
 import { BillingService } from './billing.service';
+import { SecondContactWeek } from './second-contact';
 import { StoreGateway } from './store.gateway';
 import { ZibalGateway } from './zibal.gateway';
 
@@ -15,6 +16,7 @@ import { ZibalGateway } from './zibal.gateway';
   providers: [
     BillingService,
     BillingReconciler,
+    SecondContactWeek,
     ZibalGateway,
     StoreGateway,
     { provide: AI_ACCESS, useExisting: BillingService },

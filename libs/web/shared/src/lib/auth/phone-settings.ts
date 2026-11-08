@@ -15,6 +15,7 @@ import {
 } from '@all-in-one/ui';
 import { API_BASE_URL } from '../api/api-base-url';
 import { apiErrorMessage } from './auth.guards';
+import { AuthStore } from './auth.store';
 
 /** `+989121234567` → `09121234567`, as people write it. */
 export const localMobile = (phone: string) =>
@@ -48,21 +49,31 @@ export const localMobile = (phone: string) =>
           "
         ></div>
         <div aioCardContent class="flex flex-col gap-4">
+          @if (!s.phone) {
+            <p class="bg-accent text-accent-foreground rounded-2xl p-3 text-sm">
+              {{
+                'با تأیید شماره، یک هفته هوش مصنوعی هدیه می‌گیری.'
+                  | aioTranslate
+              }}
+            </p>
+          }
           @if (s.phone) {
             <p class="flex flex-wrap items-center justify-between gap-2">
               <span>{{ 'تأییدشده' | aioTranslate }}</span>
               <bdi dir="ltr" class="font-medium">{{ local(s.phone) }}</bdi>
             </p>
-            <button
-              aioBtn
-              type="button"
-              variant="outline"
-              class="min-h-11 self-start"
-              [disabled]="busy()"
-              (click)="remove()"
-            >
-              {{ 'حذف شماره' | aioTranslate }}
-            </button>
+            @if (auth.user()?.email) {
+              <button
+                aioBtn
+                type="button"
+                variant="outline"
+                class="min-h-11 self-start"
+                [disabled]="busy()"
+                (click)="remove()"
+              >
+                {{ 'حذف شماره' | aioTranslate }}
+              </button>
+            }
           } @else if (s.pending && !changing()) {
             <form
               class="flex flex-col gap-4"
@@ -160,6 +171,8 @@ export class PhoneSettings {
   private readonly http = inject(HttpClient);
   private readonly notifications = inject(AioNotifications);
   private readonly ask = inject(AioConfirm);
+  /** A phone-only account signs in with this number: it cannot remove it (directive 119). */
+  protected readonly auth = inject(AuthStore);
   protected readonly locale = inject(AioLocale);
   protected readonly state = httpResource<PhoneState>(
     () => `${this.api}/auth/phone`,
@@ -173,8 +186,13 @@ export class PhoneSettings {
   private async run(work: () => Promise<PhoneState>, success?: string) {
     this.busy.set(true);
     try {
-      this.state.set(await work());
-      if (success) this.notifications.success(success);
+      const state = await work();
+      this.state.set(state);
+      if (state.rewardedWeek)
+        this.notifications.success(
+          'شماره تأیید شد و یک هفته هوش مصنوعی هدیه به حسابت اضافه شد.',
+        );
+      else if (success) this.notifications.success(success);
     } catch (error) {
       this.notifications.error(apiErrorMessage(error));
     } finally {

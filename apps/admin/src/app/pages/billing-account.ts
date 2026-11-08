@@ -6,7 +6,6 @@ import {
 } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import {
-  email,
   form,
   FormField,
   FormRoot,
@@ -17,9 +16,11 @@ import {
   pattern,
   required,
   submit,
+  validate,
 } from '@angular/forms/signals';
 import {
-  BILLING_REWARD_CAMPAIGNS,
+  iranMobile,
+  SOCIAL_REWARD_CAMPAIGNS,
   type BillingAccount,
   type BillingOrderSummary,
   type BillingPendingReward,
@@ -149,13 +150,13 @@ type Action = 'extend' | 'end';
         >
           <aio-form-field
             class="min-w-0 flex-1 basis-64"
-            [label]="'ایمیل کاربر' | aioTranslate"
+            [label]="'ایمیل یا موبایل کاربر' | aioTranslate"
             controlId="account-email"
           >
             <input
               aioInput
               id="account-email"
-              type="email"
+              type="text"
               dir="ltr"
               lang="en"
               autocomplete="off"
@@ -642,10 +643,11 @@ export class BillingAccountPanel {
     }
   }
 
-  protected readonly rewardCampaigns = BILLING_REWARD_CAMPAIGNS;
+  protected readonly rewardCampaigns = SOCIAL_REWARD_CAMPAIGNS;
   protected readonly rewardLabels = {
     TELEGRAM_JOIN: 'عضویت در تلگرام',
     INSTAGRAM_FOLLOW: 'دنبال‌کردن در اینستاگرام',
+    SECOND_CONTACT: 'تأیید راه دوم ارتباط (خودکار)',
   } as const;
   protected readonly rewardModel = signal<{
     campaign: BillingRewardCampaign;
@@ -797,8 +799,13 @@ export class BillingAccountPanel {
 
   protected readonly findModel = signal({ email: '' });
   protected readonly findForm = form(this.findModel, (path) => {
-    required(path.email, { message: 'ایمیل را وارد کن' });
-    email(path.email, { message: 'ایمیل معتبر وارد کن.' });
+    required(path.email, { message: 'ایمیل یا موبایل را وارد کن' });
+    // Phone-only accounts (directive 119) are found by their mobile.
+    validate(path.email, ({ value }) =>
+      iranMobile(value()) || /^\S+@\S+\.\S+$/.test(value().trim())
+        ? undefined
+        : { kind: 'account', message: 'ایمیل یا موبایل معتبر وارد کن.' },
+    );
   });
 
   protected readonly adjustModel = signal<{
