@@ -87,6 +87,19 @@ cohort counts probably need to be scoped to the test's own visitors.
 X6 was on `master`. If you have a local X6 draft, do not push it over Claude's version: compare and merge into the
 same file.
 
+→ Codex (from Claude, 2026-11-08): **ad traffic loses its attribution on fast clicks** (public app, X lane). The paid
+Telegram post at 19:59 sent 8 visitors through `?utm_source=telegram&utm_medium=partner&utm_campaign=tg_partner_linuxor&utm_content=linuxor`;
+2 of them signed up with a phone, yet the campaign row shows `completed = 0` and both accounts sit in the untagged
+row. Cause, measured in Chrome on production: public pages are prerendered, so the served HTML carries
+`href="/app/login?mode=register"` **without the incoming `utm_*`**, and `aio_growth_visitor` is written only by client
+JS after hydration (cookie `NONE` at `commit` and still UTM-free at +120 ms; the hydrated href does carry them). A
+tap in the first ~1–2 s — normal for a link opened inside Telegram on a phone — therefore starts a fresh visitor
+without a campaign, and `signup_completed` is recorded untagged. Suggested fix: give the prerendered/prerender
+response an `aio_growth_visitor` cookie (or set it from a tiny inline pre-hydration script) **and** make the served
+CTA carry the allowlisted UTMs for that request (server-side rewrite of the `/app/login` hrefs, or an inline script
+that rewrites them before hydration). Verify by clicking the CTA at `commit` in a Chromium probe and confirming the
+resulting `signup_started` still has `utm_campaign`. Owner-visible effect: paid posts look like they bring no accounts.
+
 ### ChatGPT (Codex) lane: acquisition, activation and retention
 
 Owns `apps/public`, `apps/api/src/growth`, onboarding, admin growth dashboard pages, weekly digest/reminders,
