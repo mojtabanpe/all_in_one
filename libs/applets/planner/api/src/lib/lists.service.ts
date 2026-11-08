@@ -80,7 +80,7 @@ export class ListsService {
     if (!list) throw new NotFoundException('فهرست پیدا نشد');
     const members = await this.prisma.plannerListMember.findMany({
       where: { listId },
-      include: { user: { select: { name: true, email: true } } },
+      include: { user: { select: { name: true, email: true, phone: true } } },
       orderBy: { createdAt: 'asc' },
     });
     return {
@@ -88,7 +88,7 @@ export class ListsService {
       members: members.map((m) => ({
         userId: m.userId,
         name: m.user.name,
-        email: m.user.email,
+        email: m.user.email ?? m.user.phone ?? '',
         role: m.role,
       })),
     };

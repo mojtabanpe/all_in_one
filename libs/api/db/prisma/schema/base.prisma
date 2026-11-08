@@ -18,9 +18,11 @@ enum Role {
 
 model User {
   id           String   @id @default(uuid(7)) @db.Uuid
-  email        String   @unique
+  /// Null for an account made with a confirmed phone alone (directive 119).
+  email        String?  @unique
   name         String?
-  passwordHash String
+  /// Null until a phone-only account sets a password.
+  passwordHash String?
   role         Role     @default(CUSTOMER)
   /// Null until the user opens the confirmation link (directive 21).
   emailVerifiedAt DateTime?
@@ -118,6 +120,20 @@ model PhoneCode {
 
   @@id([userId, purpose])
   @@map("phone_codes")
+}
+
+/// Sign-in/sign-up code by SMS (LOGIN_CODE template), keyed by the number because the account may not exist yet.
+/// Only the code's hash is stored; the same cooldown and daily cap as PhoneCode.
+model SmsLoginCode {
+  phone       String   @id @db.VarChar(16)
+  codeHash    String
+  expiresAt   DateTime
+  attempts    Int      @default(0)
+  sentAt      DateTime
+  sends       Int      @default(1)
+  windowStart DateTime
+
+  @@map("sms_login_codes")
 }
 
 /// Single-use email confirmation link (24 hours); only the token's SHA-256 is stored.

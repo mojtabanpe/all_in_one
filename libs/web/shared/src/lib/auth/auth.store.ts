@@ -7,6 +7,7 @@ import type {
   LoginInput,
   RegisterInput,
   RegisterResult,
+  SmsLoginResult,
   User,
 } from '@all-in-one/shared/schemas';
 import { firstValueFrom } from 'rxjs';
@@ -91,6 +92,27 @@ export class AuthStore {
     this.user.set(user);
     remember(user);
     return user;
+  }
+
+  /** Sends a sign-in code by SMS (directive 119); the same answer for any valid number. */
+  requestSmsLogin(phone: string): Promise<void> {
+    return firstValueFrom(
+      this.http.post<void>(`${this.api}/auth/sms-login/request`, { phone }),
+    );
+  }
+
+  /** Signs in with the SMS code, or creates an account with the number alone. */
+  async smsLogin(phone: string, code: string): Promise<SmsLoginResult> {
+    const result = await firstValueFrom(
+      this.http.post<SmsLoginResult>(`${this.api}/auth/sms-login`, {
+        phone,
+        code,
+        acquisition: this.analytics.context(),
+      }),
+    );
+    this.user.set(result.user);
+    remember(result.user);
+    return result;
   }
 
   /** Signs in right away, or reports that a confirmation email was sent. */

@@ -9,7 +9,12 @@ export type Role = z.infer<typeof roleSchema>;
 /** A user as the api returns it: never includes the password hash. */
 export const userSchema = z.object({
   id: z.uuid(),
-  email: z.email(),
+  /** Null for an account made with a phone number alone (directive 119). */
+  email: z.nullable(z.email()),
+  /** Confirmed Iranian mobile in E.164, or null. */
+  phone: z.nullable(z.string()),
+  /** False for a phone-only account that never set a password. */
+  hasPassword: z.boolean(),
   name: z.nullable(z.string()),
   role: roleSchema,
   createdAt: z.iso.datetime(),
@@ -34,7 +39,8 @@ const password = z.string().check(z.minLength(8), z.maxLength(128));
 
 /** Signed-in password change; other sessions are signed out. */
 export const changePasswordSchema = z.object({
-  currentPassword: z.string().check(z.minLength(1)),
+  /** Required when the account already has a password. */
+  currentPassword: z.optional(z.string().check(z.maxLength(128))),
   newPassword: password,
 });
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
@@ -103,6 +109,21 @@ export const phoneResetSchema = z.object({
   password,
 });
 export type PhoneResetInput = z.infer<typeof phoneResetSchema>;
+
+/** Sign in or sign up with an SMS code (directive 119): one request, one 6-digit code, the same answer for any number. */
+export const smsLoginRequestSchema = z.object({ phone: mobile });
+export type SmsLoginRequestInput = z.infer<typeof smsLoginRequestSchema>;
+export const smsLoginSchema = z.object({
+  acquisition: z.optional(growthAttributionSchema),
+  phone: mobile,
+  code: smsCode,
+});
+export type SmsLoginInput = z.infer<typeof smsLoginSchema>;
+/** `created`: the code made a new account (a phone alone is enough). */
+export interface SmsLoginResult {
+  user: User;
+  created: boolean;
+}
 
 /** The account's number; `enabled` is false while SMS sending is switched off on the server. */
 export interface PhoneState {

@@ -163,7 +163,14 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
       where: {
         userId: { in: [...new Set(subscriptions.map((sub) => sub.userId))] },
         OR: [{ firstWeek: true }, ...(isSaturday ? [{ weekly: true }] : [])],
-        user: { emailVerifiedAt: { not: null }, role: 'CUSTOMER' },
+        user: {
+          role: 'CUSTOMER',
+          // Confirmed by email, or a phone-only account (directive 119).
+          OR: [
+            { emailVerifiedAt: { not: null } },
+            { phoneVerifiedAt: { not: null } },
+          ],
+        },
       },
       include: { user: { select: { createdAt: true } } },
     });

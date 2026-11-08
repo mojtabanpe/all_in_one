@@ -37,6 +37,11 @@ import {
   phoneResetSchema,
   type PhoneResetInput,
   type PhoneState,
+  smsLoginRequestSchema,
+  type SmsLoginRequestInput,
+  smsLoginSchema,
+  type SmsLoginInput,
+  type SmsLoginResult,
 } from '@all-in-one/shared/schemas';
 import type { User as DbUser } from '@all-in-one/api/db';
 import { type AuthUser, CurrentUser, Public } from './auth.decorators';
@@ -93,6 +98,35 @@ export class AuthController {
     return { enabled: this.phones.enabled };
   }
 
+  /** Sends a sign-in code to any valid number (directive 119); the answer never says whether an account has it. */
+  @Public()
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  @HttpCode(202)
+  @Post('sms-login/request')
+  async requestSmsLogin(
+    @Body({ schema: smsLoginRequestSchema }) input: SmsLoginRequestInput,
+  ): Promise<void> {
+    await this.phones.requestLogin(input.phone);
+  }
+
+  /** A right code signs in, or creates an account with the number alone, and starts a session. */
+  @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @HttpCode(200)
+  @Post('sms-login')
+  async smsLogin(
+    @Body({ schema: smsLoginSchema }) input: SmsLoginInput,
+    @Res({ passthrough: true }) res: unknown,
+  ): Promise<SmsLoginResult> {
+    const phone = await this.phones.verifyLogin(input.phone, input.code);
+    const { user, created } = await this.auth.signInByPhone(
+      phone,
+      input.acquisition,
+    );
+    await this.startSession(res, user);
+    return { user: toUser(user), created };
+  }
+
   @Public()
   @Throttle({ default: { limit: 3, ttl: 60_000 } })
   @HttpCode(202)
@@ -122,7 +156,7 @@ export class AuthController {
   ): Promise<RegisterResult> {
     const user = await this.auth.register(input);
     if (!user.emailVerifiedAt)
-      return { status: 'verify-email', email: user.email };
+      return { status: 'verify-email', email: user.email ?? input.email };
     await this.startSession(res, user);
     return { status: 'signed-in', user: toUser(user) };
   }

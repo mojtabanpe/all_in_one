@@ -9,6 +9,9 @@ import {
 } from './phone.service';
 import { hashPassword, verifyPassword } from './password';
 import type { SmsService } from './sms.service';
+import { AuthService } from './auth.service';
+import type { JwtService } from '@nestjs/jwt';
+import type { MailService } from './mail.service';
 
 describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
   'Phone codes (PostgreSQL)',
@@ -164,7 +167,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       const after = await prisma.user.findUniqueOrThrow({
         where: { id: user.id },
       });
-      expect(await verifyPassword('new-password-2', after.passwordHash)).toBe(
+      expect(await verifyPassword('new-password-2', after.passwordHash!)).toBe(
         true,
       );
       expect(after.sessionVersion).toBe(before.sessionVersion + 1);
@@ -179,6 +182,122 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       sms.enabled = false;
       await expect(phones().requestReset(phone)).rejects.toMatchObject({
         status: 503,
+      });
+    });
+
+    describe('SMS sign-in (directive 119)', () => {
+      const auth = () =>
+        new AuthService(
+          prisma,
+          {} as JwtService,
+          {} as MailService,
+          new ConfigService({ GROWTH_ANALYTICS_ENABLED: 'false' }),
+        );
+      const signIn = async (phone: string, code: string) => {
+        const confirmed = await phones().verifyLogin(phone, code);
+        const result = await auth().signInByPhone(confirmed);
+        ids.push(result.user.id);
+        return result;
+      };
+
+      it('creates a phone-only account with a right code, once, and signs it in later', async () => {
+        const phone = number();
+        await phones().requestLogin('0' + phone.slice(3));
+        expect(sent.at(-1)).toMatchObject({
+          template: 'LOGIN_CODE',
+          to: phone,
+        });
+        const code = lastCode();
+        await expect(
+          phones().verifyLogin(phone, code === '000000' ? '111111' : '000000'),
+        ).rejects.toMatchObject({ status: 400 });
+        const first = await signIn(phone, code);
+        expect(first.created).toBe(true);
+        expect(first.user).toMatchObject({
+          email: null,
+          passwordHash: null,
+          phone,
+          role: 'CUSTOMER',
+        });
+        expect(first.user.phoneVerifiedAt).toBeInstanceOf(Date);
+        // A used code does not work again.
+        await expect(phones().verifyLogin(phone, code)).rejects.toMatchObject({
+          status: 400,
+        });
+        await prisma.smsLoginCode.update({
+          where: { phone },
+          data: { sentAt: new Date(Date.now() - RESEND_AFTER_MS) },
+        });
+        await phones().requestLogin(phone);
+        const again = await signIn(phone, lastCode());
+        expect(again).toMatchObject({ created: false });
+        expect(again.user.id).toBe(first.user.id);
+      });
+
+      it('signs in to the email account that confirmed the number', async () => {
+        const user = await account();
+        const phone = number();
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { phone, phoneVerifiedAt: new Date() },
+        });
+        await phones().requestLogin(phone);
+        const result = await signIn(phone, lastCode());
+        expect(result.created).toBe(false);
+        expect(result.user.id).toBe(user.id);
+      });
+
+      it('makes one account when two right codes race for a new number', async () => {
+        const phone = number();
+        const results = await Promise.all([
+          auth().signInByPhone(phone),
+          auth().signInByPhone(phone),
+        ]);
+        results.forEach(({ user }) => ids.push(user.id));
+        expect(new Set(results.map(({ user }) => user.id)).size).toBe(1);
+        expect(results.filter(({ created }) => created)).toHaveLength(1);
+      });
+
+      it('limits codes per number and tries, and needs SMS on', async () => {
+        const phone = number();
+        await phones().requestLogin(phone);
+        await expect(phones().requestLogin(phone)).rejects.toMatchObject({
+          status: 429,
+        });
+        const code = lastCode();
+        const wrong = code === '000000' ? '111111' : '000000';
+        for (let i = 0; i < MAX_ATTEMPTS; i++)
+          await expect(
+            phones().verifyLogin(phone, wrong),
+          ).rejects.toMatchObject({ status: 400 });
+        // Too many wrong guesses: even the right code is refused.
+        await expect(phones().verifyLogin(phone, code)).rejects.toMatchObject({
+          status: 400,
+        });
+        await prisma.smsLoginCode.update({
+          where: { phone },
+          data: {
+            sends: DAILY_SENDS,
+            sentAt: new Date(Date.now() - RESEND_AFTER_MS),
+          },
+        });
+        await expect(phones().requestLogin(phone)).rejects.toMatchObject({
+          status: 429,
+        });
+        // A failed SMS leaves no working code.
+        const other = number();
+        sms.send.mockRejectedValueOnce(new Error('down'));
+        await expect(phones().requestLogin(other)).rejects.toThrow('down');
+        await expect(
+          phones().verifyLogin(other, '123456'),
+        ).rejects.toMatchObject({ status: 400 });
+        sms.enabled = false;
+        await expect(phones().requestLogin(number())).rejects.toMatchObject({
+          status: 503,
+        });
+        await expect(
+          phones().requestLogin('not a phone'),
+        ).rejects.toMatchObject({ status: 503 });
       });
     });
   },

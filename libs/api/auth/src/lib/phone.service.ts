@@ -15,6 +15,8 @@ type Purpose = 'VERIFY' | 'RESET';
 
 /** How long a code works, in minutes (sent as `%minutes%`). */
 export const CODE_MINUTES: Record<Purpose, number> = { VERIFY: 5, RESET: 10 };
+/** Sign-in/sign-up codes (LOGIN_CODE, directive 119). */
+export const LOGIN_MINUTES = 5;
 export const RESEND_AFTER_MS = 60_000;
 /** Codes per account and purpose in 24 hours, and wrong guesses per code. */
 export const DAILY_SENDS = 5;
@@ -23,6 +25,8 @@ const DAY_MS = 86_400_000;
 
 const codeHash = (userId: string, purpose: Purpose, code: string) =>
   createHash('sha256').update(`${userId}:${purpose}:${code}`).digest('hex');
+const loginHash = (phone: string, code: string) =>
+  createHash('sha256').update(`${phone}:LOGIN:${code}`).digest('hex');
 
 function sameHash(a: string, b: string): boolean {
   const x = Buffer.from(a, 'hex');
@@ -153,6 +157,81 @@ export class PhoneService {
     ]);
     this.sms.notify('PASSWORD_CHANGED', phone, {});
     return { id: user.id, phone };
+  }
+
+  /**
+   * Sends a sign-in code to any valid number, whether an account has it or not (directive 119): the answer never
+   * reveals accounts. The cooldown and daily cap are per number.
+   */
+  async requestLogin(input: string, now = new Date()): Promise<void> {
+    if (!this.enabled)
+      throw new HttpException('ورود با پیامک فعلاً در دسترس نیست.', 503);
+    const phone = this.parse(input);
+    const previous = await this.prisma.smsLoginCode.findUnique({
+      where: { phone },
+    });
+    if (previous && now.getTime() - previous.sentAt.getTime() < RESEND_AFTER_MS)
+      throw tooMany('یک دقیقه صبر کن و دوباره کد بخواه.');
+    const freshWindow =
+      !previous || now.getTime() - previous.windowStart.getTime() >= DAY_MS;
+    const sends = freshWindow ? 1 : previous.sends + 1;
+    if (sends > DAILY_SENDS)
+      throw tooMany('امروز بیش از حد کد خواسته شده. فردا دوباره امتحان کن.');
+    const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
+    const data = {
+      codeHash: loginHash(phone, code),
+      expiresAt: new Date(now.getTime() + LOGIN_MINUTES * 60_000),
+      attempts: 0,
+      sentAt: now,
+      sends,
+      windowStart: freshWindow ? now : previous.windowStart,
+    };
+    await this.prisma.smsLoginCode.upsert({
+      where: { phone },
+      create: { phone, ...data },
+      update: data,
+    });
+    try {
+      await this.sms.send('LOGIN_CODE', phone, {
+        code,
+        minutes: String(LOGIN_MINUTES),
+      });
+    } catch (error) {
+      // The code never arrived: it must not work, but the send still counts against the cap.
+      await this.prisma.smsLoginCode.update({
+        where: { phone },
+        data: { expiresAt: now },
+      });
+      throw error;
+    }
+  }
+
+  /** Uses a sign-in code once; a wrong one costs an attempt. Returns the confirmed number. */
+  async verifyLogin(
+    input: string,
+    code: string,
+    now = new Date(),
+  ): Promise<string> {
+    const fail = () => new BadRequestException('کد نادرست است یا منقضی شده.');
+    const phone = iranMobile(input);
+    if (!phone) throw fail();
+    const row = await this.prisma.smsLoginCode.findUnique({ where: { phone } });
+    if (!row || row.expiresAt <= now || row.attempts >= MAX_ATTEMPTS)
+      throw fail();
+    if (!sameHash(row.codeHash, loginHash(phone, code))) {
+      await this.prisma.smsLoginCode.updateMany({
+        where: { phone },
+        data: { attempts: { increment: 1 } },
+      });
+      throw fail();
+    }
+    // Only one request can use the code (concurrent right guesses).
+    const used = await this.prisma.smsLoginCode.updateMany({
+      where: { phone, codeHash: row.codeHash, expiresAt: { gt: now } },
+      data: { expiresAt: now },
+    });
+    if (used.count !== 1) throw fail();
+    return phone;
   }
 
   private parse(input: string): string {

@@ -9,7 +9,14 @@ import { API_BASE_URL } from '../api/api-base-url';
 import { Location } from '@angular/common';
 import { extractGrowthCampaign } from '@all-in-one/shared/schemas';
 import { PushSettings } from './push-settings';
-import { Component, inject, input, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  input,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   AioLanguageSwitcher,
@@ -28,7 +35,7 @@ import {
 import { apiErrorMessage } from './auth.guards';
 import { APP_VERSION } from '../release-version';
 import { AiConnection } from './ai-connection';
-import { PhoneSettings } from './phone-settings';
+import { localMobile, PhoneSettings } from './phone-settings';
 import { PhoneReset } from './phone-reset';
 import { AuthStore } from './auth.store';
 
@@ -342,8 +349,8 @@ export class VerifyEmailPage implements OnInit {
     <div class="mx-auto flex w-full max-w-lg flex-col gap-6">
       <header class="flex flex-col gap-1">
         <h1 class="text-2xl font-bold">{{ 'حساب کاربری' | aioTranslate }}</h1>
-        <p class="text-muted-foreground text-sm" dir="ltr">
-          {{ auth.user()?.email }}
+        <p class="text-muted-foreground text-sm" dir="ltr" lang="en">
+          {{ auth.user()?.email ?? localPhone() }}
         </p>
       </header>
       @if (billing()) {
@@ -443,53 +450,57 @@ export class VerifyEmailPage implements OnInit {
           <bdi dir="ltr">{{ version }}</bdi>
         </div>
       </section>
-      <section aioCard>
-        <div
-          aioCardHeading
-          [title]="'تغییر رمز' | aioTranslate"
-          [level]="2"
-          [description]="
-            'بعد از تغییر، دستگاه‌های دیگر از حساب خارج می‌شوند.' | aioTranslate
-          "
-        ></div>
-        <form
-          aioCardContent
-          class="flex flex-col gap-4"
-          (submit)="$event.preventDefault(); change()"
-        >
-          <aio-form-field
-            [label]="'رمز فعلی' | aioTranslate"
-            controlId="current-password"
+      <!-- A password signs in with the email only: phone-only accounts (directive 119) sign in by SMS. -->
+      @if (auth.user()?.email) {
+        <section aioCard>
+          <div
+            aioCardHeading
+            [title]="'تغییر رمز' | aioTranslate"
+            [level]="2"
+            [description]="
+              'بعد از تغییر، دستگاه‌های دیگر از حساب خارج می‌شوند.'
+                | aioTranslate
+            "
+          ></div>
+          <form
+            aioCardContent
+            class="flex flex-col gap-4"
+            (submit)="$event.preventDefault(); change()"
           >
-            <input
-              aioInput
-              id="current-password"
-              type="password"
-              dir="ltr"
-              autocomplete="current-password"
-              [value]="current()"
-              (input)="current.set($any($event.target).value)"
-            />
-          </aio-form-field>
-          <aio-form-field
-            [label]="'رمز تازه' | aioTranslate"
-            controlId="new-password"
-          >
-            <input
-              aioInput
-              id="new-password"
-              type="password"
-              dir="ltr"
-              autocomplete="new-password"
-              [value]="next()"
-              (input)="next.set($any($event.target).value)"
-            />
-          </aio-form-field>
-          <button aioBtn type="submit" class="self-start" [disabled]="busy()">
-            {{ 'ذخیره رمز تازه' | aioTranslate }}
-          </button>
-        </form>
-      </section>
+            <aio-form-field
+              [label]="'رمز فعلی' | aioTranslate"
+              controlId="current-password"
+            >
+              <input
+                aioInput
+                id="current-password"
+                type="password"
+                dir="ltr"
+                autocomplete="current-password"
+                [value]="current()"
+                (input)="current.set($any($event.target).value)"
+              />
+            </aio-form-field>
+            <aio-form-field
+              [label]="'رمز تازه' | aioTranslate"
+              controlId="new-password"
+            >
+              <input
+                aioInput
+                id="new-password"
+                type="password"
+                dir="ltr"
+                autocomplete="new-password"
+                [value]="next()"
+                (input)="next.set($any($event.target).value)"
+              />
+            </aio-form-field>
+            <button aioBtn type="submit" class="self-start" [disabled]="busy()">
+              {{ 'ذخیره رمز تازه' | aioTranslate }}
+            </button>
+          </form>
+        </section>
+      }
       <web-phone-settings />
       <section aioCard>
         <div
@@ -749,6 +760,10 @@ export class AccountPage implements OnInit {
   protected readonly auth = inject(AuthStore);
   protected readonly current = signal('');
   protected readonly next = signal('');
+  protected readonly localPhone = computed(() => {
+    const phone = this.auth.user()?.phone;
+    return phone ? localMobile(phone) : '';
+  });
   protected readonly busy = signal(false);
 
   protected async change() {

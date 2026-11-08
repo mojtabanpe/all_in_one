@@ -911,7 +911,7 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'فرستاده شد. ایمیلت را باز کن و روی لینک بزن، بعد وارد شو.',
     'was sent Open your email and click on the link, then log in.',
   ],
-  ['دوباره بفرست', 'send again'],
+  ['دوباره بفرست', 'Send again'],
   ['رمز را فراموش کرده‌ای؟', 'Have you forgotten the password?'],
   [
     'این حساب به این بخش دسترسی ندارد.',
@@ -4630,6 +4630,23 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'If this number is confirmed for an account, a 6-digit code was sent to {0}. It works for 10 minutes.',
   ],
   ['کد پیامک', 'SMS code'],
+  ['ورود یا ثبت‌نام', 'Sign in or sign up'],
+  [
+    'با شمارهٔ موبایل؛ کد ورود برایت پیامک می‌شود.',
+    'With your mobile number; we text you a sign-in code.',
+  ],
+  ['دریافت کد', 'Get a code'],
+  [
+    'کد ۶ رقمی به {0} فرستاده شد. کد ۵ دقیقه اعتبار دارد.',
+    'A 6-digit code was sent to {0}. It works for 5 minutes.',
+  ],
+  ['ورود با ایمیل و رمز', 'Sign in with email and password'],
+  ['ورود یا ثبت‌نام با شمارهٔ موبایل', 'Sign in or sign up with your mobile'],
+  ['ایمیل یا موبایل', 'Email or mobile'],
+  [
+    'ورود با پیامک فعلاً در دسترس نیست.',
+    'Sign-in by SMS is unavailable right now.',
+  ],
   ['این شماره قبلاً تأیید شده است.', 'This number is already confirmed.'],
   [
     'این شماره برای حساب دیگری ثبت شده است.',

@@ -68,6 +68,18 @@ export const EXPIRY_NOTICE_MS = BILLING_RENEW_WINDOW_MS;
  * customer meets the paywall without having had a trial.
  */
 export const TRIAL_LAUNCH = new Date('2026-11-06T20:30:00.000Z');
+/** The first of email and SMS confirmation: a phone-only account starts its trial at its SMS sign-up. */
+const firstConfirmed = (user: {
+  emailVerifiedAt: Date | null;
+  phoneVerifiedAt: Date | null;
+}): Date | null => {
+  const dates = [user.emailVerifiedAt, user.phoneVerifiedAt].filter(
+    (date): date is Date => date !== null,
+  );
+  return dates.length
+    ? new Date(Math.min(...dates.map((date) => date.getTime())))
+    : null;
+};
 const trialEnd = (verifiedAt: Date) =>
   new Date(Math.max(verifiedAt.getTime(), TRIAL_LAUNCH.getTime()) + WEEK_MS);
 
@@ -207,7 +219,8 @@ export class BillingService {
   }
 
   /**
-   * Trial time starts after email confirmation, when the account can sign in (not before TRIAL_LAUNCH).
+   * Trial time starts after the account's first confirmation, email or SMS (directive 119), when it can sign in
+   * (not before TRIAL_LAUNCH).
    * Admins run the service and always have AI.
    */
   async access(userId: string, now = new Date()): Promise<BillingAccessState> {
@@ -216,6 +229,7 @@ export class BillingService {
       select: {
         role: true,
         emailVerifiedAt: true,
+        phoneVerifiedAt: true,
         billingSubscription: { select: { paidUntil: true } },
         billingRewards: {
           where: { startsAt: { lte: now }, expiresAt: { gt: now } },
@@ -225,10 +239,8 @@ export class BillingService {
         },
       },
     });
-    const trialUntil =
-      user?.role === 'CUSTOMER' && user.emailVerifiedAt
-        ? trialEnd(user.emailVerifiedAt)
-        : null;
+    const confirmedAt = user?.role === 'CUSTOMER' ? firstConfirmed(user) : null;
+    const trialUntil = confirmedAt ? trialEnd(confirmedAt) : null;
     const paidUntil = user?.billingSubscription?.paidUntil ?? null;
     const earnedUntil = user?.billingRewards[0]?.expiresAt ?? null;
     let tier: BillingAccessState['tier'] = 'free';
@@ -309,7 +321,7 @@ export class BillingService {
           createdAt: true,
           paidAt: true,
           plan: { select: { code: true } },
-          user: { select: { email: true } },
+          user: { select: { email: true, phone: true } },
           refund: { select: { amountRial: true } },
         },
       }),
@@ -340,7 +352,7 @@ export class BillingService {
       orders: rows.map(({ plan, user, createdAt, paidAt, refund, ...row }) => ({
         ...row,
         plan: plan.code,
-        email: user.email,
+        email: user.email ?? user.phone ?? '',
         createdAt: createdAt.toISOString(),
         paidAt: paidAt?.toISOString() ?? null,
         refundedRial: refund?.amountRial ?? null,
@@ -433,7 +445,7 @@ export class BillingService {
         }),
       ]);
     return {
-      email: user.email,
+      email: user.email ?? '',
       name: user.name,
       subscription,
       orders,
@@ -442,14 +454,14 @@ export class BillingService {
         startsAt: row.startsAt.toISOString(),
         expiresAt: row.expiresAt.toISOString(),
         reason: row.reason,
-        adminEmail: row.admin.email,
+        adminEmail: row.admin.email ?? '',
       })),
       refunds: refunds.map((row) => ({
         orderId: row.orderId,
         amountRial: row.amountRial,
         reason: row.reason,
         reference: row.reference,
-        adminEmail: row.admin.email,
+        adminEmail: row.admin.email ?? '',
         createdAt: row.createdAt.toISOString(),
       })),
       adjustments: adjustments.map((row) => ({
@@ -457,7 +469,7 @@ export class BillingService {
         action: row.action,
         days: row.days,
         reason: row.reason,
-        adminEmail: row.admin.email,
+        adminEmail: row.admin.email ?? '',
         previousUntil: row.previousUntil?.toISOString() ?? null,
         newUntil: row.newUntil.toISOString(),
         createdAt: row.createdAt.toISOString(),
@@ -532,14 +544,14 @@ export class BillingService {
     const rows = await this.prisma.billingRewardRequest.findMany({
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
       take: 30,
-      include: { user: { select: { email: true } } },
+      include: { user: { select: { email: true, phone: true } } },
     });
     return rows.map(({ id, campaign, handle, createdAt, user }) => ({
       id,
       campaign,
       handle,
       createdAt: createdAt.toISOString(),
-      email: user.email,
+      email: user.email ?? user.phone ?? '',
     }));
   }
 
@@ -729,7 +741,7 @@ export class BillingService {
         where: { id: order.userId },
         select: { email: true },
       });
-      return user.email;
+      return user.email ?? '';
     });
     return this.account(email, now);
   }

@@ -12,6 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { createHash, randomBytes } from 'node:crypto';
 import type {
+  GrowthAttribution,
   LoginInput,
   RegisterInput,
   User,
@@ -34,6 +35,8 @@ export function toUser(user: DbUser): User {
   return {
     id: user.id,
     email: user.email,
+    phone: user.phone,
+    hasPassword: user.passwordHash !== null,
     name: user.name,
     role: user.role,
     createdAt: user.createdAt.toISOString(),
@@ -82,32 +85,7 @@ export class AuthService {
         emailVerifiedAt: verify ? null : new Date(),
       },
     });
-    // Only a successfully created account can emit this event. Analytics must
-    // never turn a successful registration into an error or send auth fields.
-    if (
-      input.acquisition &&
-      this.config.get<string>('GROWTH_ANALYTICS_ENABLED') !== 'false'
-    ) {
-      try {
-        const { visitorId, language, campaign } = input.acquisition;
-        await this.prisma.growthEvent.createMany({
-          data: [
-            {
-              visitorId,
-              language,
-              name: 'signup_completed',
-              day: new Date().toLocaleDateString('en-CA', {
-                timeZone: 'Asia/Tehran',
-              }),
-              ...(campaign ? { campaign } : {}),
-            },
-          ],
-          skipDuplicates: true,
-        });
-      } catch {
-        this.logger.warn('Signup acquisition event could not be recorded');
-      }
-    }
+    await this.recordSignup(input.acquisition);
     if (verify)
       this.sendVerificationLink(email, input.acquisition?.campaign).catch(
         (error: Error) =>
@@ -116,12 +94,70 @@ export class AuthService {
     return user;
   }
 
+  /**
+   * A confirmed SMS sign-in code: signs into the account with that number, or creates one with the number alone
+   * (directive 119; the trial starts now, from `phoneVerifiedAt`).
+   */
+  async signInByPhone(
+    phone: string,
+    acquisition?: GrowthAttribution,
+  ): Promise<{ user: DbUser; created: boolean }> {
+    const existing = await this.prisma.user.findUnique({ where: { phone } });
+    if (existing) return { user: existing, created: false };
+    try {
+      const user = await this.prisma.user.create({
+        data: { phone, phoneVerifiedAt: new Date(), role: 'CUSTOMER' },
+      });
+      await this.recordSignup(acquisition);
+      return { user, created: true };
+    } catch (error) {
+      // Another request created the account for this number first (unique phone).
+      const raced = await this.prisma.user.findUnique({ where: { phone } });
+      if (raced) return { user: raced, created: false };
+      throw error;
+    }
+  }
+
+  /**
+   * Only a successfully created account can emit this event. Analytics must never turn a successful
+   * registration into an error or send auth fields.
+   */
+  private async recordSignup(acquisition?: GrowthAttribution): Promise<void> {
+    if (
+      !acquisition ||
+      this.config.get<string>('GROWTH_ANALYTICS_ENABLED') === 'false'
+    )
+      return;
+    try {
+      const { visitorId, language, campaign } = acquisition;
+      await this.prisma.growthEvent.createMany({
+        data: [
+          {
+            visitorId,
+            language,
+            name: 'signup_completed',
+            day: new Date().toLocaleDateString('en-CA', {
+              timeZone: 'Asia/Tehran',
+            }),
+            ...(campaign ? { campaign } : {}),
+          },
+        ],
+        skipDuplicates: true,
+      });
+    } catch {
+      this.logger.warn('Signup acquisition event could not be recorded');
+    }
+  }
+
   async login(input: LoginInput): Promise<DbUser> {
     const user = await this.prisma.user.findUnique({
       where: { email: input.email.toLowerCase() },
     });
-    // Same error for unknown email and wrong password: no account enumeration.
-    if (!user || !(await verifyPassword(input.password, user.passwordHash))) {
+    // Same error for unknown email, no password and wrong password: no account enumeration.
+    if (
+      !user?.passwordHash ||
+      !(await verifyPassword(input.password, user.passwordHash))
+    ) {
       throw new UnauthorizedException('ایمیل یا رمز عبور نادرست است');
     }
     if (!user.emailVerifiedAt)
@@ -164,7 +200,7 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { email: email.trim().toLowerCase() },
     });
-    if (!user || user.emailVerifiedAt) return;
+    if (!user?.email || user.emailVerifiedAt) return;
     const token = newToken();
     await this.prisma.emailVerification.deleteMany({
       where: { OR: [{ expiresAt: { lte: new Date() } }, { userId: user.id }] },
@@ -217,11 +253,16 @@ export class AuthService {
   /** Changes the password and signs out every other session; returns the user for a fresh cookie. */
   async changePassword(
     userId: string,
-    currentPassword: string,
+    currentPassword: string | undefined,
     newPassword: string,
   ): Promise<DbUser> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || !(await verifyPassword(currentPassword, user.passwordHash)))
+    if (!user) throw new BadRequestException('رمز فعلی درست نیست.');
+    // A phone-only account sets its first password without a current one.
+    if (
+      user.passwordHash &&
+      !(await verifyPassword(currentPassword ?? '', user.passwordHash))
+    )
       throw new BadRequestException('رمز فعلی درست نیست.');
     const updated = await this.prisma.$transaction(async (tx) => {
       await tx.passwordReset.deleteMany({ where: { userId } });
@@ -256,7 +297,7 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { email: email.trim().toLowerCase() },
     });
-    if (!user) return;
+    if (!user?.email) return;
     const token = newToken();
     await this.prisma.passwordReset.deleteMany({
       where: { expiresAt: { lte: new Date() } },
@@ -316,7 +357,8 @@ export class AuthService {
   }
 
   /** Security notice; a mail failure must not undo the password change. */
-  private notify(email: string, subject: string): void {
+  private notify(email: string | null, subject: string): void {
+    if (!email) return;
     this.mail
       .send({
         to: email,

@@ -885,14 +885,14 @@ export class TasksService {
     } else taskId = (await this.access.task(userId, taskId)).id;
     const rows = await this.prisma.plannerComment.findMany({
       where: { taskId },
-      include: { user: { select: { name: true, email: true } } },
+      include: { user: { select: { name: true, email: true, phone: true } } },
       orderBy: { createdAt: 'asc' },
     });
     return rows.map((c) => ({
       id: c.id,
       taskId: c.taskId,
       userId: c.userId,
-      author: c.user.name || c.user.email,
+      author: c.user.name || c.user.email || c.user.phone || '',
       body: c.body,
       createdAt: c.createdAt.toISOString(),
       mine: c.userId === userId,

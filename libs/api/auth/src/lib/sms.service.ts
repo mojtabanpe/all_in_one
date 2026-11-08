@@ -16,9 +16,11 @@ export const FARAZ_API = 'https://api.iranpayamak.com/ws/v1/sms/pattern';
  */
 export const FARAZ_SENDER = '3000505';
 
-/** Approved pattern codes (directive 88) and the variables each was submitted with. */
+/** Approved pattern codes (directives 88 and 119) and the variables each was submitted with. */
 export const SMS_TEMPLATES = {
   AUTH_CODE: { code: '55qc3IG5ba', params: ['code', 'minutes'] },
+  /** Sign in / sign up with an SMS code (directive 119). */
+  LOGIN_CODE: { code: '8WrT7o0zjD', params: ['code', 'minutes'] },
   PASSWORD_RESET: { code: 'N7zuaY8kHN', params: ['code', 'minutes'] },
   PASSWORD_CHANGED: { code: 't7D480PuMg', params: [] },
   SUBSCRIPTION_ACTIVATED: {

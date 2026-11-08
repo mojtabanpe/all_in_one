@@ -27,7 +27,7 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
           <thead aioTHead>
             <tr aioTr>
               <th aioTh>{{ 'نام' | aioTranslate }}</th>
-              <th aioTh>{{ 'ایمیل' | aioTranslate }}</th>
+              <th aioTh>{{ 'ایمیل یا موبایل' | aioTranslate }}</th>
               <th aioTh>{{ 'نقش' | aioTranslate }}</th>
               <th aioTh>{{ 'عضویت' | aioTranslate }}</th>
             </tr>
@@ -36,7 +36,9 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
             @for (u of list.value()?.users ?? []; track u.id) {
               <tr aioTr>
                 <td aioTd>{{ u.name ?? '—' }}</td>
-                <td aioTd dir="ltr" class="text-end">{{ u.email }}</td>
+                <td aioTd dir="ltr" lang="en" class="text-end">
+                  {{ u.email ?? u.phone ?? '—' }}
+                </td>
                 <td aioTd>
                   <span
                     aioBadge
