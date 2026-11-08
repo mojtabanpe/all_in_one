@@ -12,7 +12,10 @@ import type {
   AiKind,
   AiUsageView,
 } from '@all-in-one/shared/schemas';
-import { billingRewardRequestSchema } from '@all-in-one/shared/schemas';
+import {
+  billingRewardRequestSchema,
+  canBuyPlan,
+} from '@all-in-one/shared/schemas';
 import {
   AioAlertDirectives,
   AioAsyncButton,
@@ -315,24 +318,30 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
                       {{ '{0} تومان' | aioTranslate: [toman(plan.priceRial)] }}
                     </p>
                   </div>
-                  <div aioCardFooter>
-                    <button
-                      aioAsyncButton
-                      class="min-h-11 w-full"
-                      [label]="paid() ? 'پرداخت و تمدید' : 'پرداخت و فعال‌سازی'"
-                      busyLabel="در حال رفتن به درگاه"
-                      [busy]="paying() === plan.code"
-                      [disabled]="!!paying()"
-                      (click)="pay(plan.code)"
-                    ></button>
-                  </div>
+                  @if (canBuy()) {
+                    <div aioCardFooter>
+                      <button
+                        aioAsyncButton
+                        class="min-h-11 w-full"
+                        [label]="
+                          paid() ? 'پرداخت و تمدید' : 'پرداخت و فعال‌سازی'
+                        "
+                        busyLabel="در حال رفتن به درگاه"
+                        [busy]="paying() === plan.code"
+                        [disabled]="!!paying()"
+                        (click)="pay(plan.code)"
+                      ></button>
+                    </div>
+                  }
                 </article>
               }
             </div>
             <p class="text-sm text-muted-foreground">
               {{
-                'پرداخت در درگاه زیبال انجام می‌شود. تمدید از پایان اشتراک فعلی شروع می‌شود.'
-                  | aioTranslate
+                (canBuy()
+                  ? 'پرداخت در درگاه زیبال انجام می‌شود. تمدید از پایان اشتراک فعلی شروع می‌شود.'
+                  : 'اشتراکت فعال است. تمدید از سه روز مانده به پایان آن ممکن می‌شود و از همان روز پایان ادامه پیدا می‌کند.'
+                ) | aioTranslate
               }}
             </p>
           } @else {
@@ -528,6 +537,10 @@ export class Billing {
 
   protected readonly paid = computed(
     () => this.access.hasValue() && this.access.value().tier === 'paid',
+  );
+  /** Paid access with more than three days left hides the buy buttons (directive 118); the server refuses too. */
+  protected readonly canBuy = computed(
+    () => !this.paid() || canBuyPlan(this.access.value()?.paidUntil ?? null),
   );
   protected readonly orders = httpResource<BillingOrderSummary[]>(
     () => `${this.api}/billing/orders`,

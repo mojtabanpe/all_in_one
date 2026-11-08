@@ -164,6 +164,20 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
     const service = () =>
       new BillingService(prisma, gateway as unknown as ZibalGateway);
     const trackOf = (url: string) => url.split('/').pop() as string;
+    /**
+     * Checkout as if it were the last day of the current paid period: the renewal window (directive 118) is not what
+     * these lifecycle tests are about, and the moment only feeds that check.
+     */
+    const buy = async (billing = service(), id = userId, plan = code) => {
+      const sub = await prisma.billingSubscription.findUnique({
+        where: { userId: id },
+      });
+      const at =
+        sub && sub.paidUntil > new Date()
+          ? new Date(sub.paidUntil.getTime() - 86_400_000)
+          : new Date();
+      return billing.checkout(id, plan, at);
+    };
 
     beforeAll(async () => {
       const url = process.env['DATABASE_URL'];
@@ -442,9 +456,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
     });
 
     it('activates once for concurrent callbacks and extends from the current end', async () => {
-      const first = trackOf(
-        (await service().checkout(userId, code)).paymentUrl,
-      );
+      const first = trackOf((await buy()).paymentUrl);
       expect(gateway.request).toHaveBeenCalledWith(expect.any(String), 990_000);
       expect((await service().subscription(userId)).active).toBe(false);
       const results = await Promise.all([
@@ -461,9 +473,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       expect((await service().subscription(userId)).paidUntil).toBe(
         once.paidUntil,
       );
-      const second = trackOf(
-        (await service().checkout(userId, code)).paymentUrl,
-      );
+      const second = trackOf((await buy()).paymentUrl);
       expect(await service().settle(second)).toBe('paid');
       expect((await service().subscription(userId)).paidUntil).toBe(
         addMonths(until, 1).toISOString(),
@@ -473,11 +483,30 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       expect(orders[0]).toMatchObject({ plan: code, amountRial: 990_000 });
     });
 
+    it('refuses a second purchase until the last three days of paid access', async () => {
+      const { paidUntil } = await service().subscription(userId);
+      const end = new Date(paidUntil as string).getTime();
+      const before = await prisma.billingOrder.count({ where: { userId } });
+      await expect(
+        service().checkout(userId, code, new Date(end - 4 * 86_400_000)),
+      ).rejects.toBeInstanceOf(ConflictException);
+      expect(await prisma.billingOrder.count({ where: { userId } })).toBe(
+        before,
+      );
+      const { paymentUrl } = await service().checkout(
+        userId,
+        code,
+        new Date(end - 3 * 86_400_000),
+      );
+      // Later tests count this account's orders: drop the unpaid one.
+      await prisma.billingOrder.delete({
+        where: { trackId: trackOf(paymentUrl) },
+      });
+    });
+
     it('keeps an order pending on outage and fails it on rejection or mismatch', async () => {
       const before = (await service().subscription(userId)).paidUntil;
-      const track = trackOf(
-        (await service().checkout(userId, code)).paymentUrl,
-      );
+      const track = trackOf((await buy()).paymentUrl);
       gateway.verify.mockRejectedValueOnce(
         new ServiceUnavailableException('down'),
       );
@@ -530,9 +559,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
     });
 
     it('reconciles only pending orders older than half an hour', async () => {
-      const fresh = trackOf(
-        (await service().checkout(userId, code)).paymentUrl,
-      );
+      const fresh = trackOf((await buy()).paymentUrl);
       gateway.verify.mockClear();
       const order = await prisma.billingOrder.findUniqueOrThrow({
         where: { trackId: fresh },
@@ -790,9 +817,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
 
       it('settles a payment whose callback hit an outage on the next reconciliation, once', async () => {
         const before = (await service().subscription(userId)).paidUntil;
-        const track = trackOf(
-          (await service().checkout(userId, code)).paymentUrl,
-        );
+        const track = trackOf((await buy()).paymentUrl);
         gateway.verify.mockRejectedValueOnce(
           new ServiceUnavailableException('timeout'),
         );
@@ -811,9 +836,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       });
 
       it('activates when Zibal reports the payment was already verified but access was never granted', async () => {
-        const track = trackOf(
-          (await service().checkout(userId, code)).paymentUrl,
-        );
+        const track = trackOf((await buy()).paymentUrl);
         const before = (await service().subscription(userId)).paidUntil;
         gateway.verify.mockResolvedValueOnce({
           kind: 'already_verified' as never,
@@ -828,9 +851,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
 
       it('fails a cancelled payment and never grants access for it', async () => {
         const before = (await service().subscription(userId)).paidUntil;
-        const track = trackOf(
-          (await service().checkout(userId, code)).paymentUrl,
-        );
+        const track = trackOf((await buy()).paymentUrl);
         gateway.verify.mockRejectedValueOnce(
           new BadGatewayException('cancelled'),
         );
@@ -843,9 +864,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       });
 
       it('verifies the amount and months the order was created with, even after a price change', async () => {
-        const track = trackOf(
-          (await service().checkout(userId, code)).paymentUrl,
-        );
+        const track = trackOf((await buy()).paymentUrl);
         await prisma.billingPlan.update({
           where: { code },
           data: { priceRial: 1_490_000, months: 3 },
@@ -873,9 +892,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         });
         expect(await service().isPaid(userId)).toBe(false);
         expect((await service().access(userId)).tier).toBe('free');
-        const track = trackOf(
-          (await service().checkout(userId, code)).paymentUrl,
-        );
+        const track = trackOf((await buy()).paymentUrl);
         const start = Date.now();
         expect(await service().settle(track)).toBe('paid');
         const until = new Date(
@@ -886,9 +903,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         );
         expect((await service().access(userId)).tier).toBe('paid');
         // An unpaid renewal attempt leaves access to end on time.
-        const unpaid = trackOf(
-          (await service().checkout(userId, code)).paymentUrl,
-        );
+        const unpaid = trackOf((await buy()).paymentUrl);
         gateway.verify.mockRejectedValueOnce(new BadGatewayException('no'));
         expect(await service().settle(unpaid)).toBe('failed');
         expect(
@@ -913,9 +928,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
           },
         });
         try {
-          const track = trackOf(
-            (await texting.checkout(customer.id, code)).paymentUrl,
-          );
+          const track = trackOf((await buy(texting, customer.id)).paymentUrl);
           await Promise.all([texting.settle(track), texting.settle(track)]);
           const until = (await texting.subscription(customer.id))
             .paidUntil as string;
@@ -972,9 +985,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
           },
         });
         try {
-          const partial = trackOf(
-            (await service().checkout(userId, code)).paymentUrl,
-          );
+          const partial = trackOf((await buy()).paymentUrl);
           expect(await service().settle(partial)).toBe('paid');
           const partialOrder = await orderOf(partial);
           const kept = (await service().subscription(userId)).paidUntil;
@@ -1004,9 +1015,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
             }),
           ).rejects.toBeInstanceOf(ConflictException);
 
-          const full = trackOf(
-            (await service().checkout(userId, code)).paymentUrl,
-          );
+          const full = trackOf((await buy()).paymentUrl);
           expect(await service().settle(full)).toBe('paid');
           const fullOrder = await orderOf(full);
           const before = (await service().subscription(userId))

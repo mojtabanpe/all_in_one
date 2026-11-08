@@ -613,3 +613,11 @@ origin master` and read the index and the roadmap; after work, update its status
      line is dedicated, not a service line (`service: false`). `FARAZ_SENDER` in `sms.service.ts` is `3000505`;
      `FARAZ_SMS_SENDER` can still replace it. Delivery is read from Faraz's `GET /ws/v1/send_request` counters
      (`sent_count`, `delivered_count`, `blacklist_count`), never assumed from a 2xx.
+
+## No early renewal (2026-11-08)
+
+118. **While a plan is active, no buy buttons** (owner, after paying and then pressing «پرداخت و تمدید» again: «فک میکنم
+     نیازی به وجودش نیست وقتی پلن دارم»). `/app/billing` hides the plan buttons while paid access has more than three
+     days left and says renewal opens in the last three days (`canBuyPlan`, `BILLING_RENEW_WINDOW_MS` in the billing
+     contracts, the same window as the SUBSCRIPTION_EXPIRING SMS). `BillingService.checkout` refuses earlier purchases
+     with 409 `BILLING_STILL_ACTIVE`, so an old tab cannot charge twice. A renewal still starts at the current end.

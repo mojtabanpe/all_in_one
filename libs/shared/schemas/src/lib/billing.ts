@@ -10,6 +10,20 @@ export const billingCheckoutSchema = z.strictObject({
 });
 export type BillingCheckoutInput = z.infer<typeof billingCheckoutSchema>;
 
+/** Renewal opens this long before paid access ends (the SUBSCRIPTION_EXPIRING SMS goes out at the same time). */
+export const BILLING_RENEW_WINDOW_MS = 3 * 86_400_000;
+
+/** A plan can be bought without paid access, or in its last three days (directive 118). */
+export function canBuyPlan(
+  paidUntil: string | Date | null,
+  now = new Date(),
+): boolean {
+  if (!paidUntil) return true;
+  return (
+    new Date(paidUntil).getTime() - now.getTime() <= BILLING_RENEW_WINDOW_MS
+  );
+}
+
 /** Admin create/update. Prices are Rial (Zibal's unit; 10 Rial = 1 Toman), whole Toman only. */
 export const billingPlanInputSchema = z.strictObject({
   code: billingPlanCodeSchema,

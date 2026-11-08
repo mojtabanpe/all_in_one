@@ -209,6 +209,14 @@ export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
     'پرداخت در درگاه زیبال انجام می‌شود. تمدید از پایان اشتراک فعلی شروع می‌شود.',
     'You pay on the Zibal gateway. An extension starts when your current subscription ends.',
   ],
+  [
+    'اشتراکت فعال است. تمدید از سه روز مانده به پایان آن ممکن می‌شود و از همان روز پایان ادامه پیدا می‌کند.',
+    'Your subscription is active. You can extend it in its last three days, and the extension starts when it ends.',
+  ],
+  [
+    'اشتراکت هنوز فعال است. تمدید از سه روز مانده به پایان آن ممکن می‌شود.',
+    'Your subscription is still active. You can extend it in its last three days.',
+  ],
   ['هنوز پلنی برای خرید نیست', 'No plans to buy yet'],
   [
     'امکانات رایگان بدون اشتراک در دسترس‌اند.',

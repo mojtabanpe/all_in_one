@@ -10,6 +10,10 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '@all-in-one/api/db';
 import { SmsService, smsDate } from '@all-in-one/api/auth';
+import {
+  BILLING_RENEW_WINDOW_MS,
+  canBuyPlan,
+} from '@all-in-one/shared/schemas';
 import type {
   BillingAccessState,
   BillingRewardInput,
@@ -45,7 +49,7 @@ const SOCIAL_OFFERS = [
 
 const WEEK_MS = 7 * 86_400_000;
 /** SUBSCRIPTION_EXPIRING goes out when paid access ends within three days. */
-export const EXPIRY_NOTICE_MS = 3 * 86_400_000;
+export const EXPIRY_NOTICE_MS = BILLING_RENEW_WINDOW_MS;
 /**
  * Trials launched on this day (Tehran midnight). Accounts confirmed earlier get their week from here, so no
  * customer meets the paywall without having had a trial.
@@ -716,12 +720,24 @@ export class BillingService {
   }
 
   /** Creates an owned order with the plan's current price, then asks Zibal for a payment page. */
+  /** Refused while paid access has more than three days left (directive 118), so nobody pays twice by mistake. */
   async checkout(
     userId: string,
     code: string,
+    now = new Date(),
   ): Promise<{ paymentUrl: string }> {
     const plan = await this.prisma.billingPlan.findUnique({ where: { code } });
     if (!plan?.active) throw new NotFoundException('Plan is not available');
+    const subscription = await this.prisma.billingSubscription.findUnique({
+      where: { userId },
+      select: { paidUntil: true },
+    });
+    if (!canBuyPlan(subscription?.paidUntil ?? null, now))
+      throw new ConflictException({
+        code: 'BILLING_STILL_ACTIVE',
+        message:
+          'اشتراکت هنوز فعال است. تمدید از سه روز مانده به پایان آن ممکن می‌شود.',
+      });
     const order = await this.prisma.billingOrder.create({
       data: {
         userId,
