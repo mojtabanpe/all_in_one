@@ -305,7 +305,10 @@ Evidence: `apps/admin/src/app/pages/dashboard.ts` already shows basic user/conte
     `billing.integration.spec.ts` (concurrent verify → one month, replay, other account's replay, wrong payload, unknown
     SKU never reaches the store, invalid token, outage writes nothing then succeeds, recheck without Zibal); customer
     `store-billing.spec.ts` 4 tests (verify before consume, cancel, restore skips other accounts' purchases). Flutter
-    analyze/test and the APK builds run on GitHub (pub.dev is not reachable from the local network).
+    analyze/test and the APK builds run on GitHub (pub.dev is not reachable from the local network): commit `4ecbd6f`,
+    [Android APK run 42476988172](https://github.com/mojtabanpe/all_in_one/actions/runs/42476988172) built all three
+    flavors (direct split per ABI 24 MB, bazaar 22 MB, myket 23 MB artifacts; the bazaar job's first attempt hit a
+    GitHub 504 downloading Gradle and passed on rerun); CI green. Store builds are debug-signed until O10 adds the key.
   - `TODO` A real purchase in each store's test/live mode (owner items O10, O11), then mark C8 `DONE`.
 
 ## P0/P1 — replace user AI configuration with one reliable managed service
