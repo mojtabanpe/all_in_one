@@ -370,7 +370,7 @@ origin master` and read the index and the roadmap; after work, update its status
 
 87. **Admin AI configuration and presets (2026-11-07):** Move the existing AI settings experience to the admin panel only. Keep chat, TTS and STT settings, connection tests, remembered models and saved presets that administrators can apply again. Seed the managed configuration and presets once from the explicitly designated owner account; encrypted keys stay on the server and regular customers have no provider settings. This narrow import supersedes the legacy reuse prohibition in directive 86 for that account only.
 
-88. **Faraz SMS templates (2026-11-07):** Use Faraz SMS with sender line `20002178584475`. Approved pattern IDs in directive 83 order: `AUTH_CODE=55qc3IG5ba`, `PASSWORD_RESET=N7zuaY8kHN`, `PASSWORD_CHANGED=t7D480PuMg`, `SUBSCRIPTION_ACTIVATED=K1pz92FHPc`, `SUBSCRIPTION_EXPIRING=5O4Ya9gB3f`. These are template IDs, not an API key. Keep the API key in server secrets.
+88. **Faraz SMS templates (2026-11-07):** Use Faraz SMS with sender line `20002178584475` (line superseded by 117). Approved pattern IDs in directive 83 order: `AUTH_CODE=55qc3IG5ba`, `PASSWORD_RESET=N7zuaY8kHN`, `PASSWORD_CHANGED=t7D480PuMg`, `SUBSCRIPTION_ACTIVATED=K1pz92FHPc`, `SUBSCRIPTION_EXPIRING=5O4Ya9gB3f`. These are template IDs, not an API key. Keep the API key in server secrets.
 
 ## Recall data (2026-10-31)
 
@@ -605,3 +605,11 @@ origin master` and read the index and the roadmap; after work, update its status
      cached for all accounts (`speechCacheKey` without the user), so a text is paid for once; access is still checked
      before the cache. Watch the cost per paid user in `/admin/ai` and revisit prices or limits if it passes about
      100,000 Toman a month.
+
+## Faraz service line (2026-11-08)
+
+117. **SMS go out from Faraz's public service line `3000505`** (owner: «از 3000505 استفاده کن»). Faraz accepted every
+     code sent from the account's line `20002178584475` (`sent`, no blacklist, no error) but none was delivered: that
+     line is dedicated, not a service line (`service: false`). `FARAZ_SENDER` in `sms.service.ts` is `3000505`;
+     `FARAZ_SMS_SENDER` can still replace it. Delivery is read from Faraz's `GET /ws/v1/send_request` counters
+     (`sent_count`, `delivered_count`, `blacklist_count`), never assumed from a 2xx.

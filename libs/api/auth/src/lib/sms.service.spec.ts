@@ -64,7 +64,7 @@ describe('SmsService (Faraz)', () => {
       code: 'K1pz92FHPc',
       attributes: { plan: 'ماهانه', expiry_date: '1405/09/16' },
       recipient: '09121234567',
-      line_number: '20002178584475',
+      line_number: '3000505',
       number_format: 'english',
     });
   });

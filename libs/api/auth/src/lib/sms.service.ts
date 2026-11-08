@@ -10,8 +10,11 @@ import { ConfigService } from '@nestjs/config';
  * by IPPanel Edge, which this client used before (2026-11-08).
  */
 export const FARAZ_API = 'https://api.iranpayamak.com/ws/v1/sms/pattern';
-/** The account's sender line (directive 88); `FARAZ_SMS_SENDER` can replace it. */
-export const FARAZ_SENDER = '20002178584475';
+/**
+ * Faraz's public service line (directive 117). The account's own line 20002178584475 is not a service line, so
+ * operators never delivered its codes. `FARAZ_SMS_SENDER` can replace it.
+ */
+export const FARAZ_SENDER = '3000505';
 
 /** Approved pattern codes (directive 88) and the variables each was submitted with. */
 export const SMS_TEMPLATES = {
