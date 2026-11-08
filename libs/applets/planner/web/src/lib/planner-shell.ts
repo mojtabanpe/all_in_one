@@ -29,7 +29,7 @@ import {
     }),
   ],
   template: `
-    <div class="applet-planner aio-applet-layout">
+    <div class="applet-planner lx-stage aio-applet-layout">
       <aio-applet-header
         [title]="'جا برای کارهای مهم.' | aioTranslate"
         [subtitle]="'ذهن خلوت، مسیر روشن' | aioTranslate"

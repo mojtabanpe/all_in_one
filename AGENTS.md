@@ -577,3 +577,11 @@ origin master` and read the index and the roadmap; after work, update its status
 
 113. **Check formatting before every push.** Run `pnpm nx format:check` before sending any commits.
      In a master-only checkout, use `NX_BASE=origin/master` so Nx compares against the remote branch.
+
+## Ambient light everywhere (2026-11-08)
+
+114. **Every customer page has the ambient background light** (owner: «in english and health tab i had an shadow color
+     on whole page but in the others have not» → chose «به همه اضافه شود»). This extends directives 97/99: the planner
+     shell is an `lx-stage` with blue `--lx-1..4` on `.applet-planner`, and the layout gives the pages outside the
+     applets (home, account, subscription) `lx-stage lx-brand` (teal and the logo's sun). Keep the pastels light
+     (L ≥ 0.86, as English) so text contrast does not change, and never stack two stages on one page.

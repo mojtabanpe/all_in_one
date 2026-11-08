@@ -171,7 +171,13 @@ const TRIAL_NOTICE_DAYS = 3;
           ></div>
         </div>
       }
-      <div class="aio-route-content" [class.hidden]="!!pendingRoute()">
+      <!-- The applets paint their own ambient light; the other pages get the brand's. -->
+      <div
+        class="aio-route-content"
+        [class.hidden]="!!pendingRoute()"
+        [class.lx-stage]="assistantContext() === 'home'"
+        [class.lx-brand]="assistantContext() === 'home'"
+      >
         <router-outlet />
       </div>
     </aio-app-shell>

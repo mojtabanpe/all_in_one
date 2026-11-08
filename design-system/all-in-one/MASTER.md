@@ -118,7 +118,9 @@ Status colours always come with a label or an icon, never colour alone.
 | `--streak`  | `0.56 0.14 62`  | streak flame (amber)    | 4.8:1      | 4.4:1 (bold/large text only) |
 | `--gem`     | `0.54 0.14 235` | learned words / gems    | 4.8:1      | 4.3:1 (bold/large text only) |
 
-English and health pages sit on `.lx-stage` (ambient light from the applet's `--lx-1..4`) with glass panels
+Every customer page sits on `.lx-stage` (ambient light from `--lx-1..4`; directive 114, 2026-11-08): English, health
+and planner with their applet's pastels (planner: blues around hue 258), home/account/subscription with `.lx-brand`
+(teal hue 185 and the logo's sun, hue 70–85, all L ≥ 0.86 like English, so text contrast is unchanged). English and health keep glass panels
 (`.lx-glass`; health's companion cards get the same material through `.health-calm`). 2026-11-01.
 
 The applet root carries `.applet-planner` / `.applet-english` / `.applet-health`, which sets `--primary`,
