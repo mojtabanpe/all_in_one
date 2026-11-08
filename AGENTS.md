@@ -216,6 +216,7 @@ origin master` and read the index and the roadmap; after work, update its status
 16. **Work and push on `master`.** Commit directly on `master` and push to `origin master`. Never create or
     push a separate branch unless the owner explicitly asks for one in that conversation. (This overrides the
     usual "branch first" habit.)
+    **Commit locally and push only on the owner's word: see 124.**
 
 ## Memory (2026-10-29)
 
@@ -383,7 +384,7 @@ origin master` and read the index and the roadmap; after work, update its status
 
 91. **Push to `master` deploys.** `.github/workflows/deploy.yml` runs after CI passes: images are built on GitHub,
     then the server's self-hosted runner (`aio-server`, label `aio`, `/opt/actions-runner-aio`) loads them and
-    runs `deploy/release.sh` (health check, rollback). CI must stay green (`nx format:check` included).
+    runs `deploy/release.sh` (health check, rollback). CI must stay green (`nx format:check` included). **See 124: a push is a release, so it waits for the owner.**
 
 ## Brand (2026-10-31)
 
@@ -659,6 +660,13 @@ origin master` and read the index and the roadmap; after work, update its status
 123. **English conversation (2026-11-08).** Talk to the owner in English in every chat and session: replies, short
      progress updates, questions and summaries. Only code, paths, commands and identifiers stay as written. This
      supersedes directive 84.
+
+124. **Push only when the owner asks (2026-11-08).** The owner: «سعی کن هر کاری که انجام میدی از این به بعد پوش نکنی
+     چون باعث دیپلوی میشه و مشتری‌ها پاپ اپ ریلود رو میبینن. هر موقع خودم گفتم پوش کن». Every push to `master` starts a
+     release (91) and the installed customer PWAs then show their update prompt, so work normally — edit, test, commit
+     on local `master` — but leave the commits unpushed until the owner says to push, then push the queued commits
+     together in one release. This supersedes the "push immediately" part of 16 and 91; it does not change what goes
+     into a commit.
 
 ## graphify
 
