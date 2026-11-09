@@ -672,6 +672,8 @@ origin master` and read the index and the roadmap; after work, update its status
 
 126. **Exercise-video acceptance (2026-11-09).** The owner accepts clips that demonstrate roughly 80% of the movement correctly. Treat this as a practical review standard. Accept minor differences in framing, timing, likeness, loop polish and form when the defining movement is clear and the clip remains suitable for instruction. Record material imperfections. A different movement or a materially unsafe demonstration still needs revision.
 
+127. **Runway Gen-4 Turbo for exercise videos (2026-11-09).** Name Runway Gen-4 Turbo explicitly in future exercise-video prompts and tell the owner to select it in Runway Tools. Default to a single five-second, 720p image-to-video generation using a starting image of the approved coach already in the correct opening pose. Preserve the option to use a different model when the owner requests one.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

@@ -78,7 +78,7 @@ Prior conversations mention video review/approval for Squat, Push-up, Glute Brid
 ## Next action
 
 1. Open `dead-bug` or `plank` on a phone and in the installed PWA; confirm inline playback in the exercise sheet and guided session.
-2. Generate `trx-plank` v001 using the [standalone prompt](../exercise-video-kit/prompts/18-trx-plank.txt). A short hold is enough to review the pose and cradle contact.
+2. Generate `trx-plank` v001 using the [standalone prompt](../exercise-video-kit/prompts/18-trx-plank.txt). Use Runway Gen-4 Turbo with a five-second hold from a correct opening still.
 3. Generate `prone-w` v3 with prompt 07.
 
 Last updated: 2026-11-09.

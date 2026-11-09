@@ -440,22 +440,14 @@ Save the delivered clip as trx-y--aio-coach-v1--v001.mp4 if file saving is avail
 
 EXERCISE: TRX suspended forearm plank
 CATALOG ID: trx-plank
+MODEL: Runway Gen-4 Turbo
 
-Use the attached approved reference images of AIO Coach v1 as the identity source. One adult MALE animated fitness instructor, approximately 30 years old, athletic but not bodybuilder-sized, realistic adult proportions, medium warm olive skin, short dark brown hair, brown eyes, clean-shaven face. Teal fitted short-sleeve crew-neck athletic T-shirt, charcoal tapered joggers, white low-profile flat training shoes with teal accents. No logos, jewelry or changing accessories. Polished stylized 3D animation with rounded friendly facial features, physically credible joints and grounded movement. Preserve exactly the same face, hair, body proportions, clothing, materials and colors as the attached references across all frames. Do not substitute a live-action human or redesign the character.
+In Runway Tools, select Gen-4 Turbo, 5 seconds, and 16:9 (720p). Upload a full-body side-view starting image of AIO Coach v1 already holding the correct suspended plank. The image must show both forearms flat, elbows under shoulders, both feet in separate low TRX cradles, and both straps leading to a fixed anchor.
 
-Use a clean light-gray studio, matte floor, soft even lighting and a subtle ground shadow. Fixed camera, entire body and all working equipment visible with generous margins. No cuts, zooms, camera orbit, dramatic effects, music, speech, captions, anatomy overlays or text. Prioritize accurate exercise mechanics and clear joint positions. Natural spinal curves are allowed; neutral spine does not mean a permanently vertical torso. No extra limbs, sliding feet, impossible joints, body morphing, floating weights or discontinuous equipment. Target 8 seconds, landscape 16:9, 1080p when supported; if the available generator cannot deliver these settings, report actual settings rather than claiming compliance. Export MP4 when supported; retain the original output.
+Paste this motion prompt:
+Fixed full-body side shot. The coach holds the same suspended forearm plank for five seconds. Forearms stay flat, elbows directly under shoulders, and both feet stay supported in their separate cradles. Shoulders, hips, and ankles remain aligned. Only subtle breathing moves the body. The straps remain taut and steady. The camera stays locked.
 
-CAMERA: side including foot cradles.
-
-ACTION: Start already in forearm plank with toes supported in low foot cradles behind the body, elbows under shoulders. Hold shoulders, hips and ankles aligned with normal breathing. Straps remain stable; no hip sag or swinging.
-
-TIMING: Show a gentle entry, a stable hold with subtle breathing, and a controlled release. This short demonstration does not prescribe the full training hold duration.
-
-EQUIPMENT: For TRX: use two continuous nonelastic suspension straps attached to one secure overhead anchor. Show the anchor or enough uninterrupted strap path to establish attachment. Handles and foot cradles must be mechanically coherent; do not depict elastic bands, detached straps or a changing anchor. Use only the contact arrangement specified below.
-
-Save the delivered clip as trx-plank--aio-coach-v1--v001.mp4 if file saving is available. If persistent character-reference conditioning is unavailable, say so; do not promise identical identity from text alone. Do not upload or claim a public URL as part of video generation; publication is a separate step after the clip passes review.
-
-
+Review the elbows, hip alignment, and foot-cradle contact. Save the silent MP4 as trx-plank--aio-coach-v1--v001.mp4.
 ```
 
 ## 19. اسکات جام دمبل — Dumbbell goblet squat
