@@ -2,7 +2,7 @@
 
 **Purpose:** produce, medically/biomechanically review, upload, connect and verify exercise demonstration videos in Poshtetgarm.  
 **Status:** IN_PROGRESS — 17 of 62 clips published, including the interim `wall-slide` (10) v003.
-`trx-chest` (14) is deferred for another model after Gemini v007. TRX hand-assisted reverse lunge (`trx-lunge`, 15) v005 passed review under the owner’s 80% standard. The silent 8-second export is published. TRX biceps curl (`trx-curl`, 16) v001 is published. TRX Y raise (`trx-y`, 17) v001 is published. TRX suspended forearm plank (`trx-plank`, 18) v001 needs revision because one strap ends near the hip.
+`trx-chest` (14) is deferred for another model after Gemini v007. TRX hand-assisted reverse lunge (`trx-lunge`, 15) v005 passed review under the owner’s 80% standard. The silent 8-second export is published. TRX biceps curl (`trx-curl`, 16) v001 is published. TRX Y raise (`trx-y`, 17) v001 is published. TRX suspended forearm plank (`trx-plank`, 18) will use the corrected still for its static hold. The still is ready for catalog integration.
 Anonymous MP4 delivery verified for all 17 published clips; inline playback on a phone/PWA still needs verification.
 
 ## Summary (2026-11-09)
@@ -20,7 +20,7 @@ Anonymous MP4 delivery verified for all 17 published clips; inline playback on a
 | TRX reverse lunge v005                 | `DONE`        | The backward step, planted lead foot and return to standing are clear. The extra knee lift on return and tight anchor framing are acceptable. Silent 8-second 720p export published. Separate catalog lookup and anonymous download verified.                                                                                                                                 |
 | TRX biceps curl v001                   | `DONE`        | One clear curl to the forehead. Minor torso drift and off-frame anchor accepted under the 80% standard. Silent 8-second 720p export published and verified.                                                                                                                                                                                                                   |
 | TRX Y raise v001                       | `DONE`        | Clear overhead Y and controlled return with planted feet. Slight elbow bend and tight anchor framing accepted under the 80% standard. Original silent 8.04-second 720p clip published and verified.                                                                                                                                                                           |
-| TRX suspended forearm plank v001       | `IN_PROGRESS` | Stable forearm hold. One strap ends near the hip and only one foot cradle is visible. v002 calls for correcting the starting still before a new Runway generation.                                                                                                                                                                                                            |
+| TRX suspended forearm plank still      | `IN_PROGRESS` | Corrected still shows both shoes in separate foot cradles. The owner chose a still for the static hold. Image prepared locally. Catalog integration is pending.                                                                                                                                                                                                               |
 | Remaining 45 clips                     | `TODO`        | Owner generates with the reference images; agent reviews, uploads via MCP and updates the tracker. The 45 include the deferred TRX chest press.                                                                                                                                                                                                                               |
 
 ## Existing source of truth
@@ -70,8 +70,7 @@ The owner accepts clips that show roughly 80% of the movement correctly. Record 
 - [x] `DONE` Reviewed `trx-curl` v001 at half-second intervals. The handles travel toward the forehead and the feet stay planted. Accepted minor torso drift and the off-frame anchor. Prepared and decoded a silent 8-second 720p H.264 export. Published via Poshtetgarm MCP on 2026-11-09. Verified the catalog URL, anonymous HTTP 206 with 942,126 bytes, and the full file hash.
 - [x] `DONE` Reviewed `trx-y` v001 at half-second intervals. The arms form a clear overhead Y, the feet stay planted, and the coach returns with control. The silent 8.04-second 720p MP4 decoded successfully. Published via Poshtetgarm MCP on 2026-11-09. Verified the catalog URL, anonymous HTTP 206 with 3,030,465 bytes, and the full file hash.
 - [ ] `IN_PROGRESS` Reviewed `trx-plank` v001 at half-second intervals and at the full-resolution midpoint. The forearm hold is steady. One strap ends near the hip and only one foot cradle is visible. v002 puts the anchor above the feet and shows both strap-to-cradle paths in the still.
-- [ ] `TODO` Continue the TRX batch with `trx-plank` (18). Per clip: owner generates → agent/owner review
-      (tracker `generated` → `reviewed`) → MCP upload → `published` with URL.
+- [ ] `IN_PROGRESS` Use a still for `trx-plank` (18). The corrected image shows each shoe supported by a separate cradle. A 1280 × 720 WebP is prepared locally. Integrate it through the exercise guide and verify both the detail sheet and guided session.
 
 ## Historical handoff — NOT verified as uploaded
 
@@ -80,7 +79,7 @@ Prior conversations mention video review/approval for Squat, Push-up, Glute Brid
 ## Next action
 
 1. Open `dead-bug` or `plank` on a phone and in the installed PWA; confirm inline playback in the exercise sheet and guided session.
-2. Correct the opening still for `trx-plank` and generate v002 in Runway Gen-4 Turbo using the [standalone prompt](../exercise-video-kit/prompts/18-trx-plank.txt).
+2. Integrate the corrected `trx-plank` still into the exercise guide, then verify it in the exercise sheet and guided session.
 3. Generate `prone-w` v3 with prompt 07.
 
 Last updated: 2026-11-09.
