@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <meta charset="utf-8" />
-  <title>TRX chest press · movement pilot</title>
+  <title>TRX chest press · coach reference cut</title>
   <style>
     * {
       box-sizing: border-box;
@@ -34,18 +34,33 @@
       height="720"
       viewBox="0 0 1280 720"
       role="img"
-      aria-label="TRX chest press movement pilot"
+      aria-label="TRX chest press coach reference cut"
     >
       <defs>
         <linearGradient id="studio" x2="0" y2="1">
-          <stop stop-color="#f3f5f4" />
-          <stop offset="1" stop-color="#dce5e4" />
+          <stop stop-color="#f3f3f2" />
+          <stop offset="1" stop-color="#dedede" />
         </linearGradient>
         <linearGradient id="shirt">
-          <stop stop-color="#165455" />
-          <stop offset=".55" stop-color="#277c79" />
-          <stop offset="1" stop-color="#42938c" />
+          <stop stop-color="#174751" />
+          <stop offset=".55" stop-color="#226475" />
+          <stop offset="1" stop-color="#3d8291" />
         </linearGradient>
+        <linearGradient id="joggers">
+          <stop stop-color="#292930" />
+          <stop offset=".54" stop-color="#4d4d55" />
+          <stop offset="1" stop-color="#393940" />
+        </linearGradient>
+        <linearGradient id="skin">
+          <stop stop-color="#9e6042" />
+          <stop offset=".52" stop-color="#c48a60" />
+          <stop offset="1" stop-color="#a76c4c" />
+        </linearGradient>
+        <clipPath id="coach-face">
+          <path
+            d="M603 123Q614 103 652 98Q679 89 714 94Q755 95 779 118Q796 142 784 161Q797 185 795 219L790 239Q796 260 791 276L785 284Q790 292 786 302L778 343Q776 359 743 357L739 390L747 424Q696 438 640 408L601 375Q620 344 619 296Q605 276 597 255Q569 212 584 171Q579 153 599 139Z"
+          />
+        </clipPath>
         <radialGradient id="shadow">
           <stop stop-color="#526c6a" stop-opacity=".31" />
           <stop offset="1" stop-color="#526c6a" stop-opacity="0" />
@@ -65,31 +80,42 @@
         />
       </g>
       <g stroke-linecap="round" stroke-linejoin="round">
-        <path id="far-leg" fill="none" stroke="#414c55" stroke-width="41" />
-        <path id="near-leg" fill="none" stroke="#2b353d" stroke-width="45" />
-        <path id="far-shoe" fill="none" stroke="#ebefee" stroke-width="23" />
-        <path id="near-shoe" fill="none" stroke="#fcfefd" stroke-width="25" />
+        <path
+          id="far-leg"
+          fill="none"
+          stroke="url(#joggers)"
+          stroke-width="41"
+        />
+        <path
+          id="near-leg"
+          fill="none"
+          stroke="url(#joggers)"
+          stroke-width="45"
+        />
+        <path id="far-sole" fill="none" stroke="#447780" stroke-width="25" />
+        <path id="near-sole" fill="none" stroke="#50828d" stroke-width="27" />
+        <path id="far-shoe" fill="none" stroke="#ebefee" stroke-width="19" />
+        <path id="near-shoe" fill="none" stroke="#fcfefd" stroke-width="21" />
         <path id="far-arm" fill="none" stroke="#b77958" stroke-width="28" />
-        <path id="far-sleeve" fill="none" stroke="#235d5d" stroke-width="38" />
+        <path id="far-sleeve" fill="none" stroke="#214f5d" stroke-width="37" />
         <path id="far-strap" fill="none" stroke="#404748" stroke-width="6" />
         <path id="far-grip" fill="none" stroke="#db9d35" stroke-width="12" />
         <circle id="far-hand" r="10" fill="#b77958" />
         <path id="torso" fill="url(#shirt)" />
         <path id="neck" fill="none" stroke="#bd7f5d" stroke-width="30" />
         <g id="head">
-          <path
-            fill="#ca906b"
-            d="M-25 1C-29-18-22-35-4-37 16-39 29-28 28-13L34-3 28 2 27 14Q19 26 5 24C-14 21-23 13-25 1Z"
-          />
-          <path
-            fill="#283331"
-            d="M-24 1C-34-11-31-34-13-39 7-46 24-34 27-23 11-28-1-24-7-13L-13-5Q-20-12-24 1Z"
-          />
-          <path d="M20-12h4m-4 24 6-1" stroke="#69493a" stroke-width="2" />
-          <ellipse cx="-13" cy="-3" rx="4" ry="6" fill="#be815f" />
+          <svg x="-32" y="-49" width="65" height="83" viewBox="565 86 245 345">
+            <image
+              href="assets/aio-coach-three-quarter.jpg"
+              width="1361"
+              height="1824"
+              preserveAspectRatio="none"
+              clip-path="url(#coach-face)"
+            />
+          </svg>
         </g>
-        <path id="near-arm" fill="none" stroke="#d2936d" stroke-width="32" />
-        <path id="near-sleeve" fill="none" stroke="#277773" stroke-width="42" />
+        <path id="near-arm" fill="none" stroke="url(#skin)" stroke-width="32" />
+        <path id="near-sleeve" fill="none" stroke="#276a7c" stroke-width="40" />
         <path id="near-strap" fill="none" stroke="#283234" stroke-width="7" />
         <path id="near-grip" fill="none" stroke="#eab64d" stroke-width="14" />
         <circle id="near-hand" r="11" fill="#d2936d" />
@@ -160,14 +186,19 @@
         const ankle = [0, 0.08, side * 0.16];
         const toe = [0.18, 0.034, side * 0.17];
         shape(name + '-leg', [hip, knee, ankle]);
-        shape(name + '-shoe', [[-0.044, 0.036, side * 0.16], toe]);
+        const shoe = [[-0.044, 0.036, side * 0.16], toe];
+        shape(
+          name + '-sole',
+          shoe.map((point) => add(point, [0, -0.012, 0])),
+        );
+        shape(name + '-shoe', shoe);
 
         const shoulder = body(1.43, side * 0.213);
         const anchor = [-0.43, 2.246, side * 0.037];
-        const forward = mix(0.75, 0.982, press);
-        const lateral = side * mix(0.42, 0.31, press);
+        const forward = mix(0.8, 0.982, press);
+        const lateral = side * mix(0.47, 0.31, press);
         const drop = Math.sqrt(
-          1.69 ** 2 - (forward - anchor[0]) ** 2 - (lateral - anchor[2]) ** 2,
+          1.67 ** 2 - (forward - anchor[0]) ** 2 - (lateral - anchor[2]) ** 2,
         );
         const hand = [forward, anchor[1] - drop, lateral];
         const elbow = elbowBetween(shoulder, hand, side);
@@ -196,7 +227,7 @@
         true,
       );
       shape('neck', [body(1.43, 0), body(1.58, 0)]);
-      move('head', body(1.65, 0));
+      move('head', body(1.665, 0));
     }
 
     draw(0);
