@@ -2,9 +2,11 @@ EXERCISE: TRX suspended forearm plank
 CATALOG ID: trx-plank
 MODEL: Runway Gen-4 Turbo
 
-In Runway Tools, select Gen-4 Turbo, 5 seconds, and 16:9 (720p). Upload a full-body side-view starting image of AIO Coach v1 already holding the correct suspended plank. The image must show both forearms flat, elbows under shoulders, both feet in separate low TRX cradles, and both straps leading to a fixed anchor.
+STARTING IMAGE: Match the attached AIO Coach v1 references in a light-gray studio. Use a full-body, slightly offset side view so both shoes and both foot cradles are visible. The coach is already holding a forearm plank, with forearms flat, elbows under shoulders, and shoulders, hips, and ankles aligned. Put one fixed overhead anchor directly above the feet. Both straps descend beside each other from that anchor. Follow each strap continuously to its own cradle supporting one foot. Keep the space above the hips and torso clear. Verify both strap paths in the still before generating.
 
-Paste this motion prompt:
-Fixed full-body side shot. The coach holds the same suspended forearm plank for five seconds. Forearms stay flat, elbows directly under shoulders, and both feet stay supported in their separate cradles. Shoulders, hips, and ankles remain aligned. Only subtle breathing moves the body. The straps remain taut and steady. The camera stays locked.
+RUNWAY: In Tools select Gen-4 Turbo, 5 seconds and 16:9 (720p). Upload the corrected starting image.
 
-Review the elbows, hip alignment, and foot-cradle contact. Save the silent MP4 as trx-plank--aio-coach-v1--v001.mp4.
+MOTION PROMPT:
+Locked full-body side shot. The coach holds the same suspended forearm plank for five seconds with subtle breathing. Both forearms stay planted and the hips stay level. Both feet remain supported in their separate cradles. The two straps stay steady and keep the same visible path from the anchor above the feet down to the two shoes.
+
+REVIEW AND EXPORT: Check that each strap visibly ends at its own foot cradle for the entire clip. Save the silent MP4 as trx-plank--aio-coach-v1--v002.mp4.
