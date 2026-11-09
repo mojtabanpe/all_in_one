@@ -882,7 +882,8 @@ export class Dashboard {
     if (!this.stats.hasValue()) return [];
     const s = this.stats.value();
     return [
-      { label: 'کاربران', value: s.users },
+      // Staff accounts are not customers, so the count the operator reads is customers only.
+      { label: 'کاربران', value: s.customers },
       { label: 'کاربران جدید این هفته', value: s.newUsersThisWeek },
       { label: 'کارهای برنامه‌ریز', value: s.plannerTasks },
       { label: 'کارت‌های انگلیسی', value: s.englishCards },

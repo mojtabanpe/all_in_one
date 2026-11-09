@@ -406,7 +406,9 @@ export class BillingService {
       }[]
     >`
       WITH active AS (
-        SELECT "userId" FROM billing_subscriptions WHERE "paidUntil" > ${now}
+        SELECT "userId" FROM billing_subscriptions
+        WHERE "paidUntil" > ${now}
+          AND "userId" NOT IN (SELECT id FROM users WHERE role = 'ADMIN')
       ),
       latest AS (
         SELECT DISTINCT ON (o."userId")
@@ -419,7 +421,10 @@ export class BillingService {
       ),
       firsts AS (
         SELECT "userId", MIN("paidAt") AS first
-        FROM billing_orders WHERE status IN ('PAID', 'REFUNDED') GROUP BY "userId"
+        FROM billing_orders
+        WHERE status IN ('PAID', 'REFUNDED')
+          AND "userId" NOT IN (SELECT id FROM users WHERE role = 'ADMIN')
+        GROUP BY "userId"
       )
       SELECT
         (SELECT COUNT(*) FROM active)::int AS "paidUsers",
@@ -431,7 +436,8 @@ export class BillingService {
           WHERE o.status IN ('PAID', 'REFUNDED') AND o."paidAt" >= ${since}
             AND o."paidAt" > f.first)::int AS "renewals",
         (SELECT COUNT(*) FROM billing_subscriptions
-          WHERE "paidUntil" > ${since} AND "paidUntil" <= ${now})::int AS "endedPaidUsers"
+          WHERE "paidUntil" > ${since} AND "paidUntil" <= ${now}
+            AND "userId" NOT IN (SELECT id FROM users WHERE role = 'ADMIN'))::int AS "endedPaidUsers"
     `;
     return row;
   }

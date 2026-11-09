@@ -20,6 +20,12 @@ export class AdminController {
   @Get('stats')
   async stats(): Promise<AdminStats> {
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    // Staff accounts are not customers: their own use must never show up in the numbers.
+    const staff = await this.prisma.user.findMany({
+      where: { role: 'ADMIN' },
+      select: { id: true },
+    });
+    const notStaff = { userId: { notIn: staff.map((user) => user.id) } };
     const [
       users,
       admins,
@@ -32,12 +38,14 @@ export class AdminController {
     ] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.user.count({ where: { role: 'ADMIN' } }),
-      this.prisma.user.count({ where: { createdAt: { gte: weekAgo } } }),
-      this.prisma.plannerTask.count(),
-      this.prisma.englishCard.count(),
-      this.prisma.workoutLog.count(),
-      this.prisma.mealLog.count(),
-      this.prisma.mealPlan.count(),
+      this.prisma.user.count({
+        where: { createdAt: { gte: weekAgo }, role: 'CUSTOMER' },
+      }),
+      this.prisma.plannerTask.count({ where: notStaff }),
+      this.prisma.englishCard.count({ where: notStaff }),
+      this.prisma.workoutLog.count({ where: notStaff }),
+      this.prisma.mealLog.count({ where: notStaff }),
+      this.prisma.mealPlan.count({ where: notStaff }),
     ]);
     return {
       users,

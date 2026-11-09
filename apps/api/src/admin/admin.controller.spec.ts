@@ -13,9 +13,15 @@ describe('AdminController', () => {
       .mockResolvedValueOnce(10) // users
       .mockResolvedValueOnce(2) // admins
       .mockResolvedValue(0);
+    const plannerTaskCount = vi.fn().mockResolvedValue(5);
     const prisma = {
-      user: { count },
-      plannerTask: { count: vi.fn().mockResolvedValue(5) },
+      user: {
+        count,
+        findMany: vi
+          .fn()
+          .mockResolvedValue([{ id: 'admin-1' }, { id: 'admin-2' }]),
+      },
+      plannerTask: { count: plannerTaskCount },
       englishCard: { count: vi.fn().mockResolvedValue(0) },
       workoutLog: { count: vi.fn().mockResolvedValue(0) },
       mealLog: { count: vi.fn().mockResolvedValue(0) },
@@ -27,6 +33,10 @@ describe('AdminController', () => {
       admins: 2,
       customers: 8,
       plannerTasks: 5,
+    });
+    // Staff activity is not customer activity, so every content counter skips those accounts.
+    expect(plannerTaskCount).toHaveBeenCalledWith({
+      where: { userId: { notIn: ['admin-1', 'admin-2'] } },
     });
   });
 });

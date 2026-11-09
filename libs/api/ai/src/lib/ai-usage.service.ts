@@ -168,7 +168,10 @@ export class AiUsageService {
       SELECT "userId"::text AS "userId", to_char(day, 'YYYY-MM-DD') AS day, kind, tier,
         SUM(calls) AS calls, SUM(units) AS units, SUM("outputUnits") AS output,
         SUM("cachedUnits") AS cached
-      FROM ai_usage_days WHERE day BETWEEN ${from}::date AND ${to}::date
+      FROM ai_usage_days
+      -- Staff usage is the operator's own testing, not customer cost.
+      WHERE day BETWEEN ${from}::date AND ${to}::date
+        AND (tier IS NULL OR tier <> 'staff')
       GROUP BY "userId", day, kind, tier
     `;
     const kinds = Object.fromEntries(
