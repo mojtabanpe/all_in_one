@@ -5,12 +5,17 @@ Use the attached approved reference images of AIO Coach v1 as the identity sourc
 
 Use a clean light-gray studio, matte floor, soft even lighting and a subtle ground shadow. Fixed camera, entire body and all working equipment visible with generous margins. No cuts, zooms, camera orbit, dramatic effects, music, speech, captions, anatomy overlays or text. Prioritize accurate exercise mechanics and clear joint positions. Natural spinal curves are allowed; neutral spine does not mean a permanently vertical torso. No extra limbs, sliding feet, impossible joints, body morphing, floating weights or discontinuous equipment. Target 8 seconds, landscape 16:9, 1080p when supported; if the available generator cannot deliver these settings, report actual settings rather than claiming compliance. Export MP4 when supported; retain the original output.
 
-CAMERA: three-quarter side.
+CAMERA: Fixed front three-quarter view from the anchor side. Show both shoes separately, the coach's full body and the entire fixed overhead mount. Leave visible space above the mount.
 
-ACTION: Face the anchor holding both handles lightly; both feet are free of the straps. Step one foot back into a controlled lunge and return using the front leg. Show one repetition each side. Keep front knee aligned, avoid pulling upward with the arms.
+SETUP: The coach faces the anchor and lightly holds one handle in each hand. Two continuous, nonelastic straps run from the same mount to the handles. Both feet remain free of the cradles. Start with both feet side by side. Keep the hands quiet and use the straps for balance.
 
-TIMING: Show one or two complete slow repetitions. If alternating sides are requested, show one repetition per side. If a single side is specified, do not rush to switch sides.
+TIMING AND MOVEMENT:
+- 0–0.5 s: Hold the standing pose.
+- 0.5–3.5 s: Keep the LEFT shoe flat in its exact starting spot. Step only the RIGHT foot straight back, lower the right knee toward the floor, rise through the left leg and return the right foot to its original spot.
+- 3.5–4 s: Both feet are back in the starting stance.
+- 4–7 s: Keep the RIGHT shoe flat in its exact starting spot. Step only the LEFT foot straight back, lower the left knee toward the floor, rise through the right leg and return the left foot to its original spot.
+- 7–8 s: Hold the original stance.
 
-EQUIPMENT: For TRX: use two continuous nonelastic suspension straps attached to one secure overhead anchor. Show the anchor or enough uninterrupted strap path to establish attachment. Handles and foot cradles must be mechanically coherent; do not depict elastic bands, detached straps or a changing anchor. Use only the contact arrangement specified below.
+ACCEPTANCE: Verify that the first foot movement of each repetition is a backward step. The planted shoe does not slide or step forward. The rear leg switches sides on the second repetition. The front knee tracks with the toes, the rear heel lifts naturally, and the arms do not pull the coach back to standing. The mount, straps, hands and shoes stay visible throughout. Export with no audio track.
 
-Save the delivered clip as trx-lunge--aio-coach-v1--v001.mp4 if file saving is available. If persistent character-reference conditioning is unavailable, say so; do not promise identical identity from text alone. Do not upload or claim a public URL as part of video generation; publication is a separate step after the clip passes review.
+Save the delivered clip as trx-lunge--aio-coach-v1--v002.mp4 if file saving is available. If persistent character-reference conditioning is unavailable, say so; do not promise identical identity from text alone. Do not upload or claim a public URL as part of video generation; publication is a separate step after the clip passes review.
