@@ -370,19 +370,20 @@ Use the attached approved reference images of AIO Coach v1 as the identity sourc
 
 Use a clean light-gray studio, matte floor, soft even lighting and a subtle ground shadow. Fixed camera, entire body and all working equipment visible with generous margins. No cuts, zooms, camera orbit, dramatic effects, music, speech, captions, anatomy overlays or text. Prioritize accurate exercise mechanics and clear joint positions. Natural spinal curves are allowed; neutral spine does not mean a permanently vertical torso. No extra limbs, sliding feet, impossible joints, body morphing, floating weights or discontinuous equipment. Target 8 seconds, landscape 16:9, 1080p when supported; if the available generator cannot deliver these settings, report actual settings rather than claiming compliance. Export MP4 when supported; retain the original output.
 
-CAMERA: Fixed front three-quarter view from the anchor side. Show both shoes separately, the coach's full body and the entire fixed overhead mount. Leave visible space above the mount.
+CAMERA: Fixed side-biased three-quarter view. In the image, the coach faces screen RIGHT toward one overhead anchor. Show both shoes, the full coach and the complete anchor. Both straps run forward and upward to this same point on screen RIGHT.
 
-SETUP: The coach faces the anchor and lightly holds one handle in each hand. Two continuous, nonelastic straps run from the same mount to the handles. Both feet remain free of the cradles. Start with both feet side by side. Keep the hands quiet and use the straps for balance.
+SETUP: Start with the feet side by side. The coach lightly holds one handle in each hand. Both feet stay clear of the cradles. Keep the camera and left shoe locked in position relative to the floor.
 
-TIMING AND MOVEMENT: Show exactly ONE right-foot-back repetition.
-- 0–1 s: Hold the standing pose with both feet side by side.
-- 1–4 s: Keep the LEFT shoe flat in its exact starting spot. Lift the RIGHT foot and step straight backward, then lower the right knee toward the floor. The right heel rises naturally.
-- 4–7 s: Rise through the planted left foot. Bring the right foot forward to its original spot beside the left foot.
-- 7–8 s: Hold the original standing pose.
+ONE RIGHT-FOOT-BACK REPETITION:
+- 0–1 s: Hold the standing pose.
+- 1–2.5 s: Lift the right shoe just enough to clear the floor. Move it toward screen LEFT, away from the anchor, and plant the ball of that foot behind the left heel.
+- 2.5–4 s: With both feet in contact with the floor, bend both knees and lower the right knee toward the floor behind the body. Keep the right heel raised, the left sole flat, and the left knee tracking with the toes.
+- 4–7 s: Stand through the planted left leg, then return the right foot beside the left. Use the handles lightly for balance.
+- 7–8 s: Hold the original stance.
 
-ACCEPTANCE: Track the left shoe against the studio floor from the first frame to the last. It stays in the same position and orientation throughout. The first foot movement is the right foot stepping backward. The front knee tracks with the toes, and the arms do not pull the coach back to standing. Both feet remain free of the cradles. Keep the entire mount, straps, hands and shoes visible. Export with no audio track.
+ACCEPTANCE: At the bottom, the right toes contact the floor behind the planted left shoe. The left shoe stays in its opening position. Reject a forward leg lift, a hovering rear foot, a single-leg dip, or straps that lead to separate anchors. Keep the full mount and both shoes visible. Export with no audio track.
 
-Save the delivered clip as trx-lunge--aio-coach-v1--v003.mp4 if file saving is available. If persistent character-reference conditioning is unavailable, say so; do not promise identical identity from text alone. Do not upload or claim a public URL as part of video generation; publication is a separate step after the clip passes review.
+Save the delivered clip as trx-lunge--aio-coach-v1--v004.mp4 if file saving is available. If persistent character-reference conditioning is unavailable, say so; do not promise identical identity from text alone. Do not upload or claim a public URL as part of video generation; publication is a separate step after the clip passes review.
 ```
 
 ## 16. جلوبازو TRX — TRX biceps curl
