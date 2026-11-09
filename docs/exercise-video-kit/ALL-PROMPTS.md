@@ -334,25 +334,29 @@ Save the delivered clip as trx-row--aio-coach-v1--v001.mp4 if file saving is ava
 EXERCISE: Standing TRX chest press
 CATALOG ID: trx-chest
 
-Create one silent 8-second 3D exercise demonstration for Poshtetgarm, in 16:9. Match the attached AIO Coach v1 character: same face, build, teal shirt, charcoal joggers and white shoes. The attached two-panel TRX photo is a pose reference. Use its RIGHT panel for the opening and closing pose and its LEFT panel for the pressed-out pose. Render the animated coach in a plain light-gray studio.
+Create one silent 8-second, 16:9 3D exercise demonstration for Poshtetgarm. Use the three attached AIO Coach v1 views for the same face, dark brown hair, athletic build, teal T-shirt, charcoal joggers and white shoes with teal soles. Use the attached two-panel exercise photo for the movement: RIGHT panel for the bent-elbow pose, LEFT panel for the pressed-out pose. Render in a plain light-gray studio.
 
-FRAMING AND EQUIPMENT
-Use one fixed front three-quarter view from chest height, offset enough to show the forward lean and both hands. Frame the whole coach, both shoes and a fixed overhead anchor behind him, with the entire mounting plate and a visible strip of background above it. Leave approximately 8% of the frame height above the plate and 5% below the shoes. Show exactly two taut, nonelastic straps from this anchor, each ending at the cylindrical grip held in one closed hand. Both straps stay connected and outside the body. Both feet stay planted. Shoulders, hips and ankles stay aligned as the whole body leans forward from the ankles.
+CAMERA AND EQUIPMENT
+Use a locked front three-quarter camera at chest height. Frame the full coach, both shoes and the entire overhead mount behind him, including its bracket and strap attachment. Leave a visible strip of empty background above the highest part of the mount, about 8% of the frame. Two taut, nonelastic straps run from the fixed anchor to the two grips in his closed hands. Each strap stays attached to its grip and clear of the body. Both shoes stay planted. The shoulders, hips and ankles move together as the body leans from the ankles.
 
-FIRST FRAME: BENT-ELBOW CHEST PRESS
-Start already in the pose from the RIGHT reference panel. The chest is between the grips. Both elbows are bent about 90 degrees. The left grip is beside the left outer chest and the right grip is beside the right outer chest. Both grips are visibly above the waist and the shirt hem. The coach's hands stay in this chest-height band for the whole repetition. Make both grips and both elbows easy to see.
+POSE A — BENT ELBOWS
+The first frame is already under tension, with the coach leaning forward and his chest between the grips. The centers of both grips are level with the middle of the chest, beside the outer pectorals. The elbows are bent about 90 degrees and flare moderately to either side. The hands and elbows are easy to see. Do not start standing upright with hands near the pockets.
 
-ONE REPETITION: BENT → EXTENDED → BENT
-- 0–1 s: Hold the opening bent-elbow pose.
-- 1–4 s: Press both grips forward at chest height. Both elbows visibly open until the arms are nearly straight with soft elbows. Match the LEFT reference panel. The chest moves away from the grips as the body becomes a little more upright while remaining slightly inclined.
-- 4–7 s: Bend both elbows smoothly and bring the chest forward between the grips. The hands travel back toward the outer chest. Stop as soon as the grips are beside the chest, well above the waist.
-- 7–8 s: Hold the exact first pose with both elbows bent and both grips beside the chest. Reuse the first pose as the final keyframe, matching the positions of both hands, both elbows, the head and the torso.
+POSE B — PRESS OUT
+Push both grips forward along a nearly horizontal chest-height path. The elbows open until the arms are nearly straight with a soft bend. The coach becomes a little more upright while keeping a forward lean. Keep both grips in the same chest-height band throughout the entire movement.
 
-Before rendering, check the first, middle and last frames. The first and last match the RIGHT reference panel. The middle matches the LEFT panel. In every frame, both grips stay above the waist. The straps stay attached, the anchor stays fixed and the shoes stay planted. Reject any pose with a grip beside the hips or an arm sweeping down toward the thigh.
+TIMING
+- 0–1 s: Hold pose A.
+- 1–4 s: Press smoothly to pose B.
+- 4–7 s: Reverse the exact grip path back to pose A. Stop as soon as the grips reach the outer chest.
+- 7–8 s: Hold the exact opening pose. Reuse the first pose as the last keyframe, including the grips, elbows, head, torso and feet.
 
-Export as trx-chest--aio-coach-v1--v007.mp4, 1080p if supported. No sound, text, cuts or camera motion.
+ACCEPTANCE CHECK
+Compare the first and last frames with the RIGHT panel and the middle frame with the LEFT panel. Both hands remain at chest height even during the return and ending hold. Reject a take with handles near the waist, an upward sweep from the hips, a second rocking movement after the return, a cropped mount, a detached strap or a visible jump at the loop seam.
 
-
+EXPORT
+Filename: trx-chest--aio-coach-v1--v008.mp4
+1920 × 1080 if supported. One 8-second shot. No audio track, text, cuts or camera movement.
 ```
 
 ## 15. لانج کمکی TRX — TRX hand-assisted reverse lunge

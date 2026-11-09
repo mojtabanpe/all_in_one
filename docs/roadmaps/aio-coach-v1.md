@@ -2,8 +2,7 @@
 
 **Purpose:** produce, medically/biomechanically review, upload, connect and verify exercise demonstration videos in Poshtetgarm.  
 **Status:** IN_PROGRESS — 14 of 62 clips published, including the interim `wall-slide` (10) v003.
-`trx-chest` (14) v006 shows a recognizable chest press. The standalone v007 prompt addresses anchor framing and the loop seam.
-A Gemini-free HyperFrames cut using the approved coach references is ready for form review.
+`trx-chest` (14) v007 shows a recognizable press, but the grips drop near the waist and the mount touches the top edge. The standalone v008 Gemini prompt is ready. The owner rejected the HyperFrames illustration and chose to continue with Gemini.
 Anonymous MP4 delivery verified for all 14 published clips; inline playback on a phone/PWA still needs verification.
 
 ## Summary (2026-11-09)
@@ -16,8 +15,8 @@ Anonymous MP4 delivery verified for all 14 published clips; inline playback on a
 | In-app playback                        | `DONE` (code) | Uploaded clips play inline (`<video controls muted loop playsinline preload="metadata">`, 16:9) in the exercise sheet and guided session; a failed clip falls back to the link. Fixed: the exercise sheet called `new URL()` on the site-relative clip path and threw. Tests: `exerciseVideoSource` (health-contracts), clip/fallback test in `training-session-page.spec.ts` |
 | Anonymous MP4 delivery                 | `DONE`        | 2026-11-08: all 14 published tracker URLs returned HTTP 206, `Content-Type: video/mp4` and `Content-Range: bytes 0-31/…` for an unauthenticated range GET.                                                                                                                                                                                                                    |
 | Inline phone/PWA playback              | `VERIFY`      | Exercise sheet and guided session still need a playback check on a phone and in the installed PWA.                                                                                                                                                                                                                                                                            |
-| TRX chest press v006                   | `IN_PROGRESS` | Reviewed 2026-11-09. The grips stay above the waist and the press is visible. The mounting plate is cropped and the final hold differs slightly. Standalone v007 prompt ready.                                                                                                                                                                                                |
-| HyperFrames TRX chest press review cut | `IN_PROGRESS` | [Editable pilot and review notes](../exercise-video-kit/pilots/trx-chest/REVIEW.md). The 8-second, 720p MP4 rendered locally with the owner’s three-quarter coach image and an illustrated body. HyperFrames checks passed. Qualified form review is pending.                                                                                                                 |
+| TRX chest press v007                   | `IN_PROGRESS` | Reviewed 2026-11-09 at half-second intervals and checked the final frame. Visible press, low opening and closing grips, mount at the top edge, and a non-silent AAC track. Standalone v008 prompt ready.                                                                                                                                                                      |
+| HyperFrames TRX chest press review cut | `DONE`        | [Editable pilot and review notes](../exercise-video-kit/pilots/trx-chest/REVIEW.md). The 8-second, 720p MP4 rendered locally with the owner’s three-quarter coach image and an illustrated body. The owner rejected the visual style and chose to continue with Gemini.                                                                                                       |
 | Remaining 48 clips                     | `TODO`        | Owner generates in Gemini with the reference images; agent reviews, uploads via MCP and updates the tracker                                                                                                                                                                                                                                                                   |
 
 ## Existing source of truth
@@ -56,6 +55,7 @@ Anonymous MP4 delivery verified for all 14 published clips; inline playback on a
 - [ ] `IN_PROGRESS` Reviewed `trx-chest` v004 on 2026-11-09 at one-second intervals. The opening reach and elbow movement are clearer than v003. Around 3–4 s, the grips are beside the hips. The final hold is lower and more bent than the opening pose. The v005 prompt defines the top and bottom key poses and requires the last frame to match the first.
 - [ ] `IN_PROGRESS` Reviewed `trx-chest` v005 at one-second intervals. It restores the opening reach, but the grips drop beside the hips around 2–4 s and the anchor is cropped. The v006 prompt starts and finishes in the bent-elbow pose shown in the right panel of the catalog TRX chest press image.
 - [ ] `IN_PROGRESS` Reviewed `trx-chest` v006 at one-second intervals and inspected the opening, press and finish at full resolution. The hip-height dip is fixed. The mounting plate clips the top edge and the final grips are slightly higher than the opening grips. v007 adds headroom and reuses the opening pose as the closing keyframe.
+- [ ] `IN_PROGRESS` Reviewed Gemini v007 (`gemini_generated_video_67cbbbe4.mp4`). The press is visible, but the opening and closing grips sit near the waist, the mount touches the top edge, and the 10.03-second clip contains a non-silent AAC track. The v008 prompt fixes the grip path and anchors the loop to the loaded opening pose.
 - [ ] `TODO` Continue the TRX batch (14–18), starting with `trx-chest`. Per clip: owner generates → agent/owner review
       (tracker `generated` → `reviewed`) → MCP upload → `published` with URL.
 
@@ -66,7 +66,7 @@ Prior conversations mention video review/approval for Squat, Push-up, Glute Brid
 ## Next action
 
 1. Open `dead-bug` or `plank` on a phone and in the installed PWA; confirm inline playback in the exercise sheet and guided session.
-2. Have a qualified reviewer check the HyperFrames `trx-chest` cut against the [catalog reference and pose criteria](../exercise-video-kit/prompts/14-trx-chest.txt), including opening grip height and strap clearance. The standalone v007 Gemini prompt remains available.
+2. Generate `trx-chest` v008 in Gemini using the [standalone prompt](../exercise-video-kit/prompts/14-trx-chest.txt), then review grip height, anchor framing and the loop.
 3. Generate `prone-w` v3 with prompt 07.
 
 Last updated: 2026-11-09.
