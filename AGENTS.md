@@ -670,6 +670,8 @@ origin master` and read the index and the roadmap; after work, update its status
 
 125. **Full Gemini exercise-video prompts (2026-11-09).** Always give the owner the full standalone prompt for every Gemini exercise-video take, including revisions after review. Include the references, setup, movement, acceptance criteria and export settings so it can be pasted into a fresh Gemini chat.
 
+126. **Exercise-video acceptance (2026-11-09).** The owner accepts clips that demonstrate roughly 80% of the movement correctly. Treat this as a practical review standard. Accept minor differences in framing, timing, likeness, loop polish and form when the defining movement is clear and the clip remains suitable for instruction. Record material imperfections. A different movement or a materially unsafe demonstration still needs revision.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

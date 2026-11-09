@@ -30,6 +30,8 @@ Anonymous MP4 delivery verified for all 14 published clips; inline playback on a
 
 ## Workflow and checkpoints
 
+The owner accepts clips that show roughly 80% of the movement correctly. Record minor deviations and use the defining movement and instructional suitability to decide whether a retake is needed.
+
 - [x] `DONE` Upload path: MCP tool `upload_exercise_video` → `ExerciseVideoUploadService` (admin, MP4 ≤ 8 MiB) →
       `data/exercise-videos` volume → public `/api/exercise-videos/<slug>-<uuid>.mp4`; `videoUrl` set on the catalog row.
 - [x] `DONE` Inventory: tracker rows for the 14 published clips carry the public URL and review notes (2026-11-06–08).
@@ -60,7 +62,7 @@ Anonymous MP4 delivery verified for all 14 published clips; inline playback on a
 - [ ] `IN_PROGRESS` Reviewed `trx-lunge` v001 (`gemini_generated_video_295a8e52.mp4`) at half-second intervals and compared both bottom poses. Both feet stay free and the coach returns to standing. Both reps show the same near-side front leg, the front shoe shifts forward, and the overhead mount is outside the frame. The 10.03-second clip includes a non-silent AAC track.
 - [ ] `IN_PROGRESS` Reviewed `trx-lunge` v002 (`gemini_generated_video_ca330a18.mp4`) at half-second intervals. The mount is more visible, but the same leg leads both times and the front shoe shifts. The 10.03-second clip contains a non-silent AAC track. v003 requests a single right-foot-back repetition.
 - [ ] `IN_PROGRESS` Reviewed `trx-lunge` v003 (owner file `video.mp4`) at half-second intervals. It shows a forward leg lift and shallow dip, without rear-foot contact. The straps diverge toward opposite top edges. v004 specifies screen direction and rear toe contact.
-- [ ] `IN_PROGRESS` Reviewed `trx-lunge` v004 (new owner file `video.mp4`, 2,668,508 bytes). Quarter-second frames show the lead foot moving toward the anchor around 1.5–2 s before a recognizable lunge. The shared anchor and rear toe contact are visible. v005 uses the bottom pose as a reference and holds the lead shoe in its starting spot.
+- [ ] `IN_PROGRESS` Reviewed `trx-lunge` v004 (new owner file `video.mp4`, 2,668,508 bytes). Quarter-second frames show the lead foot moving toward the anchor around 1.5–2 s before a recognizable lunge. The shared anchor and rear toe contact are visible. Rechecked under the 80% standard: the forward entry changes the exercise, so this take still needs revision. v005 uses the bottom pose as a reference and holds the lead shoe in its starting spot.
 - [ ] `TODO` Continue the TRX batch (15–18), starting with `trx-lunge`. Per clip: owner generates → agent/owner review
       (tracker `generated` → `reviewed`) → MCP upload → `published` with URL.
 
