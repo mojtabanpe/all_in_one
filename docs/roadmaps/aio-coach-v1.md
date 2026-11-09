@@ -1,20 +1,20 @@
 # AIO Coach v1 — رودمپ تولید و آپلود ویدئوهای تمرین
 
 **Purpose:** produce, medically/biomechanically review, upload, connect and verify exercise demonstration videos in Poshtetgarm.  
-**Status:** IN_PROGRESS — 22 of 62 clips published, including the interim `wall-slide` (10) v003.
+**Status:** IN_PROGRESS — 23 of 62 clips published, including the interim `wall-slide` (10) v003.
 `trx-chest` (14) is deferred for another model after Gemini v007. TRX hand-assisted reverse lunge (`trx-lunge`, 15) v005 passed review under the owner’s 80% standard. The silent 8-second export is published. TRX biceps curl (`trx-curl`, 16) v001 is published. TRX Y raise (`trx-y`, 17) v001 is published. TRX suspended forearm plank (`trx-plank`, 18) will use the corrected still for its static hold. The still is ready for catalog integration.
-Dumbbell exercises 19–23 are published: goblet squat v001, supported row v001, floor press v001, Romanian deadlift v002 and shoulder press v002.
-Anonymous MP4 delivery verified for all 22 published clips; inline playback on a phone/PWA still needs verification.
+Dumbbell exercises 19–24 are published: goblet squat v001, supported row v001, floor press v001, Romanian deadlift v002 shoulder press v002 and standing curl v001.
+Anonymous MP4 delivery verified for all 23 published clips; inline playback on a phone/PWA still needs verification.
 
 ## Summary (2026-11-10)
 
 | Checkpoint                             | State         | Evidence                                                                                                                                                                                                                                                                                                                                                                      |
 | -------------------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Upload pipeline and storage            | `DONE`        | `apps/api/src/tools/exercise-video-upload.service.ts` (admin only, MP4 `ftyp` check, 8 MiB), served from `/api/exercise-videos` (volume `exercise-videos` in `deploy/compose.yml`)                                                                                                                                                                                            |
-| Approved clips published               | `IN_PROGRESS` | 22/62 `published` in `production-tracker.csv`: body-squat, reverse-lunge, wall-pushup, pushup, glute-bridge, bird-dog, prone-w (interim v2), jumping-jack, dead-bug, plank, march, trx-squat, trx-row, wall-slide (interim v003), trx-lunge, trx-curl, trx-y, goblet-squat, db-row, db-floor-press, db-rdl, db-press                                                          |
+| Approved clips published               | `IN_PROGRESS` | 23/62 `published` in `production-tracker.csv`: body-squat, reverse-lunge, wall-pushup, pushup, glute-bridge, bird-dog, prone-w (interim v2), jumping-jack, dead-bug, plank, march, trx-squat, trx-row, wall-slide (interim v003), trx-lunge, trx-curl, trx-y, goblet-squat, db-row, db-floor-press, db-rdl, db-press, db-curl                                                 |
 | Catalog mapping safe from re-seed      | `DONE`        | `libs/applets/health/api/src/lib/seed.ts` only fills `videoUrl` where it is `null`, so uploaded clips survive deploys                                                                                                                                                                                                                                                         |
 | In-app playback                        | `DONE` (code) | Uploaded clips play inline (`<video controls muted loop playsinline preload="metadata">`, 16:9) in the exercise sheet and guided session; a failed clip falls back to the link. Fixed: the exercise sheet called `new URL()` on the site-relative clip path and threw. Tests: `exerciseVideoSource` (health-contracts), clip/fallback test in `training-session-page.spec.ts` |
-| Anonymous MP4 delivery                 | `DONE`        | 2026-11-08: all 14 published tracker URLs returned HTTP 206, `Content-Type: video/mp4` and `Content-Range: bytes 0-31/…` for an unauthenticated range GET. 2026-11-09: `trx-lunge`, `trx-curl` and `trx-y` returned HTTP 206 and their public file hashes matched the approved exports. 2026-11-10: all five dumbbell clips passed the same checks.                           |
+| Anonymous MP4 delivery                 | `DONE`        | 2026-11-08: all 14 published tracker URLs returned HTTP 206, `Content-Type: video/mp4` and `Content-Range: bytes 0-31/…` for an unauthenticated range GET. 2026-11-09: `trx-lunge`, `trx-curl` and `trx-y` returned HTTP 206 and their public file hashes matched the approved exports. 2026-11-10: all six dumbbell clips passed the same checks.                            |
 | Inline phone/PWA playback              | `VERIFY`      | Exercise sheet and guided session still need a playback check on a phone and in the installed PWA.                                                                                                                                                                                                                                                                            |
 | TRX chest press v007                   | `DEFERRED`    | Reviewed 2026-11-09 at half-second intervals and checked the final frame. Visible press, low opening and closing grips, mount at the top edge, and a non-silent AAC track. The owner will revisit with another model. The v008 prompt is saved.                                                                                                                               |
 | HyperFrames TRX chest press review cut | `DONE`        | [Editable pilot and review notes](../exercise-video-kit/pilots/trx-chest/REVIEW.md). The 8-second, 720p MP4 rendered locally with the owner’s three-quarter coach image and an illustrated body. The owner rejected the visual style and chose to continue with Gemini.                                                                                                       |
@@ -22,7 +22,7 @@ Anonymous MP4 delivery verified for all 22 published clips; inline playback on a
 | TRX biceps curl v001                   | `DONE`        | One clear curl to the forehead. Minor torso drift and off-frame anchor accepted under the 80% standard. Silent 8-second 720p export published and verified.                                                                                                                                                                                                                   |
 | TRX Y raise v001                       | `DONE`        | Clear overhead Y and controlled return with planted feet. Slight elbow bend and tight anchor framing accepted under the 80% standard. Original silent 8.04-second 720p clip published and verified.                                                                                                                                                                           |
 | TRX suspended forearm plank still      | `IN_PROGRESS` | Corrected still shows both shoes in separate foot cradles. The owner chose a still for the static hold. Image prepared locally. Catalog integration is pending.                                                                                                                                                                                                               |
-| Remaining 40 clips                     | `TODO`        | Owner generates with the reference images; agent reviews, uploads via MCP and updates the tracker. The 40 include the deferred TRX chest press.                                                                                                                                                                                                                               |
+| Remaining 39 clips                     | `TODO`        | Owner generates with the reference images; agent reviews, uploads via MCP and updates the tracker. The 39 include the deferred TRX chest press.                                                                                                                                                                                                                               |
 
 ## Existing source of truth
 
@@ -38,7 +38,7 @@ The owner accepts clips that show roughly 80% of the movement correctly. Record 
 
 - [x] `DONE` Upload path: MCP tool `upload_exercise_video` → `ExerciseVideoUploadService` (admin, MP4 ≤ 8 MiB) →
       `data/exercise-videos` volume → public `/api/exercise-videos/<slug>-<uuid>.mp4`; `videoUrl` set on the catalog row.
-- [x] `DONE` Inventory: tracker rows for the 22 published clips carry the public URL and review notes (2026-11-06–10).
+- [x] `DONE` Inventory: tracker rows for the 23 published clips carry the public URL and review notes (2026-11-06–10).
 - [ ] `IN_PROGRESS` Coach visual reference `aio-coach-v1` is in use for the published clips; qualified review still
       needed for complex/advanced exercises before they are generated.
 - [x] `DONE` Attach by stable slug: the upload writes `videoUrl` for that slug; seed never overwrites a set `videoUrl`.
@@ -77,6 +77,8 @@ The owner accepts clips that show roughly 80% of the movement correctly. Record 
 
 - [x] `DONE` Published `db-press` v002 on 2026-11-10. Two full overhead presses with a return to shoulder height. Dumbbells briefly clip the top edge. The silent 5-second 720p export passed catalog lookup, anonymous range and full download hash checks.
 
+- [x] `DONE` Published `db-curl` v001 on 2026-11-10. Both curls return to the sides, with slightly short range at the top. The silent 5-second 720p export passed catalog lookup, anonymous range and full download hash checks.
+
 ## Historical handoff — NOT verified as uploaded
 
 Prior conversations mention video review/approval for Squat, Push-up, Glute Bridge and other exercises, with files such as `gemini_generated_video_ED7EE4D1.mp4`, `gemini_generated_video_51486F58.mp4`, `gemini_generated_video_C98E2A1A.mp4`, `gemini_generated_video_A3DFE2DA.mp4`. These are handoff references only; inspect the actual files, metadata and storage records before marking any published. Prior upload/deploy attempts were not conclusively verified.
@@ -86,6 +88,6 @@ Prior conversations mention video review/approval for Squat, Push-up, Glute Brid
 1. Open `dead-bug` or `plank` on a phone and in the installed PWA; confirm inline playback in the exercise sheet and guided session.
 2. Integrate the corrected `trx-plank` still into the exercise guide, then verify it in the exercise sheet and guided session.
 3. Generate `prone-w` v3 with prompt 07.
-4. Generate `db-curl` with prompt 24.
+4. Generate `lat-pulldown` with prompt 25.
 
 Last updated: 2026-11-10.
