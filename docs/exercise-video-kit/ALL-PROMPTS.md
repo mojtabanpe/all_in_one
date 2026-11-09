@@ -374,16 +374,15 @@ CAMERA: Fixed front three-quarter view from the anchor side. Show both shoes sep
 
 SETUP: The coach faces the anchor and lightly holds one handle in each hand. Two continuous, nonelastic straps run from the same mount to the handles. Both feet remain free of the cradles. Start with both feet side by side. Keep the hands quiet and use the straps for balance.
 
-TIMING AND MOVEMENT:
-- 0–0.5 s: Hold the standing pose.
-- 0.5–3.5 s: Keep the LEFT shoe flat in its exact starting spot. Step only the RIGHT foot straight back, lower the right knee toward the floor, rise through the left leg and return the right foot to its original spot.
-- 3.5–4 s: Both feet are back in the starting stance.
-- 4–7 s: Keep the RIGHT shoe flat in its exact starting spot. Step only the LEFT foot straight back, lower the left knee toward the floor, rise through the right leg and return the left foot to its original spot.
-- 7–8 s: Hold the original stance.
+TIMING AND MOVEMENT: Show exactly ONE right-foot-back repetition.
+- 0–1 s: Hold the standing pose with both feet side by side.
+- 1–4 s: Keep the LEFT shoe flat in its exact starting spot. Lift the RIGHT foot and step straight backward, then lower the right knee toward the floor. The right heel rises naturally.
+- 4–7 s: Rise through the planted left foot. Bring the right foot forward to its original spot beside the left foot.
+- 7–8 s: Hold the original standing pose.
 
-ACCEPTANCE: Verify that the first foot movement of each repetition is a backward step. The planted shoe does not slide or step forward. The rear leg switches sides on the second repetition. The front knee tracks with the toes, the rear heel lifts naturally, and the arms do not pull the coach back to standing. The mount, straps, hands and shoes stay visible throughout. Export with no audio track.
+ACCEPTANCE: Track the left shoe against the studio floor from the first frame to the last. It stays in the same position and orientation throughout. The first foot movement is the right foot stepping backward. The front knee tracks with the toes, and the arms do not pull the coach back to standing. Both feet remain free of the cradles. Keep the entire mount, straps, hands and shoes visible. Export with no audio track.
 
-Save the delivered clip as trx-lunge--aio-coach-v1--v002.mp4 if file saving is available. If persistent character-reference conditioning is unavailable, say so; do not promise identical identity from text alone. Do not upload or claim a public URL as part of video generation; publication is a separate step after the clip passes review.
+Save the delivered clip as trx-lunge--aio-coach-v1--v003.mp4 if file saving is available. If persistent character-reference conditioning is unavailable, say so; do not promise identical identity from text alone. Do not upload or claim a public URL as part of video generation; publication is a separate step after the clip passes review.
 ```
 
 ## 16. جلوبازو TRX — TRX biceps curl
