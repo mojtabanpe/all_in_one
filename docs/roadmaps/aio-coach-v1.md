@@ -2,7 +2,7 @@
 
 **Purpose:** produce, medically/biomechanically review, upload, connect and verify exercise demonstration videos in Poshtetgarm.  
 **Status:** IN_PROGRESS — 14 of 62 clips published, including the interim `wall-slide` (10) v003.
-`trx-chest` (14) is deferred for another model after Gemini v007. TRX hand-assisted reverse lunge (`trx-lunge`, 15) v003 needs revision. The v004 prompt specifies a backward step with rear toe contact and both straps attached to one anchor.
+`trx-chest` (14) is deferred for another model after Gemini v007. TRX hand-assisted reverse lunge (`trx-lunge`, 15) v004 needs revision. The v005 prompt pins the lead shoe to its starting position throughout.
 Anonymous MP4 delivery verified for all 14 published clips; inline playback on a phone/PWA still needs verification.
 
 ## Summary (2026-11-09)
@@ -17,7 +17,7 @@ Anonymous MP4 delivery verified for all 14 published clips; inline playback on a
 | Inline phone/PWA playback              | `VERIFY`      | Exercise sheet and guided session still need a playback check on a phone and in the installed PWA.                                                                                                                                                                                                                                                                            |
 | TRX chest press v007                   | `DEFERRED`    | Reviewed 2026-11-09 at half-second intervals and checked the final frame. Visible press, low opening and closing grips, mount at the top edge, and a non-silent AAC track. The owner will revisit with another model. The v008 prompt is saved.                                                                                                                               |
 | HyperFrames TRX chest press review cut | `DONE`        | [Editable pilot and review notes](../exercise-video-kit/pilots/trx-chest/REVIEW.md). The 8-second, 720p MP4 rendered locally with the owner’s three-quarter coach image and an illustrated body. The owner rejected the visual style and chose to continue with Gemini.                                                                                                       |
-| TRX reverse lunge v003                 | `IN_PROGRESS` | The free foot lifts forward instead of planting behind the body. The straps diverge toward opposite top edges. Standalone v004 prompt ready.                                                                                                                                                                                                                                  |
+| TRX reverse lunge v004                 | `IN_PROGRESS` | The shared anchor and rear toe contact are visible, but the lead foot steps toward the anchor before the descent. Standalone v005 prompt ready.                                                                                                                                                                                                                               |
 | Remaining 48 clips                     | `TODO`        | Owner generates with the reference images; agent reviews, uploads via MCP and updates the tracker. The 48 include the deferred TRX chest press.                                                                                                                                                                                                                               |
 
 ## Existing source of truth
@@ -60,6 +60,7 @@ Anonymous MP4 delivery verified for all 14 published clips; inline playback on a
 - [ ] `IN_PROGRESS` Reviewed `trx-lunge` v001 (`gemini_generated_video_295a8e52.mp4`) at half-second intervals and compared both bottom poses. Both feet stay free and the coach returns to standing. Both reps show the same near-side front leg, the front shoe shifts forward, and the overhead mount is outside the frame. The 10.03-second clip includes a non-silent AAC track.
 - [ ] `IN_PROGRESS` Reviewed `trx-lunge` v002 (`gemini_generated_video_ca330a18.mp4`) at half-second intervals. The mount is more visible, but the same leg leads both times and the front shoe shifts. The 10.03-second clip contains a non-silent AAC track. v003 requests a single right-foot-back repetition.
 - [ ] `IN_PROGRESS` Reviewed `trx-lunge` v003 (owner file `video.mp4`) at half-second intervals. It shows a forward leg lift and shallow dip, without rear-foot contact. The straps diverge toward opposite top edges. v004 specifies screen direction and rear toe contact.
+- [ ] `IN_PROGRESS` Reviewed `trx-lunge` v004 (new owner file `video.mp4`, 2,668,508 bytes). Quarter-second frames show the lead foot moving toward the anchor around 1.5–2 s before a recognizable lunge. The shared anchor and rear toe contact are visible. v005 uses the bottom pose as a reference and holds the lead shoe in its starting spot.
 - [ ] `TODO` Continue the TRX batch (15–18), starting with `trx-lunge`. Per clip: owner generates → agent/owner review
       (tracker `generated` → `reviewed`) → MCP upload → `published` with URL.
 
@@ -70,7 +71,7 @@ Prior conversations mention video review/approval for Squat, Push-up, Glute Brid
 ## Next action
 
 1. Open `dead-bug` or `plank` on a phone and in the installed PWA; confirm inline playback in the exercise sheet and guided session.
-2. Generate `trx-lunge` v004 using the [standalone prompt](../exercise-video-kit/prompts/15-trx-lunge.txt). Verify rear toe contact, a planted front shoe and one visible anchor.
+2. Generate `trx-lunge` v005 using the [standalone prompt](../exercise-video-kit/prompts/15-trx-lunge.txt). Verify the first step goes away from the anchor and the lead shoe never moves.
 3. Generate `prone-w` v3 with prompt 07.
 
 Last updated: 2026-11-09.
