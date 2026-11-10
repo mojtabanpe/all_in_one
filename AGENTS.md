@@ -674,6 +674,8 @@ origin master` and read the index and the roadmap; after work, update its status
 
 127. **Runway Gen-4 Turbo for exercise videos (2026-11-09).** Name Runway Gen-4 Turbo explicitly in future exercise-video prompts and tell the owner to select it in Runway Tools. Default to a single five-second, 720p image-to-video generation using a starting image of the approved coach already in the correct opening pose. Preserve the option to use a different model when the owner requests one.
 
+128. **Literal exercise-video prompts (2026-11-10).** Assume the video generator will infer nothing. Use short, concrete instructions, one action per step, and explicit screen directions and equipment contact points. State what starts in contact, what moves, what stays fixed, and what the last frame must show. Put the most important visual constraint first. Keep each prompt standalone as required by 125.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
