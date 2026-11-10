@@ -113,6 +113,8 @@ The owner accepts clips that show roughly 80% of the movement correctly. Record 
 
 - [ ] `DEFERRED` The owner deferred `trx-triceps-press` (48) on 2026-11-10 after repeated Google Flow takes. Earlier attempts had inconsistent handle contact, reversed anchor orientation or visible strap length changes. Continue with exercise 49.
 
+- [ ] `DEFERRED` `trx-clutch-curl` (49) after five takes. v003 is the best grip and backward lean reference, but the elbows sit below shoulder height. Continue with exercise 50.
+
 ## Historical handoff — NOT verified as uploaded
 
 Prior conversations mention video review/approval for Squat, Push-up, Glute Bridge and other exercises, with files such as `gemini_generated_video_ED7EE4D1.mp4`, `gemini_generated_video_51486F58.mp4`, `gemini_generated_video_C98E2A1A.mp4`, `gemini_generated_video_A3DFE2DA.mp4`. These are handoff references only; inspect the actual files, metadata and storage records before marking any published. Prior upload/deploy attempts were not conclusively verified.
@@ -123,6 +125,6 @@ Prior conversations mention video review/approval for Squat, Push-up, Glute Brid
 2. Generate `prone-w` v3 with prompt 07.
 3. Publish approved `trx-hamstring-curl` (44) v004 when requested.
 4. Review the prepared `trx-cycle-jump` (47) edit before publishing.
-5. Generate `trx-clutch-curl` with prompt 49.
+5. Generate `trx-triceps-reverse` with prompt 50.
 
 Last updated: 2026-11-10.
