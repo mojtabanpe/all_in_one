@@ -682,6 +682,8 @@ origin master` and read the index and the roadmap; after work, update its status
      `poshtetgarm`, with `utm_medium=organic_social` and `utm_campaign=youtube_channel`, then asked to focus on
      Instagram. Keep YouTube recorded for attribution; prioritize the Instagram acquisition experiment.
 
+130. **Custom Pomodoro and completion push (2026-11-11).** In planner focus, offer 15, 30, 45 and 60 minute presets (replace 25 with 30), allow a custom duration in minutes, and send a push notification when the Pomodoro ends. Pauses, resets and manual finishes cancel the running notification deadline; resumed timers schedule the remaining duration.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

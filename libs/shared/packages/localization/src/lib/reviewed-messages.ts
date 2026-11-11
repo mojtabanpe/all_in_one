@@ -1,5 +1,26 @@
 /** Reviewed product terminology and complete dynamic sentences. These override legacy copy. */
 export const REVIEWED_MESSAGES: readonly (readonly [string, string])[] = [
+  [
+    'مدت باید بین ۱ تا ۷۲۰ دقیقه باشد.',
+    'Duration must be between 1 and 720 minutes.',
+  ],
+  [
+    'مدت را به دقیقه و با عدد صحیح وارد کن.',
+    'Enter a whole number of minutes.',
+  ],
+  ['مدت دلخواه (دقیقه)', 'Custom duration (minutes)'],
+  [
+    'پومودورو تمام شد؛ وقت استراحت است.',
+    'Pomodoro complete. Time for a break.',
+  ],
+  [
+    'برای دریافت اعلان پایان، اعلان‌های دستگاه را در حساب کاربری فعال کن.',
+    'Enable device notifications in your account to receive the completion alert.',
+  ],
+  [
+    'هنوز جلسه تمرکزی ثبت نشده. یک پومودوروی ۳۰ دقیقه‌ای شروع کن!',
+    'No focus sessions yet. Start a 30-minute Pomodoro!',
+  ],
   ['کمی استراحت کن', 'Take a rest'],
   [
     'ست قبلی انجام شد؛ قبل از ادامه {0} ثانیه استراحت کن.',

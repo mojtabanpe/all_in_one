@@ -70,6 +70,64 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
   onModuleDestroy() {
     if (this.timer) clearInterval(this.timer);
   }
+  async scheduleFocus(userId: string, remainingMs: number) {
+    const { sessionVersion } = await this.db.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { sessionVersion: true },
+    });
+    const timer = await this.db.focusPushTimer.create({
+      data: {
+        userId,
+        sessionVersion,
+        dueAt: new Date(Date.now() + remainingMs),
+      },
+    });
+    return { id: timer.id, dueAt: timer.dueAt.toISOString() };
+  }
+
+  async cancelFocus(userId: string, id: string) {
+    await this.db.focusPushTimer.deleteMany({ where: { id, userId } });
+    return { ok: true };
+  }
+
+  async sendFocusReminders(now: Date) {
+    const cutoff = new Date(now.getTime() - 300_000);
+    const timers = await this.db.focusPushTimer.findMany({
+      where: { dueAt: { lte: now, gte: cutoff } },
+      include: { user: { select: { sessionVersion: true } } },
+    });
+    for (const timer of timers) {
+      if (timer.sessionVersion !== timer.user.sessionVersion) continue;
+      const subscriptions = await this.db.pushSubscription.findMany({
+        where: { userId: timer.userId, sessionVersion: timer.sessionVersion },
+      });
+      for (const sub of subscriptions) {
+        const key = `focus:${timer.id}`;
+        const claimed = await this.db.pushDelivery.createMany({
+          data: [{ subscriptionId: sub.id, key }],
+          skipDuplicates: true,
+        });
+        if (!claimed.count) continue;
+        // A pause/reset may have cancelled this timer during the sweep.
+        if (!(await this.db.focusPushTimer.count({ where: { id: timer.id } })))
+          continue;
+        const sent = await this.send(
+          sub,
+          'پومودورو تمام شد؛ وقت استراحت است.',
+          '/app/planner/focus',
+          key,
+        );
+        if (!sent)
+          await this.db.pushDelivery.deleteMany({
+            where: { subscriptionId: sub.id, key },
+          });
+      }
+    }
+    await this.db.focusPushTimer.deleteMany({
+      where: { dueAt: { lt: cutoff } },
+    });
+  }
+
   async reviewSettings(userId: string): Promise<ReviewReminderSettings> {
     const settings = await this.db.reviewReminderSetting.findUnique({
       where: { userId },
@@ -391,6 +449,11 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
     if (this.running) return;
     this.running = true;
     try {
+      try {
+        await this.sendFocusReminders(now);
+      } catch {
+        this.logger.error('Focus reminder sweep failed');
+      }
       const subscriptions = await this.db.pushSubscription.findMany({
         include: { user: { select: { sessionVersion: true } } },
       });

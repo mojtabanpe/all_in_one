@@ -68,3 +68,13 @@ export interface WeeklyProgress {
   workouts: number;
   meals: number;
 }
+
+export const focusPushTimerSchema = z.strictObject({
+  remainingMs: z
+    .number()
+    .check(z.int(), z.minimum(1), z.maximum(12 * 60 * 60_000)),
+});
+export interface FocusPushDeadline {
+  id: string;
+  dueAt: string;
+}

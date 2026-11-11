@@ -1,13 +1,24 @@
-import { httpResource } from '@angular/common/http';
+import { HttpClient, httpResource } from '@angular/common/http';
 import {
   Component,
   computed,
+  effect,
   DestroyRef,
   inject,
   Injectable,
   linkedSignal,
   signal,
 } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import {
+  form,
+  min,
+  max,
+  required,
+  disabled,
+  validate,
+} from '@angular/forms/signals';
+import type { FocusPushDeadline } from '@all-in-one/shared/schemas';
 import { ActivatedRoute } from '@angular/router';
 import {
   addDays,
@@ -31,12 +42,13 @@ import {
   AioToggleGroupDirectives,
   provideIcons,
   AioFormField,
+  AioNumberField,
   AioSectionHeading,
   AioSelectField,
   AioLocale,
   AioNotifications,
 } from '@all-in-one/ui';
-import { apiErrorMessage } from '@all-in-one/web/shared';
+import { API_BASE_URL, apiErrorMessage } from '@all-in-one/web/shared';
 import {
   lucidePause,
   lucidePlay,
@@ -46,7 +58,7 @@ import {
 } from '@ng-icons/lucide';
 import { PlannerApi } from './planner-api';
 
-const POMODORO_MINUTES = [15, 25, 45, 60];
+const POMODORO_MINUTES = [15, 30, 45, 60];
 
 /**
  * The running timer lives in a root service so switching tabs does not stop
@@ -55,8 +67,13 @@ const POMODORO_MINUTES = [15, 25, 45, 60];
  */
 @Injectable({ providedIn: 'root' })
 export class FocusTimer {
+  private readonly http = inject(HttpClient);
+  private readonly base = `${inject(API_BASE_URL)}/push/focus-timers`;
+  private readonly notifications = inject(AioNotifications);
+  private deadline: FocusPushDeadline | null = null;
+  readonly busy = signal(false);
   readonly kind = signal<FocusKind>('POMODORO');
-  readonly minutes = signal(25);
+  readonly minutes = signal(30);
   readonly taskId = signal('');
   readonly running = signal(false);
   /** Focused milliseconds before the current run. */
@@ -75,31 +92,82 @@ export class FocusTimer {
   );
   readonly started = computed(() => this.running() || this.banked() > 0);
 
-  start() {
-    if (this.running()) return;
-    this.runStart.set(Date.now());
-    this.now.set(Date.now());
-    this.running.set(true);
-    this.tick ??= setInterval(() => {
-      this.now.set(Date.now());
-      if (
-        this.kind() === 'POMODORO' &&
-        this.running() &&
-        this.remaining() === 0
-      ) {
-        this.pause();
-        this.onFinish?.();
+  async start() {
+    if (this.running() || this.busy()) return;
+    if (
+      !Number.isInteger(this.minutes()) ||
+      this.minutes() < 1 ||
+      this.minutes() > 720
+    )
+      return;
+    this.busy.set(true);
+    try {
+      if (this.kind() === 'POMODORO') {
+        this.deadline = await firstValueFrom(
+          this.http.post<FocusPushDeadline>(this.base, {
+            remainingMs: Math.max(1, this.minutes() * 60_000 - this.banked()),
+          }),
+        );
       }
-    }, 250);
+      const now = Date.now();
+      this.runStart.set(
+        this.deadline
+          ? new Date(this.deadline.dueAt).getTime() -
+              (this.minutes() * 60_000 - this.banked())
+          : now,
+      );
+      this.now.set(now);
+      this.running.set(true);
+      this.tick ??= setInterval(() => {
+        this.now.set(Date.now());
+        if (
+          !this.busy() &&
+          this.kind() === 'POMODORO' &&
+          this.running() &&
+          this.remaining() === 0
+        ) {
+          // Leave the server deadline in place so its push is delivered independently.
+          this.banked.set(this.minutes() * 60_000);
+          this.running.set(false);
+          this.deadline = null;
+          this.onFinish?.();
+        }
+      }, 250);
+    } catch (error) {
+      this.notifications.error(apiErrorMessage(error));
+    } finally {
+      this.busy.set(false);
+    }
   }
 
-  pause() {
-    if (!this.running()) return;
-    this.banked.update((ms) => ms + Date.now() - this.runStart());
-    this.running.set(false);
+  async pause(): Promise<boolean> {
+    if (this.busy()) return false;
+    if (!this.running()) return true;
+    this.busy.set(true);
+    try {
+      if (this.deadline)
+        await firstValueFrom(
+          this.http.delete(`${this.base}/${this.deadline.id}`),
+        );
+      this.deadline = null;
+      this.banked.set(
+        Math.min(
+          this.kind() === 'POMODORO' ? this.minutes() * 60_000 : Infinity,
+          this.banked() + Date.now() - this.runStart(),
+        ),
+      );
+      this.running.set(false);
+      return true;
+    } catch (error) {
+      this.notifications.error(apiErrorMessage(error));
+      return false;
+    } finally {
+      this.busy.set(false);
+    }
   }
 
-  reset() {
+  async reset() {
+    if (!(await this.pause())) return;
     this.running.set(false);
     this.banked.set(0);
     if (this.tick) clearInterval(this.tick);
@@ -120,6 +188,7 @@ export class FocusTimer {
     AioTextarea,
     AioToggleGroupDirectives,
     AioFormField,
+    AioNumberField,
     AioSectionHeading,
     AioSelectField,
     AioTranslate,
@@ -166,7 +235,7 @@ export class FocusTimer {
             aioToggleGroupItem
             [value]="k"
             class="h-11 flex-1"
-            [disabled]="timer.started()"
+            [disabled]="timer.started() || timer.busy()"
           >
             {{ kindLabels[k] | aioTranslate }}
           </button>
@@ -219,15 +288,31 @@ export class FocusTimer {
             <button
               aioBtn
               size="sm"
+              class="min-h-11"
+              [disabled]="timer.busy()"
               role="radio"
-              [attr.aria-checked]="timer.minutes() === m"
-              [variant]="timer.minutes() === m ? 'default' : 'outline'"
-              (click)="timer.minutes.set(m)"
+              [attr.aria-checked]="durationModel().minutes === m"
+              [variant]="durationModel().minutes === m ? 'default' : 'outline'"
+              (click)="durationModel.set({ minutes: m })"
             >
               {{ '{0} دقیقه' | aioTranslate: [fa(m)] }}
             </button>
           }
         </div>
+        <aio-number-field
+          class="w-full"
+          label="مدت دلخواه (دقیقه)"
+          controlId="focus-minutes"
+          [field]="durationForm.minutes"
+          [step]="1"
+          [showErrors]="true"
+        />
+        <p class="text-muted-foreground text-sm">
+          {{
+            'برای دریافت اعلان پایان، اعلان‌های دستگاه را در حساب کاربری فعال کن.'
+              | aioTranslate
+          }}
+        </p>
       }
 
       <aio-select-field
@@ -248,6 +333,7 @@ export class FocusTimer {
             aioBtn
             size="lg"
             class="btn-3d flex-1"
+            [disabled]="timer.busy()"
             (click)="timer.pause()"
           >
             <aio-icon name="lucidePause" size="sm" /> {{ 'مکث' | aioTranslate }}
@@ -257,14 +343,21 @@ export class FocusTimer {
             aioBtn
             size="lg"
             class="btn-3d flex-1"
-            (click)="timer.start()"
+            [disabled]="timer.busy() || durationForm().invalid()"
+            (click)="start()"
           >
             <aio-icon name="lucidePlay" size="sm" />
             {{ (timer.started() ? 'ادامه' : 'شروع') | aioTranslate }}
           </button>
         }
         @if (timer.started()) {
-          <button aioBtn size="lg" variant="outline" (click)="finish()">
+          <button
+            aioBtn
+            size="lg"
+            variant="outline"
+            [disabled]="timer.busy()"
+            (click)="finish()"
+          >
             <aio-icon name="lucideSquare" size="sm" />
             {{ 'پایان' | aioTranslate }}
           </button>
@@ -273,6 +366,7 @@ export class FocusTimer {
             variant="ghost"
             size="icon-lg"
             [attr.aria-label]="'از نو' | aioTranslate"
+            [disabled]="timer.busy()"
             (click)="timer.reset()"
           >
             <aio-icon name="lucideRotateCcw" size="sm" />
@@ -323,7 +417,7 @@ export class FocusTimer {
           @if (!res.isLoading()) {
             <li class="text-muted-foreground p-4 text-sm">
               {{
-                'هنوز جلسه تمرکزی ثبت نشده. یک پومودوروی ۲۵ دقیقه‌ای شروع کن!'
+                'هنوز جلسه تمرکزی ثبت نشده. یک پومودوروی ۳۰ دقیقه‌ای شروع کن!'
                   | aioTranslate
               }}
             </li>
@@ -390,6 +484,30 @@ export class FocusPage {
   private readonly api = inject(PlannerApi);
   private readonly confirm = inject(AioConfirm);
   protected readonly timer = inject(FocusTimer);
+
+  protected readonly durationModel = signal({ minutes: this.timer.minutes() });
+  protected readonly durationForm = form(this.durationModel, (path) => {
+    required(path.minutes);
+    disabled(path.minutes, () => this.timer.busy());
+    min(path.minutes, 1, { message: 'مدت باید بین ۱ تا ۷۲۰ دقیقه باشد.' });
+    max(path.minutes, 720, { message: 'مدت باید بین ۱ تا ۷۲۰ دقیقه باشد.' });
+    validate(path.minutes, (ctx) =>
+      Number.isInteger(ctx.value())
+        ? null
+        : {
+            kind: 'integer',
+            message: 'مدت را به دقیقه و با عدد صحیح وارد کن.',
+          },
+    );
+  });
+
+  protected start() {
+    if (!this.timer.started()) {
+      if (this.durationForm().invalid()) return;
+      this.timer.minutes.set(this.durationModel().minutes);
+    }
+    void this.timer.start();
+  }
 
   protected readonly kinds: FocusKind[] = ['POMODORO', 'STOPWATCH'];
   protected readonly kindLabels = FOCUS_KIND_LABELS;
@@ -458,6 +576,17 @@ export class FocusPage {
   protected readonly fa = (n: number) => this.locale.number(n);
 
   constructor() {
+    effect(() => {
+      const minutes = this.durationModel().minutes;
+      if (
+        !this.timer.started() &&
+        !this.timer.busy() &&
+        Number.isInteger(minutes) &&
+        minutes >= 1 &&
+        minutes <= 720
+      )
+        this.timer.minutes.set(minutes);
+    });
     const task = inject(ActivatedRoute).snapshot.queryParamMap.get('task');
     if (task && !this.timer.started()) this.timer.taskId.set(task);
     this.timer.onFinish = () => void this.finish(true);
@@ -480,12 +609,12 @@ export class FocusPage {
 
   /** Saves the focused time (at least a minute) and resets the timer. */
   protected async finish(completed = false) {
-    this.timer.pause();
+    if (!(await this.timer.pause())) return;
     const ms = this.timer.elapsed();
     const minutes = Math.round(ms / 60_000);
     const taskId = this.timer.taskId() || null;
     const kind = this.timer.kind();
-    this.timer.reset();
+    await this.timer.reset();
     if (minutes < 1) {
       this.notifications.info('کمتر از یک دقیقه بود؛ ثبت نشد.');
       return;

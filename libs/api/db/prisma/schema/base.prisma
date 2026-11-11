@@ -38,6 +38,7 @@ model User {
   onboardingCompletedAt DateTime?
   onboardingGoalChanges OnboardingGoalChange[]
 
+  focusPushTimers FocusPushTimer[]
   pushSubscriptions PushSubscription[]
   reviewReminder ReviewReminderSetting?
   progressNotification ProgressNotificationSetting?

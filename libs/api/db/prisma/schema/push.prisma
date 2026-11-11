@@ -43,3 +43,15 @@ model ProgressNotificationSetting {
 
   @@map("progress_notification_settings")
 }
+
+/// A running Pomodoro's deadline survives suspended browsers and API restarts.
+model FocusPushTimer {
+  id String @id @default(uuid(7)) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionVersion Int
+  dueAt DateTime
+  @@index([dueAt])
+  @@index([userId])
+  @@map("focus_push_timers")
+}

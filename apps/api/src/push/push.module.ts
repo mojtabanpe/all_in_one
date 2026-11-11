@@ -1,9 +1,20 @@
-import { Body, Controller, Get, Module, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Module,
+  Param,
+  Post,
+  Put,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { CurrentUser, type AuthUser } from '@all-in-one/api/auth';
 import { PrismaModule } from '@all-in-one/api/db';
 import { PlannerApiModule } from '@all-in-one/applets/planner/api';
 import {
+  focusPushTimerSchema,
   pushSubscriptionSchema,
   progressNotificationSchema,
   type ProgressNotificationSettings,
@@ -43,6 +54,20 @@ class PushController {
   @Get('weekly-progress')
   weeklyProgress(@CurrentUser() user: AuthUser) {
     return this.push.weeklyProgress(user.id);
+  }
+  @Post('focus-timers')
+  scheduleFocus(
+    @CurrentUser() user: AuthUser,
+    @Body({ schema: focusPushTimerSchema }) input: { remainingMs: number },
+  ) {
+    return this.push.scheduleFocus(user.id, input.remainingMs);
+  }
+  @Delete('focus-timers/:id')
+  cancelFocus(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.push.cancelFocus(user.id, id);
   }
   @Get('status') status() {
     return this.push.status();
