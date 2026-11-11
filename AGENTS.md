@@ -676,6 +676,12 @@ origin master` and read the index and the roadmap; after work, update its status
 
 128. **Literal exercise-video prompts (2026-11-10).** Assume the video generator will infer nothing. Use short, concrete instructions, one action per step, and explicit screen directions and equipment contact points. State what starts in contact, what moves, what stays fixed, and what the last frame must show. Put the most important visual constraint first. Keep each prompt standalone as required by 125.
 
+## Instagram acquisition focus (2026-11-11)
+
+129. **Focus the current marketing work on Instagram.** The owner confirmed a new YouTube account named
+     `poshtetgarm`, with `utm_medium=organic_social` and `utm_campaign=youtube_channel`, then asked to focus on
+     Instagram. Keep YouTube recorded for attribution; prioritize the Instagram acquisition experiment.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
