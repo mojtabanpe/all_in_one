@@ -82,14 +82,19 @@ export class AssistantService {
 
   /**
    * The user's new message, with the previous reply for context, so a short follow-up («آره»، «همونو
-   * پاک کن») is judged by what it answers.
+   * پاک کن») is judged by what it answers. A scope refusal is not useful context: embedding it with the
+   * next request can turn an in-scope meal/task into another refusal indefinitely.
    */
   private async allowed(userId: string, request: AssistantRequest) {
     const last = request.messages.at(-1);
     if (last?.role !== 'user') return true;
     const previous = request.messages.at(-2);
+    const previousContent = previous?.content.trim();
+    const isScopeRefusal =
+      previousContent === AI_OUT_OF_SCOPE_FA ||
+      previousContent === AI_OUT_OF_SCOPE_EN;
     const text =
-      previous?.role === 'assistant'
+      previous?.role === 'assistant' && !isScopeRefusal
         ? `(Previous assistant reply, for context: ${previous.content.slice(0, 500)})\n${last.content}`
         : last.content;
     return this.scope.inScope(userId, text, 'assistant');
