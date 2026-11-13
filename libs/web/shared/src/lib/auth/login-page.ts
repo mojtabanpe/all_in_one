@@ -4,6 +4,7 @@ import {
   computed,
   effect,
   inject,
+  isDevMode,
   input,
   signal,
   OnInit,
@@ -31,6 +32,7 @@ import {
   AioFormErrors,
   AioCardHeading,
   AioNotifications,
+  AioAlertDirectives,
 } from '@all-in-one/ui';
 import {
   extractGrowthCampaign,
@@ -56,6 +58,7 @@ import { safeAuthRedirect } from './safe-redirect';
   selector: 'web-login-page',
   imports: [
     AioButton,
+    AioAlertDirectives,
     AioCardDirectives,
     AioInput,
     FormField,
@@ -99,7 +102,9 @@ import { safeAuthRedirect } from './safe-redirect';
             [level]="1"
             [description]="
               (smsMode()
-                ? 'فقط شمارهٔ موبایل؛ کد ورود برایت پیامک می‌شود.'
+                ? smsPreview()
+                  ? 'پیش‌نمایش محلی فرم ورود با شمارهٔ موبایل.'
+                  : 'فقط شمارهٔ موبایل؛ کد ورود برایت پیامک می‌شود.'
                 : mode() === 'login'
                   ? 'با ایمیل و رمز عبورتان وارد شوید.'
                   : 'فقط ایمیل و یک رمز؛ نام را بعداً در حساب کاربری می‌گذاری.'
@@ -139,6 +144,17 @@ import { safeAuthRedirect } from './safe-redirect';
             }
 
             @if (smsMode()) {
+              @if (smsPreview()) {
+                <div aioAlert>
+                  <h2 aioAlertTitle>{{ 'پیش‌نمایش محلی' | aioTranslate }}</h2>
+                  <p aioAlertDescription>
+                    {{
+                      'کلید پیامک خالی است؛ فرم برای بررسی نمایش داده می‌شود و پیامکی ارسال نمی‌شود.'
+                        | aioTranslate
+                    }}
+                  </p>
+                </div>
+              }
               @if (!smsSentTo()) {
                 <form
                   class="flex flex-col gap-4"
@@ -166,7 +182,7 @@ import { safeAuthRedirect } from './safe-redirect';
                     type="submit"
                     size="lg"
                     class="w-full"
-                    [disabled]="busy()"
+                    [disabled]="busy() || smsPreview()"
                   >
                     {{ 'دریافت کد' | aioTranslate }}
                   </button>
@@ -359,11 +375,21 @@ export class LoginPage implements OnInit {
   private readonly sms = httpResource<{ enabled: boolean }>(
     () => `${this.api}/auth/sms`,
   );
+  /** Development-only visual preview. It never enables the SMS provider or sends a code. */
+  protected readonly smsPreview = computed(
+    () =>
+      isDevMode() &&
+      this.canRegister() &&
+      this.sms.hasValue() &&
+      !this.sms.value().enabled,
+  );
   protected readonly smsAvailable = computed(
     () =>
       this.canRegister() &&
       !this.sms.error() &&
-      (this.sms.isLoading() || !!this.sms.value()?.enabled),
+      (this.sms.isLoading() ||
+        !!this.sms.value()?.enabled ||
+        this.smsPreview()),
   );
   protected readonly smsMode = computed(
     () => this.method() === 'sms' && this.smsAvailable(),
@@ -413,6 +439,7 @@ export class LoginPage implements OnInit {
   }
 
   protected async requestCode() {
+    if (this.smsPreview()) return;
     const phone = iranMobile(this.phone());
     if (!phone) {
       this.notifications.error('شمارهٔ موبایل درست نیست.');

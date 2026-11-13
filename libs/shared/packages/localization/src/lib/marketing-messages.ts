@@ -518,4 +518,13 @@ export const MARKETING_MESSAGES: readonly (readonly [string, string])[] = [
     'دو بازهٔ هفت‌روزهٔ کامل تهران تا دیروز. فعال‌سازی یعنی ثبت اولین کار، مرور کارت یا ثبت وعده و ورزش.',
     'Two complete seven-day periods in Tehran ending yesterday. Activation means creating a task, reviewing a card, or logging a meal or workout.',
   ],
+  [
+    'پیش‌نمایش محلی فرم ورود با شمارهٔ موبایل.',
+    'Local preview of the phone sign-in form.',
+  ],
+  ['پیش‌نمایش محلی', 'Local preview'],
+  [
+    'کلید پیامک خالی است؛ فرم برای بررسی نمایش داده می‌شود و پیامکی ارسال نمی‌شود.',
+    'The SMS key is empty. This form is shown for visual review; no text message will be sent.',
+  ],
 ];
