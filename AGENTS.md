@@ -705,3 +705,5 @@ Rules:
 133. **Local phone-signup preview (2026-11-13).** The owner requested checking the phone signup UI locally with an empty SMS key. Development builds may show a clearly labeled, non-sending phone-form preview when SMS is unavailable; production must still require a configured SMS provider. Keep real keys out of commits.
 
 134. **Recover after an assistant scope refusal (2026-11-13).** The owner requested fixing valid meal-log requests being rejected after a scope refusal. Do not include the standard Persian or English scope-refusal reply as context for the next scope check; retain ordinary assistant context for follow-ups and continue checking new off-topic requests. This refines directive 110.
+
+135. **Chosen fasting times (2026-11-13).** The owner can start or end a fast at a chosen date and time instead of always using the current moment. Keep the existing 72-hour limit for backdated starts; an end must fall between the start and now. Leaving the end untouched still finishes at the server clock.

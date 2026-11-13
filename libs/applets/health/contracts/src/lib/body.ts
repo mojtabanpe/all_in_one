@@ -134,6 +134,8 @@ export function weightPlan(input: {
 /** Common time-restricted eating windows (fasting hours : eating hours). */
 export const FASTING_PROTOCOLS = [12, 14, 16, 18, 20, 24] as const;
 export const MAX_FAST_HOURS = 72;
+/** Finished fasts can be corrected this many days back. */
+export const FAST_EDIT_DAYS = 90;
 
 const fastHours = z.int().check(z.gte(1), z.lte(MAX_FAST_HOURS));
 

@@ -13,6 +13,7 @@ import {
   daysFromTo,
   type EndFastInput,
   type Fast,
+  FAST_EDIT_DAYS,
   type FastingState,
   type LogWeightInput,
   MAX_FAST_HOURS,
@@ -290,7 +291,7 @@ export class BodyService {
   private checkStart(startedAt: Date, now: Date, finished = false) {
     if (startedAt.getTime() > now.getTime() + CLOCK_SKEW)
       throw new BadRequestException('شروع فستینگ نمی‌تواند در آینده باشد');
-    const limit = finished ? 90 * 24 * HOUR : MAX_FAST_HOURS * HOUR;
+    const limit = finished ? FAST_EDIT_DAYS * 24 * HOUR : MAX_FAST_HOURS * HOUR;
     if (now.getTime() - startedAt.getTime() > limit)
       throw new BadRequestException(
         finished
