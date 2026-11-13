@@ -24,3 +24,4 @@ export * from './number-field';
 export * from './input-group-submit';
 export * from './language-switcher';
 export * from './chart';
+export * from './in-app-notifications';

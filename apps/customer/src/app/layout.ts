@@ -1,5 +1,12 @@
-import { Component, computed, effect, inject } from '@angular/core';
-import { httpResource } from '@angular/common/http';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  afterNextRender,
+  signal,
+} from '@angular/core';
+import { HttpClient, httpResource } from '@angular/common/http';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
 import {
@@ -22,13 +29,17 @@ import {
   type AioNavItem,
   provideIcons,
   AioSkeletonLines,
+  AioInAppNotifications,
+  AioInAppNotificationHost,
 } from '@all-in-one/ui';
 import { API_BASE_URL, Assistant, AuthStore } from '@all-in-one/web/shared';
 import type {
   AssistantContext,
   BillingAccessState,
+  InAppNotification,
 } from '@all-in-one/shared/schemas';
 import { Pwa } from './pwa';
+import { AiPaywall } from './billing/ai-paywall';
 import {
   lucideCalendarCheck,
   lucideCrown,
@@ -56,9 +67,11 @@ const TRIAL_NOTICE_DAYS = 3;
     Assistant,
     RouterOutlet,
     AioSkeletonLines,
+    AioInAppNotificationHost,
     AioTranslate,
   ],
   providers: [
+    AioInAppNotifications,
     provideIcons({
       lucideCalendarCheck,
       lucideCrown,
@@ -77,6 +90,7 @@ const TRIAL_NOTICE_DAYS = 3;
       [navItems]="navigation()"
       [language]="english() ? 'en' : 'fa'"
     >
+      <aio-in-app-notifications [suspended]="paywall.open()" />
       <web-assistant floating [context]="assistantContext()" />
       @if (pwa.installAvailable()) {
         <button
@@ -262,13 +276,54 @@ export class Layout {
       : this.nav,
   );
 
+  protected readonly paywall = inject(AiPaywall);
+  private readonly inApp = inject(AioInAppNotifications);
+  private readonly browserReady = signal(false);
+  private readonly http = inject(HttpClient);
+  private readonly notices = httpResource<InAppNotification[]>(() =>
+    this.browserReady() ? `${this.api}/in-app-notifications` : undefined,
+  );
+
   constructor() {
+    afterNextRender(() => this.browserReady.set(true));
+    const seen = new Set<string>();
+    let previousNotices = new Set<string>();
+    effect(() => {
+      if (!this.notices.hasValue()) return;
+      const live = new Set(this.notices.value().map((notice) => notice.id));
+      for (const id of previousNotices) {
+        if (!live.has(id)) this.inApp.remove(id);
+      }
+      previousNotices = live;
+      for (const notice of this.notices.value()) {
+        if (seen.has(notice.id)) continue;
+        seen.add(notice.id);
+        this.inApp.enqueue({
+          ...notice,
+          actions: notice.actions.map((action) => ({
+            ...action,
+            run: () => {
+              if (action.url.startsWith('/'))
+                void this.router.navigateByUrl(action.url);
+              else window.open(action.url, '_blank', 'noopener,noreferrer');
+            },
+          })),
+          onDismiss: () => {
+            this.http
+              .post(`${this.api}/in-app-notifications/${notice.id}/dismiss`, {})
+              .subscribe({ error: () => undefined });
+          },
+        });
+      }
+    });
     // A payment or reward changes access on the billing page; refresh the header after leaving it.
     let previous = this.url();
     effect(() => {
       const url = this.url();
-      if (previous.startsWith('/billing') && !url.startsWith('/billing'))
+      if (previous.startsWith('/billing') && !url.startsWith('/billing')) {
         this.access.reload();
+        this.notices.reload();
+      }
       previous = url;
     });
   }

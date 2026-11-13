@@ -1,3 +1,7 @@
+import {
+  InAppNotificationsController,
+  InAppNotificationsService,
+} from '../in-app-notifications';
 import { OnboardingController } from './onboarding.controller';
 import { PushModule } from '../push/push.module';
 import { Module } from '@nestjs/common';
@@ -42,6 +46,7 @@ import { BillingModule } from '../billing/billing.module';
     AssistantModule,
   ],
   controllers: [
+    InAppNotificationsController,
     AppController,
     HealthController,
     AdminController,
@@ -49,6 +54,7 @@ import { BillingModule } from '../billing/billing.module';
     OnboardingController,
   ],
   providers: [
+    InAppNotificationsService,
     AppService,
     CatalogSeeder,
     GrowthService,

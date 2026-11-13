@@ -104,7 +104,7 @@ class AioBottomSheetSurface {
   ],
   providers: [provideIcons({ lucideX })],
   template: `
-    @if (isMobile()) {
+    @if (bottomSheet() || isMobile()) {
       <hlm-drawer
         direction="bottom"
         [state]="state()"
@@ -208,6 +208,8 @@ class AioBottomSheetSurface {
 })
 export class AioDialog {
   readonly open = model(false);
+  /** Keep informational notifications in a bottom sheet at every screen size. */
+  readonly bottomSheet = input(false);
   /** Shown as given: callers translate fixed copy, user content stays as written. */
   readonly title = input.required<string>();
   readonly description = input<string>();

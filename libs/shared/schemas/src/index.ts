@@ -9,3 +9,4 @@ export * from './lib/push';
 export * from './lib/growth';
 export * from './lib/onboarding';
 export * from './lib/billing';
+export * from './lib/in-app-notifications';

@@ -21,6 +21,6 @@ import { ZibalGateway } from './zibal.gateway';
     StoreGateway,
     { provide: AI_ACCESS, useExisting: BillingService },
   ],
-  exports: [AI_ACCESS],
+  exports: [AI_ACCESS, BillingService],
 })
 export class BillingModule {}

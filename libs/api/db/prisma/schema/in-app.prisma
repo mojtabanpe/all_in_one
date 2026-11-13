@@ -1,0 +1,14 @@
+model InAppNotification {
+  id String @id @default(uuid(7)) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key String @db.VarChar(150)
+  source String @default("general") @db.VarChar(20)
+  content Json
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  dismissedAt DateTime?
+  @@unique([userId, key])
+  @@index([userId, dismissedAt, expiresAt])
+  @@map("in_app_notifications")
+}
