@@ -18,7 +18,6 @@ import {
   lucideSmartphone,
 } from '@ng-icons/lucide';
 import { injectCustomerLinks } from '../customer-url';
-import { APPLETS } from './applets-data';
 import { ANDROID_RELEASE } from './android-release';
 
 @Component({
@@ -43,177 +42,74 @@ import { ANDROID_RELEASE } from './android-release';
   template: `
     <div class="flex flex-col gap-10 md:gap-16">
       <section
-        class="grid items-center gap-10 py-4 lg:grid-cols-[1.2fr_1fr] lg:py-10"
+        class="flex flex-col gap-7 py-3 sm:gap-9 lg:py-8"
+        aria-labelledby="start-title"
       >
-        <div class="flex min-w-0 flex-col items-start gap-6">
-          <span
-            class="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-2 text-xs font-medium"
-            ><span class="size-1.5 rounded-full bg-primary"></span
-            >{{ 'یک فضای شخصی، برای زندگی روزمره' | aioTranslate }}</span
-          >
+        <div class="flex max-w-3xl flex-col gap-4">
           <h1
-            class="max-w-xl text-3xl leading-[1.6] font-bold text-balance sm:text-4xl lg:text-5xl"
+            id="start-title"
+            class="text-3xl leading-[1.55] font-bold text-balance sm:text-4xl lg:text-5xl"
           >
-            {{ 'برنامه روزانه، زبان و سلامت؛' | aioTranslate }}<br /><span
-              class="text-primary"
-              >{{ 'همه در یک جا.' | aioTranslate }}</span
-            >
+            {{ 'امروز از کجا شروع می‌کنی؟' | aioTranslate }}
           </h1>
           <p
-            class="text-muted-foreground max-w-lg text-base leading-8 md:text-lg"
+            class="max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg"
           >
             {{
-              'کارها و عادت‌هایت را دنبال کن، انگلیسی مرور کن و وعده‌ها و تمرین‌هایت را ثبت کن. از همان بخشی شروع کن که امروز به آن نیاز داری.'
+              'انگلیسی تمرین کن، به روزت نظم بده یا سلامتت را دنبال کن. یک مسیر انتخاب کن؛ با همان حساب، بقیه هم در دسترس‌اند.'
                 | aioTranslate
             }}
           </p>
-          <div
-            class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap"
-          >
-            <a aioBtn size="lg" [href]="customerLinks.signup()">{{
-              'ساخت حساب رایگان' | aioTranslate
-            }}</a>
-            <a
-              aioBtn
-              size="lg"
-              variant="outline"
-              routerLink="/"
-              [queryParams]="customerLinks.campaign()"
-              fragment="install"
-              class="min-h-11"
-            >
-              <aio-icon name="lucideDownload" size="sm" />
-              {{ 'نصب اپ' | aioTranslate }}
-            </a>
-            <a
-              aioBtn
-              size="lg"
-              variant="outline"
-              routerLink="/applets"
-              [queryParams]="customerLinks.campaign()"
-              >{{ 'کشف امکانات' | aioTranslate }}</a
-            >
-          </div>
-          <a aioBtn variant="link" [href]="customerLinks.login">{{
-            'حساب داری؟ وارد شو' | aioTranslate
-          }}</a>
-          <p class="text-muted-foreground text-sm leading-6">
-            {{ 'فارسی و انگلیسی، روی موبایل و کامپیوتر' | aioTranslate }}
-          </p>
         </div>
-        <div class="aio-hero flex min-w-0 flex-col gap-6">
-          <span class="aio-hero-caption">{{
-            'Poshtetgarm، در یک نگاه' | aioTranslate
-          }}</span>
-          <h2 class="text-2xl leading-relaxed font-bold">
-            {{ 'برای هر بخش از روزت،' | aioTranslate }}<br />{{
-              'یک جای درست.' | aioTranslate
-            }}
-          </h2>
-          @for (applet of applets; track applet.title) {
-            <div
-              class="flex min-w-0 items-start gap-4 border-t border-white/15 pt-5"
-            >
-              <span
-                class="flex size-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/5"
-                ><aio-icon [name]="applet.icon" size="sm"
-              /></span>
-              <div
-                aioSectionHeading
-                [title]="applet.title | aioTranslate"
-                [description]="applet.summary | aioTranslate"
-                [level]="3"
-                titleClass="font-semibold"
-                descriptionClass="aio-hero-caption mt-1"
-                textClass="flex min-w-0 flex-col gap-1"
-              ></div>
-            </div>
-          }
-        </div>
-      </section>
-      <section
-        class="flex flex-col gap-6"
-        aria-labelledby="product-preview-title"
-      >
-        <div
-          aioSectionHeading
-          headingId="product-preview-title"
-          [title]="'داخل برنامه را ببین' | aioTranslate"
-          [description]="
-            'تصاویر واقعی برنامه با داده‌های نمایشی؛ برای دیدن جزئیات، تصویر را باز کن.'
-              | aioTranslate
-          "
-          titleClass="aio-page-title"
-          descriptionClass="mt-2 text-sm leading-7 text-muted-foreground"
-        ></div>
         <div class="grid gap-4 lg:grid-cols-3">
-          @for (preview of previews; track preview.slug) {
-            <figure aioCard class="min-w-0">
-              <figcaption aioCardHeader>
-                <h3 aioCardTitle>{{ preview.title | aioTranslate }}</h3>
-                <p aioCardDescription>{{ 'نمونهٔ نمایشی' | aioTranslate }}</p>
-              </figcaption>
-              <div aioCardContent>
-                <a
-                  aioBtn
-                  variant="ghost"
-                  class="h-[28rem] w-full overflow-hidden p-0"
-                  [href]="previewImage(preview.slug)"
-                  target="_blank"
-                  rel="noopener"
-                  [attr.aria-label]="
-                    (preview.alt | aioTranslate) +
-                    ' — ' +
-                    ('باز کردن تصویر در زبانهٔ جدید' | aioTranslate)
-                  "
-                >
-                  <img
-                    [src]="previewImage(preview.slug)"
-                    [alt]="preview.alt | aioTranslate"
-                    width="430"
-                    height="900"
-                    loading="lazy"
-                    decoding="async"
-                    class="block h-full w-auto max-w-full object-contain"
-                  />
-                </a>
+          @for (path of startingPaths; track path.slug) {
+            <a
+              aioBtn
+              variant="outline"
+              class="h-auto min-w-0 justify-start gap-4 rounded-2xl p-5 text-start whitespace-normal lg:flex-col lg:items-start lg:gap-5 lg:p-6"
+              [routerLink]="path.slug"
+              [queryParams]="customerLinks.campaign()"
+            >
+              <aio-icon [name]="path.icon" class="shrink-0" />
+              <div class="flex min-w-0 flex-col gap-2">
+                <h2 class="text-lg font-semibold">
+                  {{ path.title | aioTranslate }}
+                </h2>
+                <p class="text-sm leading-7 font-normal text-muted-foreground">
+                  {{ path.description | aioTranslate }}
+                </p>
+                <span class="text-sm font-semibold">{{
+                  path.action | aioTranslate
+                }}</span>
               </div>
-            </figure>
+            </a>
           }
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <p class="text-sm leading-7 text-muted-foreground">
+            {{
+              'برای شروع، نصب اپ لازم نیست؛ در مرورگر هم کار می‌کند.'
+                | aioTranslate
+            }}
+          </p>
+          <a
+            aioBtn
+            variant="link"
+            class="min-h-11"
+            [href]="customerLinks.login()"
+            >{{ 'حساب داری؟ وارد شو' | aioTranslate }}</a
+          >
         </div>
       </section>
-      <section class="flex flex-col gap-5">
-        <div>
-          <p class="aio-eyebrow">
-            {{ 'کمتر پراکنده، بیشتر متمرکز' | aioTranslate }}
+      <section aioCard>
+        <div aioCardHeader>
+          <h2 aioCardTitle>{{ 'شروع رایگان، انتخاب با تو' | aioTranslate }}</h2>
+          <p aioCardDescription class="leading-7">
+            {{
+              'برنامه‌ریز، فلش‌کارت و ثبت سلامت رایگان می‌مانند. هوش مصنوعی هفت روز آزمایشی است؛ ادامهٔ آن با اشتراک یا هفته‌های هدیه است.'
+                | aioTranslate
+            }}
           </p>
-          <h2 class="aio-page-title">
-            {{ 'سه مسیر، یک همراه.' | aioTranslate }}
-          </h2>
-        </div>
-        <div class="grid gap-4 md:grid-cols-3">
-          @for (applet of applets; track applet.title) {
-            <article aioCard>
-              <div aioCardHeader>
-                <span class="aio-module-icon mb-4"
-                  ><aio-icon [name]="applet.icon"
-                /></span>
-                <h3 aioCardTitle>{{ applet.title | aioTranslate }}</h3>
-                <p aioCardDescription class="leading-7">
-                  {{ applet.summary | aioTranslate }}
-                </p>
-              </div>
-              <div aioCardFooter>
-                <a
-                  aioBtn
-                  variant="link"
-                  routerLink="/applets"
-                  [queryParams]="customerLinks.campaign()"
-                  >{{ 'بیشتر بدانید' | aioTranslate }}</a
-                >
-              </div>
-            </article>
-          }
         </div>
       </section>
       <section
@@ -352,26 +248,6 @@ import { ANDROID_RELEASE } from './android-release';
 })
 export class Home {
   protected readonly locale = inject(AioLocale);
-  protected readonly previews = [
-    {
-      slug: 'planner',
-      title: 'برنامه‌ریز',
-      alt: 'نمای برنامه‌ریز با سه کار و اولویت‌های متفاوت',
-    },
-    {
-      slug: 'english',
-      title: 'انگلیسی',
-      alt: 'نمای یادگیری انگلیسی با مجموعهٔ واژه‌ها و کارت‌های آمادهٔ مرور',
-    },
-    {
-      slug: 'health',
-      title: 'سلامت',
-      alt: 'نمای سلامت با کالری و وعدهٔ غذایی ثبت‌شدهٔ نمایشی',
-    },
-  ] as const;
-  protected previewImage(slug: string): string {
-    return `/product/${slug}-${this.locale.english() ? 'en' : 'fa'}.jpg`;
-  }
   private readonly analytics = inject(GrowthAnalytics);
   constructor() {
     effect(() => {
@@ -380,13 +256,36 @@ export class Home {
     });
   }
   protected readonly customerLinks = injectCustomerLinks();
-  protected readonly applets = APPLETS;
+  protected readonly startingPaths = [
+    {
+      slug: '/daily-english',
+      icon: 'lucideLanguages',
+      title: 'انگلیسی، هر روز کمی',
+      description: 'فلش‌کارت، مرور فاصله‌دار و متن‌خوانی برای روال شخصی تو.',
+      action: 'دیدن مسیر انگلیسی',
+    },
+    {
+      slug: '/daily-planner',
+      icon: 'lucideCalendarCheck',
+      title: 'یک روز منظم‌تر',
+      description: 'کارهای امروز، عادت‌ها و زمان تمرکز در یک فضای ساده.',
+      action: 'دیدن مسیر برنامه‌ریزی',
+    },
+    {
+      slug: '/health-tracking',
+      icon: 'lucideHeartPulse',
+      title: 'سلامت، قدم‌به‌قدم',
+      description: 'وعده‌ها، تمرین‌ها و روند روزانه‌ات را یک جا دنبال کن.',
+      action: 'دیدن مسیر سلامت',
+    },
+  ];
   protected readonly android = ANDROID_RELEASE;
   protected readonly gettingStarted = [
     {
       label: 'قدم اول',
       title: 'حسابت را بساز',
-      description: 'با ایمیل و رمز عبور ثبت‌نام کن. اگر حساب داری، وارد شو.',
+      description:
+        'با شمارهٔ موبایل یا ایمیل حسابت را بساز. اگر حساب داری، وارد شو.',
     },
     {
       label: 'قدم دوم',

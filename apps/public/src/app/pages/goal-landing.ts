@@ -29,9 +29,11 @@ import { GOAL_LANDINGS } from './goal-landing-data';
       <header class="grid items-center gap-8 lg:grid-cols-[1.4fr_1fr]">
         <div class="flex min-w-0 flex-col items-start gap-5">
           <p class="text-sm font-medium text-muted-foreground">
-            {{ 'راهنمای شروع با Poshtetgarm' | aioTranslate }}
+            {{ focus().eyebrow | aioTranslate }}
           </p>
-          <h1 class="aio-page-title max-w-3xl">
+          <h1
+            class="max-w-2xl text-3xl leading-[1.55] font-bold text-balance sm:text-4xl lg:text-5xl"
+          >
             {{ page().title | aioTranslate }}
           </h1>
           <p class="max-w-2xl text-lg leading-8 text-muted-foreground">
@@ -42,19 +44,28 @@ import { GOAL_LANDINGS } from './goal-landing-data';
             size="lg"
             class="min-h-12 w-full whitespace-normal sm:w-auto"
             [href]="customerLinks.signup()"
-            >{{ 'ساخت حساب رایگان' | aioTranslate }}</a
+            >{{ focus().action | aioTranslate }}</a
           >
-          <a aioBtn variant="link" [href]="customerLinks.login">{{
+          <p class="text-sm leading-7 text-muted-foreground">
+            {{
+              'حساب رایگان می‌سازی و مستقیم وارد همین بخش می‌شوی.'
+                | aioTranslate
+            }}
+          </p>
+          <a aioBtn variant="link" [href]="customerLinks.login()">{{
             'ورود به حساب' | aioTranslate
           }}</a>
         </div>
-        <figure aioCard class="mx-auto w-full max-w-sm overflow-hidden p-4">
+        <figure
+          aioCard
+          class="mx-auto w-full max-w-sm overflow-hidden p-3 sm:p-4"
+        >
           <img
             [ngSrc]="image()"
             [alt]="page().imageAlt | aioTranslate"
             width="430"
             height="900"
-            class="h-[26rem] w-full rounded-xl object-contain"
+            class="h-auto max-h-[30rem] w-full rounded-xl object-contain"
             priority
           />
           <figcaption
@@ -64,6 +75,34 @@ import { GOAL_LANDINGS } from './goal-landing-data';
           </figcaption>
         </figure>
       </header>
+      <section
+        class="grid gap-5 sm:grid-cols-3"
+        aria-label="{{ 'با همین حساب' | aioTranslate }}"
+      >
+        @for (benefit of focus().benefits; track benefit.title) {
+          <div class="flex flex-col gap-2">
+            <h2 class="text-base font-semibold">
+              {{ benefit.title | aioTranslate }}
+            </h2>
+            <p class="text-sm leading-7 text-muted-foreground">
+              {{ benefit.body | aioTranslate }}
+            </p>
+          </div>
+        }
+      </section>
+      <section aioCard aria-labelledby="free-access-title">
+        <div aioCardHeader>
+          <h2 aioCardTitle id="free-access-title">
+            {{ 'شروع رایگان، انتخاب با تو' | aioTranslate }}
+          </h2>
+          <p aioCardDescription class="leading-7">
+            {{
+              'برنامه‌ریز، فلش‌کارت و ثبت سلامت رایگان می‌مانند. هوش مصنوعی هفت روز آزمایشی است؛ ادامهٔ آن با اشتراک یا هفته‌های هدیه است.'
+                | aioTranslate
+            }}
+          </p>
+        </div>
+      </section>
       @if (page().slug === 'daily-planner') {
         <section aioCard aria-labelledby="daily-plan-template">
           <div aioCardHeader>
@@ -140,6 +179,18 @@ import { GOAL_LANDINGS } from './goal-landing-data';
           }
         </dl>
       </section>
+      <div class="flex flex-col items-start gap-3">
+        <a
+          aioBtn
+          size="lg"
+          class="min-h-12 w-full whitespace-normal sm:w-auto"
+          [href]="customerLinks.signup()"
+          >{{ focus().action | aioTranslate }}</a
+        >
+        <p class="text-sm text-muted-foreground">
+          {{ 'ثبت‌نام با شمارهٔ موبایل یا ایمیل' | aioTranslate }}
+        </p>
+      </div>
       <section
         class="flex flex-col items-start gap-4"
         aria-labelledby="guide-more-title"
@@ -186,6 +237,65 @@ export class GoalLanding {
     ].join('\n'),
   );
   protected readonly customerLinks = injectCustomerLinks();
+  protected readonly focus = computed(() => {
+    const kind = this.page().image;
+    return kind === 'english'
+      ? {
+          eyebrow: 'انگلیسی با Poshtetgarm',
+          action: 'شروع رایگان انگلیسی',
+          benefits: [
+            {
+              title: 'واژه‌هایت را نگه دار',
+              body: 'از مجموعه‌های آماده شروع کن یا کارت‌های خودت را بساز.',
+            },
+            {
+              title: 'مرور بعدی را بدان',
+              body: 'فاصلهٔ مرور با پاسخ هر کارت تنظیم می‌شود.',
+            },
+            {
+              title: 'در متن تمرین کن',
+              body: 'متن‌های خواندنی و واژه‌هایت در یک کتابخانه هستند.',
+            },
+          ],
+        }
+      : kind === 'planner'
+        ? {
+            eyebrow: 'برنامه‌ریز Poshtetgarm',
+            action: 'شروع رایگان برنامه‌ریزی',
+            benefits: [
+              {
+                title: 'امروز را روشن کن',
+                body: 'کارهایت را بنویس و مهم‌ترین قدم را مشخص کن.',
+              },
+              {
+                title: 'عادت‌هایت را دنبال کن',
+                body: 'روزهای انجام و یادآورها را خودت انتخاب کن.',
+              },
+              {
+                title: 'زمان تمرکز داشته باش',
+                body: 'تایمر تمرکز را کنار برنامهٔ روزت نگه دار.',
+              },
+            ],
+          }
+        : {
+            eyebrow: 'سلامت با Poshtetgarm',
+            action: 'شروع رایگان پیگیری سلامت',
+            benefits: [
+              {
+                title: 'وعده‌هایت را ثبت کن',
+                body: 'خوراک روزت را در یک سابقهٔ روشن نگه دار.',
+              },
+              {
+                title: 'تمرینت را پیدا کن',
+                body: 'برنامه‌های خانه، باشگاه و TRX را ببین.',
+              },
+              {
+                title: 'روندت را ببین',
+                body: 'ثبت‌های روزانه و فعالیت هفته را کنار هم مرور کن.',
+              },
+            ],
+          };
+  });
   private readonly route = inject(ActivatedRoute);
   private readonly data = toSignal(this.route.data, {
     initialValue: this.route.snapshot.data,

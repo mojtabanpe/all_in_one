@@ -1,4 +1,10 @@
 import {
+  LANDING_GOAL_COOKIE,
+  LANDING_PATHS,
+  landingGoalForPath,
+  resolveLandingGoal,
+} from '@all-in-one/shared/schemas';
+import {
   AngularNodeAppEngine,
   createNodeRequestHandler,
   isMainModule,
@@ -81,6 +87,34 @@ const cookieValue = (
     .find((part) => part.startsWith(`${name}=`))
     ?.slice(name.length + 1);
 
+// Resolve campaign/remembered interest before prerendered HTML is served: no generic-page flash.
+app.use((req, res, next) => {
+  if (req.method !== 'GET' || !req.accepts('html')) return next();
+  const path = pagePath(req.originalUrl);
+  const query = new URLSearchParams(req.originalUrl.split('?')[1] ?? '');
+  const goal =
+    path === '/'
+      ? resolveLandingGoal(
+          query,
+          cookieValue(req.headers.cookie, LANDING_GOAL_COOKIE),
+        )
+      : landingGoalForPath(path);
+  if (path === '/') {
+    res.setHeader('Cache-Control', 'private, no-store');
+    if (goal)
+      return res.redirect(
+        302,
+        `${LANDING_PATHS[goal]}${query.size ? '?' + query : ''}`,
+      );
+  }
+  if (goal)
+    res.append(
+      'Set-Cookie',
+      `${LANDING_GOAL_COOKIE}=${goal}; Path=/; Max-Age=7776000; SameSite=Lax${req.secure || req.headers['x-forwarded-proto'] === 'https' ? '; Secure' : ''}`,
+    );
+  next();
+});
+
 app.use(async (req, res, next) => {
   if (req.method !== 'GET' || !req.accepts('html')) return next();
   const query = new URLSearchParams(req.originalUrl.split('?')[1] ?? '');
@@ -97,7 +131,7 @@ app.use(async (req, res, next) => {
   if (Object.keys(campaign).length === 0) return next();
   if (!isVisitorId(cookieValue(req.headers.cookie, VISITOR_COOKIE))) {
     const secure = req.secure || req.headers['x-forwarded-proto'] === 'https';
-    res.setHeader('Set-Cookie', visitorCookie(randomUUID(), secure));
+    res.append('Set-Cookie', visitorCookie(randomUUID(), secure));
   }
   // Never let a proxy cache one visitor's tagged copy.
   res.setHeader('Cache-Control', 'no-store');

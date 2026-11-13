@@ -24,7 +24,8 @@ export class GrowthService {
 
   async recordMilestone(
     visitorId: string,
-    name: 'first_task_created' | 'first_review_completed',
+    name:
+      'first_task_created' | 'first_review_completed' | 'first_health_logged',
     language: 'fa' | 'en',
   ) {
     await this.prisma.growthEvent.createMany({
@@ -45,7 +46,8 @@ export class GrowthService {
   async recordActivity(
     visitorId: string,
     language: 'fa' | 'en',
-    milestone?: 'first_task_created' | 'first_review_completed',
+    milestone?:
+      'first_task_created' | 'first_review_completed' | 'first_health_logged',
   ): Promise<void> {
     const base = { visitorId, language, day: dayAt(new Date()) };
     await this.prisma.growthEvent.createMany({
@@ -147,7 +149,7 @@ export class GrowthService {
         COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'landing_view') AS landing,
         COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'signup_started') AS started,
         COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'signup_completed') AS completed,
-        COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name IN ('active_day', 'first_task_created', 'first_review_completed')) AS active,
+        COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name IN ('active_day', 'first_task_created', 'first_review_completed', 'first_health_logged')) AS active,
         COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'first_review_completed') AS first_review,
         COUNT(DISTINCT m."visitorId") AS eligible,
         COUNT(DISTINCT m."visitorId") FILTER (WHERE m.active_days >= 3) AS retained
@@ -356,7 +358,7 @@ export class GrowthService {
           SELECT e.day, e.name, e."visitorId"
           FROM growth_events e
           WHERE e.day BETWEEN ${windows[1].from} AND ${windows[0].to}
-            AND e.name IN ('signup_completed', 'first_task_created', 'first_review_completed')
+            AND e.name IN ('signup_completed', 'first_task_created', 'first_review_completed', 'first_health_logged')
             AND NOT EXISTS (
               SELECT 1 FROM growth_events qa
               WHERE qa."visitorId" = e."visitorId" AND qa.day <= ${daysAgo(1)}
@@ -365,7 +367,7 @@ export class GrowthService {
         )
         SELECT w.position,
           COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'signup_completed') AS signups,
-          COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name IN ('first_task_created', 'first_review_completed')) AS activations
+          COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name IN ('first_task_created', 'first_review_completed', 'first_health_logged')) AS activations
         FROM weeks w LEFT JOIN events e ON e.day BETWEEN w.start_day AND w.end_day
         GROUP BY w.position ORDER BY w.position
       `,
@@ -427,7 +429,7 @@ export class GrowthService {
         COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'landing_view') AS landing,
         COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'signup_started') AS started,
         COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name = 'signup_completed') AS completed,
-        COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name IN ('first_task_created', 'first_review_completed')) AS activated
+        COUNT(DISTINCT e."visitorId") FILTER (WHERE e.name IN ('first_task_created', 'first_review_completed', 'first_health_logged')) AS activated
       FROM events e JOIN first_touch f ON f."visitorId" = e."visitorId"
       GROUP BY f.source, f.medium ORDER BY landing DESC, completed DESC, f.source, f.medium LIMIT 20
     `;

@@ -699,3 +699,5 @@ Rules:
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
 
 131. **Actionable in-app notification sheets (2026-11-13).** Deliver persistent/actionable in-app notices through a shared Spartan bottom sheet. On entry to the signed-in app, call a general authenticated notifications API; the server decides what to show and remembers dismissals. Support arbitrary notices. Start with users nearing trial expiry: offer subscription purchase or the available Telegram/Instagram earned-week flow; joining still requires the existing reward verification.
+
+132. **Focused acquisition journeys (2026-11-13).** Provide English, planner and health landing experiences selected by campaign or explicit/remembered interest. Keep a concise general entry for unknown visitors, carry interest through signup into the matching applet, and measure signup and first-action outcomes. Use the installed design guidance, explicitly including `better-ui`, and retain shared Spartan wrappers, bilingual layouts and the established design system.

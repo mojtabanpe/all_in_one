@@ -1,3 +1,4 @@
+import { firstValueFrom } from 'rxjs';
 import {
   Component,
   computed,
@@ -14,7 +15,11 @@ import {
   submit,
   validateStandardSchema,
 } from '@angular/forms/signals';
-import { HttpErrorResponse, httpResource } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  httpResource,
+} from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   AioLanguageSwitcher,
@@ -31,6 +36,9 @@ import {
   extractGrowthCampaign,
   iranMobile,
   loginSchema,
+  onboardingGoalSchema,
+  GOAL_APP_PATHS,
+  type OnboardingState,
 } from '@all-in-one/shared/schemas';
 import { API_BASE_URL } from '../api/api-base-url';
 import { iranDigits, localMobile } from './phone-settings';
@@ -430,7 +438,7 @@ export class LoginPage implements OnInit {
     }
     this.busy.set(true);
     try {
-      await this.auth.smsLogin(phone, code);
+      await this.auth.smsLogin(phone, code, this.entryGoal());
       await this.goNext();
     } catch (error) {
       this.notifications.error(apiErrorMessage(error));
@@ -439,10 +447,40 @@ export class LoginPage implements OnInit {
     }
   }
 
-  private async goNext() {
-    const destination = this.router.parseUrl(
-      safeAuthRedirect(this.route.snapshot.queryParamMap.get('redirect')),
+  private readonly http = inject(HttpClient);
+  private entryGoal() {
+    const parsed = onboardingGoalSchema.safeParse(
+      this.route.snapshot.queryParamMap.get('goal'),
     );
+    return parsed.success ? parsed.data : undefined;
+  }
+
+  private async goNext() {
+    let target = safeAuthRedirect(
+      this.route.snapshot.queryParamMap.get('redirect'),
+    );
+    if (target === '/') {
+      const goal = this.entryGoal();
+      if (goal) target = GOAL_APP_PATHS[goal];
+      else if (this.canRegister()) {
+        // Email verification may happen on another device: the chosen goal belongs to the account.
+        try {
+          const state = await firstValueFrom(
+            this.http.get<OnboardingState>(`${this.api}/onboarding`),
+          );
+          if (
+            state.goal &&
+            !state.completed &&
+            !state.skipped &&
+            !state.established
+          )
+            target = GOAL_APP_PATHS[state.goal];
+        } catch {
+          /* Signing in must still work when onboarding is unavailable. */
+        }
+      }
+    }
+    const destination = this.router.parseUrl(target);
     destination.queryParams = {
       ...destination.queryParams,
       ...extractGrowthCampaign(this.route.snapshot.queryParamMap),
@@ -457,7 +495,11 @@ export class LoginPage implements OnInit {
         const { email, password } = this.model();
         if (this.mode() === 'login') await this.auth.login({ email, password });
         else {
-          const result = await this.auth.register({ email, password });
+          const result = await this.auth.register({
+            email,
+            password,
+            goal: this.entryGoal(),
+          });
           if (result.status === 'verify-email') {
             this.pendingEmail.set(result.email);
             this.mode.set('login');

@@ -1,3 +1,4 @@
+import { onboardingGoalSchema } from './onboarding';
 // zod/mini keeps browser bundles small: schemas here ship to every Angular app.
 import * as z from 'zod/mini';
 import { growthAttributionSchema, growthCampaignSchema } from './growth';
@@ -29,6 +30,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 
 export const registerSchema = z.object({
   acquisition: z.optional(growthAttributionSchema),
+  goal: z.optional(onboardingGoalSchema),
   email: z.email(),
   password: z.string().check(z.minLength(8), z.maxLength(128)),
   name: z.optional(z.string().check(z.trim(), z.minLength(1), z.maxLength(80))),
@@ -121,6 +123,7 @@ export const smsLoginRequestSchema = z.object({ phone: mobile });
 export type SmsLoginRequestInput = z.infer<typeof smsLoginRequestSchema>;
 export const smsLoginSchema = z.object({
   acquisition: z.optional(growthAttributionSchema),
+  goal: z.optional(onboardingGoalSchema),
   phone: mobile,
   code: smsCode,
 });

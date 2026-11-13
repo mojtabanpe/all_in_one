@@ -34,7 +34,7 @@ import {
     <aio-app-shell
       appName="Poshtetgarm"
       [navItems]="nav"
-      [navigationQueryParams]="customerLinks.campaign()"
+      [navigationQueryParams]="installParams()"
     >
       <router-outlet />
 
@@ -58,7 +58,7 @@ import {
               variant="outline"
               class="min-h-11"
               routerLink="/"
-              [queryParams]="customerLinks.campaign()"
+              [queryParams]="installParams()"
               fragment="install"
               >{{ 'نصب اپ' | aioTranslate }}</a
             >
@@ -103,6 +103,9 @@ import {
 })
 export class App {
   protected readonly customerLinks = injectCustomerLinks();
+  protected installParams() {
+    return { ...this.customerLinks.campaign(), view: 'all' };
+  }
   protected readonly nav: readonly AioNavItem[] = [
     { label: 'خانه', icon: 'lucideHouse', link: '/', exact: true },
     { label: 'اپلت‌ها', icon: 'lucideLayoutGrid', link: '/applets' },

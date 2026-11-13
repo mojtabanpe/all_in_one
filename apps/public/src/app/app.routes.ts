@@ -1,4 +1,11 @@
-import { inject } from '@angular/core';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { Router } from '@angular/router';
+import {
+  LANDING_GOAL_COOKIE,
+  LANDING_PATHS,
+  resolveLandingGoal,
+} from '@all-in-one/shared/schemas';
+import { inject, PLATFORM_ID } from '@angular/core';
 import { AioLocale } from '@all-in-one/ui';
 import { GOAL_LANDINGS } from './pages/goal-landing-data';
 import type { Route } from '@angular/router';
@@ -7,6 +14,26 @@ import { faqStructuredData, pageSeo, SITE_STRUCTURED_DATA } from './seo';
 export const appRoutes: Route[] = [
   {
     path: '',
+    canActivate: [
+      (route) => {
+        if (
+          route.fragment === 'install' ||
+          !isPlatformBrowser(inject(PLATFORM_ID))
+        )
+          return true;
+        const document = inject(DOCUMENT);
+        const remembered = document.cookie
+          .split('; ')
+          .find((c) => c.startsWith(`${LANDING_GOAL_COOKIE}=`))
+          ?.split('=')[1];
+        const goal = resolveLandingGoal(route.queryParamMap, remembered);
+        return goal
+          ? inject(Router).createUrlTree([LANDING_PATHS[goal]], {
+              queryParams: route.queryParams,
+            })
+          : true;
+      },
+    ],
     title: 'Poshtetgarm | برنامه‌ریزی روزانه، زبان و سلامت',
     resolve: {
       seo: pageSeo(

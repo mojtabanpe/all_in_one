@@ -124,6 +124,7 @@ export class AuthController {
     const { user, created } = await this.auth.signInByPhone(
       phone,
       input.acquisition,
+      input.goal,
     );
     await this.startSession(res, user);
     return { user: toUser(user), created };

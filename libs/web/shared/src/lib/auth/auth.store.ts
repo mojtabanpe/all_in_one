@@ -109,11 +109,16 @@ export class AuthStore {
   }
 
   /** Signs in with the SMS code, or creates an account with the number alone. */
-  async smsLogin(phone: string, code: string): Promise<SmsLoginResult> {
+  async smsLogin(
+    phone: string,
+    code: string,
+    goal?: import('@all-in-one/shared/schemas').OnboardingGoal,
+  ): Promise<SmsLoginResult> {
     const result = await firstValueFrom(
       this.http.post<SmsLoginResult>(`${this.api}/auth/sms-login`, {
         phone,
         code,
+        goal,
         acquisition: this.analytics.context(),
       }),
     );

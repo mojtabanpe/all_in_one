@@ -64,14 +64,14 @@ describe('Successful activity observer', () => {
     expect(failed.recordActivity).not.toHaveBeenCalled();
     expect(failed.complete).not.toHaveBeenCalled();
   });
-  it('records a daily marker for successful health logs without their content', async () => {
+  it('records a health activation milestone without meal or workout content', async () => {
     for (const path of ['/api/health/meals', '/api/health/workouts']) {
       const fixture = setup(path);
       await fixture.run();
       expect(fixture.recordActivity).toHaveBeenCalledWith(
         visitor,
         'en',
-        undefined,
+        'first_health_logged',
       );
     }
   });

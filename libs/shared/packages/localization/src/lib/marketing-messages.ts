@@ -341,4 +341,181 @@ export const MARKETING_MESSAGES: readonly (readonly [string, string])[] = [
     'خروجی گزارش ثبت نشد. دوباره تلاش کن.',
     'Unable to log the report export. Try again.',
   ],
+  ['امروز از کجا شروع می‌کنی؟', 'Where would you like to start today?'],
+  [
+    'انگلیسی تمرین کن، به روزت نظم بده یا سلامتت را دنبال کن. یک مسیر انتخاب کن؛ با همان حساب، بقیه هم در دسترس‌اند.',
+    'Practice English, organize your day, or track your health. Pick a starting point; one account gives you access to all three.',
+  ],
+  ['انگلیسی، هر روز کمی', 'A little English, every day'],
+  [
+    'فلش‌کارت، مرور فاصله‌دار و متن‌خوانی برای روال شخصی تو.',
+    'Flashcards, spaced review, and reading for your own routine.',
+  ],
+  ['دیدن مسیر انگلیسی', 'Explore English'],
+  ['یک روز منظم‌تر', 'A more organized day'],
+  [
+    'کارهای امروز، عادت‌ها و زمان تمرکز در یک فضای ساده.',
+    'Today’s tasks, habits, and focus time in one simple space.',
+  ],
+  ['دیدن مسیر برنامه‌ریزی', 'Explore the planner'],
+  ['سلامت، قدم‌به‌قدم', 'Health, one step at a time'],
+  [
+    'وعده‌ها، تمرین‌ها و روند روزانه‌ات را یک جا دنبال کن.',
+    'Keep your meals, workouts, and daily progress together.',
+  ],
+  ['دیدن مسیر سلامت', 'Explore health'],
+  [
+    'برای شروع، نصب اپ لازم نیست؛ در مرورگر هم کار می‌کند.',
+    'Start in your browser. No installation needed.',
+  ],
+  [
+    'حساب رایگان می‌سازی و مستقیم وارد همین بخش می‌شوی.',
+    'Create a free account and go straight to this part of the app.',
+  ],
+  ['با همین حساب', 'With the same account'],
+  ['شروع رایگان، انتخاب با تو', 'Start free, choose what comes next'],
+  [
+    'برنامه‌ریز، فلش‌کارت و ثبت سلامت رایگان می‌مانند. هوش مصنوعی هفت روز آزمایشی است؛ ادامهٔ آن با اشتراک یا هفته‌های هدیه است.',
+    'The planner, flashcards, and health logging stay free. AI includes a seven-day trial; continue with a subscription or earned gift weeks.',
+  ],
+  [
+    'ثبت‌نام با شمارهٔ موبایل یا ایمیل',
+    'Sign up with your mobile number or email',
+  ],
+  ['انگلیسی با Poshtetgarm', 'English with Poshtetgarm'],
+  ['شروع رایگان انگلیسی', 'Start English for free'],
+  ['واژه‌هایت را نگه دار', 'Keep your vocabulary together'],
+  [
+    'از مجموعه‌های آماده شروع کن یا کارت‌های خودت را بساز.',
+    'Start with ready-made decks or create your own cards.',
+  ],
+  ['مرور بعدی را بدان', 'Know what to review next'],
+  [
+    'فاصلهٔ مرور با پاسخ هر کارت تنظیم می‌شود.',
+    'Review intervals adapt to your answer on each card.',
+  ],
+  ['در متن تمرین کن', 'Practice through reading'],
+  [
+    'متن‌های خواندنی و واژه‌هایت در یک کتابخانه هستند.',
+    'Keep reading passages and vocabulary in the same library.',
+  ],
+  ['برنامه‌ریز Poshtetgarm', 'The Poshtetgarm planner'],
+  ['شروع رایگان برنامه‌ریزی', 'Start planning for free'],
+  ['امروز را روشن کن', 'Make today clear'],
+  [
+    'کارهایت را بنویس و مهم‌ترین قدم را مشخص کن.',
+    'Write down your tasks and choose the most important next step.',
+  ],
+  ['عادت‌هایت را دنبال کن', 'Follow your habits'],
+  [
+    'روزهای انجام و یادآورها را خودت انتخاب کن.',
+    'Choose your scheduled days and reminders.',
+  ],
+  ['زمان تمرکز داشته باش', 'Make time to focus'],
+  [
+    'تایمر تمرکز را کنار برنامهٔ روزت نگه دار.',
+    'Keep a focus timer alongside your daily plan.',
+  ],
+  ['سلامت با Poshtetgarm', 'Health with Poshtetgarm'],
+  ['شروع رایگان پیگیری سلامت', 'Start tracking health for free'],
+  ['وعده‌هایت را ثبت کن', 'Log your meals'],
+  [
+    'خوراک روزت را در یک سابقهٔ روشن نگه دار.',
+    'Keep a clear record of your daily meals.',
+  ],
+  ['تمرینت را پیدا کن', 'Find your workout'],
+  [
+    'برنامه‌های خانه، باشگاه و TRX را ببین.',
+    'Explore home, gym, and TRX routines.',
+  ],
+  ['روندت را ببین', 'See your progress'],
+  [
+    'ثبت‌های روزانه و فعالیت هفته را کنار هم مرور کن.',
+    'Review daily logs alongside your weekly activity.',
+  ],
+  [
+    'وعده‌ها و تمرین‌هایت را یک جا دنبال کن',
+    'Keep your meals and workouts together',
+  ],
+  [
+    'ثبت غذا و پیگیری تمرین و سلامت | Poshtetgarm',
+    'Meal logging, workouts and health tracking | Poshtetgarm',
+  ],
+  [
+    'وعده‌های غذایی، تمرین‌ها و روند سلامتت را در Poshtetgarm ثبت کن؛ از یک وعده یا یک تمرین شروع کن.',
+    'Log your meals, workouts, and health progress in Poshtetgarm. Start with one meal or workout.',
+  ],
+  [
+    'لازم نیست همهٔ عادت‌هایت را یک‌باره تغییر بدهی. وعدهٔ امروزت را ثبت کن یا یک برنامهٔ تمرین انتخاب کن و روندت را ببین.',
+    'Start with one small step. Log today’s meal or choose a workout routine and follow your progress.',
+  ],
+  [
+    'نمونهٔ بخش سلامت با وعدهٔ ثبت‌شده و خلاصهٔ روز',
+    'A health screen with a sample meal and daily summary',
+  ],
+  ['از وضعیت امروزت شروع کن', 'Start with where you are today'],
+  [
+    'پس از ساخت حساب، بخش سلامت باز می‌شود. اطلاعات اولیه‌ات را وارد کن تا خلاصهٔ روزت معنا داشته باشد.',
+    'Health opens after you create your account. Add your basic information to personalize your daily summary.',
+  ],
+  ['یک وعده یا تمرین ثبت کن', 'Log a meal or workout'],
+  [
+    'غذایی را که خوردی ثبت کن یا از بخش تمرین، یک برنامه انتخاب کن. برای شروع همین یک قدم کافی است.',
+    'Log a meal you ate or choose a routine in Workouts. One step is enough to get started.',
+  ],
+  ['روندت را مرور کن', 'Review your progress'],
+  [
+    'در مراجعهٔ بعد، وعده‌ها و فعالیت‌های ثبت‌شده را ببین و قدم بعدی را انتخاب کن.',
+    'Next time, review your logged meals and activity and choose your next step.',
+  ],
+  [
+    'برای ثبت غذا یا تمرین باید اشتراک بخرم؟',
+    'Do I need a subscription to log meals or workouts?',
+  ],
+  [
+    'ثبت غذا و پیگیری تمرین رایگان است. قابلیت‌های هوش مصنوعی دورهٔ آزمایشی دارند و پس از آن به اشتراک یا زمان هدیه نیاز دارند.',
+    'Meal logging and workout tracking are free. AI features have a trial and then require a subscription or earned access.',
+  ],
+  [
+    'می‌توانم از بخش‌های دیگر هم استفاده کنم؟',
+    'Can I use the other parts of the app?',
+  ],
+  [
+    'بله. همان حساب به انگلیسی و برنامه‌ریز هم دسترسی دارد؛ هر وقت خواستی از منوی برنامه وارد آن‌ها شو.',
+    'Yes. The same account includes English and the planner. Open either from the app menu whenever you like.',
+  ],
+  [
+    'بعد از ساخت حساب، برنامه‌ریز باز می‌شود؛ کاری کوتاه و روشن مثل «خواندن ده صفحه» اضافه کن.',
+    'The planner opens after signup. Add a short, clear task such as “read ten pages.”',
+  ],
+  [
+    'بعد از ساخت حساب، کتابخانهٔ زبان باز می‌شود؛ یک مجموعهٔ آماده اضافه کن یا مجموعهٔ شخصی بساز و واژه‌هایت را وارد کن.',
+    'The English library opens after signup. Add a starter deck or create your own and enter your words.',
+  ],
+  [
+    'بعد از ساخت حساب، کتابخانهٔ زبان باز می‌شود. یک مجموعهٔ آماده به کتابخانه اضافه کن و اولین کارت را مرور کن.',
+    'The English library opens after signup. Add a starter deck and review your first card.',
+  ],
+  [
+    'با شمارهٔ موبایل یا ایمیل حسابت را بساز. اگر حساب داری، وارد شو.',
+    'Create an account with your mobile number or email. If you already have one, sign in.',
+  ],
+  ['انگلیسی، بخشی از روز تو.', 'Make English part of your day.'],
+  [
+    'از یک مجموعهٔ آماده شروع کن. چند کارت مرور کن، یک متن بخوان و دفعهٔ بعد از همان‌جا ادامه بده.',
+    'Start with a ready-made deck. Review a few cards, read a passage, and pick up where you left off next time.',
+  ],
+  ['برای امروزت، یک قدم روشن.', 'One clear step for today.'],
+  [
+    'کارهای پراکنده‌ات را بنویس، اولویت بگذار و تیک بزن. عادت‌ها و زمان تمرکز هم کنار برنامهٔ روزت هستند.',
+    'Write down your tasks, set priorities, and check them off. Keep habits and focus time alongside your daily plan.',
+  ],
+  [
+    'شمارش بازدیدکنندگان یکتا؛ اولین فعالیت یعنی ساخت کار، مرور کارت یا ثبت وعده و ورزش در این مرورگر طی دورهٔ نگهداری آمار.',
+    'Unique browsers; first activity means creating a task, reviewing a card, or logging a meal or workout during the data retention period.',
+  ],
+  [
+    'دو بازهٔ هفت‌روزهٔ کامل تهران تا دیروز. فعال‌سازی یعنی ثبت اولین کار، مرور کارت یا ثبت وعده و ورزش.',
+    'Two complete seven-day periods in Tehran ending yesterday. Activation means creating a task, reviewing a card, or logging a meal or workout.',
+  ],
 ];

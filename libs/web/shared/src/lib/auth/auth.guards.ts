@@ -1,3 +1,4 @@
+import { safeAuthRedirect } from './safe-redirect';
 import { AioLocale } from '@all-in-one/ui';
 import {
   HttpErrorResponse,
@@ -27,10 +28,13 @@ export function authGuard(role?: Role): CanActivateFn {
   };
 }
 
-/** For /login: logged-in users go home. */
-export const guestGuard: CanActivateFn = async () => {
+/** For /login: signed-in visitors continue to the validated destination. */
+export const guestGuard: CanActivateFn = async (route) => {
+  const router = inject(Router);
   const user = await inject(AuthStore).load();
-  return user ? inject(Router).createUrlTree(['/']) : true;
+  return user
+    ? router.parseUrl(safeAuthRedirect(route.queryParamMap.get('redirect')))
+    : true;
 };
 
 /** A 401 from the api (other than the session probe) ends the session and goes to /login. */

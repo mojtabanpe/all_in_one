@@ -19,7 +19,7 @@ export const isVisitorId = (value: string | undefined): boolean =>
  * campaign (the page's own `mode=register` must survive), and `&` is escaped so the HTML stays valid.
  */
 export function loginHref(href: string, campaign: GrowthCampaign): string {
-  const url = new URL(href, 'http://page.invalid');
+  const url = new URL(href.replace(/&amp;/g, '&'), 'http://page.invalid');
   for (const [key, value] of Object.entries(campaign))
     if (!url.searchParams.has(key)) url.searchParams.set(key, value);
   return `href="${url.pathname}${url.search.replace(/&/g, '&amp;')}"`;

@@ -50,6 +50,36 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         ...(campaign ? { campaign } : {}),
       };
     };
+    it('counts a first health log as activation once in campaign and channel reports', async () => {
+      const id = visitor();
+      const healthSource = `health-landing-${randomUUID()}`;
+      await prisma.growthEvent.createMany({
+        data: [
+          event(id, 'landing_view', 3, {
+            utm_source: healthSource,
+            utm_campaign: 'health_tracking',
+          }),
+          event(id, 'signup_completed', 2),
+        ],
+      });
+      await service.recordActivity(id, 'en', 'first_health_logged');
+      await service.recordActivity(id, 'en', 'first_health_logged');
+      expect(
+        await prisma.growthEvent.count({
+          where: { visitorId: id, name: 'first_health_logged' },
+        }),
+      ).toBe(1);
+      expect(
+        (await service.campaigns({ source: healthSource })).totals
+          .activeVisitors,
+      ).toBe(1);
+      expect(
+        (await service.summary()).channels.find(
+          (row) => row.source === healthSource,
+        )?.activatedVisitors,
+      ).toBe(1);
+    });
+
     it('counts first-touch referrals across personal links and later untagged signups', async () => {
       const [first, second, returning] = Array.from({ length: 3 }, visitor);
       const filter = {

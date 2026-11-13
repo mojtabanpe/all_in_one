@@ -77,7 +77,7 @@ export class GrowthActivityInterceptor implements NestInterceptor {
               String(req.headers?.['accept-language'] ?? '').startsWith('en')
                 ? 'en'
                 : 'fa',
-              name,
+              name ?? (healthActivity ? 'first_health_logged' : undefined),
             );
         } catch {
           this.logger.warn('Growth activity event could not be recorded');

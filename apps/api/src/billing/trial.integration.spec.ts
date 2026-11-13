@@ -36,6 +36,41 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       await prisma.$disconnect();
     });
 
+    it('persists landing goals across new email and phone accounts without replacing existing choices', async () => {
+      const auth = new AuthService(
+        prisma,
+        {} as JwtService,
+        {} as MailService,
+        new ConfigService({ REQUIRE_EMAIL_VERIFICATION: 'false' }),
+      );
+      const email = await auth.register({
+        email: `landing-${randomUUID()}@example.invalid`,
+        password: 'synthetic-password123',
+        goal: 'english',
+      });
+      ids.push(email.id);
+      const mobile = number();
+      const phone = await auth.signInByPhone(mobile, undefined, 'health');
+      ids.push(phone.user.id);
+      expect(
+        (await auth.signInByPhone(mobile, undefined, 'planner')).user
+          .onboardingGoal,
+      ).toBe('health');
+      for (const [id, goal] of [
+        [email.id, 'english'],
+        [phone.user.id, 'health'],
+      ]) {
+        const stored = await prisma.user.findUniqueOrThrow({
+          where: { id },
+          include: { onboardingGoalChanges: true },
+        });
+        expect(stored.onboardingGoal).toBe(goal);
+        expect(
+          stored.onboardingGoalChanges.map((change) => change.goal),
+        ).toEqual([goal]);
+      }
+    });
+
     it('starts a phone-only account’s week at its SMS sign-up', async () => {
       const confirmed = new Date(TRIAL_LAUNCH.getTime() + 2 * DAY_MS);
       const user = await prisma.user.create({

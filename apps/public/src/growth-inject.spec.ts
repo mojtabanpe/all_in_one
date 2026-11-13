@@ -97,3 +97,20 @@ describe('visitorCookie', () => {
     expect(isVisitorId(undefined)).toBe(false);
   });
 });
+
+describe('focused signup handoff before hydration', () => {
+  it('preserves encoded goal and destination while adding campaign tags', () => {
+    const { html } = injectCampaign(
+      '<a href="/app/login?mode=register&amp;goal=english&amp;redirect=%2Fenglish">Start</a>',
+      new URLSearchParams(
+        'utm_source=instagram&utm_campaign=english_7day_pilot',
+      ),
+    );
+    const href = /href="([^"]+)"/.exec(html)?.[1].replace(/&amp;/g, '&');
+    const url = new URL(href ?? '', 'https://poshtetgarm.ir');
+    expect(url.searchParams.get('goal')).toBe('english');
+    expect(url.searchParams.get('redirect')).toBe('/english');
+    expect(url.searchParams.get('utm_source')).toBe('instagram');
+    expect([...url.searchParams.keys()]).not.toContain('amp;goal');
+  });
+});

@@ -18,6 +18,7 @@ import type {
   RegisterInput,
   User,
   GrowthCampaign,
+  OnboardingGoal,
 } from '@all-in-one/shared/schemas';
 import { PrismaService, type User as DbUser } from '@all-in-one/api/db';
 import { MailService } from './mail.service';
@@ -101,6 +102,12 @@ export class AuthService {
         passwordHash: await hashPassword(input.password),
         role: 'CUSTOMER',
         emailVerifiedAt: verify ? null : new Date(),
+        ...(input.goal
+          ? {
+              onboardingGoal: input.goal,
+              onboardingGoalChanges: { create: { goal: input.goal } },
+            }
+          : {}),
       },
     });
     await this.recordSignup(input.acquisition);
@@ -119,12 +126,23 @@ export class AuthService {
   async signInByPhone(
     phone: string,
     acquisition?: GrowthAttribution,
+    goal?: OnboardingGoal,
   ): Promise<{ user: DbUser; created: boolean }> {
     const existing = await this.prisma.user.findUnique({ where: { phone } });
     if (existing) return { user: existing, created: false };
     try {
       const user = await this.prisma.user.create({
-        data: { phone, phoneVerifiedAt: new Date(), role: 'CUSTOMER' },
+        data: {
+          phone,
+          phoneVerifiedAt: new Date(),
+          role: 'CUSTOMER',
+          ...(goal
+            ? {
+                onboardingGoal: goal,
+                onboardingGoalChanges: { create: { goal } },
+              }
+            : {}),
+        },
       });
       await this.recordSignup(acquisition);
       return { user, created: true };
