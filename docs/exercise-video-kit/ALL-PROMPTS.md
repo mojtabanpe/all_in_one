@@ -1177,19 +1177,35 @@ Save the delivered clip as trx-cycle-jump--aio-coach-v1--v001.mp4 if file saving
 EXERCISE: TRX triceps extension
 CATALOG ID: trx-triceps-press
 
-Use the attached approved reference images of AIO Coach v1 as the identity source. One adult MALE animated fitness instructor, approximately 30 years old, athletic but not bodybuilder-sized, realistic adult proportions, medium warm olive skin, short dark brown hair, brown eyes, clean-shaven face. Teal fitted short-sleeve crew-neck athletic T-shirt, charcoal tapered joggers, white low-profile flat training shoes with teal accents. No logos, jewelry or changing accessories. Polished stylized 3D animation with rounded friendly facial features, physically credible joints and grounded movement. Preserve exactly the same face, hair, body proportions, clothing, materials and colors as the attached references across all frames. Do not substitute a live-action human or redesign the character.
+MOST IMPORTANT
+The coach faces AWAY from the anchor. Both hands grip their own handles throughout. Elbows bend and straighten. Do not make a chest press or a movement facing the anchor.
 
-Use a clean light-gray studio, matte floor, soft even lighting and a subtle ground shadow. Fixed camera, entire body and all working equipment visible with generous margins. No cuts, zooms, camera orbit, dramatic effects, music, speech, captions, anatomy overlays or text. Prioritize accurate exercise mechanics and clear joint positions. Natural spinal curves are allowed; neutral spine does not mean a permanently vertical torso. No extra limbs, sliding feet, impossible joints, body morphing, floating weights or discontinuous equipment. Target 8 seconds, landscape 16:9, 1080p when supported; if the available generator cannot deliver these settings, report actual settings rather than claiming compliance. Export MP4 when supported; retain the original output.
+CHARACTER
+Use attached approved AIO Coach v1 images. Adult male instructor, approximately 30, athletic build, medium warm olive skin, short dark brown hair, brown eyes, clean-shaven. Teal fitted short-sleeve T-shirt, charcoal tapered joggers, white low-profile shoes with teal accents. No logos or jewelry. Polished stylized 3D animation with credible joints. Preserve identity, proportions, clothing, and colors.
 
-CAMERA: side.
+STUDIO AND EQUIPMENT
+Light-gray studio, matte non-slip floor, soft even lighting. One secure overhead anchor behind the coach. Two continuous nonelastic straps, each connected to one separate handle. Each hand grips the solid grip section of its own handle. Fingers curled around the grip; thumb wrapped around the opposite side. Handles never slide onto wrists or forearms. Straps taut and constant in physical length.
 
-ACTION: Face away from anchor, hands forward slightly above shoulder level, body inclined only modestly. Keep upper arms stable as elbows bend and the aligned body travels forward, then extend elbows to return. No elbow flare, hip sag or lumbar arch.
+STARTING IMAGE — PREPARE BEFORE ANIMATION
+Fixed side three-quarter camera. Anchor toward upper image LEFT. Coach faces image RIGHT. Anchor behind and above him. Show entire body, both hands, both feet, anchor, and uninterrupted strap paths. Offset camera enough to distinguish both arms.
+Feet hip-width apart and planted. Shallow forward lean from ankles. Head, torso, pelvis, and legs aligned. Do not bend at waist.
+Both arms reach forward and slightly upward. Hands slightly above shoulder height, shoulder-width apart. Elbows almost straight without locking. Both hands grip handles firmly. Wrists straight.
+Straps clear the head and neck. Do not intersect the head or body. Use modest lean and small movement range.
 
-TIMING: Show one or two complete slow repetitions. If alternating sides are requested, show one repetition per side. If a single side is specified, do not rush to switch sides.
+ONE REPETITION — FIVE SECONDS
+0.0–0.5: Hold opening pose. Hands forward slightly above shoulder height. Straps taut. Feet fixed.
+0.5–2.0: Slowly bend both elbows together. Let the aligned body incline slightly farther forward. Bring forehead toward the space between hands. Stop with a visible gap; hands do not touch head. Keep upper arms raised beside head. Elbows point forward rather than flaring sideways. Upper arms remain aligned with torso as body inclines. Do not pull elbows toward ribs or lower handles toward chest. Hands remain closed around handles. Wrists straight. Chest and pelvis aligned. Feet fixed.
+2.0–2.5: Hold bent-elbow position briefly. Forehead near but not touching hands. Upper arms raised. Straps taut. No hip sag or lower-back arch.
+2.5–4.5: Straighten both elbows together. Push through gripped handles. Return aligned body to original shallow lean. Finish with hands forward slightly above shoulder height. Do not lock elbows or move feet.
+4.5–5.0: Hold opening pose. Do not release handles, turn toward anchor, or start another repetition.
 
-EQUIPMENT: For TRX: use two continuous nonelastic suspension straps attached to one secure overhead anchor. Show the anchor or enough uninterrupted strap path to establish attachment. Handles and foot cradles must be mechanically coherent; do not depict elastic bands, detached straps or a changing anchor. Use only the contact arrangement specified below.
+ACCEPTANCE
+Faces away from anchor throughout. Both elbows clearly bend and straighten. Upper arms remain raised. Body aligned. Feet planted. Both hands retain their handles in every frame. Straps continuous, taut, constant in length. Last pose matches first.
+Do not make a chest press, lower handles beside chest, use a large lean or exaggerated elbow bend, or let straps cross face or neck.
 
-Save the delivered clip as trx-triceps-press--aio-coach-v1--v001.mp4 if file saving is available. If persistent character-reference conditioning is unavailable, say so; do not promise identical identity from text alone. Do not upload or claim a public URL as part of video generation; publication is a separate step after the clip passes review.
+PRESENTATION AND DELIVERY
+One continuous five-second shot. Landscape 16:9, 720p. Fixed camera. No cuts, zooms, orbit, captions, logos, music, or speech. No extra fingers, distorted joints, or floating equipment. Retain original output. Deliver MP4 if supported. Report actual output settings.
+Do not upload or invent a public URL. Review and publication happen separately.
 
 
 ```
