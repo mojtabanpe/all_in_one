@@ -1,16 +1,30 @@
 EXERCISE: TRX clutch curl
 CATALOG ID: trx-clutch-curl
+TAKE: v006
 
-Use the attached approved reference images of AIO Coach v1 as the identity source. One adult MALE animated fitness instructor, approximately 30 years old, athletic but not bodybuilder-sized, realistic adult proportions, medium warm olive skin, short dark brown hair, brown eyes, clean-shaven face. Teal fitted short-sleeve crew-neck athletic T-shirt, charcoal tapered joggers, white low-profile flat training shoes with teal accents. No logos, jewelry or changing accessories. Polished stylized 3D animation with rounded friendly facial features, physically credible joints and grounded movement. Preserve exactly the same face, hair, body proportions, clothing, materials and colors as the attached references across all frames. Do not substitute a live-action human or redesign the character.
+Use the attached reviewed opening image (Man_performing_TRX_clutch_curl_b97a3bfe.jpg) as the exact first frame. Preserve the coach, backward lean, equipment, lighting, and camera. Do not rebuild the pose.
 
-Use a clean light-gray studio, matte floor, soft even lighting and a subtle ground shadow. Fixed camera, entire body and all working equipment visible with generous margins. No cuts, zooms, camera orbit, dramatic effects, music, speech, captions, anatomy overlays or text. Prioritize accurate exercise mechanics and clear joint positions. Natural spinal curves are allowed; neutral spine does not mean a permanently vertical torso. No extra limbs, sliding feet, impossible joints, body morphing, floating weights or discontinuous equipment. Target 8 seconds, landscape 16:9, 1080p when supported; if the available generator cannot deliver these settings, report actual settings rather than claiming compliance. Export MP4 when supported; retain the original output.
+MOST IMPORTANT
+Face TOWARD the anchor. Start and finish leaning BACKWARD. Keep both elbows raised approximately at shoulder height. Keep both hands firmly gripping their handles throughout. Do not make a low row or forward lean.
 
-CAMERA: front three-quarter.
+CHARACTER AND SCENE
+Preserve AIO Coach v1: adult athletic male, olive skin, short dark brown hair, clean-shaven, teal T-shirt, charcoal joggers, white shoes with teal accents. Preserve identity and proportions. Polished stylized 3D animation. Light-gray studio, matte floor, soft lighting. Fixed side three-quarter camera; whole body and visible strap paths remain in frame.
 
-ACTION: Face anchor, upper arms raised and elbows approximately at shoulder height. Slowly extend elbows to lean the aligned body backward, then bend elbows bringing knuckles toward chest. Keep elbows elevated and shoulders relaxed; do not turn it into a low row or swing hips.
+EQUIPMENT AND OPENING POSE
+One fixed overhead anchor toward upper image LEFT. Coach faces image LEFT. Shoulders farther to image RIGHT than ankles. Two continuous nonelastic straps, each ending in one handle. Straps taut and constant in length. Both hands grip the solid handle sections with fingers and thumbs closed; handles never slide onto wrists or forearms.
+Feet hip-width apart and planted. Body aligned in a shallow backward lean. Arms reach toward anchor at approximately shoulder height. Elbows nearly straight without locking. Hands shoulder-width apart. Wrists straight.
 
-TIMING: Show one or two complete slow repetitions. If alternating sides are requested, show one repetition per side. If a single side is specified, do not rush to switch sides.
+FIVE-SECOND ACTION
+0.0–0.5: Hold the exact opening image.
+0.5–2.0: Bend both elbows together. Bring handles toward upper chest. Keep knuckles directed toward chest and elbows raised approximately at shoulder height. Do not pull elbows down beside ribs or sweep upper arms backward into a row. Draw the aligned body toward the anchor as elbows bend. Head, shoulders, and pelvis move together. Become slightly more upright but do not lean forward past ankles. Feet remain fixed. Strap lengths unchanged.
+2.0–2.5: Briefly hold. Handles near but not touching upper chest. Elbows raised. Shoulders away from ears. Both grips closed. Both straps taut.
+2.5–4.5: Slowly straighten both elbows. Let aligned body lean backward away from anchor. Keep upper arms raised. Do not drop elbows toward waist. Return to exact opening lean. Do not lock elbows.
+4.5–5.0: Hold opening pose. Do not release handles or start another repetition.
 
-EQUIPMENT: For TRX: use two continuous nonelastic suspension straps attached to one secure overhead anchor. Show the anchor or enough uninterrupted strap path to establish attachment. Handles and foot cradles must be mechanically coherent; do not depict elastic bands, detached straps or a changing anchor. Use only the contact arrangement specified below.
+ACCEPTANCE
+Faces anchor throughout. Starts and finishes leaning backward. Elbows visibly bend and straighten while remaining raised. Continuous grip. Planted feet. Aligned body. Continuous taut straps of constant length. Last frame matches first. No low row, forward lean, hip swing, shrugging, handle release, or strap stretching.
 
-Save the delivered clip as trx-clutch-curl--aio-coach-v1--v001.mp4 if file saving is available. If persistent character-reference conditioning is unavailable, say so; do not promise identical identity from text alone. Do not upload or claim a public URL as part of video generation; publication is a separate step after the clip passes review.
+OUTPUT
+One continuous five-second shot. Landscape 16:9, 720p. Fixed camera. No cuts, zooms, text, logos, music, or speech. No extra limbs, distorted hands, or intersecting equipment. Retain original output, deliver MP4 if supported, report actual settings.
+Filename: trx-clutch-curl--aio-coach-v1--v006.mp4
+Do not upload; review and publication happen separately.
