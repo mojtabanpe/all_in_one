@@ -89,6 +89,66 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       });
     });
 
+    it('counts client use independently, deduplicates retries and excludes QA and out-of-window visits', async () => {
+      const visitor = randomUUID();
+      const qa = randomUUID();
+      await prisma.$transaction(async (tx) => {
+        const service = new GrowthService(tx as never);
+        const input = { visitorId: visitor, client: 'bazaar' as const };
+        const before = await service.clients();
+        await Promise.all([
+          service.recordClient(input),
+          service.recordClient(input),
+        ]);
+        expect(
+          await tx.growthClientDay.count({
+            where: { visitorId: visitor, client: 'bazaar' },
+          }),
+        ).toBe(1);
+        const after = await service.clients();
+        expect(after.rows.find((row) => row.client === 'bazaar')).toEqual({
+          client: 'bazaar',
+          visitors:
+            (before.rows.find((row) => row.client === 'bazaar')?.visitors ??
+              0) + 1,
+        });
+        // Use a future isolated window so other local test data cannot alter counts.
+        await tx.growthClientDay.createMany({
+          data: [
+            { visitorId: visitor, client: 'direct_apk', day: '2031-01-01' },
+            { visitorId: visitor, client: 'direct_apk', day: '2031-01-02' },
+            { visitorId: visitor, client: 'pwa', day: '2031-01-02' },
+            { visitorId: visitor, client: 'myket', day: '2030-12-31' },
+            { visitorId: visitor, client: 'myket', day: '2031-01-31' },
+            { visitorId: qa, client: 'bazaar', day: '2031-01-02' },
+          ],
+        });
+        await tx.growthEvent.create({
+          data: {
+            visitorId: qa,
+            name: 'landing_view',
+            language: 'en',
+            day: '2030-12-31',
+            campaign: { utm_source: 'QA' },
+          },
+        });
+        const report = await service.clients(new Date('2031-01-30T12:00:00Z'));
+        expect(report).toMatchObject({ from: '2031-01-01', to: '2031-01-30' });
+        expect(report.rows.filter((row) => row.visitors > 0)).toEqual([
+          { client: 'direct_apk', visitors: 1 },
+          { client: 'pwa', visitors: 1 },
+        ]);
+        // Observing an app client never invents a marketing event or campaign.
+        expect(
+          await tx.growthEvent.count({ where: { visitorId: visitor } }),
+        ).toBe(0);
+        await tx.growthClientDay.deleteMany({
+          where: { visitorId: { in: [visitor, qa] } },
+        });
+        await tx.growthEvent.deleteMany({ where: { visitorId: qa } });
+      });
+    });
+
     it('deduplicates concurrent retries and returns distinct PostgreSQL visitor counts', async () => {
       const service = new GrowthService(prisma);
       const before = await service.summary();

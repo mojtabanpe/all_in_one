@@ -22,6 +22,18 @@ enum GrowthAdminReport {
   CHURN
 }
 
+/// Observed app/browser use, independent of marketing attribution and accounts.
+model GrowthClientDay {
+  visitorId String   @db.Uuid
+  client    String   @db.VarChar(24)
+  day       String   @db.VarChar(10)
+  createdAt DateTime @default(now())
+
+  @@id([visitorId, client, day])
+  @@index([day, client])
+  @@map("growth_client_days")
+}
+
 enum GrowthReportAction {
   VIEW
   EXPORT

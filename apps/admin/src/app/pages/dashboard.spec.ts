@@ -7,6 +7,45 @@ import { TestBed } from '@angular/core/testing';
 import { Dashboard } from './dashboard';
 
 describe('Dashboard churn by channel', () => {
+  it('shows separate app clients, preserves zero counts and explains what is measured', async () => {
+    TestBed.configureTestingModule({
+      imports: [Dashboard],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const fixture = TestBed.createComponent(Dashboard);
+    const http = TestBed.inject(HttpTestingController);
+    await new Promise((resolve) => setTimeout(resolve));
+    http
+      .expectOne((request) => request.url.endsWith('/growth/clients'))
+      .flush({
+        from: '2026-10-16',
+        to: '2026-11-14',
+        rows: [
+          { client: 'bazaar', visitors: 7 },
+          { client: 'myket', visitors: 0 },
+          { client: 'direct_apk', visitors: 3 },
+          { client: 'pwa', visitors: 4 },
+          { client: 'web', visitors: 5 },
+        ],
+      });
+    for (let round = 0; round < 3; round++) {
+      for (const request of http.match(() => true))
+        request.flush(null, { status: 500, statusText: 'Server Error' });
+      await new Promise((resolve) => setTimeout(resolve));
+    }
+    await fixture.whenStable();
+    const table = [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll('table'),
+    ].find((element) => element.textContent?.includes('APK'));
+    expect(table).toBeDefined();
+    if (!table) throw new Error('App distribution table is missing');
+    expect(table.querySelectorAll('tbody tr')).toHaveLength(5);
+    expect(table.textContent).toContain('کافه‌بازار');
+    expect(table.textContent).toContain('مایکت');
+    expect(table.textContent).toContain('۰');
+    expect(table.textContent).toContain('PWA');
+    http.verify();
+  });
   it('lists each channel with its churn and never-active share, then the total', async () => {
     TestBed.configureTestingModule({
       imports: [Dashboard],

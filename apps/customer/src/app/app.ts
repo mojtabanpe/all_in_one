@@ -4,7 +4,7 @@ import type {
   BillingAccessState,
   BillingRewardOffer,
 } from '@all-in-one/shared/schemas';
-import { API_BASE_URL } from '@all-in-one/web/shared';
+import { API_BASE_URL, GrowthAnalytics } from '@all-in-one/web/shared';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { SwPush } from '@angular/service-worker';
@@ -119,6 +119,7 @@ export class App {
     this.offers.value().some((offer) => offer.status === 'available');
 
   constructor() {
+    inject(GrowthAnalytics).startClientTracking();
     const router = inject(Router);
     // The service worker only focuses the open window (navigating first loses the
     // click's focus permission), so the running app routes to the notification here.

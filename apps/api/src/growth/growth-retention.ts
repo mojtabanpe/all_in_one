@@ -19,13 +19,15 @@ export class GrowthRetention implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   async prune(): Promise<void> {
-    await this.prisma.growthEvent.deleteMany({
-      where: {
-        createdAt: {
-          lt: new Date(Date.now() - GROWTH_RETENTION_DAYS * 86_400_000),
-        },
+    const where = {
+      createdAt: {
+        lt: new Date(Date.now() - GROWTH_RETENTION_DAYS * 86_400_000),
       },
-    });
+    };
+    await Promise.all([
+      this.prisma.growthClientDay.deleteMany({ where }),
+      this.prisma.growthEvent.deleteMany({ where }),
+    ]);
   }
 
   onModuleInit(): void {

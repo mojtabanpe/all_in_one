@@ -11,8 +11,11 @@ import type {
   GrowthChurnReport,
   GrowthMonitoring,
   GrowthReportAuditEntry,
+  GrowthClientVisitInput,
+  GrowthClientReport,
+  GrowthClient,
 } from '@all-in-one/shared/schemas';
-import { GROWTH_CHURN_DAYS } from '@all-in-one/shared/schemas';
+import { GROWTH_CHURN_DAYS, GROWTH_CLIENTS } from '@all-in-one/shared/schemas';
 
 const WINDOW_DAYS = 30;
 const dayAt = (date: Date) =>
@@ -21,6 +24,41 @@ const dayAt = (date: Date) =>
 @Injectable()
 export class GrowthService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async recordClient(input: GrowthClientVisitInput): Promise<void> {
+    await this.prisma.growthClientDay.createMany({
+      data: [{ ...input, day: dayAt(new Date()) }],
+      skipDuplicates: true,
+    });
+  }
+
+  async clients(now = new Date()): Promise<GrowthClientReport> {
+    const from = dayAt(new Date(now.getTime() - 29 * 86_400_000));
+    const to = dayAt(now);
+    const rows = await this.prisma.$queryRaw<
+      { client: GrowthClient; visitors: bigint }[]
+    >`
+      SELECT c.client, COUNT(DISTINCT c."visitorId") AS visitors
+      FROM growth_client_days c
+      WHERE c.day >= ${from} AND c.day <= ${to}
+        AND NOT EXISTS (
+          SELECT 1 FROM growth_events qa
+          WHERE qa."visitorId" = c."visitorId" AND qa.day <= ${to}
+            AND LOWER(qa.campaign->>'utm_source') IN ('qa', 'test', 'roadmap_check')
+        )
+      GROUP BY c.client
+    `;
+    return {
+      from,
+      to,
+      rows: GROWTH_CLIENTS.map((client) => ({
+        client,
+        visitors: Number(
+          rows.find((row) => row.client === client)?.visitors ?? 0,
+        ),
+      })),
+    };
+  }
 
   async recordMilestone(
     visitorId: string,

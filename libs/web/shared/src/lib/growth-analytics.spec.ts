@@ -82,4 +82,43 @@ describe('Optional acquisition analytics', () => {
     expect(service.choice()).toBe('denied');
     http.expectNone('/api/growth/events');
   });
+
+  it('records a store version once without changing campaign attribution or sending the raw agent', () => {
+    const agent = vi
+      .spyOn(window.navigator, 'userAgent', 'get')
+      .mockReturnValue(
+        'Mozilla/5.0 (Linux; Android 14; wv) PoshtetgarmStore/myket',
+      );
+    try {
+      const campaign = service.campaign();
+      service.startClientTracking();
+      const req = http.expectOne('/api/growth/client-visits');
+      expect(req.request.body).toEqual({
+        visitorId: expect.any(String),
+        client: 'myket',
+      });
+      req.flush(null);
+      service.startClientTracking();
+      http.expectNone('/api/growth/client-visits');
+      expect(service.campaign()).toEqual(campaign);
+    } finally {
+      agent.mockRestore();
+    }
+  });
+
+  it('respects opt-out and retries failed client observations', async () => {
+    service.choose('denied');
+    service.startClientTracking();
+    http.expectNone('/api/growth/client-visits');
+    service.choose('granted');
+    http
+      .expectOne('/api/growth/client-visits')
+      .flush(null, { status: 503, statusText: 'Unavailable' });
+    await Promise.resolve();
+    service.startClientTracking();
+    http.expectOne('/api/growth/client-visits').flush(null);
+    service.choose('denied');
+    service.startClientTracking();
+    http.expectNone('/api/growth/client-visits');
+  });
 });

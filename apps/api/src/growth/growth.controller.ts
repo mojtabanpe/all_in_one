@@ -23,6 +23,8 @@ import {
   type GrowthEventInput,
   type GrowthRetentionFilter,
   type GrowthReportAuditEntry,
+  growthClientVisitSchema,
+  type GrowthClientVisitInput,
 } from '@all-in-one/shared/schemas';
 import { GrowthService } from './growth.service';
 
@@ -45,6 +47,24 @@ export class GrowthController {
   async record(@Body({ schema: growthEventSchema }) input: GrowthEventInput) {
     this.requireEnabled();
     await this.growth.record(input);
+  }
+
+  @Public()
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  @HttpCode(204)
+  @Post('client-visits')
+  async recordClient(
+    @Body({ schema: growthClientVisitSchema }) input: GrowthClientVisitInput,
+  ) {
+    this.requireEnabled();
+    await this.growth.recordClient(input);
+  }
+
+  @Roles('ADMIN')
+  @Get('clients')
+  clients(@CurrentUser() admin: AuthUser) {
+    this.requireEnabled();
+    return this.auditedView(admin, 'SUMMARY', this.growth.clients());
   }
 
   private async auditedView<T>(

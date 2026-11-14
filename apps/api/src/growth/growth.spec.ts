@@ -3,6 +3,7 @@ import { IS_PUBLIC, ROLES } from '@all-in-one/api/auth';
 import {
   growthEventSchema,
   growthCampaignFilterSchema,
+  growthClientVisitSchema,
 } from '@all-in-one/shared/schemas';
 import { GrowthController } from './growth.controller';
 import { GrowthService } from './growth.service';
@@ -25,6 +26,10 @@ describe('Growth data boundaries', () => {
     await expect(controller.record(event)).rejects.toThrow();
     expect(() => controller.summary({} as never)).toThrow();
     expect(() => controller.campaigns({} as never, {})).toThrow();
+    await expect(
+      controller.recordClient({ visitorId: event.visitorId, client: 'bazaar' }),
+    ).rejects.toThrow();
+    expect(() => controller.clients({} as never)).toThrow();
     expect(record).not.toHaveBeenCalled();
     expect(summary).not.toHaveBeenCalled();
     expect(campaigns).not.toHaveBeenCalled();
@@ -65,6 +70,24 @@ describe('Growth data boundaries', () => {
     expect(reflector.get(ROLES, GrowthController.prototype.summary)).toEqual([
       'ADMIN',
     ]);
+    expect(
+      reflector.get(IS_PUBLIC, GrowthController.prototype.recordClient),
+    ).toBe(true);
+    expect(reflector.get(ROLES, GrowthController.prototype.clients)).toEqual([
+      'ADMIN',
+    ]);
+  });
+
+  it('accepts only known clients and a random visitor ID, without personal data', () => {
+    const input = { visitorId: event.visitorId, client: 'direct_apk' };
+    expect(growthClientVisitSchema.safeParse(input).success).toBe(true);
+    for (const invalid of [
+      { ...input, client: 'other-store' },
+      { ...input, visitorId: 'person@example.com' },
+      { ...input, userId: event.visitorId },
+      { ...input, userAgent: 'private device data' },
+    ])
+      expect(growthClientVisitSchema.safeParse(invalid).success).toBe(false);
   });
 
   it('validates campaign filters and protects the campaign report for admins', () => {

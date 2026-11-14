@@ -1,6 +1,27 @@
 import type { OnboardingGoal } from './onboarding';
 import * as z from 'zod/mini';
 
+export const GROWTH_CLIENTS = [
+  'bazaar',
+  'myket',
+  'direct_apk',
+  'pwa',
+  'web',
+  'macos',
+  'unknown_app',
+] as const;
+export type GrowthClient = (typeof GROWTH_CLIENTS)[number];
+export const growthClientVisitSchema = z.strictObject({
+  visitorId: z.string().check(z.uuid()),
+  client: z.enum(GROWTH_CLIENTS),
+});
+export type GrowthClientVisitInput = z.infer<typeof growthClientVisitSchema>;
+export interface GrowthClientReport {
+  from: string;
+  to: string;
+  rows: { client: GrowthClient; visitors: number }[];
+}
+
 export const GROWTH_EVENTS = [
   'landing_view',
   'signup_started',

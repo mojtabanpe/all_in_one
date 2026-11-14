@@ -7,6 +7,8 @@ import type {
   GrowthChurnReport,
   GrowthSummary,
   GrowthMonitoring,
+  GrowthClient,
+  GrowthClientReport,
 } from '@all-in-one/shared/schemas';
 import {
   AioTranslate,
@@ -609,6 +611,66 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
           }
         </div>
       </section>
+      <section
+        class="flex min-w-0 flex-col gap-4"
+        aria-labelledby="clients-heading"
+      >
+        <h2 id="clients-heading" class="text-xl font-semibold">
+          {{ 'استفاده به تفکیک نسخهٔ برنامه' | aioTranslate }}
+        </h2>
+        <p class="text-sm leading-7 text-muted-foreground">
+          {{
+            'مرورگرها و نسخه‌های برنامهٔ بازشده در ۳۰ روز اخیر؛ منبع کمپین جداست. یک نفر می‌تواند در چند ردیف باشد. این آمار تعداد نصب یا افراد یکتا نیست و از زمان فعال‌سازی گزارش جمع می‌شود.'
+              | aioTranslate
+          }}
+        </p>
+        @if (clients.isLoading()) {
+          <div aioSkeletonRows [count]="7" itemClass="h-11 rounded-xl"></div>
+        } @else if (clients.hasValue()) {
+          <div aioTableContainer class="max-w-full overflow-x-auto">
+            <table aioTable class="w-full table-fixed">
+              <caption aioCaption>
+                {{
+                  'شناسه‌های یکتا در هر نسخه؛ برچسب بازار و مایکت نسخهٔ فایل را مشخص می‌کند، نه فروشگاه نصب‌کننده را.'
+                    | aioTranslate
+                }}
+              </caption>
+              <thead aioTHead>
+                <tr aioTr>
+                  <th aioTh scope="col" class="w-2/3 whitespace-normal">
+                    {{ 'نسخهٔ برنامه' | aioTranslate }}
+                  </th>
+                  <th aioTh scope="col" class="whitespace-normal">
+                    {{ 'شناسه‌های یکتا' | aioTranslate }}
+                  </th>
+                </tr>
+              </thead>
+              <tbody aioTBody>
+                @for (row of clients.value().rows; track row.client) {
+                  <tr aioTr>
+                    <th aioTh scope="row" class="whitespace-normal">
+                      {{ clientLabel(row.client) | aioTranslate }}
+                    </th>
+                    <td aioTd>{{ fa(row.visitors) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else if (clients.error()) {
+          <div
+            aioEmptyState
+            [title]="'آمار نسخه‌های برنامه دریافت نشد' | aioTranslate"
+            [description]="
+              'دریافت نشدن آمار به معنی صفر بودن آن نیست.' | aioTranslate
+            "
+          >
+            <button aioBtn variant="outline" (click)="clients.reload()">
+              {{ 'تلاش دوباره' | aioTranslate }}
+            </button>
+          </div>
+        }
+      </section>
       <admin-campaign-report (exported)="monitoring.reload()" />
       <section aioCard aria-labelledby="growth-monitoring-heading">
         <div aioCardHeader>
@@ -795,6 +857,20 @@ export class Dashboard {
   protected readonly monitoring = httpResource<GrowthMonitoring>(
     () => `${this.api}/growth/monitoring`,
   );
+  protected readonly clients = httpResource<GrowthClientReport>(
+    () => `${this.api}/growth/clients`,
+  );
+  protected clientLabel(client: GrowthClient): string {
+    return {
+      bazaar: 'کافه‌بازار',
+      myket: 'مایکت',
+      direct_apk: 'اندروید مستقیم (APK عمومی)',
+      pwa: 'وب‌اپ نصب‌شده (PWA)',
+      web: 'مرورگر وب',
+      macos: 'برنامهٔ مک',
+      unknown_app: 'برنامهٔ شناسایی‌نشده',
+    }[client];
+  }
   protected readonly growthAlerts = computed(() => {
     if (!this.monitoring.hasValue()) return [];
     const [current, previous] = this.monitoring.value().weeks;

@@ -4,7 +4,7 @@
 **Market:** Iran; Persian-speaking users  
 **Business model:** Freemium; AI features available only with paid entitlement  
 **Scope:** `apps/public`, `apps/customer`, `apps/admin`, API, billing, AI, analytics.  
-**Status:** In progress. Claude C1–C7 and Codex X1–X6 are complete. The owner confirmed X8 and X9 complete on 2026-11-14; the production notification migration is independently verified. Campaigns have started. The English pilot Reel is live (2026-11-11); a captioned health Reel was published with the owner's approved caption on 2026-11-14. Production campaign counts were read over SSH with QA excluded; see the dated evidence below. X7 remains open for the Instagram in-app registration check and follow-up measurement. The bio still uses the legacy general link. Three billing plans and a real Zibal payment are verified; C8/O11 still await store approval, publication and one verified purchase per store.
+**Status:** In progress. Claude C1–C7 and Codex X1–X6 are complete. The owner confirmed X8 and X9 complete on 2026-11-14; the production notification migration is independently verified. Campaigns have started. The English pilot Reel is live (2026-11-11); a captioned health Reel was published with the owner's approved caption on 2026-11-14. Production campaign counts were read over SSH with QA excluded; see the dated evidence below. X7 remains open for the Instagram in-app registration check and follow-up measurement. The bio still uses the legacy general link. Three billing plans and a real Zibal payment are verified; C8/O11 still await store approval, publication and one verified purchase per store. X10 client/distribution usage reporting is complete locally (Bazaar, Myket, direct APK, PWA and web), using existing APK signals; not deployed.
 
 ## Current checkpoint — 2026-11-14
 
@@ -15,7 +15,7 @@
 | SEO                        | Production metadata and sitemap verified. Search Console ownership and sitemap submission complete. The owner waived the PageSpeed check (O5) and asked to remove Enamad from the public footer because it did not load. | Monitor indexing.                                                                                           |
 | In-app notifications       | X8 complete, confirmed by the owner on 2026-11-14. Production migration `20261113070004_in_app_notifications` is applied.                                                                                                | Monitor actual delivery and dismissals during rollout.                                                      |
 | Assistant scope recovery   | Deployed in `70cb2d8`: standard Persian/English refusals excluded from scope context; follow-up context and off-topic checks preserved. CI/deployment, live code and API health verified.                                | Confirm the signed-in meal-log flow on the user’s device; no diagnostic meal was created.                   |
-| Growth and AI reports      | Owner reviewed the production admin reports and accepted them for now (O8). Managed AI connection tests, prices and daily limits confirmed (O2).                                                                         | Monitor usage and costs during rollout.                                                                     |
+| Growth and AI reports      | Existing production reports accepted (O8). X10 client/distribution report implemented and tested locally with existing APK identifiers, independent of campaigns.                                                        | Release X10 and verify current APKs on real devices; monitor usage and AI costs.                            |
 | Campaigns                  | English pilot Reel verified live on 2026-11-11; health Reel published and independently read back on 2026-11-14. Reels have more views than carousels in the current small snapshot.                                     | Compare posts at the same age, link visits to signup/activation, and continue the publishing sequence.      |
 | Payments                   | Three active plans and a verified Zibal payment. Signed Cafe Bazaar and Myket 1.0.4 APKs uploaded, and server verification credentials configured.                                                                       | Store approval and publication, then one verified purchase per store (C8 / O11).                            |
 
@@ -156,6 +156,8 @@ campaign content in `docs/roadmaps/*pilot*`.
 | X7 | Verify the organic Instagram link through registration and review the first pilot funnel using Windsor and the production growth report | IN_PROGRESS (Codex; publication and production counts verified 2026-11-14; in-app handoff and follow-up measurements pending) |
 | X8 | Server-driven in-app notifications on signed-in app entry; arbitrary content/actions, remembered dismissal and trial-expiry offers | DONE (owner confirmation 2026-11-14; production migration verified) |
 | X9 | Focus English, planner and health entry pages; select by explicit/campaign/remembered interest, persist signup goal and measure activation | DONE (owner confirmation 2026-11-14; campaign comparison remains TODO) |
+
+| X10 | Distinguish Bazaar, Myket and direct/global APK usage alongside PWA and browser, without an APK update | DONE (local database, tests and browser; production VERIFY) |
 
 ### Owner lane: decisions, accounts, devices and networks
 
@@ -370,6 +372,14 @@ Evidence: `apps/admin/src/app/pages/dashboard.ts` already shows basic user/conte
     container with a made-up token: Bazaar answers 404 `not_found` and Myket 400 `InvalidToken` (a wrong Myket key
     answers 401), so both keys authenticate and `StoreGateway` maps these to "invalid purchase", not an outage.
   - `TODO` Await store approval and publication, then verify a real purchase in each store (owner item O11) before marking C8 `DONE`.
+
+## Client/distribution usage (X10) — 2026-11-14
+
+- `DONE` (local, directive 138) Existing store user-agent markers identify Bazaar and Myket; the existing native bridge plus Android user agent identifies the direct APK. Native bridge detection does not ask for notification permission. Standalone display identifies PWA use; a generic WebView without the app bridge remains unidentified. macOS is separate.
+- `DONE` (local) Customer app entry/resume records only the pseudonymous visitor ID and an allowlisted client category through `POST /api/growth/client-visits`. Analytics opt-out and blocked-cookie behavior are preserved. A separate `growth_client_days` table deduplicates visitor/client/Tehran-day rows and is pruned after 90 days; marketing events and campaign attribution are unchanged. Additive migration `20261114090133_growth_client_usage` generated and applied to local PostgreSQL.
+- `DONE` (local) Admin dashboard has a bilingual 30-day report through admin-only `GET /api/growth/clients`, with audited views, explicit zero counts, loading skeletons and retry. Counts are unique visitor IDs per client, not installs, accounts or people; one person can appear in several rows. Store labels identify APK builds, not the actual installer.
+- Evidence: Node 24; all 63 Nx lint/test/build/typecheck tasks passed, plus formatting and instruction-sync checks. API suite with local PostgreSQL passed serially (178 tests; 20 unrelated opt-in tests skipped), including concurrent deduplication, repeated days, cross-client use, window boundaries and QA exclusion. Shared web tests cover identification, opt-out, allowlisted request bodies and retries. Browser probes observed the expected request for Bazaar/Myket/direct/PWA/web, an unidentified WebView and no request after opt-out; campaign query tags remained intact. Populated admin table checked in Persian/English at 320px and 1440px with no page or table overflow. Code knowledge graph refreshed.
+- `VERIFY` Production migration/release and a real-device check of each currently distributed APK. No APK rebuild is needed; collection begins when the new web assets load. Work remains unpushed per directive 124.
 
 ## P0/P1 — replace user AI configuration with one reliable managed service
 
