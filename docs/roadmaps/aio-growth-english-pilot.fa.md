@@ -46,7 +46,7 @@
 
 ## Instagram acquisition sprint — 2026-11-11
 
-**Status: prepared; publication and profile changes not performed.** Owner direction: focus on Instagram.
+**Status updated 2026-11-14: publication started.** Windsor verified the [English pilot Reel](https://www.instagram.com/reel/Dfl3tZht5Mu/) published on 2026-11-11 at 10:16 Tehran. The owner confirmed the campaign has started. A separate approved [health Reel](https://www.instagram.com/reel/DftwNt1EThg/) was published on 2026-11-14 at 11:45 Tehran and read back successfully. Production counts and remaining X7 checks are in [the current roadmap evidence](aio-growth-v1.md#campaign-evidence--2026-11-14). The bio still uses `instagram / social / bio`; profile changes have not been performed in this session. The original preparation evidence below is dated and is superseded by that current snapshot. Owner direction: focus on Instagram.
 YouTube account `poshtetgarm` is owner-reported, with `utm_medium=organic_social` and
 `utm_campaign=youtube_channel`; its link and analytics have not been verified. This Instagram sprint takes
 priority over the Instagram entries in the mixed-topic 30-day calendar during its seven publishing days.
