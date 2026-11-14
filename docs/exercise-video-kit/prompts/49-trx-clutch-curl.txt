@@ -1,30 +1,30 @@
 EXERCISE: TRX clutch curl
 CATALOG ID: trx-clutch-curl
-TAKE: v006
+TAKE: v007
 
-Use the attached reviewed opening image (Man_performing_TRX_clutch_curl_b97a3bfe.jpg) as the exact first frame. Preserve the coach, backward lean, equipment, lighting, and camera. Do not rebuild the pose.
+MAIN FIX
+Keep both elbows approximately at shoulder height. Do not lower them beside the ribs when curling. Do not make a low row.
 
-MOST IMPORTANT
-Face TOWARD the anchor. Start and finish leaning BACKWARD. Keep both elbows raised approximately at shoulder height. Keep both hands firmly gripping their handles throughout. Do not make a low row or forward lean.
+REFERENCE AND STYLE
+Use approved AIO Coach v1 references. Preserve adult male coach, olive skin, short dark brown hair, clean-shaven face, teal T-shirt, charcoal joggers, white shoes with teal accents, identity and proportions. Polished stylized 3D animation. Light-gray studio, matte floor, soft lighting.
 
-CHARACTER AND SCENE
-Preserve AIO Coach v1: adult athletic male, olive skin, short dark brown hair, clean-shaven, teal T-shirt, charcoal joggers, white shoes with teal accents. Preserve identity and proportions. Polished stylized 3D animation. Light-gray studio, matte floor, soft lighting. Fixed side three-quarter camera; whole body and visible strap paths remain in frame.
+PREPARE A NEW STARTING IMAGE
+Start in the CURLED position. Face the overhead anchor toward image LEFT. Lean slightly backward away from the anchor. Head, torso, pelvis, and legs aligned. Feet hip-width apart and planted.
+Both elbows raised to shoulder height. Upper arms extend forward and outward. Both elbows bent. Handles close to upper chest. Elbows clearly separated from ribs. Shoulders down. Wrists straight.
+Each hand firmly grips one handle. Fingers and thumbs wrapped around solid grips. Two continuous nonelastic straps connect handles to one fixed anchor. Both straps taut.
+Fixed front-side three-quarter camera. Show both elbows clearly, whole body, handles, and strap paths.
 
-EQUIPMENT AND OPENING POSE
-One fixed overhead anchor toward upper image LEFT. Coach faces image LEFT. Shoulders farther to image RIGHT than ankles. Two continuous nonelastic straps, each ending in one handle. Straps taut and constant in length. Both hands grip the solid handle sections with fingers and thumbs closed; handles never slide onto wrists or forearms.
-Feet hip-width apart and planted. Body aligned in a shallow backward lean. Arms reach toward anchor at approximately shoulder height. Elbows nearly straight without locking. Hands shoulder-width apart. Wrists straight.
-
-FIVE-SECOND ACTION
-0.0–0.5: Hold the exact opening image.
-0.5–2.0: Bend both elbows together. Bring handles toward upper chest. Keep knuckles directed toward chest and elbows raised approximately at shoulder height. Do not pull elbows down beside ribs or sweep upper arms backward into a row. Draw the aligned body toward the anchor as elbows bend. Head, shoulders, and pelvis move together. Become slightly more upright but do not lean forward past ankles. Feet remain fixed. Strap lengths unchanged.
-2.0–2.5: Briefly hold. Handles near but not touching upper chest. Elbows raised. Shoulders away from ears. Both grips closed. Both straps taut.
-2.5–4.5: Slowly straighten both elbows. Let aligned body lean backward away from anchor. Keep upper arms raised. Do not drop elbows toward waist. Return to exact opening lean. Do not lock elbows.
-4.5–5.0: Hold opening pose. Do not release handles or start another repetition.
+ONE REPETITION — FIVE SECONDS
+0.0–0.5: Hold curled pose. Both elbows at shoulder height.
+0.5–2.0: Slowly straighten both elbows. Move hands away from chest toward anchor. Let aligned body lean farther backward from ankles. Keep upper arms raised. Do not lower elbows or move feet. Strap lengths constant.
+2.0–2.5: Hold extended pose. Elbows softly extended without locking. Body leaning backward. Both hands gripping.
+2.5–4.5: Bend elbows together. Bring handles toward upper chest. Draw aligned body slightly toward anchor. Keep elbows at shoulder height. Do not pull elbows down or sweep behind torso.
+4.5–5.0: Hold exact curled opening pose.
 
 ACCEPTANCE
-Faces anchor throughout. Starts and finishes leaning backward. Elbows visibly bend and straighten while remaining raised. Continuous grip. Planted feet. Aligned body. Continuous taut straps of constant length. Last frame matches first. No low row, forward lean, hip swing, shrugging, handle release, or strap stretching.
+Elbows approximately level with shoulders in every phase. Handles approach upper chest with raised elbows. Continuous grip, planted feet, aligned body. Straps taut and constant in length. Last frame matches first.
 
 OUTPUT
-One continuous five-second shot. Landscape 16:9, 720p. Fixed camera. No cuts, zooms, text, logos, music, or speech. No extra limbs, distorted hands, or intersecting equipment. Retain original output, deliver MP4 if supported, report actual settings.
-Filename: trx-clutch-curl--aio-coach-v1--v006.mp4
-Do not upload; review and publication happen separately.
+One continuous five-second shot. Landscape 16:9, 720p. Fixed camera. No text, cuts, music, speech, distorted hands or detached equipment. Retain original output and report actual settings.
+Filename: trx-clutch-curl--aio-coach-v1--v007.mp4
+Do not upload; review happens separately.
