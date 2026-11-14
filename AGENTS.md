@@ -672,7 +672,7 @@ origin master` and read the index and the roadmap; after work, update its status
 
 126. **Exercise-video acceptance (2026-11-09).** The owner accepts clips that demonstrate roughly 80% of the movement correctly. Treat this as a practical review standard. Accept minor differences in framing, timing, likeness, loop polish and form when the defining movement is clear and the clip remains suitable for instruction. Record material imperfections. A different movement or a materially unsafe demonstration still needs revision.
 
-127. **Runway Gen-4 Turbo for exercise videos (2026-11-09).** Name Runway Gen-4 Turbo explicitly in future exercise-video prompts and tell the owner to select it in Runway Tools. Default to a single five-second, 720p image-to-video generation using a starting image of the approved coach already in the correct opening pose. Preserve the option to use a different model when the owner requests one.
+127. **Runway Gen-4 Turbo for exercise videos (2026-11-09).** Model naming in owner-facing prompts superseded by 137. Name Runway Gen-4 Turbo explicitly in future exercise-video prompts and tell the owner to select it in Runway Tools. Default to a single five-second, 720p image-to-video generation using a starting image of the approved coach already in the correct opening pose. Preserve the option to use a different model when the owner requests one.
 
 128. **Literal exercise-video prompts (2026-11-10).** Assume the video generator will infer nothing. Use short, concrete instructions, one action per step, and explicit screen directions and equipment contact points. State what starts in contact, what moves, what stays fixed, and what the last frame must show. Put the most important visual constraint first. Keep each prompt standalone as required by 125.
 
@@ -709,3 +709,5 @@ Rules:
 135. **Chosen fasting times (2026-11-13).** The owner can start or end a fast at a chosen date and time instead of always using the current moment. Keep the existing 72-hour limit for backdated starts; an end must fall between the start and now. Leaving the end untouched still finishes at the server clock.
 
 136. **Skip deployment for documentation-only pushes (2026-11-14).** A push to `master` that changes only documentation must not build or deploy production. Compare the full push, including all commits; mixed code/documentation pushes still deploy after successful CI. Keep documentation CI checks and explicit manual deployment available. Documentation exemptions are Markdown/MDX/reStructuredText files and `docs/`, `design-system/`, `graphify-out/`. This refines 91 and 124; pushing still requires the owner's request.
+
+137. **Omit model names from exercise-video prompts (2026-11-14).** The owner requested that prompts contain no model name. Keep the full standalone references, setup, movement, acceptance criteria and export settings required by 125/128. This supersedes the model-naming requirement in 127.

@@ -1,16 +1,41 @@
 EXERCISE: TRX clock press
 CATALOG ID: trx-clock-press
+TAKE: v001
 
-Use the attached approved reference images of AIO Coach v1 as the identity source. One adult MALE animated fitness instructor, approximately 30 years old, athletic but not bodybuilder-sized, realistic adult proportions, medium warm olive skin, short dark brown hair, brown eyes, clean-shaven face. Teal fitted short-sleeve crew-neck athletic T-shirt, charcoal tapered joggers, white low-profile flat training shoes with teal accents. No logos, jewelry or changing accessories. Polished stylized 3D animation with rounded friendly facial features, physically credible joints and grounded movement. Preserve exactly the same face, hair, body proportions, clothing, materials and colors as the attached references across all frames. Do not substitute a live-action human or redesign the character.
+MOST IMPORTANT
+Show an asymmetric chest press. The RIGHT elbow bends while the LEFT arm opens sideways. Both hands retain their own handles. Do not make a symmetrical press or a two-arm chest fly. Show one repetition on one side only.
 
-Use a clean light-gray studio, matte floor, soft even lighting and a subtle ground shadow. Fixed camera, entire body and all working equipment visible with generous margins. No cuts, zooms, camera orbit, dramatic effects, music, speech, captions, anatomy overlays or text. Prioritize accurate exercise mechanics and clear joint positions. Natural spinal curves are allowed; neutral spine does not mean a permanently vertical torso. No extra limbs, sliding feet, impossible joints, body morphing, floating weights or discontinuous equipment. Target 8 seconds, landscape 16:9, 1080p when supported; if the available generator cannot deliver these settings, report actual settings rather than claiming compliance. Export MP4 when supported; retain the original output.
+CHARACTER
+Use the attached approved AIO Coach v1 references. One adult male animated fitness instructor, approximately 30, athletic but not bodybuilder-sized. Medium warm olive skin, short dark brown hair, brown eyes, clean-shaven. Teal fitted short-sleeve T-shirt, charcoal tapered joggers, white low-profile training shoes with teal accents. No logos or jewelry. Polished stylized 3D animation with credible joints. Preserve face, proportions, clothes, and colors.
 
-CAMERA: front three-quarter.
+STUDIO AND EQUIPMENT
+Clean light-gray studio, matte non-slip floor, soft even lighting. One secure overhead anchor behind the coach. Two continuous nonelastic suspension straps descend from that anchor. Each strap ends in one separate handle. Each hand firmly grips one handle throughout. Both straps remain taut and constant in length. No detached handles, elastic stretching, or additional straps.
 
-ACTION: Face away from anchor, small forward lean and body aligned. Bend the right elbow into a chest press while the left arm opens sideways with a soft elbow. Press back to center, then alternate once. Keep hips and shoulders square; no locked lateral elbow or overextended shoulder.
+STARTING IMAGE — PREPARE BEFORE ANIMATING
+The coach faces away from the anchor. The anchor is behind and above his upper back. Feet hip-width apart, both shoes planted. The straight body leans slightly forward from the ankles. Head, trunk, and legs aligned. Do not bend at the waist. Use a shallow lean and a small demonstration range.
+Both arms extend forward at chest height with softly bent elbows. Hands shoulder-width apart. Wrists aligned with forearms. Both hands grip their handles. Both straps already taut.
 
-TIMING: Show one or two complete slow repetitions. If alternating sides are requested, show one repetition per side. If a single side is specified, do not rush to switch sides.
+CAMERA AND SCREEN DIRECTIONS
+Fixed, slightly elevated front three-quarter view. Show face, chest, both hands, both feet, anchor, and complete strap paths with margins.
+The coach's anatomical RIGHT hand appears on the LEFT side of the image.
+The coach's anatomical LEFT hand appears on the RIGHT side of the image.
+Do not reverse those roles during the shot.
 
-EQUIPMENT: For TRX: use two continuous nonelastic suspension straps attached to one secure overhead anchor. Show the anchor or enough uninterrupted strap path to establish attachment. Handles and foot cradles must be mechanically coherent; do not depict elastic bands, detached straps or a changing anchor. Use only the contact arrangement specified below.
+ONE REPETITION — FIVE SECONDS
+0.0–0.5 seconds: Hold the starting pose. Both hands forward. Straps taut. Feet fixed.
+0.5–2.0 seconds: Lower the aligned body forward a small distance. Bend the RIGHT elbow. Bring the RIGHT handle toward the right side of the chest. Keep this elbow below shoulder height and moderately away from the ribs. Do not flare it straight sideways.
+At the same time, open the LEFT arm toward the RIGHT edge of the image. Keep the LEFT elbow softly bent. Move the LEFT hand outward in a controlled arc at approximately chest height. Do not move that hand behind the torso. Keep gripping both handles.
+Keep shoulders and pelvis facing forward together. Do not twist toward the opening arm. Do not move either foot.
+2.0–2.5 seconds: Hold the asymmetric position. RIGHT elbow bent with handle near chest. LEFT arm open sideways with soft elbow. Both straps taut. Body aligned. Shoulders away from ears.
+2.5–4.5 seconds: Press through the RIGHT handle. Gradually straighten the RIGHT elbow without locking it. Bring the LEFT arm forward along the same arc. Return both hands to their original shoulder-width positions. Return to the original slight forward lean. Feet fixed, straps taut.
+4.5–5.0 seconds: Hold the original starting pose. Both hands forward again. Do not release handles, switch sides, or start another repetition.
 
-Save the delivered clip as trx-clock-press--aio-coach-v1--v001.mp4 if file saving is available. If persistent character-reference conditioning is unavailable, say so; do not promise identical identity from text alone. Do not upload or claim a public URL as part of video generation; publication is a separate step after the clip passes review.
+ACCEPTANCE
+The arms have visibly different roles. The RIGHT elbow bends and straightens. The LEFT arm opens sideways and returns. Both hands retain handles. Both feet stay planted. Torso and pelvis remain aligned without twisting. Straps remain continuous, taut, and constant in length. Final pose matches the opening pose.
+Avoid excessive shoulder range. Do not lock the sideways elbow. Do not shrug, sag at the hips, arch the lower back, or step forward.
+
+PRESENTATION AND EXPORT
+One continuous five-second shot. Landscape 16:9, 720p. Fixed camera. No cuts, zooms, orbit, slow-motion effects, captions, labels, logos, music, or speech. No extra limbs, distorted hands, or equipment passing through the body.
+Keep the original output. Deliver MP4 if supported. Report actual output settings.
+Filename: trx-clock-press--aio-coach-v1--v001.mp4
+Do not upload or create a public URL. Review and publication happen separately.
