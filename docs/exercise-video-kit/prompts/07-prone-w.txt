@@ -1,16 +1,38 @@
-EXERCISE: Prone W scapular retraction
+EXERCISE: Prone W scapular retraction — take 3
 CATALOG ID: prone-w
 
-Use the attached approved reference images of AIO Coach v1 as the identity source. One adult MALE animated fitness instructor, approximately 30 years old, athletic but not bodybuilder-sized, realistic adult proportions, medium warm olive skin, short dark brown hair, brown eyes, clean-shaven face. Teal fitted short-sleeve crew-neck athletic T-shirt, charcoal tapered joggers, white low-profile flat training shoes with teal accents. No logos, jewelry or changing accessories. Polished stylized 3D animation with rounded friendly facial features, physically credible joints and grounded movement. Preserve exactly the same face, hair, body proportions, clothing, materials and colors as the attached references across all frames. Do not substitute a live-action human or redesign the character.
+MAIN CONSTRAINT: The forehead stays on the folded towel for the entire shot. The chest and pelvis stay on the mat. Only the bent arms rise a small distance and return. Do not animate a head lift, chest lift, or back extension.
 
-Use a clean light-gray studio, matte floor, soft even lighting and a subtle ground shadow. Fixed camera, entire body and all working equipment visible with generous margins. No cuts, zooms, camera orbit, dramatic effects, music, speech, captions, anatomy overlays or text. Prioritize accurate exercise mechanics and clear joint positions. Natural spinal curves are allowed; neutral spine does not mean a permanently vertical torso. No extra limbs, sliding feet, impossible joints, body morphing, floating weights or discontinuous equipment. Target 8 seconds, landscape 16:9, 1080p when supported; if the available generator cannot deliver these settings, report actual settings rather than claiming compliance. Export MP4 when supported; retain the original output.
+MODEL AND OUTPUT
+Select Runway Gen-4 Turbo in Runway Tools. Use image-to-video with the approved coach already in the opening pose. Generate one 5-second shot at 720p, landscape 16:9. Keep the original output. Export MP4 if available. Do not claim settings that the tool did not produce.
 
-CAMERA: fixed high front three-quarter, looking down from just off the head end so both elbows, both hands, and forehead contact with the towel are visible.
+REFERENCE AND IDENTITY
+Use the attached approved AIO Coach v1 images to prepare the starting image. One adult male animated fitness instructor, approximately 30, athletic but not bodybuilder-sized. Medium warm olive skin. Short dark brown hair. Brown eyes. Clean-shaven. Teal fitted short-sleeve crew-neck athletic T-shirt. Charcoal tapered joggers. White low-profile training shoes with teal accents. No logos or jewelry. Polished stylized 3D animation with friendly adult features and credible joints. Preserve the starting image's face, proportions, clothes, colors, and materials throughout. If reference conditioning is unavailable, report that limitation.
 
-ACTION: Start face down with the forehead supported by a folded towel, chest and pelvis resting on the floor, and both arms bent symmetrically in a W. Keep forehead, chest, pelvis, and legs supported throughout the entire clip. Gently draw both shoulder blades together and lift only the bent arms a few centimeters, preserving the W and keeping shoulders away from the ears. Pause briefly, then lower the arms to their original position. No head lift, chest lift, or back extension.
+STARTING IMAGE — PREPARE THIS BEFORE ANIMATING
+Use a light-gray studio with a matte floor and soft even light. Place one thin charcoal exercise mat on the floor. Place one small folded light-colored towel beneath the forehead. Show no other equipment.
+The coach lies face down. In the image, his head points toward the lower center and his feet toward the upper center. His forehead rests visibly on the towel. His face points down. His neck continues the line of his upper back.
+His chest, abdomen, pelvis, thighs, and legs rest on the mat. His legs stay straight and comfortably separated. His shoes rest on the mat.
+Both upper arms extend diagonally outward from the shoulders, slightly toward the hips. Both elbows bend approximately 90 degrees. Both forearms point toward the head. Both hands remain outside the head, on opposite sides. Viewed from above, the arms form a symmetrical W, rather than straight T arms or overhead Y arms.
+Both palms face the mat. Both elbows, forearms, and hands start resting lightly on the mat. Keep each hand visible and separate from the towel.
+Use a fixed elevated three-quarter view from the head end, slightly offset to one side. Show the whole body, both elbows, both hands, the towel, and the mat with margins. Keep the forehead-to-towel contact visible. Do not use a side view that hides the far arm.
 
-TIMING: Show one complete slow repetition with a clear start, brief peak, and return to the same resting pose.
+ONE COMPLETE REPETITION — FIVE SECONDS
+0.0–0.5 seconds: Hold the exact opening pose. Forehead on towel. Chest and pelvis on mat. Both bent arms resting.
+0.5–2.0 seconds: Gently draw both shoulder blades toward the spine. Move both elbows, forearms, and hands upward together, away from the mat by only a few centimeters. Preserve both elbow bends and the W shape. The hands do not travel toward the head or hips. Keep the shoulders away from the ears.
+2.0–3.0 seconds: Hold the small arm lift. Both bent arms hover at the same low height. The forehead remains on the towel. The chest and pelvis remain on the mat. The legs stay still.
+3.0–4.5 seconds: Slowly lower both bent arms together. Return the elbows, forearms, and hands to their original places on the mat. Keep the same elbow bends.
+4.5–5.0 seconds: Hold the original resting pose. The final frame matches the opening pose. Do not sit up, look toward the camera, or begin another repetition.
 
-EQUIPMENT: Show only the equipment needed for this exercise, with mechanically coherent support, contact points and load paths. Use light demonstration loads where applicable.
+FIXED THROUGHOUT
+Keep the head, towel, chest, pelvis, legs, mat, and camera in the same positions. Keep the forehead in continuous contact with the towel. Keep the torso supported. Allow only subtle natural breathing. Keep the hands relaxed and wrists aligned with the forearms. Do not force a large range of motion.
 
-Save the delivered clip as prone-w--aio-coach-v1--v003.mp4 if file saving is available. If persistent character-reference conditioning is unavailable, say so; do not promise identical identity from text alone. Do not upload or claim a public URL as part of video generation; publication is a separate step after the clip passes review.
+REVIEW CRITERIA
+Show one clear, simultaneous lift and return of both W-shaped arms. Keep forehead-to-towel contact visible throughout. Keep the chest and pelvis down. Keep both arms separately visible. A small arm lift is enough. Do not replace this with a superman, push-up, prone press-up, straight-arm reverse fly, or overhead reach. Do not straighten the elbows, shrug the shoulders, lift the legs, or arch the back to gain height.
+
+PRESENTATION
+One continuous shot. Fixed camera. No cuts, zoom, orbit, slow-motion effect, captions, text, logos, anatomy overlays, music, or speech. No extra fingers or limbs, body morphing, floor penetration, or floating equipment. If audio is generated, provide a silent delivery copy and retain the original.
+
+DELIVERY
+Filename: prone-w--aio-coach-v1--v003.mp4
+Return the generated file and actual output settings. Do not upload it or invent a public URL. Review and publication happen separately.
