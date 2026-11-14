@@ -384,7 +384,7 @@ origin master` and read the index and the roadmap; after work, update its status
 
 91. **Push to `master` deploys.** `.github/workflows/deploy.yml` runs after CI passes: images are built on GitHub,
     then the server's self-hosted runner (`aio-server`, label `aio`, `/opt/actions-runner-aio`) loads them and
-    runs `deploy/release.sh` (health check, rollback). CI must stay green (`nx format:check` included). **See 124: a push is a release, so it waits for the owner.**
+    runs `deploy/release.sh` (health check, rollback). CI must stay green (`nx format:check` included). **See 124: pushes wait for the owner. Documentation-only pushes are exempt from deployment under 136.**
 
 ## Brand (2026-10-31)
 
@@ -707,3 +707,5 @@ Rules:
 134. **Recover after an assistant scope refusal (2026-11-13).** The owner requested fixing valid meal-log requests being rejected after a scope refusal. Do not include the standard Persian or English scope-refusal reply as context for the next scope check; retain ordinary assistant context for follow-ups and continue checking new off-topic requests. This refines directive 110.
 
 135. **Chosen fasting times (2026-11-13).** The owner can start or end a fast at a chosen date and time instead of always using the current moment. Keep the existing 72-hour limit for backdated starts; an end must fall between the start and now. Leaving the end untouched still finishes at the server clock.
+
+136. **Skip deployment for documentation-only pushes (2026-11-14).** A push to `master` that changes only documentation must not build or deploy production. Compare the full push, including all commits; mixed code/documentation pushes still deploy after successful CI. Keep documentation CI checks and explicit manual deployment available. Documentation exemptions are Markdown/MDX/reStructuredText files and `docs/`, `design-system/`, `graphify-out/`. This refines 91 and 124; pushing still requires the owner's request.

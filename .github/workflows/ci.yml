@@ -39,6 +39,20 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
 
+      - name: Check deployment changes across the full push
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        id: deploy-changes
+        run: node tools/scripts/check-deploy-changes.mjs
+
+      - name: Mark this run as requiring deployment
+        if: steps.deploy-changes.outputs.required == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-deploy-${{ github.sha }}
+          path: .github/workflows/deploy.yml
+          retention-days: 30
+          if-no-files-found: error
+
       - run: pnpm install --frozen-lockfile
 
       - uses: nrwl/nx-set-shas@v4
