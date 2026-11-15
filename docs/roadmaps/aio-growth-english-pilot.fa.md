@@ -162,3 +162,10 @@ Decision sequence: if visits remain scarce, revise the opening demonstration and
 but registrations do not, inspect the landing/signup path; if accounts arrive without reviews, inspect onboarding.
 If reviews happen but installs do not, inspect the install path separately. Small samples remain inconclusive;
 there is no promised signup/install target and no spending increase based on views alone.
+
+### Conceptual English AI Reel — 2026-11-15
+
+- `IN_PROGRESS` Creative brief: the owner selected English flashcard review, then requested an imaginative Runway prompt showing AI capabilities without app screenshots (directive 139). This supersedes the real-screen treatment for this Reel only; the existing A/B/C drafts above remain historical alternatives.
+- Concept: **One word becomes a world.** A floating vocabulary card unfolds into a miniature story and a two-speaker listening scene. Ground the metaphors in existing AI definitions/examples, level-matched reading and generated listening dialogues; do not imply a live conversational avatar, guaranteed learning outcomes or free AI access.
+- Proposed output: a 10-second vertical 9:16 conceptual animation, one continuous camera move, mint/green and warm porcelain palette. Add Persian captions and the official Poshtetgarm logo during editing, rather than asking the video generator to draw them. No app screenshots or reconstructed app screens.
+- `TODO` Generate and review the clip; then edit captions/branding and obtain publication approval. No video generation, paid generation call or publication has occurred for this concept.

@@ -713,3 +713,5 @@ Rules:
 137. **Omit model names from exercise-video prompts (2026-11-14).** The owner requested that prompts contain no model name. Keep the full standalone references, setup, movement, acceptance criteria and export settings required by 125/128. This supersedes the model-naming requirement in 127.
 
 138. **Distinguish Android distributions in usage reports (2026-11-14).** Track Cafe Bazaar, Myket and the global/direct APK separately, alongside PWA and browser usage. Use the current store user-agent labels and native bridge so existing APKs do not need an update. Keep client usage independent of marketing campaign attribution; report observed app use, not verified installs or unique people, and preserve the analytics opt-out.
+
+139. **Conceptual English AI Instagram Reel (2026-11-15).** For the current English-learning Instagram Reel, the owner requested a Runway prompt that imagines the app's AI capabilities visually without using app screenshots. Use conceptual scenes grounded in actual features; this supersedes the real-screen creative requirement for this Reel only.
