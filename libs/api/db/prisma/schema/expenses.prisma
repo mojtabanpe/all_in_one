@@ -1,0 +1,47 @@
+// Applet: expenses (libs/applets/expenses): expense categories, expenses, budgets & reporting
+
+model ExpenseCategory {
+  id            String    @id @default(uuid(7)) @db.Uuid
+  userId        String    @db.Uuid
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String    @db.VarChar(80)
+  /// Optional slug for default starter categories (food, transport, bills, shopping, health, entertainment, other)
+  slug          String?   @db.VarChar(32)
+  /// Category colour token (emerald, blue, violet, amber, rose, cyan, slate)
+  color         String    @default("emerald") @db.VarChar(24)
+  /// Lucide icon name
+  icon          String    @default("lucideWallet") @db.VarChar(40)
+  /// Keywords/examples to help the decision model classify expenses into this category
+  keywords      String    @default("") @db.VarChar(500)
+  /// Optional monthly budget in Toman
+  monthlyBudget BigInt?
+  sortOrder     Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  expenses      Expense[]
+
+  @@index([userId, sortOrder])
+  @@map("expense_categories")
+}
+
+model Expense {
+  id         String          @id @default(uuid(7)) @db.Uuid
+  userId     String          @db.Uuid
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId String          @db.Uuid
+  category   ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  title      String          @db.VarChar(160)
+  /// Amount in Toman (positive integer)
+  amount     BigInt
+  /// Tehran calendar day (YYYY-MM-DD)
+  date       DateTime        @db.Date
+  note       String?         @db.VarChar(1000)
+  /// How the category was selected: 'user' | 'local' | 'jev' | 'chat' | 'keywords' | 'fallback'
+  decidedBy  String          @default("user") @db.VarChar(16)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@index([userId, date])
+  @@index([userId, categoryId, date])
+  @@map("expenses")
+}

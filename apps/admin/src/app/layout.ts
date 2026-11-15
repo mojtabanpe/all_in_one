@@ -19,6 +19,7 @@ import {
   lucideShieldCheck,
   lucideUsers,
   lucideSparkles,
+  lucideWallet,
 } from '@ng-icons/lucide';
 
 @Component({
@@ -42,6 +43,7 @@ import {
       lucideShieldCheck,
       lucideUsers,
       lucideSparkles,
+      lucideWallet,
     }),
   ],
   template: `
@@ -77,6 +79,7 @@ export class Layout {
   protected readonly nav: readonly AioNavItem[] = [
     { label: 'داشبورد', icon: 'lucideLayoutDashboard', link: '/', exact: true },
     { label: 'کاربران', icon: 'lucideUsers', link: '/users' },
+    { label: 'مدیریت مخارج', icon: 'lucideWallet', link: '/expenses' },
     { label: 'محتوا', icon: 'lucideLibrary', link: '/content' },
     { label: 'اشتراک', icon: 'lucideReceipt', link: '/billing' },
     { label: 'هوش مصنوعی', icon: 'lucideSparkles', link: '/ai' },

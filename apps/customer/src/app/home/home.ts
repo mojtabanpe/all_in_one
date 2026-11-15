@@ -35,6 +35,7 @@ import {
   lucideDumbbell,
   lucideLanguages,
   lucideSalad,
+  lucideWallet,
 } from '@ng-icons/lucide';
 
 /** Today at a glance, one card per applet. */
@@ -58,6 +59,7 @@ import {
       lucideDumbbell,
       lucideLanguages,
       lucideSalad,
+      lucideWallet,
     }),
   ],
   template: `
@@ -604,6 +606,19 @@ export class Home {
         value: `${this.locale.number(this.week.value()?.minutes ?? 0)} از ۱۵۰ دقیقه`,
         accent: 'applet-health',
       },
+      ...(this.auth.user()?.role === 'ADMIN'
+        ? [
+            {
+              title: 'مدیریت مخارج',
+              loading: false,
+              action: 'ثبت و گزارش مخارج',
+              icon: 'lucideWallet',
+              link: '/expenses',
+              value: 'بخش ویژه مدیر',
+              accent: 'applet-expenses',
+            },
+          ]
+        : []),
     ];
   });
 }

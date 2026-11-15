@@ -11,6 +11,7 @@ import { AiModule } from '@all-in-one/api/ai';
 import { AuthModule } from '@all-in-one/api/auth';
 import { PrismaModule } from '@all-in-one/api/db';
 import { EnglishApiModule } from '@all-in-one/applets/english-learning/api';
+import { ExpensesApiModule } from '@all-in-one/applets/expenses/api';
 import { HealthApiModule } from '@all-in-one/applets/health/api';
 import { PlannerApiModule } from '@all-in-one/applets/planner/api';
 import { envSchema } from '../config/env';
@@ -41,6 +42,7 @@ import { BillingModule } from '../billing/billing.module';
     PlannerApiModule,
     EnglishApiModule,
     HealthApiModule,
+    ExpensesApiModule,
     // ChatGPT connection and the in-app assistant (same tools)
     McpModule,
     AssistantModule,

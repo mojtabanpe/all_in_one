@@ -89,6 +89,18 @@ export const SCOPE_IN: readonly string[] = [
   "Is this correct: 'I didn't went there'?",
   'این پاراگراف انگلیسی رو اصلاح کن',
   'یادآور قسط بانک رو بذار برای اول ماه',
+  'امروز ۱۵۰ هزار تومن پول اسنپ دادم ثبتش کن',
+  'مخارج این ماهم چقدر شده؟',
+  'یک کتگوری جدید برای کافه و رستوران بساز',
+  'خرج ناهار امروز ۳۲۰ هزار تومان رو توی خوراک ثبت کن',
+  'گزارش مخارج هفتهٔ گذشته رو نشون بده',
+  'بیشترین خرجم این ماه روی کدوم دسته بوده؟',
+  'پول قبض اینترنت ۲۵۰ تومن رو به مخارج اضافه کن',
+  'خرید سوپرمارکت ۴۸۰ هزار تومن برای امروز ثبت کن',
+  'Log a 250,000 Toman expense for groceries today',
+  'How much did I spend on transport this month?',
+  'Add a new expense category for subscriptions',
+  'Show my spending report for the last 7 days',
 ];
 
 export const SCOPE_OUT: readonly string[] = [

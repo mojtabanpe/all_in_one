@@ -65,6 +65,14 @@ export const appRoutes: Route[] = [
         loadChildren: () =>
           import('@all-in-one/applets/health/web').then((m) => m.healthRoutes),
       },
+      {
+        path: 'expenses',
+        canActivate: [authGuard('ADMIN')],
+        loadChildren: () =>
+          import('@all-in-one/applets/expenses/web').then(
+            (m) => m.expensesRoutes,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

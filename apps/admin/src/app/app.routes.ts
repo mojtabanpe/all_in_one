@@ -48,6 +48,14 @@ export const appRoutes: Route[] = [
         loadComponent: () => import('./pages/content').then((m) => m.Content),
       },
       {
+        path: 'expenses',
+        title: 'مدیریت مخارج',
+        loadChildren: () =>
+          import('@all-in-one/applets/expenses/web').then(
+            (m) => m.expensesRoutes,
+          ),
+      },
+      {
         path: 'billing',
         title: 'پلن‌های اشتراک',
         loadComponent: () =>

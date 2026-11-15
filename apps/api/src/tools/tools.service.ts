@@ -31,7 +31,9 @@ import {
   TasksService,
   TickTickReconciliationService,
 } from '@all-in-one/applets/planner/api';
+import { ExpensesService } from '@all-in-one/applets/expenses/api';
 import { englishTools } from './english-tools';
+import { expensesTools } from './expenses-tools';
 import { healthBodyTools } from './health-body-tools';
 import { healthCoachTools } from './health-coach-tools';
 import { healthTools } from './health-tools';
@@ -65,6 +67,7 @@ export class ToolsService {
     private readonly body: BodyService,
     private readonly videoUpload: ExerciseVideoUploadService,
     private readonly onboarding: OnboardingService,
+    private readonly expenses: ExpensesService,
   ) {}
 
   register(sink: ToolSink): void {
@@ -222,5 +225,6 @@ export class ToolsService {
     );
     healthTools(sink, { health: this.health, ai: this.healthAi });
     healthBodyTools(sink, { body: this.body });
+    expensesTools(sink, { expenses: this.expenses });
   }
 }

@@ -81,6 +81,8 @@ model User {
   healthFasts     HealthFast[]
   mealLogs        MealLog[]
   mealPlans       MealPlan[]
+  expenseCategories ExpenseCategory[]
+  expenses          Expense[]
   aiSettings      UserAiSettings?
   aiPresets UserAiPreset[]
   aiUsage   AiUsageDay[]

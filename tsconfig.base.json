@@ -129,6 +129,15 @@
       "@all-in-one/applets/health/web": [
         "./libs/applets/health/web/src/index.ts"
       ],
+      "@all-in-one/applets/expenses/contracts": [
+        "./libs/applets/expenses/contracts/src/index.ts"
+      ],
+      "@all-in-one/applets/expenses/api": [
+        "./libs/applets/expenses/api/src/index.ts"
+      ],
+      "@all-in-one/applets/expenses/web": [
+        "./libs/applets/expenses/web/src/index.ts"
+      ],
       "@all-in-one/localization": [
         "./libs/shared/packages/localization/src/index.ts"
       ],

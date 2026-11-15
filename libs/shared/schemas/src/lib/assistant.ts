@@ -5,6 +5,7 @@ export const ASSISTANT_CONTEXTS = [
   'planner',
   'health',
   'english',
+  'expenses',
 ] as const;
 export type AssistantContext = (typeof ASSISTANT_CONTEXTS)[number];
 

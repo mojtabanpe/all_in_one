@@ -74,6 +74,11 @@ const SUGGESTIONS: Record<AssistantContext, string[]> = {
     'How many cards are due today?',
     'Create and save a B1 reading about sports',
   ],
+  expenses: [
+    'مخارج این ماهم چقدر شده؟',
+    '۸۵ هزار تومان خرید سوپرمارکت ثبت کن',
+    'بیشترین هزینه‌ام مربوط به چه دسته‌ای بوده؟',
+  ],
 };
 
 /** The conversation survives closing the sheet and switching pages (not reloads). */
@@ -329,6 +334,7 @@ export class Assistant implements OnDestroy {
         planner: 'applet-planner',
         health: 'applet-health',
         english: 'applet-english',
+        expenses: 'applet-expenses',
         home: '',
       })[this.context()],
   );

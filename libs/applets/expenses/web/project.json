@@ -1,0 +1,10 @@
+{
+  "name": "expenses-web",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/applets/expenses/web/src",
+  "prefix": "expenses",
+  "projectType": "library",
+  "tags": ["scope:web", "type:applet"],
+  "// targets": "to see all targets run: nx show project expenses-web --web",
+  "targets": {}
+}

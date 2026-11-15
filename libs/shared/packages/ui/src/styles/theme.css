@@ -152,6 +152,7 @@ html[lang='en'] *,
   /* 2026-11-01: health took the green, English moved to violet (owner). */
   --english: oklch(0.52 0.2 293);
   --health: oklch(0.53 0.15 152);
+  --expenses: oklch(0.55 0.16 168);
   --streak: oklch(0.56 0.14 62);
   --gem: oklch(0.54 0.14 235);
 
@@ -248,6 +249,19 @@ html[lang='en'] *,
   --lx-2: oklch(0.9 0.08 195 / 0.8);
   --lx-3: oklch(0.93 0.1 120 / 0.7);
   --lx-4: oklch(0.92 0.07 60 / 0.7);
+}
+
+.applet-expenses {
+  --primary: var(--expenses);
+  --primary-foreground: oklch(0.99 0 0);
+  --primary-edge: oklch(0.44 0.14 168);
+  --ring: var(--expenses);
+  --accent: oklch(0.55 0.16 168 / 0.12);
+  --accent-foreground: oklch(0.42 0.14 168);
+  --lx-1: oklch(0.88 0.12 168 / 0.9);
+  --lx-2: oklch(0.9 0.08 200 / 0.8);
+  --lx-3: oklch(0.92 0.09 130 / 0.75);
+  --lx-4: oklch(0.92 0.07 85 / 0.7);
 }
 
 /*

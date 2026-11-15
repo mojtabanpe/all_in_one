@@ -35,6 +35,39 @@ export function vote(vector: Float32Array, examples: readonly Example[]) {
   return total ? yes / total : 1;
 }
 
+export interface RankedCandidate {
+  id: string;
+  similarity: number;
+  probability: number;
+}
+
+/** Ranks candidate vectors against a query vector by cosine similarity and softmax probability. */
+export function rankVectors(
+  vector: Float32Array,
+  candidates: readonly { id: string; vector: Float32Array }[],
+): RankedCandidate[] {
+  if (!candidates.length) return [];
+  const scored = candidates
+    .map((candidate) => {
+      let similarity = 0;
+      for (let i = 0; i < vector.length; i++)
+        similarity += vector[i] * candidate.vector[i];
+      return { id: candidate.id, similarity };
+    })
+    .sort((a, b) => b.similarity - a.similarity);
+  let totalWeight = 0;
+  const weights = scored.map((item) => {
+    const weight = Math.exp(item.similarity * SHARPNESS);
+    totalWeight += weight;
+    return weight;
+  });
+  return scored.map((item, index) => ({
+    id: item.id,
+    similarity: item.similarity,
+    probability: totalWeight > 0 ? weights[index] / totalWeight : 0,
+  }));
+}
+
 /**
  * The local decision model: a small embedding model on our own server, so no request leaves it and nothing is
  * paid per call. It compares a request with the labelled examples in `scope-anchors.ts`. The model files are
@@ -45,6 +78,7 @@ export function vote(vector: Float32Array, examples: readonly Example[]) {
 export class LocalScopeClassifier {
   private readonly logger = new Logger(LocalScopeClassifier.name);
   private loading?: Promise<{ embed: Embed; examples: Example[] } | null>;
+  private readonly candidateCache = new Map<string, Float32Array>();
 
   constructor(private readonly config: ConfigService) {}
 
@@ -71,6 +105,34 @@ export class LocalScopeClassifier {
     const model = await this.load();
     if (!model) return null;
     return vote(await model.embed(text), model.examples);
+  }
+
+  /**
+   * Ranks candidate options (e.g. expense categories) against `text` using the local embedding model.
+   * Returns null when the local model is off or cannot be loaded.
+   */
+  async rankCandidates(
+    text: string,
+    candidates: readonly { id: string; text: string }[],
+  ): Promise<RankedCandidate[] | null> {
+    if (!this.enabled || !candidates.length) return null;
+    const model = await this.load();
+    if (!model) return null;
+    const queryVector = await model.embed(text);
+    const embedded: { id: string; vector: Float32Array }[] = [];
+    for (const candidate of candidates) {
+      let vec = this.candidateCache.get(candidate.text);
+      if (!vec) {
+        vec = await model.embed(candidate.text);
+        if (this.candidateCache.size >= 500) {
+          const oldest = this.candidateCache.keys().next().value;
+          if (oldest !== undefined) this.candidateCache.delete(oldest);
+        }
+        this.candidateCache.set(candidate.text, vec);
+      }
+      embedded.push({ id: candidate.id, vector: vec });
+    }
+    return rankVectors(queryVector, embedded);
   }
 
   private load() {

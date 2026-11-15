@@ -50,6 +50,7 @@ import {
   lucideLogOut,
   lucideUserRound,
   lucideSparkles,
+  lucideWallet,
 } from '@ng-icons/lucide';
 
 /** The trial reminder appears in the header this many days before it ends. */
@@ -82,6 +83,7 @@ const TRIAL_NOTICE_DAYS = 3;
       lucideLogOut,
       lucideUserRound,
       lucideSparkles,
+      lucideWallet,
     }),
   ],
   template: `
@@ -227,17 +229,30 @@ export class Layout {
   /** The assistant focuses on the applet the user is in. */
   protected readonly assistantContext = computed<AssistantContext>(() => {
     const first = this.url().split(/[/?#]/)[1];
-    return first === 'planner' || first === 'health' || first === 'english'
+    return first === 'planner' ||
+      first === 'health' ||
+      first === 'english' ||
+      first === 'expenses'
       ? first
       : 'home';
   });
 
-  protected readonly nav: readonly AioNavItem[] = [
-    { label: 'خانه', icon: 'lucideHouse', link: '/', exact: true },
-    { label: 'برنامه‌ریز', icon: 'lucideCalendarCheck', link: '/planner' },
-    { label: 'انگلیسی', icon: 'lucideLanguages', link: '/english' },
-    { label: 'سلامت', icon: 'lucideHeartPulse', link: '/health' },
-  ];
+  protected readonly nav = computed<readonly AioNavItem[]>(() => {
+    const items: AioNavItem[] = [
+      { label: 'خانه', icon: 'lucideHouse', link: '/', exact: true },
+      { label: 'برنامه‌ریز', icon: 'lucideCalendarCheck', link: '/planner' },
+      { label: 'انگلیسی', icon: 'lucideLanguages', link: '/english' },
+      { label: 'سلامت', icon: 'lucideHeartPulse', link: '/health' },
+    ];
+    if (this.auth.user()?.role === 'ADMIN') {
+      items.push({
+        label: 'مخارج',
+        icon: 'lucideWallet',
+        link: '/expenses',
+      });
+    }
+    return items;
+  });
 
   protected readonly english = this.locale.english;
   private readonly api = inject(API_BASE_URL);
@@ -267,14 +282,24 @@ export class Layout {
   protected readonly upgradeValues = computed(() => [
     this.locale.number(this.trialDays() ?? 0),
   ]);
-  protected readonly navigation = computed(() =>
-    this.english()
-      ? this.nav.map((item, i) => ({
+  protected readonly navigation = computed(() => {
+    const list = this.nav();
+    return this.english()
+      ? list.map((item) => ({
           ...item,
-          label: ['Home', 'Planner', 'English', 'Health'][i],
+          label:
+            item.link === '/planner'
+              ? 'Planner'
+              : item.link === '/english'
+                ? 'English'
+                : item.link === '/health'
+                  ? 'Health'
+                  : item.link === '/expenses'
+                    ? 'Expenses'
+                    : 'Home',
         }))
-      : this.nav,
-  );
+      : list;
+  });
 
   protected readonly paywall = inject(AiPaywall);
   private readonly inApp = inject(AioInAppNotifications);
