@@ -715,3 +715,5 @@ Rules:
 138. **Distinguish Android distributions in usage reports (2026-11-14).** Track Cafe Bazaar, Myket and the global/direct APK separately, alongside PWA and browser usage. Use the current store user-agent labels and native bridge so existing APKs do not need an update. Keep client usage independent of marketing campaign attribution; report observed app use, not verified installs or unique people, and preserve the analytics opt-out.
 
 139. **Conceptual English AI Instagram Reel (2026-11-15).** For the current English-learning Instagram Reel, the owner requested a Runway prompt that imagines the app's AI capabilities visually without using app screenshots. Use conceptual scenes grounded in actual features; this supersedes the real-screen creative requirement for this Reel only.
+
+140. **Persian-only AI Reel copy and voice (2026-11-15).** The owner specified that the current conceptual English-learning Instagram Reel must be in Persian: all editorial on-screen copy, captions, narration and any generated dialogue must be Persian. The subject is learning English, but do not add English advertising copy or English character dialogue. Refines 139.
