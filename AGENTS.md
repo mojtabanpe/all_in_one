@@ -246,7 +246,7 @@ origin master` and read the index and the roadmap; after work, update its status
 
 ## Native WebView shells (2026-10-31)
 
-30. Maintain an Android and macOS WebView shell for this repository in `/Users/mojtabanpe/Projects/personal/hybrid/Poshtetgarm`, following the existing shell in `/Users/mojtabanpe/Projects/personal/hybrid/Recall`. Use this project’s official Poshtetgarm logo for the native app icons; do not retain Recall branding.
+30. Maintain an Android and macOS WebView shell for this repository in `/Users/mojtabanpe/Projects/personal/hybrid/Poshtetgarm`, following the existing shell in `/Users/mojtabanpe/Projects/personal/hybrid/Recall`. Use this project’s official Poshtetgarm logo for the native app icons; do not retain Recall branding. **Location superseded by 155: the shell lives in `native/poshtetgarm` in this repository.**
 
 ## PWA installation (2026-10-31)
 
@@ -745,3 +745,5 @@ Rules:
 153. **Approved dinner-ad audio; show the man using Poshtetgarm (2026-11-16).** The owner approved the full audio preview («همین خوبه») and requested «فقط نشون بده مرد توی پشتت گرم میزنه». Preserve `/Users/mojtabanpe/Downloads/Poshtetgarm-Dinner-Dialogue-Audio-v3.mp3` unchanged. Proceed with visuals showing the man opening Poshtetgarm, using health and entering the recipe question. Retain the existing unlimited-only funding and no-publication limits. This satisfies the listening gate in 152; it does not authorize regenerating approved speech.
 
 154. **Morning tasks digest at 10:00 (2026-11-16).** The owner judged the proposed 08:30 default «خیلی زوده». The planner's morning digest of today's open tasks defaults to 10:00 Tehran time (`DAILY_TASKS_DEFAULT_TIME`); each user can still change it. Do not default a routine reminder to earlier than mid-morning without asking.
+
+155. **The native shell lives in this repository (2026-11-16).** The owner asked to correct directive 30 («دستور ۳۰ رو اصلاح کن») after the comparison showed `/Users/mojtabanpe/Projects/personal/hybrid/Poshtetgarm` is an older copy (1.0.2, no store billing, not a git repository). The Android and macOS WebView shell is maintained only in `native/poshtetgarm`; the `direct`, `bazaar` and `myket` APKs are built from it by the `Android APK` workflow on GitHub (the published 1.0.4 came from run 42482248309) and the store builds are signed with the release key held in GitHub secrets. Never build a release from the `hybrid` copy or edit it as the source. The Cafe Bazaar and Myket apps are WebViews of `https://poshtetgarm.ir/app`, so web releases reach them without a store update. The logo and branding rules of 30 stay.
