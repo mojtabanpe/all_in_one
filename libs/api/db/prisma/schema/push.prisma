@@ -42,7 +42,7 @@ model ProgressNotificationSetting {
   weekly Boolean @default(false)
   /// Morning digest of today's open tasks, at a Tehran wall-clock time.
   dailyTasks Boolean @default(false)
-  dailyTasksTime String @default("08:30")
+  dailyTasksTime String @default("10:00")
 
   @@map("progress_notification_settings")
 }

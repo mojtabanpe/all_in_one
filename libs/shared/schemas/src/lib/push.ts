@@ -52,7 +52,8 @@ export const reviewReminderSchema = z.object({
 });
 export type ReviewReminderSettings = z.infer<typeof reviewReminderSchema>;
 
-export const DAILY_TASKS_DEFAULT_TIME = '08:30';
+/** Mid-morning: the owner judged 08:30 too early (directive 154). */
+export const DAILY_TASKS_DEFAULT_TIME = '10:00';
 /** The daily-tasks fields are optional so an installed older client keeps saving its two switches. */
 export const progressNotificationSchema = z.strictObject({
   firstWeek: z.boolean(),

@@ -797,7 +797,7 @@ describe('daily tasks digest', () => {
       firstWeek: false,
       weekly: false,
       dailyTasks: false,
-      dailyTasksTime: '08:30',
+      dailyTasksTime: '10:00',
     });
     expect(
       progressNotificationSchema.safeParse({ firstWeek: true, weekly: false })
