@@ -818,6 +818,46 @@ export class VerifyEmailPage implements OnInit {
                   | aioTranslate
               }}
             </p>
+            <div class="flex min-h-11 items-center justify-between gap-3">
+              <label for="progress-dailyTasks">{{
+                'خلاصهٔ صبحگاهی کارهای امروز' | aioTranslate
+              }}</label>
+              <aio-switch
+                inputId="progress-dailyTasks"
+                [checked]="progress.value().dailyTasks"
+                [disabled]="progressSaving() || progress.isLoading()"
+                (checkedChange)="saveProgress('dailyTasks', $event)"
+              />
+            </div>
+            @if (progress.value().dailyTasks) {
+              <aio-form-field
+                label="ساعت خلاصهٔ صبحگاهی"
+                controlId="daily-tasks-time"
+              >
+                <input
+                  aioInput
+                  id="daily-tasks-time"
+                  type="time"
+                  required
+                  class="min-w-0 max-w-full"
+                  aria-describedby="daily-tasks-description"
+                  [value]="progress.value().dailyTasksTime"
+                  [disabled]="progressSaving() || progress.isLoading()"
+                  (change)="
+                    saveProgress('dailyTasksTime', $any($event.target).value)
+                  "
+                />
+                <p
+                  id="daily-tasks-description"
+                  class="text-muted-foreground text-xs"
+                >
+                  {{
+                    'به وقت تهران؛ فقط روزهایی که کار باز داری فرستاده می‌شود.'
+                      | aioTranslate
+                  }}
+                </p>
+              </aio-form-field>
+            }
           } @else if (progress.isLoading()) {
             <p role="status">
               {{ 'در حال دریافت تنظیم یادآوری…' | aioTranslate }}
@@ -880,11 +920,16 @@ export class AccountPage implements OnInit {
     { key: 'meals', label: 'وعده‌های ثبت‌شده' },
   ] as const;
 
-  protected async saveProgress(
-    key: keyof ProgressNotificationSettings,
-    value: boolean,
+  protected async saveProgress<K extends keyof ProgressNotificationSettings>(
+    key: K,
+    value: ProgressNotificationSettings[K],
   ) {
     if (this.progressSaving() || !this.progress.hasValue()) return;
+    if (
+      key === 'dailyTasksTime' &&
+      !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(value))
+    )
+      return;
     const previous = this.progress.value();
     const next = { ...previous, [key]: value };
     this.progressSaving.set(true);

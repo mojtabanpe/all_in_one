@@ -40,6 +40,9 @@ model ProgressNotificationSetting {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   firstWeek Boolean @default(false)
   weekly Boolean @default(false)
+  /// Morning digest of today's open tasks, at a Tehran wall-clock time.
+  dailyTasks Boolean @default(false)
+  dailyTasksTime String @default("08:30")
 
   @@map("progress_notification_settings")
 }

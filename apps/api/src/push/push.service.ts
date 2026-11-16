@@ -20,9 +20,11 @@ import type {
   PushSubscriptionInput,
   ReviewReminderSettings,
   NativePushInput,
+  ProgressNotificationInput,
   ProgressNotificationSettings,
   WeeklyProgress,
 } from '@all-in-one/shared/schemas';
+import { DAILY_TASKS_DEFAULT_TIME } from '@all-in-one/shared/schemas';
 import * as webpush from 'web-push';
 import { createHash } from 'node:crypto';
 import { NativePush } from './native-push';
@@ -33,6 +35,13 @@ export function reminderOffset(value: string): number | null {
   const minutes = Number(match[1] ?? 0) * 60 + Number(match[2] ?? 0);
   return minutes <= 7 * 1440 ? -minutes * 60000 : null;
 }
+const PROGRESS_FIELDS = {
+  firstWeek: true,
+  weekly: true,
+  dailyTasks: true,
+  dailyTasksTime: true,
+} as const;
+
 @Injectable()
 export class PushService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PushService.name);
@@ -217,21 +226,88 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
     return (
       (await this.db.progressNotificationSetting.findUnique({
         where: { userId },
-        select: { firstWeek: true, weekly: true },
-      })) ?? { firstWeek: false, weekly: false }
+        select: PROGRESS_FIELDS,
+      })) ?? {
+        firstWeek: false,
+        weekly: false,
+        dailyTasks: false,
+        dailyTasksTime: DAILY_TASKS_DEFAULT_TIME,
+      }
     );
   }
 
+  /** Fields an older client does not send keep their stored value. */
   async updateProgressSettings(
     userId: string,
-    input: ProgressNotificationSettings,
-  ) {
+    input: ProgressNotificationInput,
+  ): Promise<ProgressNotificationSettings> {
     return this.db.progressNotificationSetting.upsert({
       where: { userId },
       create: { userId, ...input },
       update: input,
-      select: { firstWeek: true, weekly: true },
+      select: PROGRESS_FIELDS,
     });
+  }
+
+  /**
+   * Morning digest of today's open tasks. Due from the chosen Tehran time for three hours, so a restart does
+   * not lose the morning and nothing arrives late in the day; skipped when the day has no open task.
+   */
+  private async sendDailyTasks(
+    subscriptions: (Parameters<PushService['send']>[0] & { userId: string })[],
+    today: string,
+    now: Date,
+  ) {
+    if (!subscriptions.length) return;
+    const settings = await this.db.progressNotificationSetting.findMany({
+      where: {
+        userId: { in: [...new Set(subscriptions.map((sub) => sub.userId))] },
+        dailyTasks: true,
+      },
+      select: { userId: true, dailyTasksTime: true },
+    });
+    for (const setting of settings) {
+      const due = zonedInstant(
+        today,
+        setting.dailyTasksTime,
+        'Asia/Tehran',
+      )?.getTime();
+      if (
+        due === undefined ||
+        now.getTime() < due ||
+        now.getTime() >= due + 3 * 3_600_000
+      )
+        continue;
+      const open = (
+        await this.tasks.filter(
+          setting.userId,
+          { from: today, to: today, status: 'open' },
+          true,
+        )
+      ).filter((task) => task.kind === 'TASK').length;
+      if (!open) continue;
+      const key = `daily-tasks:${today}`;
+      for (const sub of subscriptions.filter(
+        (s) => s.userId === setting.userId,
+      )) {
+        const claimed = await this.db.pushDelivery.createMany({
+          data: [{ subscriptionId: sub.id, key }],
+          skipDuplicates: true,
+        });
+        if (!claimed.count) continue;
+        const sent = await this.send(
+          sub,
+          'امروز {0} کار در برنامه‌ات داری',
+          '/app/planner',
+          key,
+          [open],
+        );
+        if (!sent)
+          await this.db.pushDelivery.deleteMany({
+            where: { subscriptionId: sub.id, key },
+          });
+      }
+    }
   }
 
   /** The last complete Saturday–Friday week in Tehran. */
@@ -413,10 +489,11 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
     title: string,
     url: string,
     tag: string,
+    values: readonly (string | number)[] = [],
   ) {
     const language = subscription.language === 'en' ? 'en' : 'fa';
     await loadMessages();
-    title = translateMessage(title, language);
+    title = translateMessage(title, language, values);
     try {
       if (subscription.platform && subscription.platform !== 'WEB') {
         if (!subscription.fcmToken) return false;
@@ -532,6 +609,17 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
         );
       } catch {
         this.logger.error('Progress notification sweep failed');
+      }
+      try {
+        await this.sendDailyTasks(
+          subscriptions.filter(
+            (sub) => sub.sessionVersion === sub.user.sessionVersion,
+          ),
+          today,
+          now,
+        );
+      } catch {
+        this.logger.error('Daily tasks digest sweep failed');
       }
       // Language reminders must not depend on planner queries succeeding.
       try {

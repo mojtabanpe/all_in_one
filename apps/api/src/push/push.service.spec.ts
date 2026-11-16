@@ -5,6 +5,7 @@ import {
   pushSubscriptionSchema,
   reviewReminderSchema,
   nativePushSchema,
+  progressNotificationSchema,
   removePushSchema,
 } from '@all-in-one/shared/schemas';
 import { PushService, reminderOffset } from './push.service';
@@ -575,7 +576,12 @@ describe('progress notifications', () => {
       .mockResolvedValueOnce(false)
       .mockResolvedValue(true);
     await service.tick(new Date('2026-11-07T14:29:00Z'));
-    expect(db.progressNotificationSetting.findMany).not.toHaveBeenCalled();
+    // Before the evening slot only the daily-tasks digest may read the settings.
+    expect(
+      db.progressNotificationSetting.findMany.mock.calls.filter(
+        ([query]) => !query.where.dailyTasks,
+      ),
+    ).toEqual([]);
     const slot = new Date('2026-11-07T14:30:00Z');
     await service.tick(slot);
     await service.tick(slot);
@@ -680,5 +686,137 @@ describe('progress notifications', () => {
         },
       },
     });
+  });
+});
+
+describe('daily tasks digest', () => {
+  function setup(tasks: { kind: string }[]) {
+    const keys = new Set<string>();
+    const db = {
+      progressNotificationSetting: {
+        findMany: vi.fn(async ({ where }) =>
+          where.dailyTasks ? [{ userId: 'u1', dailyTasksTime: '08:30' }] : [],
+        ),
+        findUnique: vi.fn().mockResolvedValue(null),
+        upsert: vi.fn(async ({ update }) => ({
+          firstWeek: true,
+          weekly: true,
+          dailyTasks: false,
+          dailyTasksTime: '08:30',
+          ...update,
+        })),
+      },
+      reviewReminderSetting: { findMany: vi.fn().mockResolvedValue([]) },
+      plannerHabit: { findMany: vi.fn().mockResolvedValue([]) },
+      pushSubscription: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: 'current',
+            userId: 'u1',
+            sessionVersion: 1,
+            user: { sessionVersion: 1 },
+          },
+          {
+            id: 'stale',
+            userId: 'u1',
+            sessionVersion: 0,
+            user: { sessionVersion: 1 },
+          },
+        ]),
+      },
+      pushDelivery: {
+        createMany: vi.fn(async ({ data: [row] }) => {
+          if (keys.has(row.key)) return { count: 0 };
+          keys.add(row.key);
+          return { count: 1 };
+        }),
+        deleteMany: vi.fn(async ({ where }) => ({
+          count: Number(keys.delete(where.key)),
+        })),
+      },
+    };
+    const filter = vi.fn().mockResolvedValue(tasks);
+    const service = new PushService(
+      db as unknown as PrismaService,
+      new ConfigService(),
+      { filter } as unknown as TasksService,
+    );
+    const send = vi.spyOn(service, 'send').mockResolvedValue(true);
+    return { db, service, send, filter };
+  }
+  const digests = (send: ReturnType<typeof setup>['send']) =>
+    send.mock.calls
+      .filter(([, , , key]) => String(key).startsWith('daily-tasks:'))
+      .map(([device, title, url, key, values]) => [
+        device.id,
+        title,
+        url,
+        key,
+        values,
+      ]);
+
+  it('sends once in the morning window with the number of open tasks', async () => {
+    const { service, send } = setup([
+      { kind: 'TASK' },
+      { kind: 'TASK' },
+      { kind: 'NOTE' },
+    ]);
+    // 08:30 Tehran is 05:00 UTC.
+    await service.tick(new Date('2026-11-17T04:59:00Z'));
+    expect(digests(send)).toEqual([]);
+    await service.tick(new Date('2026-11-17T05:00:00Z'));
+    await service.tick(new Date('2026-11-17T06:00:00Z'));
+    // Three hours later the morning is over.
+    await service.tick(new Date('2026-11-18T08:00:00Z'));
+    expect(digests(send)).toEqual([
+      [
+        'current',
+        'امروز {0} کار در برنامه‌ات داری',
+        '/app/planner',
+        'daily-tasks:2026-11-17',
+        [2],
+      ],
+    ]);
+  });
+
+  it('stays silent on a day without open tasks and retries a failed send', async () => {
+    const empty = setup([]);
+    await empty.service.tick(new Date('2026-11-17T05:00:00Z'));
+    expect(digests(empty.send)).toEqual([]);
+
+    const { service, send } = setup([{ kind: 'TASK' }]);
+    send.mockResolvedValueOnce(false);
+    await service.tick(new Date('2026-11-17T05:00:00Z'));
+    await service.tick(new Date('2026-11-17T05:01:00Z'));
+    expect(digests(send)).toHaveLength(2);
+  });
+
+  it('defaults to off and keeps fields an older client does not send', async () => {
+    const { db, service } = setup([]);
+    expect(await service.progressSettings('u1')).toEqual({
+      firstWeek: false,
+      weekly: false,
+      dailyTasks: false,
+      dailyTasksTime: '08:30',
+    });
+    expect(
+      progressNotificationSchema.safeParse({ firstWeek: true, weekly: false })
+        .success,
+    ).toBe(true);
+    expect(
+      progressNotificationSchema.safeParse({
+        firstWeek: true,
+        weekly: false,
+        dailyTasks: true,
+        dailyTasksTime: '25:00',
+      }).success,
+    ).toBe(false);
+    await service.updateProgressSettings('u1', {
+      firstWeek: true,
+      weekly: false,
+    });
+    expect(
+      db.progressNotificationSetting.upsert.mock.calls[0][0].update,
+    ).toEqual({ firstWeek: true, weekly: false });
   });
 });

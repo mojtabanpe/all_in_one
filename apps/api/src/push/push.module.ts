@@ -17,7 +17,7 @@ import {
   focusPushTimerSchema,
   pushSubscriptionSchema,
   progressNotificationSchema,
-  type ProgressNotificationSettings,
+  type ProgressNotificationInput,
   reviewReminderSchema,
   type ReviewReminderSettings,
   removePushSchema,
@@ -26,6 +26,7 @@ import {
   type NativePushInput,
 } from '@all-in-one/shared/schemas';
 import { PushService } from './push.service';
+import { TrialEndingPush } from './trial-ending';
 
 @Controller('push')
 class PushController {
@@ -47,7 +48,7 @@ class PushController {
   updateProgressSettings(
     @CurrentUser() user: AuthUser,
     @Body({ schema: progressNotificationSchema })
-    input: ProgressNotificationSettings,
+    input: ProgressNotificationInput,
   ) {
     return this.push.updateProgressSettings(user.id, input);
   }
@@ -102,7 +103,7 @@ class PushController {
 @Module({
   imports: [PrismaModule, PlannerApiModule],
   controllers: [PushController],
-  providers: [PushService],
+  providers: [PushService, TrialEndingPush],
   exports: [PushService],
 })
 export class PushModule {}

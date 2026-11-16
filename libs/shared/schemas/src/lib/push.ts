@@ -52,13 +52,21 @@ export const reviewReminderSchema = z.object({
 });
 export type ReviewReminderSettings = z.infer<typeof reviewReminderSchema>;
 
+export const DAILY_TASKS_DEFAULT_TIME = '08:30';
+/** The daily-tasks fields are optional so an installed older client keeps saving its two switches. */
 export const progressNotificationSchema = z.strictObject({
   firstWeek: z.boolean(),
   weekly: z.boolean(),
+  dailyTasks: z.optional(z.boolean()),
+  dailyTasksTime: z.optional(
+    z.string().check(z.regex(/^([01]\d|2[0-3]):[0-5]\d$/)),
+  ),
 });
-export type ProgressNotificationSettings = z.infer<
+export type ProgressNotificationInput = z.infer<
   typeof progressNotificationSchema
 >;
+/** `dailyTasks`: a morning digest of today's open tasks at `dailyTasksTime` (Tehran). */
+export type ProgressNotificationSettings = Required<ProgressNotificationInput>;
 
 export interface WeeklyProgress {
   from: string;

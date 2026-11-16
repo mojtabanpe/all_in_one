@@ -181,6 +181,13 @@ describe('welcome page', () => {
 
     await click('روشن کردن اعلان‌ها');
     expect(enable).toHaveBeenCalledTimes(1);
+    const progress = http.expectOne('/api/push/progress-settings');
+    expect(progress.request.body).toEqual({
+      firstWeek: true,
+      weekly: true,
+      dailyTasks: false,
+    });
+    progress.flush({});
     const reminder = http.expectOne('/api/push/review-settings');
     expect(reminder.request.body).toEqual({ enabled: true, time: '20:00' });
     reminder.flush({});

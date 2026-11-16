@@ -324,7 +324,7 @@ export function mealTypeAt(hour: number): MealType {
               </h1>
               <p aioCardDescription>
                 {{
-                  'اعلان‌ها را روشن کن تا یادآورها به دستت برسد. هر وقت خواستی از حساب کاربری خاموشش کن.'
+                  'اعلان‌ها را روشن کن تا یادآور روزانه و گزارش هفتگی‌ات به دستت برسد. هر وقت خواستی از حساب کاربری خاموشش کن.'
                     | aioTranslate
                 }}
               </p>
@@ -611,14 +611,26 @@ export class Welcome {
       this.reminderFailed.set(true);
       return;
     }
-    if (this.goal() === 'english')
-      // The daily review reminder is the reason to enable notifications for this goal.
-      await firstValueFrom(
-        this.http.put(`${this.api}/push/review-settings`, {
-          enabled: true,
-          time: '20:00',
+    // Saying yes here is the request for reminders: the first-week nudges and weekly report for everyone,
+    // plus the reminder that fits the chosen goal. Each can be turned off in the account.
+    const goal = this.goal();
+    await Promise.all([
+      firstValueFrom(
+        this.http.put(`${this.api}/push/progress-settings`, {
+          firstWeek: true,
+          weekly: true,
+          dailyTasks: goal === 'planner',
         }),
-      ).catch(() => undefined);
+      ).catch(() => undefined),
+      goal === 'english'
+        ? firstValueFrom(
+            this.http.put(`${this.api}/push/review-settings`, {
+              enabled: true,
+              time: '20:00',
+            }),
+          ).catch(() => undefined)
+        : undefined,
+    ]);
     this.notifications.success('اعلان‌ها روشن شد.');
     await this.finish();
   }

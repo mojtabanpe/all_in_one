@@ -4815,8 +4815,8 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ],
   ['قدم اول انجام شد.', 'First step done.'],
   [
-    'اعلان‌ها را روشن کن تا یادآورها به دستت برسد. هر وقت خواستی از حساب کاربری خاموشش کن.',
-    'Turn on notifications so reminders can reach you. You can turn them off in your account at any time.',
+    'اعلان‌ها را روشن کن تا یادآور روزانه و گزارش هفتگی‌ات به دستت برسد. هر وقت خواستی از حساب کاربری خاموشش کن.',
+    'Turn on notifications to get your daily reminder and weekly report. You can turn them off in your account at any time.',
   ],
   ['روشن کردن اعلان‌ها', 'Turn on notifications'],
   ['در حال فعال‌سازی', 'Turning on'],
@@ -4833,4 +4833,16 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['اول وعده را بنویس.', 'Write the meal first.'],
   ['مجموعه به کتابخانه‌ات اضافه شد.', 'The deck was added to your library.'],
   ['اعلان‌ها روشن شد.', 'Notifications are on.'],
+  // Daily tasks digest and trial-ending push.
+  ['امروز {0} کار در برنامه‌ات داری', 'You have {0} tasks planned for today'],
+  [
+    'دسترسی آزمایشی هوش مصنوعی‌ات فردا تمام می‌شود',
+    'Your AI trial access ends tomorrow',
+  ],
+  ['خلاصهٔ صبحگاهی کارهای امروز', 'Morning summary of today’s tasks'],
+  ['ساعت خلاصهٔ صبحگاهی', 'Morning summary time'],
+  [
+    'به وقت تهران؛ فقط روزهایی که کار باز داری فرستاده می‌شود.',
+    'Tehran time. Sent only on days when you have open tasks.',
+  ],
 ];

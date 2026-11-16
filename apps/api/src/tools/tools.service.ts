@@ -129,7 +129,7 @@ export class ToolsService {
       'get_progress_notifications',
       {
         description:
-          'Read the user’s opt-in settings for first-week and weekly progress notifications.',
+          'Read the user’s opt-in notification settings: first-week and weekly progress, and the morning digest of today’s open tasks (dailyTasks, at dailyTasksTime HH:mm in Asia/Tehran).',
         scope: 'planner:read',
         kind: 'read',
         input: {},
@@ -140,10 +140,18 @@ export class ToolsService {
       'set_progress_notifications',
       {
         description:
-          'Update first-week and weekly progress notifications. Enable an option only at the user’s explicit request. Preserve the other option unless they asked to change it. Sends at 18:00 Tehran time on subscribed devices.',
+          'Update first-week and weekly progress notifications and the morning digest of today’s open tasks. Enable an option only at the user’s explicit request. Preserve the other options unless they asked to change them. Progress sends at 18:00 Tehran time; the digest at dailyTasksTime (HH:mm, Asia/Tehran) and only on days with open tasks. Subscribed devices only.',
         scope: 'planner:write',
         kind: 'update',
-        input: { firstWeek: z.boolean(), weekly: z.boolean() },
+        input: {
+          firstWeek: z.boolean(),
+          weekly: z.boolean(),
+          dailyTasks: z.boolean().optional(),
+          dailyTasksTime: z
+            .string()
+            .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
+            .optional(),
+        },
       },
       async (args) =>
         this.push.updateProgressSettings(
