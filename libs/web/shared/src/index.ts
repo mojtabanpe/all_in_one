@@ -4,6 +4,7 @@ export * from './lib/api/restart-retry.interceptor';
 export * from './lib/api/restart-retry.interceptor';
 export * from './lib/auth/auth.guards';
 export * from './lib/auth/auth.store';
+export { PushSettings } from './lib/auth/push-settings';
 export * from './lib/auth/login-page';
 export * from './lib/format/fa';
 export * from './lib/auth/account-pages';

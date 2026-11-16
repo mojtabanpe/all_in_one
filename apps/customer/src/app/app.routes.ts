@@ -8,6 +8,7 @@ import {
   ResetPasswordPage,
   VerifyEmailPage,
 } from '@all-in-one/web/shared';
+import { welcomeGuard } from './welcome/welcome-gate';
 
 export const appRoutes: Route[] = [
   {
@@ -26,6 +27,12 @@ export const appRoutes: Route[] = [
   { path: 'reset-password', component: ResetPasswordPage, title: 'رمز تازه' },
   { path: 'verify-email', component: VerifyEmailPage, title: 'تأیید ایمیل' },
   {
+    path: 'welcome',
+    loadComponent: () => import('./welcome/welcome').then((m) => m.Welcome),
+    canActivate: [authGuard()],
+    title: 'شروع',
+  },
+  {
     path: '',
     loadComponent: () => import('./layout').then((m) => m.Layout),
     canActivate: [authGuard()],
@@ -43,11 +50,13 @@ export const appRoutes: Route[] = [
       },
       {
         path: '',
+        canActivate: [welcomeGuard],
         loadComponent: () => import('./home/home').then((m) => m.Home),
         title: 'Poshtetgarm',
       },
       {
         path: 'planner',
+        canActivate: [welcomeGuard],
         loadChildren: () =>
           import('@all-in-one/applets/planner/web').then(
             (m) => m.plannerRoutes,
@@ -55,6 +64,7 @@ export const appRoutes: Route[] = [
       },
       {
         path: 'english',
+        canActivate: [welcomeGuard],
         loadChildren: () =>
           import('@all-in-one/applets/english-learning/web').then(
             (m) => m.englishLearningRoutes,
@@ -62,6 +72,7 @@ export const appRoutes: Route[] = [
       },
       {
         path: 'health',
+        canActivate: [welcomeGuard],
         loadChildren: () =>
           import('@all-in-one/applets/health/web').then((m) => m.healthRoutes),
       },

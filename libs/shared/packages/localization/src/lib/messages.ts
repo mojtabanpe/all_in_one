@@ -4760,4 +4760,77 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'پیامک ارسال نشد. کمی بعد دوباره امتحان کن.',
     'The SMS was not sent. Try again in a little while.',
   ],
+
+  // First-session welcome page (customer /welcome).
+  ['از کجا شروع کنیم؟', 'Where shall we start?'],
+  [
+    'یکی را انتخاب کن تا اولین قدم را همین‌جا برداری. هر سه بخش همیشه در دسترس‌اند.',
+    'Pick one and take your first step right here. All three areas stay available.',
+  ],
+  [
+    'کارهای امروزت را بنویس و یکی‌یکی تیک بزن.',
+    'Write down today’s tasks and tick them off one by one.',
+  ],
+  [
+    'روزی چند دقیقه فلش‌کارت مرور کن تا لغت‌ها یادت بماند.',
+    'Review flashcards a few minutes a day so the words stick.',
+  ],
+  [
+    'وعده‌ها و تمرین‌هایت را ثبت کن و روزت را ببین.',
+    'Log your meals and workouts and see your day.',
+  ],
+  ['اولین کار امروزت چیست؟', 'What is your first task today?'],
+  [
+    'یکی از این‌ها را بردار یا کار خودت را بنویس. بعداً می‌توانی عوضش کنی.',
+    'Take one of these or write your own. You can change it later.',
+  ],
+  ['ده دقیقه پیاده‌روی', 'Walk for ten minutes'],
+  ['مرتب کردن میز کار', 'Tidy my desk'],
+  ['نوشتن سه کار مهم فردا', 'Write tomorrow’s three main tasks'],
+  ['کار خودم', 'My own task'],
+  ['مثلاً: تماس با دکتر', 'For example: call the doctor'],
+  ['ثبت برای امروز', 'Add for today'],
+  ['در حال ثبت', 'Saving'],
+  ['با کدام مجموعه شروع کنیم؟', 'Which deck shall we start with?'],
+  [
+    'یک مجموعهٔ آماده را بردار و همین حالا چند کارت مرور کن.',
+    'Take a ready-made deck and review a few cards right now.',
+  ],
+  ['مجموعه‌ها دریافت نشد.', 'The decks could not be loaded.'],
+  ['{0}، {1} کارت', '{0}, {1} cards'],
+  ['پایه', 'Elementary'],
+  ['بالاتر از متوسط', 'Upper intermediate'],
+  ['آخرین وعده‌ات چه بود؟', 'What was your last meal?'],
+  [
+    'همان‌طور که به یک دوست می‌گویی بنویس؛ کالری‌اش را برایت برآورد می‌کنیم.',
+    'Write it the way you would tell a friend; we will estimate its calories for you.',
+  ],
+  [
+    'همان‌طور که به یک دوست می‌گویی بنویس.',
+    'Write it the way you would tell a friend.',
+  ],
+  [
+    'مثلاً: یک بشقاب عدس‌پلو با ماست',
+    'For example: a plate of lentil rice with yogurt',
+  ],
+  ['قدم اول انجام شد.', 'First step done.'],
+  [
+    'اعلان‌ها را روشن کن تا یادآورها به دستت برسد. هر وقت خواستی از حساب کاربری خاموشش کن.',
+    'Turn on notifications so reminders can reach you. You can turn them off in your account at any time.',
+  ],
+  ['روشن کردن اعلان‌ها', 'Turn on notifications'],
+  ['در حال فعال‌سازی', 'Turning on'],
+  ['ادامه بدون اعلان', 'Continue without notifications'],
+  [
+    'ذخیره نشد؛ اتصال را بررسی کن و دوباره تلاش کن.',
+    'Not saved. Check your connection and try again.',
+  ],
+  [
+    'ثبت نشد؛ اتصال را بررسی کن و دوباره تلاش کن.',
+    'Not saved. Check your connection and try again.',
+  ],
+  ['اول کار را بنویس.', 'Write the task first.'],
+  ['اول وعده را بنویس.', 'Write the meal first.'],
+  ['مجموعه به کتابخانه‌ات اضافه شد.', 'The deck was added to your library.'],
+  ['اعلان‌ها روشن شد.', 'Notifications are on.'],
 ];
