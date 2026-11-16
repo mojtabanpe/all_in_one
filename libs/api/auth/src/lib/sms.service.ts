@@ -31,9 +31,9 @@ export const SMS_TEMPLATES = {
     code: '5O4Ya9gB3f',
     params: ['plan', 'expiry_date'],
   },
-  /** Reminder SMS for accounts with a phone and no push device (directives 148 and 149). */
-  REMINDER_START: { code: 'MThe3g4xrU', params: [] },
-  REMINDER_RETURN: { code: 'Y4Qm4Qf3pv', params: [] },
+  /** Informational notices for accounts with a phone and no push device (directives 148 and 150). */
+  ACCOUNT_READY: { code: 'MThe3g4xrU', params: [] },
+  DAILY_SUMMARY: { code: 'Y4Qm4Qf3pv', params: ['count'] },
   TRIAL_ENDING: { code: 'HAFXaRVsmQ', params: ['days'] },
 } as const;
 export type SmsTemplate = keyof typeof SMS_TEMPLATES;
