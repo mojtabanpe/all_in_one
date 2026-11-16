@@ -37,6 +37,10 @@ export function reminderOffset(value: string): number | null {
 export class PushService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PushService.name);
   private timer?: ReturnType<typeof setInterval>;
+  private readonly focusTimers = new Map<
+    string,
+    ReturnType<typeof setTimeout>
+  >();
   private running = false;
   private readonly native: NativePush;
   constructor(
@@ -65,16 +69,55 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
       }, 30000);
       this.timer.unref();
       void this.tick();
+      void this.armPendingFocusTimers();
     }
   }
   onModuleDestroy() {
     if (this.timer) clearInterval(this.timer);
+    for (const handle of this.focusTimers.values()) clearTimeout(handle);
+    this.focusTimers.clear();
+  }
+  private armFocusTimer(id: string, dueAt: Date) {
+    this.disarmFocusTimer(id);
+    if (!this.status().enabled && !this.native.enabled) return;
+    const delay = Math.min(
+      Math.max(0, dueAt.getTime() - Date.now()),
+      2_147_483_647,
+    );
+    const handle = setTimeout(() => {
+      this.focusTimers.delete(id);
+      void this.deliverFocusTimerById(id);
+    }, delay);
+    handle.unref();
+    this.focusTimers.set(id, handle);
+  }
+  private disarmFocusTimer(id: string) {
+    const handle = this.focusTimers.get(id);
+    if (handle) {
+      clearTimeout(handle);
+      this.focusTimers.delete(id);
+    }
+  }
+  private async armPendingFocusTimers() {
+    const pending = await this.db.focusPushTimer.findMany({
+      where: { dueAt: { gt: new Date() } },
+      select: { id: true, dueAt: true },
+    });
+    for (const t of pending) this.armFocusTimer(t.id, t.dueAt);
   }
   async scheduleFocus(userId: string, remainingMs: number) {
     const { sessionVersion } = await this.db.user.findUniqueOrThrow({
       where: { id: userId },
       select: { sessionVersion: true },
     });
+    const existing = await this.db.focusPushTimer.findMany({
+      where: { userId },
+      select: { id: true },
+    });
+    if (existing.length) {
+      for (const row of existing) this.disarmFocusTimer(row.id);
+      await this.db.focusPushTimer.deleteMany({ where: { userId } });
+    }
     const timer = await this.db.focusPushTimer.create({
       data: {
         userId,
@@ -82,12 +125,56 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
         dueAt: new Date(Date.now() + remainingMs),
       },
     });
+    this.armFocusTimer(timer.id, timer.dueAt);
     return { id: timer.id, dueAt: timer.dueAt.toISOString() };
   }
 
   async cancelFocus(userId: string, id: string) {
+    this.disarmFocusTimer(id);
     await this.db.focusPushTimer.deleteMany({ where: { id, userId } });
     return { ok: true };
+  }
+
+  async deliverFocusTimerById(id: string) {
+    const timer = await this.db.focusPushTimer.findUnique({
+      where: { id },
+      include: { user: { select: { sessionVersion: true } } },
+    });
+    if (!timer) return;
+    await this.deliverFocusTimer(timer);
+  }
+
+  private async deliverFocusTimer(timer: {
+    id: string;
+    userId: string;
+    sessionVersion: number;
+    user: { sessionVersion: number };
+  }) {
+    if (timer.sessionVersion !== timer.user.sessionVersion) return;
+    const subscriptions = await this.db.pushSubscription.findMany({
+      where: { userId: timer.userId, sessionVersion: timer.sessionVersion },
+    });
+    for (const sub of subscriptions) {
+      const key = `focus:${timer.id}`;
+      const claimed = await this.db.pushDelivery.createMany({
+        data: [{ subscriptionId: sub.id, key }],
+        skipDuplicates: true,
+      });
+      if (!claimed.count) continue;
+      // A pause/reset may have cancelled this timer during the sweep.
+      if (!(await this.db.focusPushTimer.count({ where: { id: timer.id } })))
+        continue;
+      const sent = await this.send(
+        sub,
+        'پومودورو تمام شد؛ وقت استراحت است.',
+        '/app/planner/focus',
+        key,
+      );
+      if (!sent)
+        await this.db.pushDelivery.deleteMany({
+          where: { subscriptionId: sub.id, key },
+        });
+    }
   }
 
   async sendFocusReminders(now: Date) {
@@ -97,31 +184,7 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
       include: { user: { select: { sessionVersion: true } } },
     });
     for (const timer of timers) {
-      if (timer.sessionVersion !== timer.user.sessionVersion) continue;
-      const subscriptions = await this.db.pushSubscription.findMany({
-        where: { userId: timer.userId, sessionVersion: timer.sessionVersion },
-      });
-      for (const sub of subscriptions) {
-        const key = `focus:${timer.id}`;
-        const claimed = await this.db.pushDelivery.createMany({
-          data: [{ subscriptionId: sub.id, key }],
-          skipDuplicates: true,
-        });
-        if (!claimed.count) continue;
-        // A pause/reset may have cancelled this timer during the sweep.
-        if (!(await this.db.focusPushTimer.count({ where: { id: timer.id } })))
-          continue;
-        const sent = await this.send(
-          sub,
-          'پومودورو تمام شد؛ وقت استراحت است.',
-          '/app/planner/focus',
-          key,
-        );
-        if (!sent)
-          await this.db.pushDelivery.deleteMany({
-            where: { subscriptionId: sub.id, key },
-          });
-      }
+      await this.deliverFocusTimer(timer);
     }
     await this.db.focusPushTimer.deleteMany({
       where: { dueAt: { lt: cutoff } },

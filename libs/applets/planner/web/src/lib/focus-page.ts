@@ -110,12 +110,7 @@ export class FocusTimer {
         );
       }
       const now = Date.now();
-      this.runStart.set(
-        this.deadline
-          ? new Date(this.deadline.dueAt).getTime() -
-              (this.minutes() * 60_000 - this.banked())
-          : now,
-      );
+      this.runStart.set(now);
       this.now.set(now);
       this.running.set(true);
       this.tick ??= setInterval(() => {
