@@ -129,7 +129,7 @@ export class ToolsService {
       'get_progress_notifications',
       {
         description:
-          'Read the user’s opt-in notification settings: first-week and weekly progress, and the morning digest of today’s open tasks (dailyTasks, at dailyTasksTime HH:mm in Asia/Tehran).',
+          'Read the user’s opt-in notification settings: first-week and weekly progress, and the morning digest of today’s open tasks (dailyTasks, at dailyTasksTime HH:mm in Asia/Tehran), and informational account SMS (sms).',
         scope: 'planner:read',
         kind: 'read',
         input: {},
@@ -140,13 +140,14 @@ export class ToolsService {
       'set_progress_notifications',
       {
         description:
-          'Update first-week and weekly progress notifications and the morning digest of today’s open tasks. Enable an option only at the user’s explicit request. Preserve the other options unless they asked to change them. Progress sends at 18:00 Tehran time; the digest at dailyTasksTime (HH:mm, Asia/Tehran) and only on days with open tasks. Subscribed devices only.',
+          'Update first-week and weekly progress notifications and the morning digest of today’s open tasks. Enable an option only at the user’s explicit request. Preserve the other options unless they asked to change them. Progress sends at 18:00 Tehran time; the digest at dailyTasksTime (HH:mm, Asia/Tehran) and only on days with open tasks. Subscribed devices only. `sms` turns the informational account SMS (sent only to accounts with a confirmed phone and no notification device) on or off.',
         scope: 'planner:write',
         kind: 'update',
         input: {
           firstWeek: z.boolean(),
           weekly: z.boolean(),
           dailyTasks: z.boolean().optional(),
+          sms: z.boolean().optional(),
           dailyTasksTime: z
             .string()
             .regex(/^([01]\d|2[0-3]):[0-5]\d$/)

@@ -10,7 +10,7 @@ import {
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { CurrentUser, type AuthUser } from '@all-in-one/api/auth';
+import { AuthModule, CurrentUser, type AuthUser } from '@all-in-one/api/auth';
 import { PrismaModule } from '@all-in-one/api/db';
 import { PlannerApiModule } from '@all-in-one/applets/planner/api';
 import {
@@ -26,6 +26,7 @@ import {
   type NativePushInput,
 } from '@all-in-one/shared/schemas';
 import { PushService } from './push.service';
+import { SmsNotices } from './sms-notices';
 import { TrialEndingPush } from './trial-ending';
 
 @Controller('push')
@@ -101,9 +102,9 @@ class PushController {
   }
 }
 @Module({
-  imports: [PrismaModule, PlannerApiModule],
+  imports: [AuthModule, PrismaModule, PlannerApiModule],
   controllers: [PushController],
-  providers: [PushService, TrialEndingPush],
+  providers: [PushService, TrialEndingPush, SmsNotices],
   exports: [PushService],
 })
 export class PushModule {}

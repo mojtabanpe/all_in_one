@@ -798,6 +798,7 @@ describe('daily tasks digest', () => {
       weekly: false,
       dailyTasks: false,
       dailyTasksTime: '10:00',
+      sms: true,
     });
     expect(
       progressNotificationSchema.safeParse({ firstWeek: true, weekly: false })

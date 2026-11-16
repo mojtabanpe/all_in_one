@@ -43,8 +43,21 @@ model ProgressNotificationSetting {
   /// Morning digest of today's open tasks, at a Tehran wall-clock time.
   dailyTasks Boolean @default(false)
   dailyTasksTime String @default("10:00")
+  /// Informational account SMS (directive 150) for accounts without a push device.
+  sms Boolean @default(true)
 
   @@map("progress_notification_settings")
+}
+
+/// One informational SMS of each kind per account, ever (directives 148 and 150).
+model SmsNotice {
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind String @db.VarChar(32)
+  createdAt DateTime @default(now())
+
+  @@id([userId, kind])
+  @@map("sms_notices")
 }
 
 /// A running Pomodoro's deadline survives suspended browsers and API restarts.

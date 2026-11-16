@@ -59,6 +59,8 @@ export const progressNotificationSchema = z.strictObject({
   firstWeek: z.boolean(),
   weekly: z.boolean(),
   dailyTasks: z.optional(z.boolean()),
+  /** Informational account SMS when the account has a phone and no push device. */
+  sms: z.optional(z.boolean()),
   dailyTasksTime: z.optional(
     z.string().check(z.regex(/^([01]\d|2[0-3]):[0-5]\d$/)),
   ),

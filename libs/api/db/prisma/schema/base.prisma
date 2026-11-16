@@ -44,6 +44,7 @@ model User {
   pushSubscriptions PushSubscription[]
   reviewReminder ReviewReminderSetting?
   progressNotification ProgressNotificationSetting?
+  smsNotices SmsNotice[]
   passwordResets     PasswordReset[]
   phoneCodes         PhoneCode[]
   emailVerifications EmailVerification[]

@@ -819,6 +819,23 @@ export class VerifyEmailPage implements OnInit {
               }}
             </p>
             <div class="flex min-h-11 items-center justify-between gap-3">
+              <label for="progress-sms">{{
+                'پیامک‌های اطلاع‌رسانی حساب' | aioTranslate
+              }}</label>
+              <aio-switch
+                inputId="progress-sms"
+                [checked]="progress.value().sms"
+                [disabled]="progressSaving() || progress.isLoading()"
+                (checkedChange)="saveProgress('sms', $event)"
+              />
+            </div>
+            <p class="text-muted-foreground text-sm">
+              {{
+                'فقط وقتی شمارهٔ تأییدشده داری و اعلان هیچ دستگاهی روشن نیست، حداکثر سه پیامک دربارهٔ حسابت می‌فرستیم.'
+                  | aioTranslate
+              }}
+            </p>
+            <div class="flex min-h-11 items-center justify-between gap-3">
               <label for="progress-dailyTasks">{{
                 'خلاصهٔ صبحگاهی کارهای امروز' | aioTranslate
               }}</label>

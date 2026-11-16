@@ -15,7 +15,6 @@ import {
   toIsoDate,
   type AppApplet,
   type OnboardingState,
-  type OnboardingGoal,
 } from '@all-in-one/shared/schemas';
 import {
   AioTranslate,
@@ -30,10 +29,17 @@ import {
   AioSkeletonRows,
   AioLocale,
 } from '@all-in-one/ui';
-import { API_BASE_URL, AuthStore } from '@all-in-one/web/shared';
+import {
+  API_BASE_URL,
+  AssistantStore,
+  AuthStore,
+  PushSettings,
+} from '@all-in-one/web/shared';
 import {
   lucideCalendarCheck,
   lucideChevronLeft,
+  lucideCircle,
+  lucideCircleCheck,
   lucideDumbbell,
   lucideLanguages,
   lucideSalad,
@@ -58,6 +64,8 @@ import {
     provideIcons({
       lucideCalendarCheck,
       lucideChevronLeft,
+      lucideCircle,
+      lucideCircleCheck,
       lucideDumbbell,
       lucideLanguages,
       lucideSalad,
@@ -83,131 +91,54 @@ import {
           {{ 'راهنمای نصب' | aioTranslate }}
         </a>
       </header>
-      <!-- Optional guide, for accounts that have not used the app yet: nothing while loading or on error,
-           so returning users never see it flash in and out. -->
-      @if (onboarding.hasValue() && !onboarding.value().established) {
-        <section aioCard aria-labelledby="onboarding-heading">
+      <!-- First-week checklist: nothing while loading or on error, so returning users never see it flash. -->
+      @if (firstWeek(); as steps) {
+        <section aioCard aria-labelledby="first-week-heading">
           <div aioCardHeader>
-            <h2 aioCardTitle id="onboarding-heading">
-              {{ 'قدم اول را انتخاب کن' | aioTranslate }}
+            <h2 aioCardTitle id="first-week-heading">
+              {{ 'هفتهٔ اول تو' | aioTranslate }}
             </h2>
             <p aioCardDescription>
               {{
-                'یک هدف کوچک برای شروع؛ هر سه بخش همیشه در دسترس‌اند.'
+                'سه قدم کوچک تا Poshtetgarm واقعاً به کارت بیاید.'
                   | aioTranslate
               }}
             </p>
           </div>
-          <div aioCardContent>
-            @if (onboarding.hasValue()) {
-              @if (
-                editingGoal() ||
-                (!onboarding.value().goal && !onboarding.value().skipped)
-              ) {
-                <div
-                  class="grid gap-3 md:grid-cols-3"
-                  [attr.aria-busy]="savingGoal()"
-                >
-                  @for (goal of goals; track goal.id) {
-                    <button
-                      aioBtn
-                      variant="outline"
-                      type="button"
-                      class="h-auto min-h-28 flex-col items-start gap-2 whitespace-normal p-4 text-start"
-                      [disabled]="savingGoal()"
-                      (click)="chooseGoal(goal.id)"
-                    >
-                      <span class="flex items-center gap-2"
-                        ><aio-icon [name]="goal.icon" />{{
-                          goal.title | aioTranslate
-                        }}</span
-                      >
-                      <span
-                        class="text-sm font-normal leading-6 text-muted-foreground"
-                        >{{ goal.description | aioTranslate }}</span
-                      >
-                    </button>
+          <ul aioCardContent class="flex flex-col gap-3">
+            @for (step of steps; track step.id) {
+              <li
+                class="flex min-h-11 flex-wrap items-center justify-between gap-3"
+              >
+                <span class="flex items-center gap-2">
+                  <aio-icon
+                    [name]="step.done ? 'lucideCircleCheck' : 'lucideCircle'"
+                    [class]="
+                      step.done ? 'text-primary' : 'text-muted-foreground'
+                    "
+                  />
+                  <span [class.text-muted-foreground]="step.done">{{
+                    step.label | aioTranslate
+                  }}</span>
+                  @if (step.done) {
+                    <span class="sr-only">{{ 'انجام شد' | aioTranslate }}</span>
                   }
-                </div>
-                <button
-                  aioBtn
-                  variant="ghost"
-                  type="button"
-                  class="mt-3 min-h-11"
-                  [disabled]="savingGoal()"
-                  (click)="chooseGoal(null)"
-                >
-                  {{ 'فعلاً بدون راهنما ادامه می‌دهم' | aioTranslate }}
-                </button>
-              } @else if (onboarding.value().completed) {
-                <p class="leading-7">
-                  {{
-                    'قدم اولت انجام شد. با یک قدم کوچک دیگر در روز بعد ادامه بده.'
-                      | aioTranslate
-                  }}
-                </p>
-                <button
-                  aioBtn
-                  variant="ghost"
-                  type="button"
-                  class="mt-3 min-h-11"
-                  (click)="editingGoal.set(true)"
-                >
-                  {{ 'انتخاب هدف تازه' | aioTranslate }}
-                </button>
-              } @else if (selectedGoal(); as goal) {
-                <p class="font-semibold">{{ goal.title | aioTranslate }}</p>
-                <p class="mt-2 text-sm leading-7 text-muted-foreground">
-                  {{ goal.description | aioTranslate }}
-                </p>
-                <div class="mt-4 flex flex-wrap gap-3">
-                  <a
-                    aioBtn
-                    [routerLink]="goal.link"
-                    queryParamsHandling="preserve"
-                    >{{ goal.action | aioTranslate }}</a
-                  >
+                </span>
+                @if (!step.done) {
                   <button
                     aioBtn
                     variant="outline"
                     type="button"
-                    [disabled]="savingGoal()"
-                    (click)="editingGoal.set(true)"
+                    class="min-h-11"
+                    [disabled]="push.busy()"
+                    (click)="doStep(step.id)"
                   >
-                    {{ 'تغییر هدف' | aioTranslate }}
+                    {{ step.action | aioTranslate }}
                   </button>
-                  <button
-                    aioBtn
-                    variant="ghost"
-                    type="button"
-                    [disabled]="savingGoal()"
-                    (click)="chooseGoal(null)"
-                  >
-                    {{ 'فعلاً بدون راهنما ادامه می‌دهم' | aioTranslate }}
-                  </button>
-                </div>
-              } @else {
-                <button
-                  aioBtn
-                  variant="outline"
-                  type="button"
-                  (click)="editingGoal.set(true)"
-                >
-                  {{ 'باز کردن راهنمای شروع' | aioTranslate }}
-                </button>
-              }
-              @if (savingGoal()) {
-                <p class="mt-3 text-sm" role="status">
-                  {{ 'در حال ذخیرهٔ هدف' | aioTranslate }}
-                </p>
-              }
-              @if (goalError()) {
-                <p class="mt-3 text-sm text-destructive" role="alert">
-                  {{ 'انتخابت ذخیره نشد. دوباره تلاش کن.' | aioTranslate }}
-                </p>
-              }
+                }
+              </li>
             }
-          </div>
+          </ul>
         </section>
       }
       <section
@@ -493,65 +424,91 @@ export class Home {
   protected readonly onboarding = httpResource<OnboardingState>(
     () => `${this.api}/onboarding`,
   );
-  protected readonly editingGoal = signal(false);
-  protected readonly savingGoal = signal(false);
-  protected readonly goalError = signal(false);
-  protected readonly goals = [
-    {
-      id: 'planner',
-      title: 'روز منظم‌تر',
-      description: 'در برنامه‌ریز، یک کار کوچک برای امروز بنویس و ذخیره کن.',
-      action: 'ساخت اولین کار',
-      icon: 'lucideCalendarCheck',
-      link: '/planner',
-    },
-    {
-      id: 'english',
-      title: 'تمرین روزانهٔ زبان',
-      description:
-        'یک مجموعهٔ آماده به کتابخانه اضافه کن، سپس اولین کارت را مرور کن.',
-      action: 'رفتن به کتابخانهٔ زبان',
-      icon: 'lucideLanguages',
-      link: '/english',
-    },
-    {
-      id: 'health',
-      title: 'ثبت عادت‌های سلامت',
-      description:
-        'در بخش سلامت، یک وعده را با دکمهٔ ثبت کنار آن اضافه کن؛ ثبت یک ورزش هم قدم اول را کامل می‌کند.',
-      action: 'ثبت اولین فعالیت سلامت',
-      icon: 'lucideSalad',
-      link: '/health',
-    },
-  ] as const;
-  protected readonly selectedGoal = computed(() =>
-    this.goals.find(
-      (goal) =>
-        this.onboarding.hasValue() && goal.id === this.onboarding.value().goal,
-    ),
+  protected readonly push = inject(PushSettings);
+  private readonly assistant = inject(AssistantStore);
+  private readonly storage = this.document.defaultView?.localStorage;
+  private readonly assistantKey = computed(
+    () => `aio_first_week_assistant:${this.auth.user()?.id ?? ''}`,
   );
-
-  protected async chooseGoal(goal: OnboardingGoal | null): Promise<void> {
-    if (this.savingGoal()) return;
-    this.savingGoal.set(true);
-    this.goalError.set(false);
+  private readonly askedAssistant = signal(false);
+  /** The three first-week steps, or null once they are done or the first week is over. */
+  protected readonly firstWeek = computed(() => {
+    const user = this.auth.user();
+    if (!user || !this.onboarding.hasValue()) return null;
+    if (Date.now() - Date.parse(user.createdAt) > 7 * 86_400_000) return null;
+    const state = this.onboarding.value();
+    let asked = this.askedAssistant();
     try {
-      const state = await firstValueFrom(
-        this.http.put<OnboardingState>(`${this.api}/onboarding`, { goal }),
-      );
-      this.onboarding.set(state);
-      this.editingGoal.set(false);
+      asked ||= this.storage?.getItem(this.assistantKey()) === '1';
     } catch {
-      this.goalError.set(true);
-      return;
-    } finally {
-      this.savingGoal.set(false);
+      /* Private mode: the step simply stays open. */
     }
-    const selected = this.goals.find((item) => item.id === goal);
-    if (selected)
-      await this.router.navigate([selected.link], {
-        queryParamsHandling: 'preserve',
+    const steps = [
+      {
+        id: 'first',
+        label: 'اولین قدم را بردار',
+        action: 'شروع',
+        done: state.completed || state.established,
+      },
+      ...(this.push.supported
+        ? [
+            {
+              id: 'reminders',
+              label: 'یادآورها را روشن کن',
+              action: 'روشن کردن',
+              done: this.push.enabled(),
+            } as const,
+          ]
+        : []),
+      {
+        id: 'assistant',
+        label: 'یک کار را به دستیار بسپار',
+        action: 'پرسیدن از دستیار',
+        done: asked,
+      },
+    ] as const;
+    return steps.every((step) => step.done) ? null : steps;
+  });
+
+  protected async doStep(id: 'first' | 'reminders' | 'assistant') {
+    if (id === 'first') {
+      await this.router.navigate(['/welcome'], {
+        queryParams: { restart: 1 },
       });
+    } else if (id === 'reminders') {
+      await this.push.enable();
+      if (!this.push.enabled()) {
+        this.notifications.info(this.push.message());
+        return;
+      }
+      // Fields left out keep their value (the morning digest stays as the user set it).
+      await firstValueFrom(
+        this.http.put(`${this.api}/push/progress-settings`, {
+          firstWeek: true,
+          weekly: true,
+        }),
+      ).catch(() => undefined);
+      this.notifications.success('اعلان‌ها روشن شد.');
+    } else {
+      const goal = this.onboarding.hasValue()
+        ? this.onboarding.value().goal
+        : null;
+      this.assistant.ask(
+        this.locale.text(
+          goal === 'english'
+            ? 'امروز کدام کارت‌ها را مرور کنم؟'
+            : goal === 'health'
+              ? 'برای شام امشب یک پیشنهاد سالم بده.'
+              : 'سه کار مهم فردا را برایم در برنامه بگذار.',
+        ),
+      );
+      this.askedAssistant.set(true);
+      try {
+        this.storage?.setItem(this.assistantKey(), '1');
+      } catch {
+        /* Private mode: the step reopens on the next visit. */
+      }
+    }
   }
   private readonly today = toIsoDate(new Date());
   protected readonly todayLabel = computed(() =>

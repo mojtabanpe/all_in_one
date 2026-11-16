@@ -1,6 +1,6 @@
 import { HttpClient, httpResource } from '@angular/common/http';
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import type {
   Deck,
   StarterDeck,
@@ -406,6 +406,8 @@ export class Welcome {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly notifications = inject(AioNotifications);
+  private readonly restart =
+    inject(ActivatedRoute).snapshot.queryParamMap.has('restart');
 
   protected readonly levelNames = LEVEL_NAMES;
   protected readonly goalSkeleton = [
@@ -478,8 +480,12 @@ export class Welcome {
     effect(() => {
       if (
         this.state.hasValue() &&
-        !needsWelcome(this.state.value()) &&
-        !this.target()
+        !this.target() &&
+        !needsWelcome({
+          ...this.state.value(),
+          // Reopened from the first-week card by an account that skipped the guide earlier.
+          skipped: this.state.value().skipped && !this.restart,
+        })
       )
         void this.router.navigateByUrl('/');
     });

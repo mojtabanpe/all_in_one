@@ -40,6 +40,7 @@ const PROGRESS_FIELDS = {
   weekly: true,
   dailyTasks: true,
   dailyTasksTime: true,
+  sms: true,
 } as const;
 
 @Injectable()
@@ -232,6 +233,7 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
         weekly: false,
         dailyTasks: false,
         dailyTasksTime: DAILY_TASKS_DEFAULT_TIME,
+        sms: true,
       }
     );
   }

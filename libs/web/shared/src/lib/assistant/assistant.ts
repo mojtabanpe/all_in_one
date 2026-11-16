@@ -7,6 +7,7 @@ import {
   booleanAttribute,
   Component,
   computed,
+  effect,
   ElementRef,
   inject,
   Injectable,
@@ -86,6 +87,11 @@ const SUGGESTIONS: Record<AssistantContext, string[]> = {
 export class AssistantStore {
   readonly messages = signal<Message[]>([]);
   readonly englishMessages = signal<Message[]>([]);
+  /** A question another page wants to put in the composer; the open assistant takes it and clears it. */
+  readonly prompt = signal<string | null>(null);
+  ask(text: string): void {
+    this.prompt.set(text);
+  }
 }
 
 /**
@@ -317,6 +323,14 @@ export class Assistant implements OnDestroy {
   protected readonly open = signal(false);
   protected readonly busy = signal(false);
   protected readonly draft = signal('');
+  /** Opens with a prepared question; the user still reads it and presses send. */
+  private readonly prompted = effect(() => {
+    const prompt = this.store.prompt();
+    if (prompt === null) return;
+    this.draft.set(prompt);
+    this.open.set(true);
+    this.store.prompt.set(null);
+  });
   protected readonly recording = signal(false);
   private changed = false;
   private recorder: MediaRecorder | null = null;

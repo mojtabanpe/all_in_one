@@ -4845,4 +4845,29 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'به وقت تهران؛ فقط روزهایی که کار باز داری فرستاده می‌شود.',
     'Tehran time. Sent only on days when you have open tasks.',
   ],
+  // First-week checklist and informational SMS setting.
+  ['هفتهٔ اول تو', 'Your first week'],
+  [
+    'سه قدم کوچک تا Poshtetgarm واقعاً به کارت بیاید.',
+    'Three small steps to make Poshtetgarm really useful to you.',
+  ],
+  ['اولین قدم را بردار', 'Take your first step'],
+  ['یادآورها را روشن کن', 'Turn on reminders'],
+  ['روشن کردن', 'Turn on'],
+  ['یک کار را به دستیار بسپار', 'Hand one task to the assistant'],
+  ['پرسیدن از دستیار', 'Ask the assistant'],
+  ['امروز کدام کارت‌ها را مرور کنم؟', 'Which cards should I review today?'],
+  [
+    'برای شام امشب یک پیشنهاد سالم بده.',
+    'Suggest a healthy dinner for tonight.',
+  ],
+  [
+    'سه کار مهم فردا را برایم در برنامه بگذار.',
+    'Put tomorrow’s three most important tasks in my plan.',
+  ],
+  ['پیامک‌های اطلاع‌رسانی حساب', 'Account information SMS'],
+  [
+    'فقط وقتی شمارهٔ تأییدشده داری و اعلان هیچ دستگاهی روشن نیست، حداکثر سه پیامک دربارهٔ حسابت می‌فرستیم.',
+    'Only when you have a confirmed number and no device has notifications on, we send at most three SMS about your account.',
+  ],
 ];
