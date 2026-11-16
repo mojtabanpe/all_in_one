@@ -84,4 +84,4 @@ export function cardMaterial(_card: HlmCard): void {
 
 /** For `aio-native-select`, which passes it to spartan's `selectClass`. */
 export const NATIVE_SELECT_MATERIAL =
-  'h-11 w-full min-w-0 max-w-full truncate border-input bg-card ps-3.5 shadow-input';
+  'h-11 w-full min-w-0 max-w-full truncate border-input bg-card ps-3.5 text-base md:text-sm shadow-input';

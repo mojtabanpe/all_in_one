@@ -330,7 +330,7 @@ interface BatchExpenseDraft {
               [(ngModel)]="searchQuery"
               (ngModelChange)="onSearchChange()"
               placeholder="جستجو در عنوان یا یادداشت..."
-              class="h-8 w-44 rounded-lg border border-input/60 bg-background/50 pr-7 pl-2 text-xs outline-none focus:w-56 focus:border-primary transition-all"
+              class="h-8 w-44 max-w-full rounded-lg border border-input/60 bg-background/50 pr-7 pl-2 text-xs outline-none focus:w-56 focus:border-primary transition-all"
             />
             <span
               class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"

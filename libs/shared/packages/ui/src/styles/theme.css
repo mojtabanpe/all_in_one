@@ -40,6 +40,18 @@
 /* Keep the application frame in place while routes, fonts and data load. */
 html {
   scrollbar-gutter: stable;
+  overflow-x: clip;
+}
+body {
+  overflow-x: clip;
+}
+/* Prevent iOS Safari / mobile WebView auto-zoom on input focus (requires >= 16px). */
+@media (max-width: 767px), (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  textarea,
+  select {
+    font-size: max(16px, 1rem) !important;
+  }
 }
 .aio-route-content,
 .aio-route-loading {
