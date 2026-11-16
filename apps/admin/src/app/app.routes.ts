@@ -50,10 +50,8 @@ export const appRoutes: Route[] = [
       {
         path: 'expenses',
         title: 'مدیریت مخارج',
-        loadChildren: () =>
-          import('@all-in-one/applets/expenses/web').then(
-            (m) => m.expensesRoutes,
-          ),
+        loadComponent: () =>
+          import('./pages/expenses-admin').then((m) => m.ExpensesAdminPage),
       },
       {
         path: 'billing',

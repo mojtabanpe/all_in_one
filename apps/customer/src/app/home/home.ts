@@ -11,7 +11,9 @@ import type {
 import type { PlannerTask } from '@all-in-one/applets/planner/contracts';
 import {
   GROWTH_REFERRAL_SOURCE,
+  resolveEnabledApplets,
   toIsoDate,
+  type AppApplet,
   type OnboardingState,
   type OnboardingGoal,
 } from '@all-in-one/shared/schemas';
@@ -244,33 +246,39 @@ import {
         <div
           class="grid grid-cols-3 gap-3 rounded-2xl border border-white/15 bg-white/5 px-4 py-4 md:flex md:flex-col md:gap-0 md:px-5 md:py-2"
         >
-          <div
-            class="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center md:border-b md:border-white/10 md:py-5"
-            aioMetric
-            [label]="'کارهای باقی‌مانده' | aioTranslate"
-            [value]="tasks.error() ? '—' : fa(openTasks().length)"
-            [loading]="tasks.isLoading() && !tasks.hasValue()"
-            labelClass="aio-hero-stat-label"
-            valueClass="min-h-9 min-w-[2ch] text-3xl tabular-nums"
-          ></div>
-          <div
-            class="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center md:border-b md:border-white/10 md:py-5"
-            aioMetric
-            [label]="'کارت‌های آماده مرور' | aioTranslate"
-            [value]="english.error() ? '—' : fa(english.value()?.due ?? 0)"
-            [loading]="english.isLoading() && !english.hasValue()"
-            labelClass="aio-hero-stat-label"
-            valueClass="min-h-9 min-w-[2ch] text-3xl tabular-nums"
-          ></div>
-          <div
-            class="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center md:py-5"
-            aioMetric
-            [label]="'دقیقه فعالیت این هفته' | aioTranslate"
-            [value]="week.error() ? '—' : fa(week.value()?.minutes ?? 0)"
-            [loading]="week.isLoading() && !week.hasValue()"
-            labelClass="aio-hero-stat-label"
-            valueClass="min-h-9 min-w-[2ch] text-3xl tabular-nums"
-          ></div>
+          @if (hasApplet('planner')) {
+            <div
+              class="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center md:border-b md:border-white/10 md:py-5"
+              aioMetric
+              [label]="'کارهای باقی‌مانده' | aioTranslate"
+              [value]="tasks.error() ? '—' : fa(openTasks().length)"
+              [loading]="tasks.isLoading() && !tasks.hasValue()"
+              labelClass="aio-hero-stat-label"
+              valueClass="min-h-9 min-w-[2ch] text-3xl tabular-nums"
+            ></div>
+          }
+          @if (hasApplet('english')) {
+            <div
+              class="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center md:border-b md:border-white/10 md:py-5"
+              aioMetric
+              [label]="'کارت‌های آماده مرور' | aioTranslate"
+              [value]="english.error() ? '—' : fa(english.value()?.due ?? 0)"
+              [loading]="english.isLoading() && !english.hasValue()"
+              labelClass="aio-hero-stat-label"
+              valueClass="min-h-9 min-w-[2ch] text-3xl tabular-nums"
+            ></div>
+          }
+          @if (hasApplet('health')) {
+            <div
+              class="flex flex-col items-start justify-between gap-2 md:flex-row md:items-center md:py-5"
+              aioMetric
+              [label]="'دقیقه فعالیت این هفته' | aioTranslate"
+              [value]="week.error() ? '—' : fa(week.value()?.minutes ?? 0)"
+              [loading]="week.isLoading() && !week.hasValue()"
+              labelClass="aio-hero-stat-label"
+              valueClass="min-h-9 min-w-[2ch] text-3xl tabular-nums"
+            ></div>
+          }
         </div>
       </section>
       <section aria-labelledby="spaces-heading" class="flex flex-col gap-4">
@@ -282,101 +290,121 @@ import {
             'انتخاب کن و ادامه بده' | aioTranslate
           }}</span>
         </div>
-        <div class="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
-          @for (card of cards(); track card.title) {
-            <a
-              aioNavigationCard
-              [routerLink]="card.link"
-              [class]="card.accent"
-              [title]="card.title"
-              [icon]="card.icon"
-              [description]="card.value | aioTranslate"
-              [action]="card.action | aioTranslate"
-              [loading]="card.loading"
-            ></a>
-          }
-        </div>
-      </section>
-      <section aioCard aria-labelledby="next-heading">
-        <div
-          aioCardHeader
-          class="flex flex-row items-center justify-between gap-3"
-        >
-          <div>
-            <h2 id="next-heading" aioCardTitle>
-              {{ 'قدم‌های بعدی امروز' | aioTranslate }}
-            </h2>
-            <p aioCardDescription>
-              {{ 'فقط همین قدم بعدی را بردار.' | aioTranslate }}
-            </p>
-          </div>
-          <a aioBtn variant="ghost" routerLink="/planner"
-            >{{ 'همه کارها' | aioTranslate
-            }}<aio-icon
-              name="lucideChevronLeft"
-              class="ltr:-scale-x-100"
-              size="sm"
-          /></a>
-        </div>
-        <div aioCardContent>
-          @if (tasks.isLoading()) {
-            <div
-              class="flex flex-col gap-3 py-4"
-              role="status"
-              [attr.aria-label]="'در حال دریافت برنامه امروز' | aioTranslate"
-            >
-              <div
-                aioSkeletonRows
-                class="contents"
-                [count]="4"
-                itemClass="h-12 rounded-xl"
-              ></div>
-            </div>
-          } @else if (tasks.error()) {
-            <div class="flex flex-wrap items-center justify-between gap-3 py-4">
-              <p role="alert">
-                {{ 'برنامه امروز دریافت نشد.' | aioTranslate }}
-              </p>
-              <button aioBtn variant="outline" (click)="tasks.reload()">
-                {{ 'تلاش دوباره' | aioTranslate }}
-              </button>
-            </div>
-          } @else if (!openTasks().length) {
-            <div class="flex flex-col items-start gap-3 py-5">
-              <span class="aio-module-icon"
-                ><aio-icon name="lucideCalendarCheck"
-              /></span>
-              <p class="font-semibold">
-                {{ 'امروز هنوز جای یک کار خوب دارد.' | aioTranslate }}
-              </p>
-              <p class="text-muted-foreground text-sm">
-                {{
-                  'یک کار کوچک اضافه کن؛ یا از این فرصت برای استراحت استفاده کن.'
-                    | aioTranslate
-                }}
-              </p>
-              <a aioBtn variant="outline" routerLink="/planner">{{
-                'برنامه‌ریزی امروز' | aioTranslate
-              }}</a>
-            </div>
-          } @else {
-            @for (task of openTasks().slice(0, 4); track task.id) {
-              <a class="aio-task-row" routerLink="/planner"
-                ><span
-                  class="size-5 shrink-0 rounded-full border border-input"
-                ></span
-                ><span class="min-w-0 flex-1 break-words text-sm">{{
-                  task.title
-                }}</span
-                ><aio-icon
-                  name="lucideChevronLeft"
-                  size="sm"
-                  class="text-muted-foreground ltr:-scale-x-100"
-              /></a>
+        @if (cards().length) {
+          <div class="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
+            @for (card of cards(); track card.title) {
+              <a
+                aioNavigationCard
+                [routerLink]="card.link"
+                [class]="card.accent"
+                [title]="card.title"
+                [icon]="card.icon"
+                [description]="card.value | aioTranslate"
+                [action]="card.action | aioTranslate"
+                [loading]="card.loading"
+              ></a>
             }
-          }
-        </div>
+          </div>
+        } @else {
+          <div
+            class="glass flex flex-wrap items-center justify-between gap-3 rounded-2xl p-4"
+          >
+            <p class="text-sm text-muted-foreground">
+              {{
+                'هیچ بخشی برای نمایش انتخاب نشده است. از حساب کاربری بخش‌های مورد نیازت را فعال کن.'
+                  | aioTranslate
+              }}
+            </p>
+            <a aioBtn variant="outline" routerLink="/account">
+              {{ 'تنظیم بخش‌های برنامه' | aioTranslate }}
+            </a>
+          </div>
+        }
       </section>
+      @if (hasApplet('planner')) {
+        <section aioCard aria-labelledby="next-heading">
+          <div
+            aioCardHeader
+            class="flex flex-row items-center justify-between gap-3"
+          >
+            <div>
+              <h2 id="next-heading" aioCardTitle>
+                {{ 'قدم‌های بعدی امروز' | aioTranslate }}
+              </h2>
+              <p aioCardDescription>
+                {{ 'فقط همین قدم بعدی را بردار.' | aioTranslate }}
+              </p>
+            </div>
+            <a aioBtn variant="ghost" routerLink="/planner"
+              >{{ 'همه کارها' | aioTranslate
+              }}<aio-icon
+                name="lucideChevronLeft"
+                class="ltr:-scale-x-100"
+                size="sm"
+            /></a>
+          </div>
+          <div aioCardContent>
+            @if (tasks.isLoading()) {
+              <div
+                class="flex flex-col gap-3 py-4"
+                role="status"
+                [attr.aria-label]="'در حال دریافت برنامه امروز' | aioTranslate"
+              >
+                <div
+                  aioSkeletonRows
+                  class="contents"
+                  [count]="4"
+                  itemClass="h-12 rounded-xl"
+                ></div>
+              </div>
+            } @else if (tasks.error()) {
+              <div
+                class="flex flex-wrap items-center justify-between gap-3 py-4"
+              >
+                <p role="alert">
+                  {{ 'برنامه امروز دریافت نشد.' | aioTranslate }}
+                </p>
+                <button aioBtn variant="outline" (click)="tasks.reload()">
+                  {{ 'تلاش دوباره' | aioTranslate }}
+                </button>
+              </div>
+            } @else if (!openTasks().length) {
+              <div class="flex flex-col items-start gap-3 py-5">
+                <span class="aio-module-icon"
+                  ><aio-icon name="lucideCalendarCheck"
+                /></span>
+                <p class="font-semibold">
+                  {{ 'امروز هنوز جای یک کار خوب دارد.' | aioTranslate }}
+                </p>
+                <p class="text-muted-foreground text-sm">
+                  {{
+                    'یک کار کوچک اضافه کن؛ یا از این فرصت برای استراحت استفاده کن.'
+                      | aioTranslate
+                  }}
+                </p>
+                <a aioBtn variant="outline" routerLink="/planner">{{
+                  'برنامه‌ریزی امروز' | aioTranslate
+                }}</a>
+              </div>
+            } @else {
+              @for (task of openTasks().slice(0, 4); track task.id) {
+                <a class="aio-task-row" routerLink="/planner"
+                  ><span
+                    class="size-5 shrink-0 rounded-full border border-input"
+                  ></span
+                  ><span class="min-w-0 flex-1 break-words text-sm">{{
+                    task.title
+                  }}</span
+                  ><aio-icon
+                    name="lucideChevronLeft"
+                    size="sm"
+                    class="text-muted-foreground ltr:-scale-x-100"
+                /></a>
+              }
+            }
+          </div>
+        </section>
+      }
       <section aioCard aria-labelledby="invite-heading">
         <div aioCardHeader>
           <h2 id="invite-heading" aioCardTitle>
@@ -538,17 +566,30 @@ export class Home {
 
   protected readonly fa = (value: number, options?: Intl.NumberFormatOptions) =>
     this.locale.number(value, options);
-  protected readonly tasks = httpResource<PlannerTask[]>(
-    () => `${this.api}/planner/tasks?preset=today`,
+  protected readonly enabledApplets = computed(() => {
+    const user = this.auth.user();
+    return new Set(resolveEnabledApplets(user?.enabledApplets, user?.role));
+  });
+  protected hasApplet(key: AppApplet): boolean {
+    return this.enabledApplets().has(key);
+  }
+  protected readonly tasks = httpResource<PlannerTask[]>(() =>
+    this.hasApplet('planner')
+      ? `${this.api}/planner/tasks?preset=today`
+      : undefined,
   );
-  protected readonly english = httpResource<EnglishStats>(
-    () => `${this.api}/english/stats`,
+  protected readonly english = httpResource<EnglishStats>(() =>
+    this.hasApplet('english') ? `${this.api}/english/stats` : undefined,
   );
-  private readonly meals = httpResource<MealLog[]>(
-    () => `${this.api}/health/meals?date=${this.today}`,
+  private readonly meals = httpResource<MealLog[]>(() =>
+    this.hasApplet('health')
+      ? `${this.api}/health/meals?date=${this.today}`
+      : undefined,
   );
-  protected readonly week = httpResource<FitnessWeek>(
-    () => `${this.api}/health/workouts/week?date=${this.today}`,
+  protected readonly week = httpResource<FitnessWeek>(() =>
+    this.hasApplet('health')
+      ? `${this.api}/health/workouts/week?date=${this.today}`
+      : undefined,
   );
 
   protected readonly openTasks = computed(() =>
@@ -556,6 +597,7 @@ export class Home {
   );
 
   protected readonly cards = computed(() => {
+    const enabled = this.enabledApplets();
     const open = (this.tasks.value() ?? []).filter((t) => !t.done).length;
     const due = this.english.value()?.due ?? 0;
     const meals = this.meals.value() ?? [];
@@ -563,50 +605,62 @@ export class Home {
       ? Math.round(meals.reduce((s, m) => s + m.score, 0) / meals.length)
       : null;
     return [
-      {
-        title: 'برنامه‌ریز',
-        loading: this.tasks.isLoading() && !this.tasks.hasValue(),
-        action: 'روزت را بچین',
-        icon: 'lucideCalendarCheck',
-        link: '/planner',
-        value: open
-          ? `${this.locale.number(open)} کار باقی مانده`
-          : 'کاری باقی نمانده',
-        accent: 'applet-planner',
-      },
-      {
-        title: 'یادگیری زبان',
-        loading: this.english.isLoading() && !this.english.hasValue(),
-        action: 'ادامه یادگیری',
-        icon: 'lucideLanguages',
-        link: '/english',
-        value: due
-          ? `${this.locale.number(due)} کارت آماده مرور`
-          : 'مروری باقی نمانده',
-        accent: 'applet-english',
-      },
-      {
-        title: 'تغذیه',
-        loading: this.meals.isLoading() && !this.meals.hasValue(),
-        action: 'ثبت وعده غذایی',
-        icon: 'lucideSalad',
-        link: '/health/nutrition',
-        value:
-          avg === null
-            ? 'وعده‌ای ثبت نشده'
-            : `میانگین امتیاز ${this.locale.number(avg)}`,
-        accent: 'applet-health',
-      },
-      {
-        title: 'حرکت و تمرین',
-        loading: this.week.isLoading() && !this.week.hasValue(),
-        action: 'برنامه تمرین من',
-        icon: 'lucideDumbbell',
-        link: '/health/fitness',
-        value: `${this.locale.number(this.week.value()?.minutes ?? 0)} از ۱۵۰ دقیقه`,
-        accent: 'applet-health',
-      },
-      ...(this.auth.user()?.role === 'ADMIN'
+      ...(enabled.has('planner')
+        ? [
+            {
+              title: 'برنامه‌ریز',
+              loading: this.tasks.isLoading() && !this.tasks.hasValue(),
+              action: 'روزت را بچین',
+              icon: 'lucideCalendarCheck',
+              link: '/planner',
+              value: open
+                ? `${this.locale.number(open)} کار باقی مانده`
+                : 'کاری باقی نمانده',
+              accent: 'applet-planner',
+            },
+          ]
+        : []),
+      ...(enabled.has('english')
+        ? [
+            {
+              title: 'یادگیری زبان',
+              loading: this.english.isLoading() && !this.english.hasValue(),
+              action: 'ادامه یادگیری',
+              icon: 'lucideLanguages',
+              link: '/english',
+              value: due
+                ? `${this.locale.number(due)} کارت آماده مرور`
+                : 'مروری باقی نمانده',
+              accent: 'applet-english',
+            },
+          ]
+        : []),
+      ...(enabled.has('health')
+        ? [
+            {
+              title: 'تغذیه',
+              loading: this.meals.isLoading() && !this.meals.hasValue(),
+              action: 'ثبت وعده غذایی',
+              icon: 'lucideSalad',
+              link: '/health/nutrition',
+              value:
+                avg === null
+                  ? 'وعده‌ای ثبت نشده'
+                  : `میانگین امتیاز ${this.locale.number(avg)}`,
+              accent: 'applet-health',
+            },
+            {
+              title: 'حرکت و تمرین',
+              loading: this.week.isLoading() && !this.week.hasValue(),
+              action: 'برنامه تمرین من',
+              icon: 'lucideDumbbell',
+              link: '/health/fitness',
+              value: `${this.locale.number(this.week.value()?.minutes ?? 0)} از ۱۵۰ دقیقه`,
+              accent: 'applet-health',
+            },
+          ]
+        : []),
+      ...(this.auth.user()?.role === 'ADMIN' && enabled.has('expenses')
         ? [
             {
               title: 'مدیریت مخارج',

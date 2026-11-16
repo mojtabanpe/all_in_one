@@ -11,14 +11,17 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { createHash, randomBytes } from 'node:crypto';
-import { growthCampaignSchema } from '@all-in-one/shared/schemas';
-import type {
-  GrowthAttribution,
-  LoginInput,
-  RegisterInput,
-  User,
-  GrowthCampaign,
-  OnboardingGoal,
+import {
+  growthCampaignSchema,
+  resolveEnabledApplets,
+  type AppApplet,
+  type GrowthAttribution,
+  type LoginInput,
+  type RegisterInput,
+  type Role,
+  type User,
+  type GrowthCampaign,
+  type OnboardingGoal,
 } from '@all-in-one/shared/schemas';
 import { PrismaService, type User as DbUser } from '@all-in-one/api/db';
 import { MailService } from './mail.service';
@@ -57,6 +60,7 @@ export function toUser(user: DbUser): User {
     hasPassword: user.passwordHash !== null,
     name: user.name,
     role: user.role,
+    enabledApplets: resolveEnabledApplets(user.enabledApplets, user.role),
     createdAt: user.createdAt.toISOString(),
   };
 }
@@ -378,6 +382,18 @@ export class AuthService {
     return this.prisma.user.update({
       where: { id: userId },
       data: { name: name.trim() },
+    });
+  }
+
+  async updateEnabledApplets(
+    userId: string,
+    role: Role,
+    enabledApplets: AppApplet[],
+  ): Promise<DbUser> {
+    const filtered = resolveEnabledApplets(enabledApplets, role);
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { enabledApplets: filtered },
     });
   }
 

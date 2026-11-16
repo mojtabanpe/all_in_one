@@ -1,4 +1,10 @@
-import { loginSchema, updateProfileSchema, userSchema } from './user';
+import {
+  loginSchema,
+  resolveEnabledApplets,
+  updateEnabledAppletsSchema,
+  updateProfileSchema,
+  userSchema,
+} from './user';
 
 describe('userSchema', () => {
   it('accepts a user from the api', () => {
@@ -65,5 +71,49 @@ describe('updateProfileSchema', () => {
     expect(
       updateProfileSchema.safeParse({ name: 'x'.repeat(80) }).success,
     ).toBe(true);
+  });
+});
+
+describe('resolveEnabledApplets & updateEnabledAppletsSchema', () => {
+  it('filters out expenses for non-admin users', () => {
+    expect(
+      resolveEnabledApplets(
+        ['planner', 'english', 'health', 'expenses'],
+        'CUSTOMER',
+      ),
+    ).toEqual(['planner', 'english', 'health']);
+    expect(
+      resolveEnabledApplets(
+        ['planner', 'english', 'health', 'expenses'],
+        'ADMIN',
+      ),
+    ).toEqual(['planner', 'english', 'health', 'expenses']);
+  });
+
+  it('defaults to all role-allowed applets when unset', () => {
+    expect(resolveEnabledApplets(undefined, 'CUSTOMER')).toEqual([
+      'planner',
+      'english',
+      'health',
+    ]);
+    expect(resolveEnabledApplets(null, 'ADMIN')).toEqual([
+      'planner',
+      'english',
+      'health',
+      'expenses',
+    ]);
+  });
+
+  it('validates enabledApplets payload', () => {
+    expect(
+      updateEnabledAppletsSchema.safeParse({
+        enabledApplets: ['planner', 'health'],
+      }).success,
+    ).toBe(true);
+    expect(
+      updateEnabledAppletsSchema.safeParse({
+        enabledApplets: ['unknown'],
+      }).success,
+    ).toBe(false);
   });
 });

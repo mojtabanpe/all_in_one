@@ -35,6 +35,7 @@ describe('AuthController.updateProfile', () => {
       hasPassword: false,
       name: 'مجتبی',
       role: 'CUSTOMER',
+      enabledApplets: ['planner', 'english', 'health'],
       createdAt: '2026-11-08T10:00:00.000Z',
     });
     expect(user).not.toHaveProperty('passwordHash');

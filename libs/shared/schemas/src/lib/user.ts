@@ -7,6 +7,39 @@ import { growthAttributionSchema, growthCampaignSchema } from './growth';
 export const roleSchema = z.enum(['ADMIN', 'CUSTOMER']);
 export type Role = z.infer<typeof roleSchema>;
 
+/** Customer-facing app applets that a user can toggle in their profile. */
+export const appAppletSchema = z.enum([
+  'planner',
+  'english',
+  'health',
+  'expenses',
+]);
+export type AppApplet = z.infer<typeof appAppletSchema>;
+
+export const CUSTOMER_APPLETS: readonly AppApplet[] = [
+  'planner',
+  'english',
+  'health',
+];
+
+export const ADMIN_APPLETS: readonly AppApplet[] = [
+  'planner',
+  'english',
+  'health',
+  'expenses',
+];
+
+/** Returns the applets permitted for a role, filtered to the user's enabled list (defaulting to all permitted). */
+export function resolveEnabledApplets(
+  enabledApplets: readonly string[] | undefined | null,
+  role: Role | undefined | null,
+): AppApplet[] {
+  const allowed = role === 'ADMIN' ? ADMIN_APPLETS : CUSTOMER_APPLETS;
+  if (!enabledApplets) return [...allowed];
+  const set = new Set(enabledApplets);
+  return allowed.filter((item) => set.has(item));
+}
+
 /** A user as the api returns it: never includes the password hash. */
 export const userSchema = z.object({
   id: z.uuid(),
@@ -18,6 +51,7 @@ export const userSchema = z.object({
   hasPassword: z.boolean(),
   name: z.nullable(z.string()),
   role: roleSchema,
+  enabledApplets: z.optional(z.array(appAppletSchema)),
   createdAt: z.iso.datetime(),
 });
 export type User = z.infer<typeof userSchema>;
@@ -42,6 +76,14 @@ export const updateProfileSchema = z.object({
   name: z.string().check(z.trim(), z.minLength(1), z.maxLength(80)),
 });
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+
+/** Which app sections (applets) the user wants visible in their workspace. */
+export const updateEnabledAppletsSchema = z.object({
+  enabledApplets: z.array(appAppletSchema),
+});
+export type UpdateEnabledAppletsInput = z.infer<
+  typeof updateEnabledAppletsSchema
+>;
 
 const password = z.string().check(z.minLength(8), z.maxLength(128));
 

@@ -25,6 +25,8 @@ import {
   resetPasswordSchema,
   type UpdateProfileInput,
   updateProfileSchema,
+  type UpdateEnabledAppletsInput,
+  updateEnabledAppletsSchema,
   type User,
   type VerifyEmailInput,
   verifyEmailSchema,
@@ -270,6 +272,24 @@ export class AuthController {
     @Body({ schema: updateProfileSchema }) input: UpdateProfileInput,
   ): Promise<User> {
     return toUser(await this.auth.updateProfile(current.id, input.name));
+  }
+
+  /** Saves which app applets the user wants enabled in their workspace. */
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  @HttpCode(200)
+  @Post('applets')
+  async updateEnabledApplets(
+    @CurrentUser() current: AuthUser,
+    @Body({ schema: updateEnabledAppletsSchema })
+    input: UpdateEnabledAppletsInput,
+  ): Promise<User> {
+    return toUser(
+      await this.auth.updateEnabledApplets(
+        current.id,
+        current.role,
+        input.enabledApplets,
+      ),
+    );
   }
 
   private async startSession(res: unknown, user: DbUser): Promise<void> {

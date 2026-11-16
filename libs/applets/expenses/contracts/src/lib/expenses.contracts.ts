@@ -263,6 +263,53 @@ export type UpdateExpenseCategoryInput = z.infer<
   typeof updateExpenseCategorySchema
 >;
 
+export interface DefaultExpenseCategoryItem {
+  id: string;
+  name: string;
+  slug: string | null;
+  color: ExpenseCategoryColor;
+  icon: ExpenseCategoryIcon;
+  keywords: string;
+  sortOrder: number;
+}
+
+export interface AdminExpensesOverview {
+  totalUsersWithExpenses: number;
+  activeUsersLast7Days: number;
+  activeUsersLast30Days: number;
+  totalUsersWithCategories: number;
+  totalExpensesCount: number;
+  totalAmount: number;
+  expensesLast30DaysCount: number;
+  totalCategoriesCount: number;
+  defaultCategoriesCount: number;
+  aiDecidedCount: number;
+}
+
+export const createDefaultExpenseCategorySchema = z.object({
+  name: z.string().check(z.trim(), z.minLength(1), z.maxLength(80)),
+  slug: z.optional(z.nullable(z.string().check(z.trim(), z.maxLength(32)))),
+  color: z.optional(z.enum(EXPENSE_CATEGORY_COLORS)),
+  icon: z.optional(z.enum(EXPENSE_CATEGORY_ICONS)),
+  keywords: z.optional(z.string().check(z.trim(), z.maxLength(500))),
+  sortOrder: z.optional(z.int().check(z.gte(0), z.lte(1000))),
+});
+export type CreateDefaultExpenseCategoryInput = z.infer<
+  typeof createDefaultExpenseCategorySchema
+>;
+
+export const updateDefaultExpenseCategorySchema = z.object({
+  name: z.optional(z.string().check(z.trim(), z.minLength(1), z.maxLength(80))),
+  slug: z.optional(z.nullable(z.string().check(z.trim(), z.maxLength(32)))),
+  color: z.optional(z.enum(EXPENSE_CATEGORY_COLORS)),
+  icon: z.optional(z.enum(EXPENSE_CATEGORY_ICONS)),
+  keywords: z.optional(z.string().check(z.trim(), z.maxLength(500))),
+  sortOrder: z.optional(z.int().check(z.gte(0), z.lte(1000))),
+});
+export type UpdateDefaultExpenseCategoryInput = z.infer<
+  typeof updateDefaultExpenseCategorySchema
+>;
+
 export const createExpenseSchema = z.object({
   title: z.string().check(z.trim(), z.minLength(1), z.maxLength(160)),
   amount: z.int().check(z.gte(1), z.lte(MAX_EXPENSE_AMOUNT)),

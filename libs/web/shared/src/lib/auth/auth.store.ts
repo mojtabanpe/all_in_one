@@ -3,6 +3,7 @@ import { NativePush } from './native-push';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import type {
+  AppApplet,
   ChangePasswordInput,
   LoginInput,
   RegisterInput,
@@ -181,6 +182,15 @@ export class AuthStore {
   async updateName(name: string): Promise<void> {
     const user = await firstValueFrom(
       this.http.post<User>(`${this.api}/auth/profile`, { name }),
+    );
+    this.user.set(user);
+    remember(user);
+  }
+
+  /** Saves which customer app sections (applets) the user wants visible. */
+  async updateEnabledApplets(enabledApplets: AppApplet[]): Promise<void> {
+    const user = await firstValueFrom(
+      this.http.post<User>(`${this.api}/auth/applets`, { enabledApplets }),
     );
     this.user.set(user);
     remember(user);

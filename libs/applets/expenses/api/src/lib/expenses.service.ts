@@ -12,15 +12,19 @@ import {
   matchExpenseCategoryByKeywords,
   resolveExpenseDateRange,
   tehranIsoDate,
+  type AdminExpensesOverview,
   type ClassifyExpenseInput,
+  type CreateDefaultExpenseCategoryInput,
   type CreateExpenseCategoryInput,
   type CreateExpenseInput,
   type CreateExpensesBatchInput,
+  type DefaultExpenseCategoryItem,
   type ExpenseCategory,
   type ExpenseClassificationResult,
   type ExpenseItem,
   type ExpenseQueryInput,
   type ExpenseReport,
+  type UpdateDefaultExpenseCategoryInput,
   type UpdateExpenseCategoryInput,
   type UpdateExpenseInput,
 } from '@all-in-one/applets/expenses/contracts';
@@ -32,6 +36,30 @@ export class ExpensesService {
     private readonly aiScope: AiScopeGuard,
   ) {}
 
+  /** Ensures the admin-configured default template table is populated, seeding from constants once if empty. */
+  async ensureSeededDefaultTemplates(): Promise<DefaultExpenseCategoryItem[]> {
+    const existing = await this.prisma.defaultExpenseCategory.findMany({
+      orderBy: { sortOrder: 'asc' },
+    });
+    if (existing.length) return existing.map(this.mapDefaultCategory);
+
+    await this.prisma.defaultExpenseCategory.createMany({
+      data: DEFAULT_EXPENSE_CATEGORIES.map((cat) => ({
+        name: cat.name,
+        slug: cat.slug,
+        color: cat.color,
+        icon: cat.icon,
+        keywords: cat.keywords,
+        sortOrder: cat.sortOrder,
+      })),
+    });
+
+    const created = await this.prisma.defaultExpenseCategory.findMany({
+      orderBy: { sortOrder: 'asc' },
+    });
+    return created.map(this.mapDefaultCategory);
+  }
+
   /** Ensures user has the default starter categories if they have none yet. */
   async ensureDefaultCategories(userId: string): Promise<ExpenseCategory[]> {
     const existing = await this.prisma.expenseCategory.findMany({
@@ -40,8 +68,9 @@ export class ExpensesService {
     });
     if (existing.length) return existing.map(this.mapCategory);
 
+    const templates = await this.ensureSeededDefaultTemplates();
     await this.prisma.expenseCategory.createMany({
-      data: DEFAULT_EXPENSE_CATEGORIES.map((cat) => ({
+      data: templates.map((cat) => ({
         userId,
         name: cat.name,
         slug: cat.slug,
@@ -393,6 +422,137 @@ export class ExpensesService {
       range.to,
       todayAmount,
     );
+  }
+
+  // ---- Admin: default category templates & platform overview ----
+
+  async listDefaultCategories(): Promise<DefaultExpenseCategoryItem[]> {
+    return this.ensureSeededDefaultTemplates();
+  }
+
+  async createDefaultCategory(
+    input: CreateDefaultExpenseCategoryInput,
+  ): Promise<DefaultExpenseCategoryItem> {
+    await this.ensureSeededDefaultTemplates();
+    const highest = await this.prisma.defaultExpenseCategory.findFirst({
+      orderBy: { sortOrder: 'desc' },
+      select: { sortOrder: true },
+    });
+    const nextOrder = input.sortOrder ?? (highest?.sortOrder ?? -1) + 1;
+
+    const row = await this.prisma.defaultExpenseCategory.create({
+      data: {
+        name: input.name.trim(),
+        slug: input.slug?.trim() || null,
+        color: input.color ?? 'emerald',
+        icon: input.icon ?? 'lucideWallet',
+        keywords: input.keywords?.trim() ?? '',
+        sortOrder: nextOrder,
+      },
+    });
+    return this.mapDefaultCategory(row);
+  }
+
+  async updateDefaultCategory(
+    id: string,
+    input: UpdateDefaultExpenseCategoryInput,
+  ): Promise<DefaultExpenseCategoryItem> {
+    const existing = await this.prisma.defaultExpenseCategory.findUnique({
+      where: { id },
+    });
+    if (!existing) throw new NotFoundException('دسته‌بندی پیش‌فرض یافت نشد.');
+
+    const row = await this.prisma.defaultExpenseCategory.update({
+      where: { id },
+      data: {
+        name: input.name !== undefined ? input.name.trim() : undefined,
+        slug: input.slug !== undefined ? input.slug?.trim() || null : undefined,
+        color: input.color ?? undefined,
+        icon: input.icon ?? undefined,
+        keywords:
+          input.keywords !== undefined ? input.keywords.trim() : undefined,
+        sortOrder: input.sortOrder ?? undefined,
+      },
+    });
+    return this.mapDefaultCategory(row);
+  }
+
+  async deleteDefaultCategory(id: string): Promise<void> {
+    const existing = await this.prisma.defaultExpenseCategory.findUnique({
+      where: { id },
+    });
+    if (!existing) throw new NotFoundException('دسته‌بندی پیش‌فرض یافت نشد.');
+    await this.prisma.defaultExpenseCategory.delete({ where: { id } });
+  }
+
+  async getAdminOverview(): Promise<AdminExpensesOverview> {
+    await this.ensureSeededDefaultTemplates();
+
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 86_400_000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 86_400_000);
+
+    const [
+      usersWithExpenses,
+      active7,
+      active30,
+      usersWithCategories,
+      expenseAgg,
+      expenses30Count,
+      totalCategoriesCount,
+      defaultCategoriesCount,
+      aiDecidedCount,
+    ] = await Promise.all([
+      this.prisma.expense.groupBy({ by: ['userId'] }),
+      this.prisma.expense.groupBy({
+        by: ['userId'],
+        where: { createdAt: { gte: sevenDaysAgo } },
+      }),
+      this.prisma.expense.groupBy({
+        by: ['userId'],
+        where: { createdAt: { gte: thirtyDaysAgo } },
+      }),
+      this.prisma.expenseCategory.groupBy({ by: ['userId'] }),
+      this.prisma.expense.aggregate({
+        _count: { _all: true },
+        _sum: { amount: true },
+      }),
+      this.prisma.expense.count({
+        where: { createdAt: { gte: thirtyDaysAgo } },
+      }),
+      this.prisma.expenseCategory.count(),
+      this.prisma.defaultExpenseCategory.count(),
+      this.prisma.expense.count({
+        where: { decidedBy: { not: 'user' } },
+      }),
+    ]);
+
+    return {
+      totalUsersWithExpenses: usersWithExpenses.length,
+      activeUsersLast7Days: active7.length,
+      activeUsersLast30Days: active30.length,
+      totalUsersWithCategories: usersWithCategories.length,
+      totalExpensesCount: expenseAgg._count._all,
+      totalAmount: Number(expenseAgg._sum.amount ?? 0n),
+      expensesLast30DaysCount: expenses30Count,
+      totalCategoriesCount,
+      defaultCategoriesCount,
+      aiDecidedCount,
+    };
+  }
+
+  private mapDefaultCategory(
+    row: import('@all-in-one/api/db').DefaultExpenseCategory,
+  ): DefaultExpenseCategoryItem {
+    return {
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      color: row.color as ExpenseCategory['color'],
+      icon: row.icon as ExpenseCategory['icon'],
+      keywords: row.keywords,
+      sortOrder: row.sortOrder,
+    };
   }
 
   private mapCategory(

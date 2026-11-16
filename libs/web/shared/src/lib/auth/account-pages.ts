@@ -7,7 +7,11 @@ import type {
 } from '@all-in-one/shared/schemas';
 import { API_BASE_URL } from '../api/api-base-url';
 import { Location } from '@angular/common';
-import { extractGrowthCampaign } from '@all-in-one/shared/schemas';
+import {
+  extractGrowthCampaign,
+  resolveEnabledApplets,
+  type AppApplet,
+} from '@all-in-one/shared/schemas';
 import { PushSettings } from './push-settings';
 import {
   Component,
@@ -22,6 +26,7 @@ import {
   AioLanguageSwitcher,
   AioTranslate,
   AioButton,
+  AioCheckbox,
   AioCardDirectives,
   AioFieldDirectives,
   AioInput,
@@ -346,6 +351,7 @@ export class VerifyEmailPage implements OnInit {
     PhoneSettings,
     RouterLink,
     AioButton,
+    AioCheckbox,
     AioSwitch,
     AioCardDirectives,
     AioFieldDirectives,
@@ -397,6 +403,40 @@ export class VerifyEmailPage implements OnInit {
         </form>
       </section>
       @if (billing()) {
+        <section aioCard id="enabled-applets">
+          <div
+            aioCardHeading
+            [title]="'بخش‌های فعال برنامه' | aioTranslate"
+            [level]="2"
+            [description]="
+              'انتخاب کن کدام بخش‌ها در منو و صفحهٔ خانه نمایش داده شوند. داده‌های بخش‌های غیرفعال حفظ می‌شوند.'
+                | aioTranslate
+            "
+          ></div>
+          <div aioCardContent class="flex flex-col gap-3">
+            @for (option of availableAppletOptions(); track option.key) {
+              <div class="flex min-h-11 items-center justify-between gap-3">
+                <label
+                  class="flex cursor-pointer flex-col gap-0.5"
+                  [attr.for]="'applet-' + option.key"
+                >
+                  <span class="text-sm font-medium">{{
+                    option.label | aioTranslate
+                  }}</span>
+                  <span class="text-xs text-muted-foreground">{{
+                    option.description | aioTranslate
+                  }}</span>
+                </label>
+                <aio-checkbox
+                  [inputId]="'applet-' + option.key"
+                  [checked]="isAppletEnabled(option.key)"
+                  [disabled]="appletsSaving()"
+                  (checkedChange)="toggleApplet(option.key, $event)"
+                />
+              </div>
+            }
+          </div>
+        </section>
         <section aioCard>
           <div
             aioCardHeading
@@ -881,6 +921,61 @@ export class AccountPage implements OnInit {
   });
   protected readonly displayName = signal('');
   protected readonly busy = signal(false);
+  protected readonly appletsSaving = signal(false);
+  protected readonly availableAppletOptions = computed(() => {
+    const base: Array<{ key: AppApplet; label: string; description: string }> =
+      [
+        {
+          key: 'planner',
+          label: 'برنامه‌ریز',
+          description: 'مدیریت کارها، عادت‌ها، تقویم و تمرکز',
+        },
+        {
+          key: 'english',
+          label: 'یادگیری زبان',
+          description: 'فلش‌کارت‌ها، مرور هوشمند و تمرین زبان انگلیسی',
+        },
+        {
+          key: 'health',
+          label: 'سلامت و ورزش',
+          description: 'تغذیه، برنامه تمرینی و پیگیری فعالیت بدنی',
+        },
+      ];
+    if (this.auth.user()?.role === 'ADMIN') {
+      base.push({
+        key: 'expenses',
+        label: 'مدیریت مخارج',
+        description: 'ثبت مخارج، دسته‌بندی با هوش مصنوعی و گزارش مالی',
+      });
+    }
+    return base;
+  });
+
+  protected isAppletEnabled(key: AppApplet): boolean {
+    const user = this.auth.user();
+    if (!user) return false;
+    return resolveEnabledApplets(user.enabledApplets, user.role).includes(key);
+  }
+
+  protected async toggleApplet(key: AppApplet, checked: boolean) {
+    const user = this.auth.user();
+    if (!user || this.appletsSaving()) return;
+    const current = resolveEnabledApplets(user.enabledApplets, user.role);
+    const next = checked
+      ? Array.from(new Set([...current, key]))
+      : current.filter((item) => item !== key);
+    this.appletsSaving.set(true);
+    try {
+      await this.auth.updateEnabledApplets(next);
+      this.notifications.success(
+        this.locale.text('بخش‌های فعال برنامه ذخیره شد.'),
+      );
+    } catch (error) {
+      this.notifications.error(apiErrorMessage(error));
+    } finally {
+      this.appletsSaving.set(false);
+    }
+  }
 
   protected async saveName() {
     const name = this.displayName().trim();

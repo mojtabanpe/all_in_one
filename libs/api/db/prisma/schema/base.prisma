@@ -36,6 +36,7 @@ model User {
   onboardingGoal String? @db.VarChar(16)
   onboardingSkipped Boolean @default(false)
   onboardingCompletedAt DateTime?
+  enabledApplets String[] @default(["planner", "english", "health", "expenses"])
   onboardingGoalChanges OnboardingGoalChange[]
 
   inAppNotifications InAppNotification[]

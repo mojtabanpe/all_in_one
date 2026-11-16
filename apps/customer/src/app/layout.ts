@@ -33,10 +33,11 @@ import {
   AioInAppNotificationHost,
 } from '@all-in-one/ui';
 import { API_BASE_URL, Assistant, AuthStore } from '@all-in-one/web/shared';
-import type {
-  AssistantContext,
-  BillingAccessState,
-  InAppNotification,
+import {
+  resolveEnabledApplets,
+  type AssistantContext,
+  type BillingAccessState,
+  type InAppNotification,
 } from '@all-in-one/shared/schemas';
 import { Pwa } from './pwa';
 import { AiPaywall } from './billing/ai-paywall';
@@ -238,13 +239,35 @@ export class Layout {
   });
 
   protected readonly nav = computed<readonly AioNavItem[]>(() => {
+    const user = this.auth.user();
+    const enabled = new Set(
+      resolveEnabledApplets(user?.enabledApplets, user?.role),
+    );
     const items: AioNavItem[] = [
       { label: 'خانه', icon: 'lucideHouse', link: '/', exact: true },
-      { label: 'برنامه‌ریز', icon: 'lucideCalendarCheck', link: '/planner' },
-      { label: 'انگلیسی', icon: 'lucideLanguages', link: '/english' },
-      { label: 'سلامت', icon: 'lucideHeartPulse', link: '/health' },
     ];
-    if (this.auth.user()?.role === 'ADMIN') {
+    if (enabled.has('planner')) {
+      items.push({
+        label: 'برنامه‌ریز',
+        icon: 'lucideCalendarCheck',
+        link: '/planner',
+      });
+    }
+    if (enabled.has('english')) {
+      items.push({
+        label: 'انگلیسی',
+        icon: 'lucideLanguages',
+        link: '/english',
+      });
+    }
+    if (enabled.has('health')) {
+      items.push({
+        label: 'سلامت',
+        icon: 'lucideHeartPulse',
+        link: '/health',
+      });
+    }
+    if (user?.role === 'ADMIN' && enabled.has('expenses')) {
       items.push({
         label: 'مخارج',
         icon: 'lucideWallet',

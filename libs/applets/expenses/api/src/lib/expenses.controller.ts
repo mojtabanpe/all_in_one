@@ -13,21 +13,27 @@ import {
 import { type AuthUser, CurrentUser, Roles } from '@all-in-one/api/auth';
 import {
   classifyExpenseSchema,
+  createDefaultExpenseCategorySchema,
   createExpenseCategorySchema,
   createExpensesBatchSchema,
   createExpenseSchema,
   expenseQuerySchema,
+  updateDefaultExpenseCategorySchema,
   updateExpenseCategorySchema,
   updateExpenseSchema,
+  type AdminExpensesOverview,
   type ClassifyExpenseInput,
+  type CreateDefaultExpenseCategoryInput,
   type CreateExpenseCategoryInput,
   type CreateExpensesBatchInput,
   type CreateExpenseInput,
+  type DefaultExpenseCategoryItem,
   type ExpenseCategory,
   type ExpenseClassificationResult,
   type ExpenseItem,
   type ExpenseQueryInput,
   type ExpenseReport,
+  type UpdateDefaultExpenseCategoryInput,
   type UpdateExpenseCategoryInput,
   type UpdateExpenseInput,
 } from '@all-in-one/applets/expenses/contracts';
@@ -40,6 +46,39 @@ import { ExpensesService } from './expenses.service';
 @Controller('expenses')
 export class ExpensesController {
   constructor(private readonly expenses: ExpensesService) {}
+
+  @Get('admin/overview')
+  getAdminOverview(): Promise<AdminExpensesOverview> {
+    return this.expenses.getAdminOverview();
+  }
+
+  @Get('admin/default-categories')
+  listDefaultCategories(): Promise<DefaultExpenseCategoryItem[]> {
+    return this.expenses.listDefaultCategories();
+  }
+
+  @Post('admin/default-categories')
+  createDefaultCategory(
+    @Body({ schema: createDefaultExpenseCategorySchema })
+    input: CreateDefaultExpenseCategoryInput,
+  ): Promise<DefaultExpenseCategoryItem> {
+    return this.expenses.createDefaultCategory(input);
+  }
+
+  @Patch('admin/default-categories/:id')
+  updateDefaultCategory(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body({ schema: updateDefaultExpenseCategorySchema })
+    input: UpdateDefaultExpenseCategoryInput,
+  ): Promise<DefaultExpenseCategoryItem> {
+    return this.expenses.updateDefaultCategory(id, input);
+  }
+
+  @Delete('admin/default-categories/:id')
+  @HttpCode(204)
+  deleteDefaultCategory(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    return this.expenses.deleteDefaultCategory(id);
+  }
 
   @Get('categories')
   listCategories(@CurrentUser() user: AuthUser): Promise<ExpenseCategory[]> {

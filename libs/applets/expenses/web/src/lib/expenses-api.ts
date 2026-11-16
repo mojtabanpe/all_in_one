@@ -1,15 +1,19 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import type {
+  AdminExpensesOverview,
   ClassifyExpenseInput,
   ClassifyExpenseResult,
+  CreateDefaultExpenseCategoryInput,
   CreateExpenseCategoryInput,
   CreateExpenseInput,
   CreateExpensesBatchInput,
+  DefaultExpenseCategoryItem,
   ExpenseCategoryItem,
   ExpenseItem,
   ExpenseQueryInput,
   ExpenseReport,
+  UpdateDefaultExpenseCategoryInput,
   UpdateExpenseCategoryInput,
   UpdateExpenseInput,
 } from '@all-in-one/applets/expenses/contracts';
@@ -40,7 +44,7 @@ export class ExpensesApi {
     input: UpdateExpenseCategoryInput,
   ): Promise<ExpenseCategoryItem> {
     return firstValueFrom(
-      this.http.put<ExpenseCategoryItem>(
+      this.http.patch<ExpenseCategoryItem>(
         `${this.base}/categories/${id}`,
         input,
       ),
@@ -83,7 +87,7 @@ export class ExpensesApi {
 
   update(id: string, input: UpdateExpenseInput): Promise<ExpenseItem> {
     return firstValueFrom(
-      this.http.put<ExpenseItem>(`${this.base}/${id}`, input),
+      this.http.patch<ExpenseItem>(`${this.base}/${id}`, input),
     );
   }
 
@@ -102,6 +106,49 @@ export class ExpensesApi {
 
     return firstValueFrom(
       this.http.get<ExpenseReport>(`${this.base}/report`, { params }),
+    );
+  }
+
+  getAdminOverview(): Promise<AdminExpensesOverview> {
+    return firstValueFrom(
+      this.http.get<AdminExpensesOverview>(`${this.base}/admin/overview`),
+    );
+  }
+
+  listDefaultCategories(): Promise<DefaultExpenseCategoryItem[]> {
+    return firstValueFrom(
+      this.http.get<DefaultExpenseCategoryItem[]>(
+        `${this.base}/admin/default-categories`,
+      ),
+    );
+  }
+
+  createDefaultCategory(
+    input: CreateDefaultExpenseCategoryInput,
+  ): Promise<DefaultExpenseCategoryItem> {
+    return firstValueFrom(
+      this.http.post<DefaultExpenseCategoryItem>(
+        `${this.base}/admin/default-categories`,
+        input,
+      ),
+    );
+  }
+
+  updateDefaultCategory(
+    id: string,
+    input: UpdateDefaultExpenseCategoryInput,
+  ): Promise<DefaultExpenseCategoryItem> {
+    return firstValueFrom(
+      this.http.patch<DefaultExpenseCategoryItem>(
+        `${this.base}/admin/default-categories/${id}`,
+        input,
+      ),
+    );
+  }
+
+  deleteDefaultCategory(id: string): Promise<void> {
+    return firstValueFrom(
+      this.http.delete<void>(`${this.base}/admin/default-categories/${id}`),
     );
   }
 }

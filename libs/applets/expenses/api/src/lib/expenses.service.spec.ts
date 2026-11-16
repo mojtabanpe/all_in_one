@@ -6,16 +6,56 @@ import { ExpensesService } from './expenses.service';
 
 describe('ExpensesService', () => {
   let service: ExpensesService;
+  let defaultCategoriesInDb: any[] = [];
   let categoriesInDb: any[] = [];
   let expensesInDb: any[] = [];
   let aiChooseOptionMock: any;
 
   beforeEach(() => {
+    defaultCategoriesInDb = [];
     categoriesInDb = [];
     expensesInDb = [];
     aiChooseOptionMock = vi.fn().mockResolvedValue(null);
 
     const prismaMock = {
+      defaultExpenseCategory: {
+        findMany: vi.fn().mockImplementation(() => [...defaultCategoriesInDb]),
+        findFirst: vi.fn().mockImplementation(() => {
+          if (!defaultCategoriesInDb.length) return null;
+          return defaultCategoriesInDb[defaultCategoriesInDb.length - 1];
+        }),
+        findUnique: vi.fn().mockImplementation(({ where }) => {
+          return defaultCategoriesInDb.find((c) => c.id === where.id) ?? null;
+        }),
+        createMany: vi.fn().mockImplementation(({ data }) => {
+          data.forEach((item: any, i: number) => {
+            defaultCategoriesInDb.push({
+              ...item,
+              id: `def-${i + 1}`,
+            });
+          });
+          return { count: data.length };
+        }),
+        create: vi.fn().mockImplementation(({ data }) => {
+          const created = {
+            id: `def-${defaultCategoriesInDb.length + 1}`,
+            ...data,
+          };
+          defaultCategoriesInDb.push(created);
+          return created;
+        }),
+        update: vi.fn().mockImplementation(({ where, data }) => {
+          const cat = defaultCategoriesInDb.find((c) => c.id === where.id);
+          Object.assign(cat, data);
+          return cat;
+        }),
+        delete: vi.fn().mockImplementation(({ where }) => {
+          defaultCategoriesInDb = defaultCategoriesInDb.filter(
+            (c) => c.id !== where.id,
+          );
+        }),
+        count: vi.fn().mockImplementation(() => defaultCategoriesInDb.length),
+      },
       expenseCategory: {
         findMany: vi.fn().mockImplementation(({ where }) => {
           return categoriesInDb.filter((c) => c.userId === where.userId);
@@ -216,5 +256,35 @@ describe('ExpensesService', () => {
     expect(report.transactionCount).toBe(2);
     expect(report.todayAmount).toBe(400_000);
     expect(report.topCategory?.categoryId).toBe(cats[0].id);
+  });
+
+  it('isolates categories per user and copies admin default categories for new users', async () => {
+    const def = await service.createDefaultCategory({
+      name: 'سرمایه‌گذاری',
+      slug: 'invest',
+      color: 'violet',
+      icon: 'lucidePieChart',
+      keywords: 'سهام، طلا',
+    });
+
+    const u1Cats = await service.listCategories('u1');
+    const customCat = await service.createCategory('u1', {
+      name: 'دسته اختصاصی کاربر ۱',
+    });
+
+    const u2Cats = await service.listCategories('u2');
+    expect(u1Cats.some((c) => c.name === 'سرمایه‌گذاری')).toBe(true);
+    expect(u2Cats.some((c) => c.name === 'سرمایه‌گذاری')).toBe(true);
+    expect(u2Cats.some((c) => c.name === customCat.name)).toBe(false);
+
+    // Updating a user's own category works and does not affect u2 or default templates
+    const updatedU1 = await service.updateCategory('u1', customCat.id, {
+      name: 'دسته ویرایش‌شده',
+    });
+    expect(updatedU1.name).toBe('دسته ویرایش‌شده');
+
+    await service.updateDefaultCategory(def.id, { name: 'پس‌انداز' });
+    const u2After = await service.listCategories('u2');
+    expect(u2After.some((c) => c.name === 'پس‌انداز')).toBe(false);
   });
 });
