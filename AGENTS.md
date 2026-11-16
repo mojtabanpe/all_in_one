@@ -659,7 +659,7 @@ origin master` and read the index and the roadmap; after work, update its status
 
 123. **English conversation (2026-11-08).** Talk to the owner in English in every chat and session: replies, short
      progress updates, questions and summaries. Only code, paths, commands and identifiers stay as written. This
-     supersedes directive 84.
+     supersedes directive 84. **Superseded by 146.**
 
 124. **Push only when the owner asks (2026-11-08).** The owner: «سعی کن هر کاری که انجام میدی از این به بعد پوش نکنی
      چون باعث دیپلوی میشه و مشتری‌ها پاپ اپ ریلود رو میبینن. هر موقع خودم گفتم پوش کن». Every push to `master` starts a
@@ -727,3 +727,5 @@ Rules:
 144. **Persian dinner-choice health advertisement (2026-11-16).** The owner requested an approximately 30-second Persian comedy ad: a wife asks what to cook, her husband repeatedly says he does not know, their verbal disagreement escalates, and he gets a recipe from the app's health section. The owner asked to send the prompt to Higgsfield and produce narration and captions, selected the Primary connection, and explicitly approved its active unlimited allowance. Keep the cooking/recipe capability concrete, preserve Persian dialogue and copy, and do not infer authorization to publish this new ad from directive 142.
 
 145. **Hourly dinner-ad follow-through (2026-11-16).** For the existing Higgsfield dinner-choice ad job, the owner asked to check once per hour and continue the work when it is ready. Reuse the submitted job; on completion inspect the media, finish Persian captions/narration and official branding, and deliver the review file. This does not authorize a replacement generation or social publication.
+
+146. **Persian conversation again (2026-11-16).** The owner: «به فارسی با من صحبت کن». Talk to the owner in Persian in every chat and session: replies, short progress updates, questions and summaries. Only code, paths, commands and identifiers stay as written. This supersedes directive 123.
