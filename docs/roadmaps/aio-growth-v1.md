@@ -6,7 +6,7 @@
 **Scope:** `apps/public`, `apps/customer`, `apps/admin`, API, billing, AI, analytics.  
 **Status:** In progress. Claude C1–C7 and Codex X1–X6 are complete. The owner confirmed X8 and X9 complete on 2026-11-14; the production notification migration is independently verified. Campaigns have started. The English pilot Reel is live (2026-11-11); a captioned health Reel was published with the owner's approved caption on 2026-11-14, and the owner-authorized English AI Reel was published and independently read back on 2026-11-15. Production campaign counts were read over SSH with QA excluded; see the dated evidence below. X7 remains open for the Instagram in-app registration check and follow-up measurement. The bio still uses the legacy general link. Three billing plans and a real Zibal payment are verified; Myket publication and purchase verification are confirmed by the owner on 2026-11-15; C8/O11 still await Cafe Bazaar approval/publication and a verified purchase there. X10 client/distribution usage reporting is complete locally (Bazaar, Myket, direct APK, PWA and web), using existing APK signals; not deployed.
 
-## Current checkpoint — 2026-11-15
+## Current checkpoint — 2026-11-16
 
 | Workstream                 | Current state                                                                                                                                                                                                                        | Still required                                                                                              |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
@@ -20,6 +20,8 @@
 | Payments                   | Three active plans and a verified Zibal payment. Signed Cafe Bazaar and Myket 1.0.4 APKs uploaded, and server verification credentials configured. Myket publication and purchase verification confirmed by the owner on 2026-11-15. | Cafe Bazaar approval/publication and a verified purchase there (C8 / O11).                                  |
 
 **English AI Reel publication (2026-11-15):** Owner authorized publishing the reviewed 13-second vertical edit. [The Reel](https://www.instagram.com/reel/DfwPmDjHLgC/) is live on @poshtetgarm at 10:58:14 Tehran, with Persian narration/captions and official branding. Windsor publication succeeded; separate read-back matched the media ID `17995631457049405`, caption, timestamp, permalink and REELS type. [Validation and publication evidence](aio-growth-english-pilot.fa.md#conceptual-english-ai-reel--2026-11-15). No new generation credits were spent; campaign measurement remains open.
+
+**Health dinner-choice ad (2026-11-16):** Owner requested a 30-second Persian couple-comedy Reel and approved generation through Higgsfield Primary using its active unlimited allowance. One 9:16/720p job with native Persian dialogue and closing narration was submitted (`ef4baa59-70c7-4bd1-acd0-726607ea0e49`); the generation is waiting. The prompt, narration and Persian post caption are saved locally. Output inspection, exact subtitles and branded final edit remain pending; publication is not requested.
 
 ## Campaign evidence — 2026-11-14
 
@@ -486,3 +488,11 @@ Campaign destinations (preserve the campaign's existing UTM fields):
 | Neutral/control | `/?view=all`       | General app home unless a specific path is selected |
 
 Recognized campaign words: `english`, `flashcards`, `leitner`; `planner`, `plan`, `planning`, `habit`, `habits`; `health`, `workout`, `fitness`, `nutrition`. Existing campaigns such as `english_7day_pilot`, `tg_partner_planner` and `home_workout` therefore work when linked to the root. A direct focused URL is preferred for new campaigns.
+
+## Health dinner-choice ad — 2026-11-16
+
+- Owner brief (144): a Persian couple debates “امشب چی بپزم؟”; the repeated “نمی‌دونم” escalates into comic frustration; the husband uses the health section for a chicken-and-potato recipe; the wife hands him an apron and they start cooking together. No real app screenshots, medical claims, free-AI claims or invented nutritional numbers.
+- `DONE` Prompt and copy: complete 30-second shot/dialogue brief, Persian closing narration “امشب چی بپزم؟ از بخش سلامت بپرس.” and a Persian post caption drafted. Local working folder: `/Users/mojtabanpe/.codex/visualizations/2026/11/15/01a1ddc3-6eac-7e72-bc16-b96999503c1f/health-dinner-ad-2026-11-16/`.
+- `IN_PROGRESS` Generation: user selected the Primary Higgsfield connection and explicitly approved unlimited generation after a 210-credit quote (ordinary balance was 5.2 credits). Preferences returned `auto_create_project=false`, so no media project was created. One `seedance_2_5` text-to-video request: 30s, 9:16, 720p, native audio, count 1, `use_unlim=true`; job `ef4baa59-70c7-4bd1-acd0-726607ea0e49`. Submitted successfully; latest status `waiting`. No completed output or quality claim yet.
+- `TODO` Follow the existing job to a terminal result, inspect frames and Persian speech, add accurate captions and the official logo, and provide the review file. Do not duplicate an uncertain paid/free submission.
+- Publication is not requested. Prior English-Reel publication permission (142) does not cover this ad.
