@@ -77,9 +77,9 @@ export const updateProfileSchema = z.object({
 });
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
-/** Which app sections (applets) the user wants visible in their workspace. */
+/** Which app sections (applets) the user wants visible in their workspace (at least 1). */
 export const updateEnabledAppletsSchema = z.object({
-  enabledApplets: z.array(appAppletSchema),
+  enabledApplets: z.array(appAppletSchema).check(z.minLength(1)),
 });
 export type UpdateEnabledAppletsInput = z.infer<
   typeof updateEnabledAppletsSchema

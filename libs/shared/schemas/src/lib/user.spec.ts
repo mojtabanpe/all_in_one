@@ -115,5 +115,10 @@ describe('resolveEnabledApplets & updateEnabledAppletsSchema', () => {
         enabledApplets: ['unknown'],
       }).success,
     ).toBe(false);
+    expect(
+      updateEnabledAppletsSchema.safeParse({
+        enabledApplets: [],
+      }).success,
+    ).toBe(false);
   });
 });

@@ -430,7 +430,10 @@ export class VerifyEmailPage implements OnInit {
                 <aio-checkbox
                   [inputId]="'applet-' + option.key"
                   [checked]="isAppletEnabled(option.key)"
-                  [disabled]="appletsSaving()"
+                  [disabled]="
+                    appletsSaving() ||
+                    (isAppletEnabled(option.key) && enabledAppletsCount() <= 1)
+                  "
                   (checkedChange)="toggleApplet(option.key, $event)"
                 />
               </div>
@@ -951,6 +954,12 @@ export class AccountPage implements OnInit {
     return base;
   });
 
+  protected readonly enabledAppletsCount = computed(() => {
+    const user = this.auth.user();
+    if (!user) return 0;
+    return resolveEnabledApplets(user.enabledApplets, user.role).length;
+  });
+
   protected isAppletEnabled(key: AppApplet): boolean {
     const user = this.auth.user();
     if (!user) return false;
@@ -964,6 +973,12 @@ export class AccountPage implements OnInit {
     const next = checked
       ? Array.from(new Set([...current, key]))
       : current.filter((item) => item !== key);
+    if (!next.length) {
+      this.notifications.error(
+        this.locale.text('دست‌کم یک بخش باید فعال بماند.'),
+      );
+      return;
+    }
     this.appletsSaving.set(true);
     try {
       await this.auth.updateEnabledApplets(next);

@@ -391,6 +391,9 @@ export class AuthService {
     enabledApplets: AppApplet[],
   ): Promise<DbUser> {
     const filtered = resolveEnabledApplets(enabledApplets, role);
+    if (!filtered.length) {
+      throw new BadRequestException('دست‌کم یک بخش باید فعال بماند.');
+    }
     return this.prisma.user.update({
       where: { id: userId },
       data: { enabledApplets: filtered },
