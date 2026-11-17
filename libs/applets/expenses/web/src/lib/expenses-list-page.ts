@@ -19,6 +19,11 @@ import {
   AioDialogBody,
   AioEmptyState,
   AioIcon,
+  AioInput,
+  AioNativeSelect,
+  AioNativeSelectOption,
+  AioToggleGroup,
+  AioToggleGroupItem,
   AioLocale,
   verbatim,
   AioNotifications,
@@ -71,6 +76,11 @@ interface BatchExpenseDraft {
     AioDialogActions,
     AioDateInput,
     AioEmptyState,
+    AioInput,
+    AioNativeSelect,
+    AioNativeSelectOption,
+    AioToggleGroup,
+    AioToggleGroupItem,
     AioTranslate,
   ],
   providers: [
@@ -197,45 +207,43 @@ interface BatchExpenseDraft {
           </div>
 
           <!-- Note & AI Preview Button -->
-          <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
-            <div class="flex min-w-[240px] flex-1 items-center gap-2">
-              <input
-                type="text"
-                [(ngModel)]="newNote"
-                name="note"
-                [attr.placeholder]="
-                  'یادداشت اختیاری (مثلاً با دوستان، تخفیف‌دار، ...)'
-                    | aioTranslate
-                "
-                class="h-10 w-full rounded-xl border border-input/60 bg-background/40 px-3 text-xs outline-none transition focus:border-primary focus:ring-1 focus:ring-primary/20"
-              />
+          <div class="flex flex-col gap-3 pt-1 md:flex-row md:items-center">
+            <input
+              aioInput
+              type="text"
+              [(ngModel)]="newNote"
+              name="note"
+              [attr.aria-label]="'یادداشت اختیاری' | aioTranslate"
+              [attr.placeholder]="'یادداشت اختیاری' | aioTranslate"
+              class="w-full min-w-0 md:flex-1"
+            />
+            <div
+              class="grid grid-cols-1 gap-2 sm:grid-cols-2 md:flex md:shrink-0"
+            >
               <button
                 aioBtn
                 type="button"
-                variant="ghost"
-                size="sm"
-                class="h-10 shrink-0 gap-1.5 px-3 text-xs text-primary"
+                variant="outline"
+                class="h-11 min-w-0 gap-1.5"
                 [disabled]="!newTitle().trim() || classifying()"
                 (click)="askAiCategory()"
               >
                 <aio-icon name="lucideSparkles" size="sm" />
-                {{
+                <span class="truncate">{{
                   (classifying() ? 'در حال بررسی...' : 'پیشنهاد هوش مصنوعی')
                     | aioTranslate
-                }}
+                }}</span>
+              </button>
+              <button
+                aioBtn
+                type="submit"
+                class="h-11 min-w-0 gap-2 font-semibold"
+                [disabled]="saving() || !newTitle().trim() || !newAmount()"
+              >
+                <aio-icon name="lucidePlus" size="sm" />
+                {{ (saving() ? 'در حال ثبت...' : 'ثبت هزینه') | aioTranslate }}
               </button>
             </div>
-
-            <button
-              aioBtn
-              type="submit"
-              variant="default"
-              class="h-11 min-w-[120px] gap-2 rounded-xl px-5 text-sm font-semibold"
-              [disabled]="saving() || !newTitle().trim() || !newAmount()"
-            >
-              <aio-icon name="lucidePlus" size="sm" />
-              {{ (saving() ? 'در حال ثبت...' : 'ثبت هزینه') | aioTranslate }}
-            </button>
           </div>
 
           <!-- AI Classification Preview Pill -->
@@ -270,78 +278,64 @@ interface BatchExpenseDraft {
 
       <!-- Filter Bar -->
       <section
-        class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/40 bg-card/40 p-3.5 backdrop-blur-sm"
+        class="flex flex-col gap-3 rounded-2xl border border-border/40 bg-card/40 p-3.5 backdrop-blur-sm"
       >
         <!-- Range presets -->
-        <div class="flex flex-wrap items-center gap-1.5">
-          <button
-            aioBtn
-            type="button"
-            [variant]="filterPreset() === 'all' ? 'default' : 'ghost'"
-            size="sm"
-            class="h-8 rounded-lg text-xs"
-            (click)="setPreset('all')"
-          >
-            {{ 'همه' | aioTranslate }}
-          </button>
-          <button
-            aioBtn
-            type="button"
-            [variant]="filterPreset() === 'today' ? 'default' : 'ghost'"
-            size="sm"
-            class="h-8 rounded-lg text-xs"
-            (click)="setPreset('today')"
-          >
-            {{ 'امروز' | aioTranslate }}
-          </button>
-          <button
-            aioBtn
-            type="button"
-            [variant]="filterPreset() === 'last7day' ? 'default' : 'ghost'"
-            size="sm"
-            class="h-8 rounded-lg text-xs"
-            (click)="setPreset('last7day')"
-          >
-            {{ '۷ روز اخیر' | aioTranslate }}
-          </button>
-          <button
-            aioBtn
-            type="button"
-            [variant]="filterPreset() === 'this_month' ? 'default' : 'ghost'"
-            size="sm"
-            class="h-8 rounded-lg text-xs"
-            (click)="setPreset('this_month')"
-          >
-            {{ 'این ماه' | aioTranslate }}
-          </button>
+        <div
+          aioToggleGroup
+          type="single"
+          variant="outline"
+          class="w-full"
+          [attr.aria-label]="'بازهٔ هزینه‌ها' | aioTranslate"
+          [value]="filterPreset()"
+          (valueChange)="onPresetChange($event)"
+        >
+          @for (preset of presets; track preset.value) {
+            <button
+              aioToggleGroupItem
+              [value]="preset.value"
+              class="h-11 min-w-0 flex-1 px-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+            >
+              {{ preset.label | aioTranslate }}
+            </button>
+          }
         </div>
 
-        <div class="flex flex-wrap items-center gap-2">
-          <!-- Category Filter -->
-          <select
-            [(ngModel)]="filterCategoryId"
-            (ngModelChange)="loadExpenses()"
-            class="h-8 rounded-lg border border-input/60 bg-background/50 px-2.5 text-xs outline-none focus:border-primary"
-          >
-            <option value="">{{ 'همه دسته‌ها' | aioTranslate }}</option>
-            @for (cat of categories(); track cat.id) {
-              <option [value]="cat.id">{{ cat.name }}</option>
-            }
-          </select>
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div class="min-w-0">
+            <label class="sr-only" for="expense-filter-category">
+              {{ 'فیلتر دسته' | aioTranslate }}
+            </label>
+            <aio-native-select
+              selectId="expense-filter-category"
+              [value]="filterCategoryId()"
+              (valueChange)="onCategoryFilterChange($event)"
+            >
+              <option aioNativeSelectOption value="">
+                {{ 'همه دسته‌ها' | aioTranslate }}
+              </option>
+              @for (cat of categories(); track cat.id) {
+                <option aioNativeSelectOption [value]="cat.id">
+                  {{ cat.name }}
+                </option>
+              }
+            </aio-native-select>
+          </div>
 
-          <!-- Search input -->
-          <div class="relative">
+          <div class="relative min-w-0">
             <input
-              type="text"
-              [(ngModel)]="searchQuery"
-              (ngModelChange)="onSearchChange()"
-              [attr.placeholder]="'جستجو در عنوان یا یادداشت...' | aioTranslate"
-              class="h-8 w-44 max-w-full rounded-lg border border-input/60 bg-background/50 pr-7 pl-2 text-xs outline-none focus:w-56 focus:border-primary transition-all"
+              aioInput
+              type="search"
+              [ngModel]="searchQuery()"
+              (ngModelChange)="searchQuery.set($event); onSearchChange()"
+              [attr.aria-label]="'جستجو در هزینه‌ها' | aioTranslate"
+              [attr.placeholder]="'جستجو در هزینه‌ها' | aioTranslate"
+              class="w-full ps-10"
             />
             <span
-              class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+              class="pointer-events-none absolute start-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
             >
-              <aio-icon name="lucideSearch" size="xs" />
+              <aio-icon name="lucideSearch" size="sm" />
             </span>
           </div>
         </div>
@@ -659,6 +653,12 @@ export class ExpensesListPage implements OnInit {
   protected readonly filterPreset = signal<
     'all' | 'today' | 'last7day' | 'this_month'
   >('this_month');
+  protected readonly presets = [
+    { value: 'all', label: 'همه' },
+    { value: 'today', label: 'امروز' },
+    { value: 'last7day', label: '۷ روز اخیر' },
+    { value: 'this_month', label: 'این ماه' },
+  ] as const;
   protected readonly filterCategoryId = signal('');
   protected readonly searchQuery = signal('');
 
@@ -716,6 +716,16 @@ export class ExpensesListPage implements OnInit {
 
   setPreset(preset: 'all' | 'today' | 'last7day' | 'this_month'): void {
     this.filterPreset.set(preset);
+    void this.loadExpenses();
+  }
+
+  protected onPresetChange(value: unknown): void {
+    const preset = this.presets.find((p) => p.value === value);
+    if (preset) this.setPreset(preset.value);
+  }
+
+  protected onCategoryFilterChange(value: string): void {
+    this.filterCategoryId.set(value);
     void this.loadExpenses();
   }
 
