@@ -143,3 +143,80 @@ describe.skipIf(process.env['IN_APP_DB_INTEGRATION'] !== '1')(
     });
   },
 );
+
+describe('store rating notice', () => {
+  const now = new Date('2026-11-18T10:00:00Z');
+  const bazaar = 'Mozilla/5.0 (Linux; Android 14) PoshtetgarmStore/bazaar';
+  function rating(opts: {
+    existing?: boolean;
+    ageDays?: number;
+    role?: string;
+    activeDays?: number;
+  }) {
+    const db = {
+      inAppNotification: {
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+        upsert: vi.fn().mockResolvedValue({ id: 'id' }),
+        findMany: vi.fn().mockResolvedValue([]),
+        findUnique: vi
+          .fn()
+          .mockResolvedValue(opts.existing ? { id: 'old' } : null),
+      },
+      user: {
+        findUnique: vi.fn().mockResolvedValue({
+          role: opts.role ?? 'CUSTOMER',
+          createdAt: new Date(+now - (opts.ageDays ?? 5) * 86_400_000),
+        }),
+      },
+      $queryRaw: vi
+        .fn()
+        .mockResolvedValue([{ days: BigInt(opts.activeDays ?? 4) }]),
+    };
+    const billing = {
+      access: vi.fn().mockResolvedValue({ tier: 'free', trialUntil: null }),
+      rewardOffers: vi.fn().mockResolvedValue([]),
+    };
+    const service = new InAppNotificationsService(
+      db as unknown as PrismaService,
+      billing as unknown as BillingService,
+    );
+    const ratingCalls = () =>
+      db.inAppNotification.upsert.mock.calls.filter(
+        ([call]) => call.create.source === 'rating',
+      );
+    return { db, service, ratingCalls };
+  }
+
+  it('asks an active store customer once, with that store’s page', async () => {
+    const { service, ratingCalls } = rating({});
+    await service.pending('owner', now, bazaar);
+    const [[call]] = ratingCalls();
+    expect(call.where).toEqual({
+      userId_key: { userId: 'owner', key: 'rate:bazaar' },
+    });
+    expect(call.update).toEqual({});
+    expect(call.create.content.actions[0].url).toBe(
+      'https://cafebazaar.ir/app/ir.poshtetgarm.poshtetgarm_hybrid',
+    );
+  });
+
+  it('uses the Myket page in the Myket build', async () => {
+    const { service, ratingCalls } = rating({});
+    await service.pending('owner', now, 'Android PoshtetgarmStore/myket');
+    expect(ratingCalls()[0][0].create.content.actions[0].url).toBe(
+      'https://myket.ir/app/ir.poshtetgarm.poshtetgarm_hybrid',
+    );
+  });
+
+  it.each([
+    ['outside a store build', {}, 'Mozilla/5.0 Chrome'],
+    ['after it was shown once', { existing: true }, bazaar],
+    ['to a new account', { ageDays: 1 }, bazaar],
+    ['to an account active on fewer days', { activeDays: 2 }, bazaar],
+    ['to an admin', { role: 'ADMIN' }, bazaar],
+  ])('does not ask %s', async (_label, opts, agent) => {
+    const { service, ratingCalls } = rating(opts);
+    await service.pending('owner', now, agent);
+    expect(ratingCalls()).toHaveLength(0);
+  });
+});

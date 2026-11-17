@@ -359,6 +359,10 @@ export class Layout {
             run: () => {
               if (action.url.startsWith('/'))
                 void this.router.navigateByUrl(action.url);
+              // Inside the Android shell a new window may never open; a plain navigation is handed to the
+              // store app or the browser by the shell (it never loads outside links in the WebView).
+              else if (/PoshtetgarmStore\//.test(navigator.userAgent))
+                window.location.assign(action.url);
               else window.open(action.url, '_blank', 'noopener,noreferrer');
             },
           })),

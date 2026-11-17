@@ -773,3 +773,11 @@ Rules:
      `20261117155633_expenses_opt_in` removes the default-given `expenses` from customer rows). The api reaches
      customers only after they turn it on (`ExpensesEnabledGuard`); the default-category routes stay admin-only; the
      route uses `appletGuard('expenses')`. Admins keep their current choice. This supersedes the admin-only part of 143.
+
+161. **Ask store users for a rating, once (2026-11-18).** Most new accounts come from Cafe Bazaar and Myket and both
+     listings had no ratings; the owner approved («Yes, build it») an in-app request. The in-app notifications API
+     (131) creates a `rate:<store>` notice only when the request comes from a store build (`PoshtetgarmStore/bazaar|myket`
+     in the user agent), for a customer whose account is at least 3 days old and who has activity on at least 3
+     separate Tehran days (`RATE_PROMPT_ACTIVE_DAYS`). Its button opens that store's app page; closing or tapping it
+     ends it for good. In store builds outside links open with a plain navigation, which the Android shell hands to the
+     store app or browser, so existing APKs need no update.
