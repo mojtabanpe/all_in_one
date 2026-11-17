@@ -570,3 +570,11 @@ Recognized campaign words: `english`, `flashcards`, `leitner`; `planner`, `plan`
 - `DONE` Media `18181607725432036`: [live Reel](https://www.instagram.com/reel/Df1X9z6mWAd/), platform timestamp `2026-11-17T07:17:34+0000` = 10:47:34 Tehran. Separate connector reads returned the same ID, permalink, full exact caption and `REELS` product type. Forced refresh was unavailable on the trial plan; the supported read without it returned the newly published media.
 - Published file is the approved v4, SHA-256 `4e48d91b3670d76cfea38467286fd2a51e308e087f2bb67ac75a83de8b262d34`, 25,935,054 bytes. Hosting upload returned HTTP 200 and public HEAD confirmed matching length and video/mp4. Full publication receipt and caption saved locally in `health-dinner-ad-2026-11-16/publication.json`; no new media generation or generation credits spent for publication.
 - `VERIFY` Subsequent reach, watch time, profile/website visits and attributed health signups/activation remain to be measured. Publishing alone is not evidence of conversion.
+
+## Campaign evidence — 2026-11-17 evening (LinkedIn and store signups)
+
+Read-only production check after the owner reported a LinkedIn signup that the campaign report counted as zero.
+
+- `linkedin / organic_social / linkedin_launch`: 3 landing visitors, 1 `signup_started` (19:23 Tehran), 0 `signup_completed`. No customer account was created after 18:22 Tehran (checked about 19:30), so that visit did not finish creating a new account. It may have signed in to an existing number instead, which creates no signup event.
+- **Most new accounts now come from the Android stores, not from campaigns.** Of 22 `signup_completed` events in 7 days, the client seen for that visitor (X10, `growth_client_days`) was Cafe Bazaar 10, Myket 9, direct APK 1, web/PWA 2. Only 2 of them had a landing-page visit. Store installs open `/app` directly, so they never touch a tagged link and correctly appear as untagged. This is not an attribution bug. Client mix over 7 days (unique visitors): Bazaar 28, Myket 11, web 8, PWA 4, direct APK 1.
+- Reading: since Myket (2026-11-15) and Cafe Bazaar went live, store discovery brings far more signups than every tagged campaign together. Store listing quality (screenshots, description, ratings) is now the main acquisition lever. The campaign report cannot show it, because the stores pass no `utm_*`.
