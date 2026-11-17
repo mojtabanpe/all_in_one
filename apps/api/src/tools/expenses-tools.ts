@@ -55,6 +55,52 @@ export function expensesTools(
   );
 
   sink.tool(
+    'update_expense_category',
+    {
+      description:
+        'Edit an expense category: rename it or change its color, icon, keywords (used for automatic categorizing) or monthly budget in Toman. Pass monthly_budget: null to remove the budget.',
+      scope: 'expenses:write',
+      kind: 'update',
+      input: {
+        id: z.uuid(),
+        name: z.string().min(1).max(80).optional(),
+        color: z.enum(EXPENSE_CATEGORY_COLORS).optional(),
+        icon: z.enum(EXPENSE_CATEGORY_ICONS).optional(),
+        keywords: z.string().max(500).optional(),
+        monthly_budget: z
+          .number()
+          .int()
+          .min(1)
+          .max(MAX_EXPENSE_AMOUNT)
+          .nullable()
+          .optional(),
+      },
+    },
+    async (args) =>
+      deps.expenses.updateCategory(sink.user, args.id, {
+        name: args.name,
+        color: args.color,
+        icon: args.icon,
+        keywords: args.keywords,
+        monthlyBudget: args.monthly_budget,
+      }),
+  );
+
+  sink.tool(
+    'delete_expense_category',
+    {
+      description:
+        'Delete an empty expense category by ID. A category that still has expenses cannot be deleted: move those expenses with update_expense first.',
+      scope: 'expenses:write',
+      kind: 'delete',
+      input: {
+        id: z.uuid(),
+      },
+    },
+    async (args) => deps.expenses.deleteCategory(sink.user, args.id),
+  );
+
+  sink.tool(
     'classify_expense_category',
     {
       description:
