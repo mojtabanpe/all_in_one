@@ -251,26 +251,49 @@ jobs:
           FCM_SERVICE_ACCOUNT_JSON: ${{ secrets.FCM_SERVICE_ACCOUNT_JSON }}
           RELEASE: ${{ needs.build.outputs.release }}
         run: |
+          # A wrong Firebase secret stops the release (exit 1). Google's token endpoint being unreachable from
+          # the server (filtered networks, seen 2026-11-16/17) only affects native push, so after three tries
+          # it is a warning (exit 2) and the web release goes ahead.
           if [ -n "${FCM_SERVICE_ACCOUNT_JSON:-}" ]; then
+            status=0
             docker run --rm --network host -e FCM_SERVICE_ACCOUNT_JSON \
               --entrypoint node "all-in-one-api:$RELEASE" -e '
                 (async () => {
-                  const timer = setTimeout(() => {
-                    console.error("Firebase credential verification timed out");
-                    process.exit(1);
-                  }, 30000);
+                  const { cert } = require("firebase-admin/app");
+                  let credential;
                   try {
-                    const { cert } = require("firebase-admin/app");
                     const account = JSON.parse(process.env.FCM_SERVICE_ACCOUNT_JSON);
                     if (account.project_id !== "poshtetgarm") throw new Error();
-                    await cert(account).getAccessToken();
-                    clearTimeout(timer);
-                    console.log("Firebase server authentication verified");
+                    credential = cert(account);
                   } catch {
-                    console.error("Firebase credential verification failed; check the production secret and server connectivity");
+                    console.error("Firebase secret is not a valid poshtetgarm service account");
                     process.exit(1);
                   }
+                  for (let attempt = 1; attempt <= 3; attempt++) {
+                    try {
+                      await Promise.race([
+                        credential.getAccessToken(),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 20000)),
+                      ]);
+                      console.log("Firebase server authentication verified");
+                      process.exit(0);
+                    } catch (error) {
+                      const text = String((error && error.message) || error);
+                      // Google answered and refused the key: the secret is wrong, not the network.
+                      if (/invalid_grant|invalid_client|unauthorized_client|account not found/i.test(text)) {
+                        console.error("Firebase rejected the service account; check the production secret");
+                        process.exit(1);
+                      }
+                      console.error("Firebase token endpoint unreachable (attempt " + attempt + " of 3)");
+                    }
+                  }
+                  process.exit(2);
                 })();
-              '
+              ' || status=$?
+            if [ "$status" = 2 ]; then
+              echo "::warning title=Native push::Google token endpoint unreachable from the server; releasing anyway. Native (FCM) push cannot send until the server reaches oauth2.googleapis.com."
+            elif [ "$status" != 0 ]; then
+              exit "$status"
+            fi
           fi
           sh deploy/release.sh "$RELEASE"
