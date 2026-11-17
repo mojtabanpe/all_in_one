@@ -2848,7 +2848,14 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['وزن الان (کیلوگرم)', 'Current weight (kg)'],
   ['وزن هدف (کیلوگرم)', 'Target weight (kg)'],
   ['تا کی؟', 'until when'],
+  ['{0} ماه', '{0} month'],
   ['{0} ماه', '{0} months'],
+  // Flashcard rating buttons show when the card returns (`previewInterval`, English source).
+  ['{0} روز', '{0} day'],
+  ['{0} روز', '{0} days'],
+  ['{0} سال', '{0} year'],
+  ['{0} سال', '{0} years'],
+  ['کمتر از یک روز', 'Less than a day'],
   ['یا تاریخ دلخواه', 'or desired date'],
   [
     'وزن هدف با وزن فعلی یکی است؛ یعنی حفظ وزن.',

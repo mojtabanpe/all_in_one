@@ -8,7 +8,12 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import type { OnboardingState } from '@all-in-one/shared/schemas';
 import { AioNotifications } from '@all-in-one/ui';
-import { API_BASE_URL, AuthStore, PushSettings } from '@all-in-one/web/shared';
+import {
+  API_BASE_URL,
+  AuthStore,
+  GrowthAnalytics,
+  PushSettings,
+} from '@all-in-one/web/shared';
 import { mealTypeAt, Welcome } from './welcome';
 import { needsWelcome, WelcomeGate } from './welcome-gate';
 
@@ -73,6 +78,7 @@ describe('first-step gate', () => {
 describe('welcome page', () => {
   function setup(push: Partial<PushSettings> = { supported: false }) {
     const success = vi.fn();
+    const track = vi.fn(async () => undefined);
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -80,6 +86,7 @@ describe('welcome page', () => {
         provideRouter([]),
         { provide: API_BASE_URL, useValue: '/api' },
         { provide: AioNotifications, useValue: { success } },
+        { provide: GrowthAnalytics, useValue: { track } },
         {
           provide: PushSettings,
           useValue: {
@@ -112,12 +119,12 @@ describe('welcome page', () => {
       await settle();
     };
     fixture.detectChanges();
-    return { fixture, http, navigate, settle, click, success };
+    return { fixture, http, navigate, settle, click, success, track };
   }
   afterEach(() => TestBed.resetTestingModule());
 
   it('takes a new account from a goal to its first task', async () => {
-    const { fixture, http, navigate, settle, click } = setup();
+    const { fixture, http, navigate, settle, click, track } = setup();
     http.expectOne('/api/onboarding').flush(fresh);
     await settle();
 
@@ -138,6 +145,10 @@ describe('welcome page', () => {
     await settle();
     // No notification support here: straight to the planner.
     expect(navigate).toHaveBeenCalledWith('/planner');
+    expect(track.mock.calls).toEqual([
+      ['welcome_viewed'],
+      ['notify_unsupported'],
+    ]);
   });
 
   it('starts at the first action when the goal came from a landing page', async () => {
@@ -154,7 +165,7 @@ describe('welcome page', () => {
   it('offers notifications after the first action and continues either way', async () => {
     const enabled = signal(false);
     const enable = vi.fn(async () => enabled.set(true));
-    const { fixture, http, navigate, settle, click, success } = setup({
+    const { fixture, http, navigate, settle, click, success, track } = setup({
       supported: true,
       enabled,
       enable,
@@ -194,10 +205,40 @@ describe('welcome page', () => {
     await settle();
     expect(success).toHaveBeenCalledWith('اعلان‌ها روشن شد.');
     expect(navigate).toHaveBeenCalledWith('/english/deck/d1/study');
+    expect(track.mock.calls).toEqual([
+      ['welcome_viewed'],
+      ['notify_prompt_viewed'],
+      ['notify_enabled'],
+    ]);
+  });
+
+  it('records a declined or failed notification offer', async () => {
+    const enable = vi.fn(async () => undefined);
+    const { http, navigate, settle, click, track } = setup({
+      supported: true,
+      enable,
+    });
+    http.expectOne('/api/onboarding').flush({ ...fresh, goal: 'planner' });
+    await settle();
+    await click('ده دقیقه پیاده‌روی');
+    http.expectOne('/api/planner/tasks').flush({});
+    await settle();
+
+    await click('روشن کردن اعلان‌ها');
+    expect(enable).toHaveBeenCalledTimes(1);
+    expect(navigate).not.toHaveBeenCalled();
+    await click('ادامه بدون اعلان');
+    expect(navigate).toHaveBeenCalledWith('/planner');
+    expect(track.mock.calls).toEqual([
+      ['welcome_viewed'],
+      ['notify_prompt_viewed'],
+      ['notify_failed'],
+      ['notify_declined'],
+    ]);
   });
 
   it('skips the guide on request', async () => {
-    const { http, navigate, settle, click } = setup();
+    const { http, navigate, settle, click, track } = setup();
     http.expectOne('/api/onboarding').flush(fresh);
     await settle();
     await click('فعلاً بدون راهنما');
@@ -206,6 +247,7 @@ describe('welcome page', () => {
     skipped.flush({ ...fresh, skipped: true });
     await settle();
     expect(navigate).toHaveBeenCalledWith('/');
+    expect(track).toHaveBeenLastCalledWith('welcome_skipped');
   });
 
   it('sends accounts that no longer need it home', async () => {

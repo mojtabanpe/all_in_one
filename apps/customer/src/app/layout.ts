@@ -94,7 +94,9 @@ const TRIAL_NOTICE_DAYS = 3;
       [language]="english() ? 'en' : 'fa'"
     >
       <aio-in-app-notifications [suspended]="paywall.open()" />
-      <web-assistant floating [context]="assistantContext()" />
+      @if (!studySession()) {
+        <web-assistant floating [context]="assistantContext()" />
+      }
       @if (pwa.installAvailable()) {
         <button
           aioShellActions
@@ -226,6 +228,10 @@ export class Layout {
       map(() => this.router.url),
     ),
     { initialValue: this.router.url },
+  );
+  /** A flashcard review keeps its answer and rating buttons at the bottom, where the assistant button would cover them. */
+  protected readonly studySession = computed(() =>
+    /^\/english\/deck\/[^/?#]+\/study(?:[?#]|$)/.test(this.url()),
   );
   /** The assistant focuses on the applet the user is in. */
   protected readonly assistantContext = computed<AssistantContext>(() => {

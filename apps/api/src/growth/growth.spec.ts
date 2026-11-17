@@ -40,6 +40,13 @@ describe('Growth data boundaries', () => {
       'pwa_install_prompt',
       'pwa_installed',
       'paywall_viewed',
+      'welcome_viewed',
+      'welcome_skipped',
+      'notify_prompt_viewed',
+      'notify_unsupported',
+      'notify_enabled',
+      'notify_failed',
+      'notify_declined',
     ])
       expect(growthEventSchema.safeParse({ ...event, name }).success).toBe(
         true,

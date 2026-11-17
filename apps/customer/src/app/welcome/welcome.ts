@@ -1,5 +1,12 @@
 import { HttpClient, httpResource } from '@angular/common/http';
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import type {
   Deck,
@@ -30,7 +37,11 @@ import {
   AioTranslate,
   provideIcons,
 } from '@all-in-one/ui';
-import { API_BASE_URL, PushSettings } from '@all-in-one/web/shared';
+import {
+  API_BASE_URL,
+  GrowthAnalytics,
+  PushSettings,
+} from '@all-in-one/web/shared';
 import {
   lucideBell,
   lucideCalendarCheck,
@@ -347,7 +358,7 @@ export function mealTypeAt(hour: number): MealType {
                 type="button"
                 class="min-h-11"
                 [disabled]="push.busy()"
-                (click)="finish()"
+                (click)="decline()"
               >
                 {{
                   (reminderFailed() ? 'ادامه بدون اعلان' : 'فعلاً نه')
@@ -406,6 +417,7 @@ export class Welcome {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly notifications = inject(AioNotifications);
+  private readonly growth = inject(GrowthAnalytics);
   private readonly restart =
     inject(ActivatedRoute).snapshot.queryParamMap.has('restart');
 
@@ -489,6 +501,13 @@ export class Welcome {
       )
         void this.router.navigateByUrl('/');
     });
+    // Content-free funnel markers (one per visitor and day); the goal itself is on the account.
+    const viewed = effect(() => {
+      const step = this.step();
+      if (step === 'loading' || step === 'reminder') return;
+      untracked(() => void this.growth.track('welcome_viewed'));
+      viewed.destroy();
+    });
   }
 
   /** Copy of ours that becomes the user's own task title, in the chosen language. */
@@ -529,7 +548,10 @@ export class Welcome {
 
   protected skip(): Promise<void> {
     return this.run(async () => {
-      if (await this.put(null)) await this.router.navigateByUrl('/');
+      if (await this.put(null)) {
+        void this.growth.track('welcome_skipped');
+        await this.router.navigateByUrl('/');
+      }
     });
   }
 
@@ -537,6 +559,9 @@ export class Welcome {
   private done(target: string, message?: string): void {
     if (message) this.notifications.success(message);
     this.target.set(target);
+    if (!this.push.supported) void this.growth.track('notify_unsupported');
+    else if (!this.push.enabled())
+      void this.growth.track('notify_prompt_viewed');
     if (!this.push.supported || this.push.enabled()) void this.finish();
   }
 
@@ -565,10 +590,8 @@ export class Welcome {
           {},
         ),
       );
-      this.done(
-        `${GOAL_APP_PATHS.english}/deck/${deck.id}/study`,
-        'مجموعه به کتابخانه‌ات اضافه شد.',
-      );
+      // No toast: the review opens on this deck, and a toast would cover its "Show answer" button.
+      this.done(`${GOAL_APP_PATHS.english}/deck/${deck.id}/study`);
     });
   }
 
@@ -615,8 +638,10 @@ export class Welcome {
     await this.push.enable();
     if (!this.push.enabled()) {
       this.reminderFailed.set(true);
+      void this.growth.track('notify_failed');
       return;
     }
+    void this.growth.track('notify_enabled');
     // Saying yes here is the request for reminders: the first-week nudges and weekly report for everyone,
     // plus the reminder that fits the chosen goal. Each can be turned off in the account.
     const goal = this.goal();
@@ -639,6 +664,11 @@ export class Welcome {
     ]);
     this.notifications.success('اعلان‌ها روشن شد.');
     await this.finish();
+  }
+
+  protected decline(): Promise<void> {
+    void this.growth.track('notify_declined');
+    return this.finish();
   }
 
   protected async finish(): Promise<void> {

@@ -28,6 +28,14 @@ export const GROWTH_EVENTS = [
   'pwa_install_prompt',
   'pwa_installed',
   'paywall_viewed',
+  // First-step page (/welcome) and its notification offer: where new accounts drop off.
+  'welcome_viewed',
+  'welcome_skipped',
+  'notify_prompt_viewed',
+  'notify_unsupported',
+  'notify_enabled',
+  'notify_failed',
+  'notify_declined',
 ] as const;
 const campaignValue = z.string().check(
   z.minLength(1),
