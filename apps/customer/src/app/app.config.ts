@@ -1,4 +1,4 @@
-import { provideAioLocale } from '@all-in-one/ui';
+import { AioTitleStrategy, provideAioLocale } from '@all-in-one/ui';
 import {
   provideHttpClient,
   withFetch,
@@ -14,6 +14,7 @@ import {
   provideRouter,
   withComponentInputBinding,
   withPreloading,
+  TitleStrategy,
   withInMemoryScrolling,
 } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
@@ -28,6 +29,8 @@ import { onboardingFeedbackInterceptor } from './onboarding-feedback';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideAioLocale(),
+    // Route titles follow the app language (they are written in Persian).
+    { provide: TitleStrategy, useExisting: AioTitleStrategy },
     provideBrowserGlobalErrorListeners(),
     provideRouter(
       appRoutes,

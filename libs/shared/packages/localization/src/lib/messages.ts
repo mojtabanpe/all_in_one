@@ -165,6 +165,8 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['راهنما را رد کرده‌اند', 'Skipped the guide'],
   // Experimental expenses applet in account settings and on home (directive 160).
   ['مدیریت مخارج', 'Expenses'],
+  ['گزارش و تحلیل مخارج', 'Expense report'],
+  ['دسته‌بندی‌های مخارج', 'Expense categories'],
   [
     'ثبت مخارج، دسته‌بندی با هوش مصنوعی و گزارش مالی',
     'Log expenses, sort them with AI and see spending reports',
