@@ -1052,7 +1052,6 @@ textarea {
         var(--lx-2, oklch(0.9 0.08 200 / 0.8)),
         transparent 60%
       );
-    animation: lx-drift 26s ease-in-out infinite alternate;
   }
   .lx-stage::after {
     width: min(60vw, 520px);
@@ -1070,7 +1069,6 @@ textarea {
         var(--lx-4, oklch(0.93 0.09 95 / 0.7)),
         transparent 60%
       );
-    animation: lx-drift 32s ease-in-out -8s infinite alternate-reverse;
   }
 
   .lx-glass {
@@ -1143,21 +1141,11 @@ textarea {
   }
 }
 
-@keyframes lx-drift {
-  from {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  to {
-    transform: translate3d(6%, 8%, 0) scale(1.12);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .lx-stage::before,
-  .lx-stage::after {
-    animation: none;
-  }
-}
+/*
+ * The ambient light is static (2026-11-17). It used to drift forever; with the glass panels' backdrop blur over it,
+ * every frame re-blurred every panel, and a phone running the Android app got hot enough that the AI chat was
+ * unusable. Keep it still: same colours, nothing to recompute while the page sits idle.
+ */
 @media (prefers-reduced-transparency: reduce) {
   .lx-glass {
     background: oklch(0.995 0.003 240);
