@@ -23,6 +23,35 @@
 
 **Health dinner-choice ad (2026-11-17):** Owner approved the v4 video and explicitly authorized publication (156). Published to @poshtetgarm at 10:47:34 Tehran: [Instagram Reel](https://www.instagram.com/reel/Df1X9z6mWAd/), media `18181607725432036`. Independent connector read-back verified media ID, permalink, exact Persian caption, timestamp and REELS type. Source is the approved 30.666667-second v4 with unchanged approved audio and visible conceptual Poshtetgarm phone use. Campaign measurement remains open.
 
+## Campaign evidence — 2026-11-17 (Instagram measurement, X7)
+
+Read-only: Windsor `instagram` connector for `@poshtetgarm` (media published 2026-11-01..17; account days 2026-11-08..17) and production `growth_events` for the last 21 days with QA sources excluded (counts only).
+
+| Reel (Tehran publish day)                                                               | Views | Reach | Avg watch | Skipped < 3 s | Saves | Shares |
+| --------------------------------------------------------------------------------------- | ----: | ----: | --------: | ------------: | ----: | -----: |
+| [DfelKMZt41x](https://www.instagram.com/reel/DfelKMZt41x/) (11-08)                      |   130 |   117 |     5.7 s |           60% |     2 |      1 |
+| [Dfek_YrstbQ](https://www.instagram.com/reel/Dfek_YrstbQ/) (11-08)                      |   133 |   123 |     4.3 s |           62% |     3 |      1 |
+| [Dfekh_lNzJb](https://www.instagram.com/reel/Dfekh_lNzJb/) (11-08)                      |   128 |   120 |     4.6 s |           65% |     2 |      3 |
+| [DfkI-i5od8_](https://www.instagram.com/reel/DfkI-i5od8_/) (11-10)                      |   144 |   124 |     4.3 s |           57% |     0 |      1 |
+| [English pilot Dfl3tZht5Mu](https://www.instagram.com/reel/Dfl3tZht5Mu/) (11-11)        |   130 |   123 |     4.7 s |           61% |     3 |      0 |
+| [Dfp8PEVgSvP](https://www.instagram.com/reel/Dfp8PEVgSvP/) (11-12)                      |   149 |   129 |     4.5 s |           64% |     5 |      2 |
+| [Health DftwNt1EThg](https://www.instagram.com/reel/DftwNt1EThg/) (11-14)               |   124 |   112 |     4.8 s |           48% |     2 |      2 |
+| [English AI DfwPmDjHLgC](https://www.instagram.com/reel/DfwPmDjHLgC/) (11-15)           |   128 |   113 |     3.4 s |           71% |     3 |      0 |
+| [Dinner ad Df1X9z6mWAd](https://www.instagram.com/reel/Df1X9z6mWAd/) (11-17, hours old) |   152 |   135 |     9.1 s |           36% |     0 |      0 |
+
+- Every Reel stops at roughly 110–135 accounts reached: none was pushed beyond Instagram's first test audience. The profile has 8 followers. Feed posts reach 6–9 accounts.
+- The dinner ad holds attention clearly best on its first day (average watch 9.1 s, 36% skipped in the first 3 s; earlier Reels 3.4–5.7 s and 48–71%). The English AI Reel is the weakest (71% skipped).
+- Bio-link taps are not available: Meta's `profile_links_taps` counts contact buttons (0 every day) and website clicks are deprecated. Attribution therefore comes from the tagged links.
+- Tagged-link traffic in 21 days (unique visitors, landing / signup started / signup completed):
+  - Telegram Linuxor partner: 41 / 13 / 6
+  - Untagged: 44 / 5 / 5
+  - Telegram `tech_immigrants`: 7 / 0 / 0
+  - Instagram `english_7day_pilot`: 4 / 0 / 0
+  - YouTube bio: 4 / 0 / 0
+  - Legacy Instagram bio: 3 / 2 / 1
+  - New `instagram_bio`: 2 / 0 / 0 on 11-17 (could include the owner's own check after changing the bio)
+- **Reading:** organic Instagram has produced one attributed signup in three weeks. The Linuxor partner placement produced six, so partner placements outperform organic Instagram by a wide margin at this size. The story-led dinner format is the only Reel that held viewers. Re-read the dinner ad and the new bio link on 2026-11-24 with the activation measurement.
+
 ## Campaign evidence — 2026-11-14
 
 - Owner confirmed campaigns have started and X8/X9 are complete. Read-only production SQL via `ssh flashcard` at 10:58–11:00 Tehran verified the notification migration. Running API/public image tags were `e80b9a9`; no production settings or user data were changed.
