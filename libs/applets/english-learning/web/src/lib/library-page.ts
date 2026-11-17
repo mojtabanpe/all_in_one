@@ -10,6 +10,7 @@ import {
   type StarterDeck,
 } from '@all-in-one/applets/english-learning/contracts';
 import {
+  verbatim,
   AioTranslate,
   AioButton,
   AioDialog,
@@ -277,8 +278,8 @@ import { EnglishApi } from './english-api';
           aioSectionHeading
           [title]="'My decks' | aioTranslate"
           [description]="
-            fa(myDecks().length) + ' decks, ' + fa(totalCards()) + ' cards'
-              | aioTranslate
+            '{0} decks, {1} cards'
+              | aioTranslate: [fa(myDecks().length), fa(totalCards())]
           "
           [loading]="decks.isLoading() && !decks.hasValue()"
           [level]="2"
@@ -435,7 +436,9 @@ import { EnglishApi } from './english-api';
                 size="sm"
                 [disabled]="copying() === s.slug || inLibrary(s)"
                 (click)="copy(s)"
-                [attr.aria-label]="'Add ' + s.title | aioTranslate"
+                [attr.aria-label]="
+                  'Add {0}' | aioTranslate: [verbatim(s.title)]
+                "
               >
                 @if (inLibrary(s)) {
                   <aio-icon name="lucideCheck" size="sm" />
@@ -564,6 +567,7 @@ export class LibraryPage {
   protected readonly copied = signal<ReadonlySet<string>>(new Set());
 
   protected readonly fa = (n: number) => this.locale.number(n);
+  protected readonly verbatim = verbatim;
   protected readonly tone = (c: DeckColor) => DECK_TONE[c];
   /** Copied in this visit, or a deck with the same name is already in the library. */
   protected readonly inLibrary = (s: StarterDeck) =>

@@ -170,7 +170,7 @@ import { EnglishApi } from './english-api';
                     <span
                       class="flex items-center gap-0.5 text-[var(--streak)]"
                       [attr.aria-label]="
-                        fa(text.rating) + ' stars' | aioTranslate
+                        '{0} stars' | aioTranslate: [fa(text.rating)]
                       "
                     >
                       <aio-icon name="lucideStar" size="xs" />{{

@@ -174,7 +174,7 @@ const UNIT_KEY = 'aio.english.reader.unit';
                   [class.text-[var(--streak)]]="s <= rating()"
                   [class.text-muted-foreground]="s > rating()"
                   [attr.aria-checked]="s === rating()"
-                  [attr.aria-label]="s + ' stars' | aioTranslate"
+                  [attr.aria-label]="'{0} stars' | aioTranslate: [s]"
                   (click)="rating.set(s)"
                 >
                   <aio-icon

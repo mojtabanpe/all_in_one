@@ -627,7 +627,8 @@ const freshTask = (): TaskState => ({
                       class="text-primary shrink-0 font-bold"
                       (click)="speak(l.text, speakerVoice(l.speaker))"
                       [attr.aria-label]="
-                        'Play sentence ' + l.speaker | aioTranslate
+                        'Play sentence {0}'
+                          | aioTranslate: [verbatim(l.speaker)]
                       "
                     >
                       {{ l.speaker }}:
@@ -993,7 +994,9 @@ const freshTask = (): TaskState => ({
                   variant="ghost"
                   size="icon"
                   (click)="speak(p.phrase)"
-                  [attr.aria-label]="'Pronunciation ' + p.phrase | aioTranslate"
+                  [attr.aria-label]="
+                    'Pronunciation {0}' | aioTranslate: [verbatim(p.phrase)]
+                  "
                 >
                   <aio-icon name="lucideVolume2" size="sm" />
                 </button>
@@ -1004,7 +1007,7 @@ const freshTask = (): TaskState => ({
                   [disabled]="added().has(p.phrase)"
                   (click)="addPhrase(p)"
                   [attr.aria-label]="
-                    'Add ' + p.phrase + ' to deck' | aioTranslate
+                    'Add {0} to deck' | aioTranslate: [verbatim(p.phrase)]
                   "
                 >
                   <aio-icon
