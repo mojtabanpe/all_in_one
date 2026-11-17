@@ -151,7 +151,8 @@ export type AiQuotas = Record<AiQuotaTier, AiDailyLimits>;
 export const DEFAULT_AI_QUOTAS: AiQuotas = {
   trial: { chat: 200_000, tts: 5_000, stt: 30 },
   earned: { chat: 200_000, tts: 5_000, stt: 30 },
-  paid: { chat: 600_000, tts: 15_000, stt: 60 },
+  // 3,000 characters (directive 157): 15,000 a day could cost one account ≈3.7M Toman a month in speech alone.
+  paid: { chat: 600_000, tts: 3_000, stt: 60 },
 };
 
 const limit = z.int().check(z.minimum(0), z.maximum(100_000_000));

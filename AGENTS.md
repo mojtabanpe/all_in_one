@@ -602,7 +602,7 @@ origin master` and read the index and the roadmap; after work, update its status
      Plans in Toman: monthly 249,000; three months 649,000; yearly 1,990,000; no automatic renewal; planner, flashcards
      and health stay free forever, AI is the paid part (with trial and earned weeks, directive 108). Plans are entered
      in `/admin/billing` (directive: plans are admin-managed, nothing seeded). Daily AI limits (`DEFAULT_AI_QUOTAS`):
-     trial and earned 200k chat tokens, 5,000 speech characters, 30 recordings; paid 600k, 15,000, 60. Speech audio is
+     trial and earned 200k chat tokens, 5,000 speech characters, 30 recordings; paid 600k, 15,000, 60 (paid speech superseded by 157). Speech audio is
      cached for all accounts (`speechCacheKey` without the user), so a text is paid for once; access is still checked
      before the cache. Watch the cost per paid user in `/admin/ai` and revisit prices or limits if it passes about
      100,000 Toman a month.
@@ -749,3 +749,9 @@ Rules:
 155. **The native shell lives in this repository (2026-11-16).** The owner asked to correct directive 30 («دستور ۳۰ رو اصلاح کن») after the comparison showed `/Users/mojtabanpe/Projects/personal/hybrid/Poshtetgarm` is an older copy (1.0.2, no store billing, not a git repository). The Android and macOS WebView shell is maintained only in `native/poshtetgarm`; the `direct`, `bazaar` and `myket` APKs are built from it by the `Android APK` workflow on GitHub (the published 1.0.4 came from run 42482248309) and the store builds are signed with the release key held in GitHub secrets. Never build a release from the `hybrid` copy or edit it as the source. The Cafe Bazaar and Myket apps are WebViews of `https://poshtetgarm.ir/app`, so web releases reach them without a store update. The logo and branding rules of 30 stay.
 
 156. **Publish the approved dinner-ad v4 to Poshtetgarm Instagram (2026-11-17).** The owner approved the completed v4 review («خوبه»), then explicitly instructed «پابلیش کن تو پشتت گرم». This authorizes publishing that exact 30.666667-second review video with its prepared Persian caption to the established @poshtetgarm Instagram account. This supersedes the no-publication restriction in 144/147/153 for this approved ad only, and is not standing authorization for future posts. Record the resulting media ID, permalink and read-back evidence in the growth roadmap.
+
+157. **Paid speech limit 3,000 characters a day (2026-11-17).** After the first production cost read (an assistant
+     message ≈ 940 Toman; a paid account using 15,000 speech characters every day could cost ≈3.7M Toman a month in
+     speech alone, against a 249,000 Toman plan), the owner chose «Lower to 3,000». `DEFAULT_AI_QUOTAS.paid.tts` is
+     3,000; chat and recordings are unchanged. Limits saved in `/admin/ai` still override the defaults (none were
+     saved on 2026-11-17). This supersedes the paid speech number in 116.
