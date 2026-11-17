@@ -270,10 +270,11 @@ html[lang='en'] *,
   --ring: var(--expenses);
   --accent: oklch(0.55 0.16 168 / 0.12);
   --accent-foreground: oklch(0.42 0.14 168);
-  --lx-1: oklch(0.88 0.12 168 / 0.9);
-  --lx-2: oklch(0.9 0.08 200 / 0.8);
-  --lx-3: oklch(0.92 0.09 130 / 0.75);
-  --lx-4: oklch(0.92 0.07 85 / 0.7);
+  /* Warm amber and peach (2026-11-17, owner): the green light read the same as health. */
+  --lx-1: oklch(0.88 0.11 75 / 0.9);
+  --lx-2: oklch(0.9 0.08 40 / 0.8);
+  --lx-3: oklch(0.93 0.08 100 / 0.75);
+  --lx-4: oklch(0.92 0.06 15 / 0.7);
 }
 
 /*

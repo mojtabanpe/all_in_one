@@ -123,6 +123,9 @@ Every customer page sits on `.lx-stage` (ambient light from `--lx-1..4`; directi
 and planner with their applet's pastels (planner: blues around hue 258), home/account/subscription with `.lx-brand`
 (teal hue 185 and the logo's sun, hue 70–85, all L ≥ 0.86 like English, so text contrast is unchanged). English and health keep glass panels
 (`.lx-glass`; health's companion cards get the same material through `.health-calm`). 2026-11-01.
+Expenses (`.applet-expenses`) uses warm amber and peach (hues 75, 40, 100, 15; L ≥ 0.88), so it no longer reads
+like health's green (owner, 2026-11-17). Its accent `--expenses` (`0.55 0.16 168`) is still green. The light is
+static: no drift animation, which made phones re-blur the glass every frame (2026-11-17).
 
 The applet root carries `.applet-planner` / `.applet-english` / `.applet-health`, which sets `--primary`,
 `--ring` and `--accent`, so every spartan component inside follows the applet colour. Sheets and dialogs
