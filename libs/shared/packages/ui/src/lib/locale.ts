@@ -189,4 +189,4 @@ export class AioDatePipe implements PipeTransform {
 }
 
 /** Mark a `{0}` value for `aioTranslate` as user/learning content: never translated. */
-export { verbatim } from '@all-in-one/localization';
+export { loadMessages, verbatim } from '@all-in-one/localization';
