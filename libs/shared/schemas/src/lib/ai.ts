@@ -149,9 +149,9 @@ export type AiQuotas = Record<AiQuotaTier, AiDailyLimits>;
  * cached audio does not count.
  */
 export const DEFAULT_AI_QUOTAS: AiQuotas = {
-  trial: { chat: 200_000, tts: 5_000, stt: 30 },
-  earned: { chat: 200_000, tts: 5_000, stt: 30 },
-  // 3,000 characters (directive 157): 15,000 a day could cost one account ≈3.7M Toman a month in speech alone.
+  trial: { chat: 200_000, tts: 3_000, stt: 30 },
+  earned: { chat: 200_000, tts: 3_000, stt: 30 },
+  // 3,000 speech characters a day for every tier (directives 157, 158): 15,000 could cost one account ≈3.7M Toman a month.
   paid: { chat: 600_000, tts: 3_000, stt: 60 },
 };
 

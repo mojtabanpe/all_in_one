@@ -602,7 +602,7 @@ origin master` and read the index and the roadmap; after work, update its status
      Plans in Toman: monthly 249,000; three months 649,000; yearly 1,990,000; no automatic renewal; planner, flashcards
      and health stay free forever, AI is the paid part (with trial and earned weeks, directive 108). Plans are entered
      in `/admin/billing` (directive: plans are admin-managed, nothing seeded). Daily AI limits (`DEFAULT_AI_QUOTAS`):
-     trial and earned 200k chat tokens, 5,000 speech characters, 30 recordings; paid 600k, 15,000, 60 (paid speech superseded by 157). Speech audio is
+     trial and earned 200k chat tokens, 5,000 speech characters, 30 recordings; paid 600k, 15,000, 60 (speech limits superseded by 157 and 158). Speech audio is
      cached for all accounts (`speechCacheKey` without the user), so a text is paid for once; access is still checked
      before the cache. Watch the cost per paid user in `/admin/ai` and revisit prices or limits if it passes about
      100,000 Toman a month.
@@ -755,3 +755,8 @@ Rules:
      speech alone, against a 249,000 Toman plan), the owner chose «Lower to 3,000». `DEFAULT_AI_QUOTAS.paid.tts` is
      3,000; chat and recordings are unchanged. Limits saved in `/admin/ai` still override the defaults (none were
      saved on 2026-11-17). This supersedes the paid speech number in 116.
+
+158. **Trial speech limit 3,000 characters a day (2026-11-17).** Once paid speech dropped to 3,000 (157), trial and
+     earned-week accounts still had 5,000, more than paying customers. The owner chose to lower them in the same
+     release («With trial limit»): `DEFAULT_AI_QUOTAS.trial.tts` and `.earned.tts` are 3,000. Chat and recordings are
+     unchanged; limits saved in `/admin/ai` still override the defaults.
