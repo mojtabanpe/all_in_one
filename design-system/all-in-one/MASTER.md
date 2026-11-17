@@ -111,20 +111,21 @@ Status colours always come with a label or an icon, never colour alone.
 
 ### Applet accents
 
-| Token       | Value           | Applet / meaning        | White text | As text on bg                |
-| ----------- | --------------- | ----------------------- | ---------- | ---------------------------- |
-| `--planner` | `0.54 0.19 258` | planner (TickTick blue) | 5.2:1      | 4.7:1                        |
-| `--english` | `0.52 0.2 293`  | english (violet)        | 6.0:1      | 5.6:1                        |
-| `--health`  | `0.53 0.15 152` | health (green)          | 4.9:1      | 4.5:1                        |
-| `--streak`  | `0.56 0.14 62`  | streak flame (amber)    | 4.8:1      | 4.4:1 (bold/large text only) |
-| `--gem`     | `0.54 0.14 235` | learned words / gems    | 4.8:1      | 4.3:1 (bold/large text only) |
+| Token        | Value           | Applet / meaning        | White text | As text on bg                |
+| ------------ | --------------- | ----------------------- | ---------- | ---------------------------- |
+| `--planner`  | `0.54 0.19 258` | planner (TickTick blue) | 5.2:1      | 4.7:1                        |
+| `--english`  | `0.52 0.2 293`  | english (violet)        | 6.0:1      | 5.6:1                        |
+| `--health`   | `0.53 0.15 152` | health (green)          | 4.9:1      | 4.5:1                        |
+| `--expenses` | `0.55 0.15 55`  | expenses (amber)        | 5.1:1      | 4.8:1                        |
+| `--streak`   | `0.56 0.14 62`  | streak flame (amber)    | 4.8:1      | 4.4:1 (bold/large text only) |
+| `--gem`      | `0.54 0.14 235` | learned words / gems    | 4.8:1      | 4.3:1 (bold/large text only) |
 
 Every customer page sits on `.lx-stage` (ambient light from `--lx-1..4`; directive 114, 2026-11-08): English, health
 and planner with their applet's pastels (planner: blues around hue 258), home/account/subscription with `.lx-brand`
 (teal hue 185 and the logo's sun, hue 70–85, all L ≥ 0.86 like English, so text contrast is unchanged). English and health keep glass panels
 (`.lx-glass`; health's companion cards get the same material through `.health-calm`). 2026-11-01.
 Expenses (`.applet-expenses`) uses warm amber and peach (hues 75, 40, 100, 15; L ≥ 0.88), so it no longer reads
-like health's green (owner, 2026-11-17). Its accent `--expenses` (`0.55 0.16 168`) is still green. The light is
+like health's green (owner, 2026-11-17). Its accent `--expenses` became amber too (`0.55 0.15 55`, accent text `0.44 0.13 55` at 7.7:1). The light is
 static: no drift animation, which made phones re-blur the glass every frame (2026-11-17).
 
 The applet root carries `.applet-planner` / `.applet-english` / `.applet-health`, which sets `--primary`,

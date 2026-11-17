@@ -268,7 +268,7 @@ interface DailyChartRow {
                 {{ 'بیشترین سهم هزینه' | aioTranslate }}
               </span>
               <span
-                class="flex size-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500"
+                class="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary"
               >
                 <aio-icon name="lucidePieChart" size="xs" />
               </span>

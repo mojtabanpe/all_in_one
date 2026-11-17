@@ -763,7 +763,8 @@ Rules:
 
 159. **Expenses has its own ambient colour (2026-11-17).** The owner: «رنگ پس زمینه مخارج رو هم از سلامت متمایز کن».
      `.applet-expenses` ambient light is warm amber and peach (`--lx-1..4` at hues 75, 40, 100, 15, L ≥ 0.88), no
-     longer green like health. Its accent `--expenses` is unchanged. Recorded in `design-system/all-in-one/MASTER.md`.
+     longer green like health. Buttons and the active tab follow too (owner: «رنگ دکمه‌ها و تب فعال مخارج هنوز سبز است… این اشتباهه»):
+     `--expenses` is amber `oklch(0.55 0.15 55)` (white text 5.1:1). Recorded in `design-system/all-in-one/MASTER.md`.
 
 160. **Expenses is an opt-in experiment for every account (2026-11-17).** The owner: «مخارج رو هم برای همه کاربران
      اجازه بده ک فعال کنن ولی دیفالت فعال نباشه، فقط جلوش بنویس آزمایش». Every account can turn on «مدیریت مخارج» in

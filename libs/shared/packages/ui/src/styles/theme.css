@@ -164,7 +164,8 @@ html[lang='en'] *,
   /* 2026-11-01: health took the green, English moved to violet (owner). */
   --english: oklch(0.52 0.2 293);
   --health: oklch(0.53 0.15 152);
-  --expenses: oklch(0.55 0.16 168);
+  /* 2026-11-17 (owner): amber, so expenses no longer looks like health's green. */
+  --expenses: oklch(0.55 0.15 55);
   --streak: oklch(0.56 0.14 62);
   --gem: oklch(0.54 0.14 235);
 
@@ -266,10 +267,10 @@ html[lang='en'] *,
 .applet-expenses {
   --primary: var(--expenses);
   --primary-foreground: oklch(0.99 0 0);
-  --primary-edge: oklch(0.44 0.14 168);
+  --primary-edge: oklch(0.45 0.13 55);
   --ring: var(--expenses);
-  --accent: oklch(0.55 0.16 168 / 0.12);
-  --accent-foreground: oklch(0.42 0.14 168);
+  --accent: oklch(0.55 0.15 55 / 0.12);
+  --accent-foreground: oklch(0.44 0.13 55);
   /* Warm amber and peach (2026-11-17, owner): the green light read the same as health. */
   --lx-1: oklch(0.88 0.11 75 / 0.9);
   --lx-2: oklch(0.9 0.08 40 / 0.8);
