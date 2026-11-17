@@ -613,6 +613,15 @@ export class GrowthService {
       pwaPromptVisitors: count('pwa_install_prompt'),
       pwaInstalledVisitors: count('pwa_installed'),
       paywallVisitors: count('paywall_viewed'),
+      welcome: {
+        viewedVisitors: count('welcome_viewed'),
+        skippedVisitors: count('welcome_skipped'),
+        notifyPromptVisitors: count('notify_prompt_viewed'),
+        notifyUnsupportedVisitors: count('notify_unsupported'),
+        notifyEnabledVisitors: count('notify_enabled'),
+        notifyFailedVisitors: count('notify_failed'),
+        notifyDeclinedVisitors: count('notify_declined'),
+      },
       channels: channelRows.map((row) => ({
         source: row.source,
         medium: row.medium,

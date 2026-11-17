@@ -153,6 +153,9 @@ describe('Growth data boundaries', () => {
         { name: 'pwa_install_prompt', visitors: 2n },
         { name: 'pwa_installed', visitors: 1n },
         { name: 'paywall_viewed', visitors: 3n },
+        { name: 'welcome_viewed', visitors: 5n },
+        { name: 'notify_prompt_viewed', visitors: 4n },
+        { name: 'notify_enabled', visitors: 1n },
       ])
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
@@ -212,6 +215,15 @@ describe('Growth data boundaries', () => {
       pwaPromptVisitors: 2,
       pwaInstalledVisitors: 1,
       paywallVisitors: 3,
+      welcome: {
+        viewedVisitors: 5,
+        skippedVisitors: 0,
+        notifyPromptVisitors: 4,
+        notifyUnsupportedVisitors: 0,
+        notifyEnabledVisitors: 1,
+        notifyFailedVisitors: 0,
+        notifyDeclinedVisitors: 0,
+      },
       channels: [],
     });
   });

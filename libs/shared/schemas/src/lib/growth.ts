@@ -126,6 +126,16 @@ export interface GrowthSummary {
   pwaPromptVisitors: number;
   pwaInstalledVisitors: number;
   paywallVisitors: number;
+  /** First-step page and its notification offer, unique visitors (directive 151). */
+  welcome: {
+    viewedVisitors: number;
+    skippedVisitors: number;
+    notifyPromptVisitors: number;
+    notifyUnsupportedVisitors: number;
+    notifyEnabledVisitors: number;
+    notifyFailedVisitors: number;
+    notifyDeclinedVisitors: number;
+  };
   channels: GrowthChannel[];
 }
 

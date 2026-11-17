@@ -190,6 +190,28 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
             </table>
           </div>
           <h2 class="mt-4 text-xl font-semibold">
+            {{ 'صفحهٔ شروع و پیشنهاد اعلان' | aioTranslate }}
+          </h2>
+          <p class="text-sm leading-7 text-muted-foreground">
+            {{
+              'مرورگرهای یکتا در ۳۰ روز اخیر؛ این رویدادها از نسخهٔ جدید ثبت می‌شوند و گذشته بازسازی نمی‌شود. «دستگاه بدون اعلان» یعنی پیشنهاد اعلان اصلاً نشان داده نشد.'
+                | aioTranslate
+            }}
+          </p>
+          <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            @for (tile of welcomeTiles(); track tile.label) {
+              <section aioCard size="sm">
+                <div
+                  aioCardHeading
+                  [title]="fa(tile.value)"
+                  [level]="3"
+                  [description]="tile.label | aioTranslate"
+                  titleClass="text-2xl"
+                ></div>
+              </section>
+            }
+          </div>
+          <h2 class="mt-4 text-xl font-semibold">
             {{ 'فعالیت و بازگشت' | aioTranslate }}
           </h2>
           <p class="text-sm leading-7 text-muted-foreground">
@@ -911,6 +933,22 @@ export class Dashboard {
             value: data.unselectedAccounts,
           },
           { label: 'راهنما را رد کرده‌اند', value: data.skippedAccounts },
+        ]
+      : [];
+  });
+  protected readonly welcomeTiles = computed(() => {
+    const data = this.growth.hasValue()
+      ? this.growth.value().welcome
+      : undefined;
+    return data
+      ? [
+          { label: 'صفحهٔ شروع را دیدند', value: data.viewedVisitors },
+          { label: 'راهنما را رد کردند', value: data.skippedVisitors },
+          { label: 'پیشنهاد اعلان را دیدند', value: data.notifyPromptVisitors },
+          { label: 'دستگاه بدون اعلان', value: data.notifyUnsupportedVisitors },
+          { label: 'اعلان را روشن کردند', value: data.notifyEnabledVisitors },
+          { label: 'روشن‌کردن اعلان ناموفق', value: data.notifyFailedVisitors },
+          { label: 'اعلان را نخواستند', value: data.notifyDeclinedVisitors },
         ]
       : [];
   });

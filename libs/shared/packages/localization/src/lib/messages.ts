@@ -163,6 +163,19 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['حساب‌های مشتری تازه', 'New customer accounts'],
   ['هنوز هدف انتخاب نکرده‌اند', 'No goal selected yet'],
   ['راهنما را رد کرده‌اند', 'Skipped the guide'],
+  // Admin dashboard: first-step page and notification offer.
+  ['صفحهٔ شروع و پیشنهاد اعلان', 'First-step page and notification offer'],
+  [
+    'مرورگرهای یکتا در ۳۰ روز اخیر؛ این رویدادها از نسخهٔ جدید ثبت می‌شوند و گذشته بازسازی نمی‌شود. «دستگاه بدون اعلان» یعنی پیشنهاد اعلان اصلاً نشان داده نشد.',
+    'Unique browsers in the last 30 days; these events are recorded from the new release on and the past is not rebuilt. “Device without notifications” means the notification offer was never shown.',
+  ],
+  ['صفحهٔ شروع را دیدند', 'Saw the first-step page'],
+  ['راهنما را رد کردند', 'Skipped the guide'],
+  ['پیشنهاد اعلان را دیدند', 'Saw the notification offer'],
+  ['دستگاه بدون اعلان', 'Device without notifications'],
+  ['اعلان را روشن کردند', 'Turned notifications on'],
+  ['روشن‌کردن اعلان ناموفق', 'Turning notifications on failed'],
+  ['اعلان را نخواستند', 'Declined notifications'],
 
   ['قدم اول را انتخاب کن', 'Choose your first step'],
   [
