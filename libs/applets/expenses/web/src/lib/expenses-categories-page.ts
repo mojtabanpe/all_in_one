@@ -19,6 +19,7 @@ import {
   AioEmptyState,
   AioIcon,
   AioLocale,
+  verbatim,
   AioNotifications,
   AioTranslate,
   provideIcons,
@@ -228,7 +229,7 @@ import { ExpensesApi } from './expenses-api';
               <input
                 type="text"
                 [(ngModel)]="formName"
-                placeholder="مثال: هدایا و خیریه"
+                [attr.placeholder]="'مثال: هدایا و خیریه' | aioTranslate"
                 class="h-10 rounded-xl border border-input bg-background/50 px-3 text-sm outline-none focus:border-primary"
               />
             </div>
@@ -241,7 +242,7 @@ import { ExpensesApi } from './expenses-api';
               <input
                 type="text"
                 [(ngModel)]="formSlug"
-                placeholder="مثال: gifts"
+                [attr.placeholder]="'مثال: gifts' | aioTranslate"
                 class="h-10 rounded-xl border border-input bg-background/50 px-3 text-sm font-mono outline-none focus:border-primary"
               />
             </div>
@@ -258,7 +259,9 @@ import { ExpensesApi } from './expenses-api';
                   class="h-10 rounded-xl border border-input bg-background/50 px-2.5 text-xs outline-none focus:border-primary"
                 >
                   @for (ic of availableIcons; track ic) {
-                    <option [value]="ic">{{ iconLabels[ic] }}</option>
+                    <option [value]="ic">
+                      {{ iconLabels[ic] | aioTranslate }}
+                    </option>
                   }
                 </select>
               </div>
@@ -273,7 +276,9 @@ import { ExpensesApi } from './expenses-api';
                   class="h-10 rounded-xl border border-input bg-background/50 px-2.5 text-xs outline-none focus:border-primary"
                 >
                   @for (col of availableColors; track col) {
-                    <option [value]="col">{{ colorLabels[col] }}</option>
+                    <option [value]="col">
+                      {{ colorLabels[col] | aioTranslate }}
+                    </option>
                   }
                 </select>
               </div>
@@ -288,7 +293,7 @@ import { ExpensesApi } from './expenses-api';
                 type="number"
                 min="0"
                 [(ngModel)]="formBudget"
-                placeholder="مثال: 2000000"
+                [attr.placeholder]="'مثال: 2000000' | aioTranslate"
                 class="h-10 rounded-xl border border-input bg-background/50 px-3 text-sm outline-none focus:border-primary"
               />
             </div>
@@ -304,7 +309,9 @@ import { ExpensesApi } from './expenses-api';
               <input
                 type="text"
                 [(ngModel)]="formKeywords"
-                placeholder="مثال: هدیه, تولد, کادو, نذری, خیریه"
+                [attr.placeholder]="
+                  'مثال: هدیه, تولد, کادو, نذری, خیریه' | aioTranslate
+                "
                 class="h-10 rounded-xl border border-input bg-background/50 px-3 text-xs outline-none focus:border-primary"
               />
             </div>
@@ -442,7 +449,10 @@ export class ExpensesCategoriesPage implements OnInit {
   async deleteCategory(cat: ExpenseCategoryItem): Promise<void> {
     const ok = await this.confirm.ask({
       title: 'حذف این دسته‌بندی؟',
-      description: `دسته‌بندی «${cat.name}» حذف خواهد شد. اگر هزینه‌ای در این دسته ثبت شده باشد، ابتدا باید دسته‌بندی آن تغییر کند.`,
+      description: this.locale.text(
+        'دسته‌بندی «{0}» حذف خواهد شد. اگر هزینه‌ای در این دسته ثبت شده باشد، ابتدا باید دسته‌بندی آن تغییر کند.',
+        [verbatim(cat.name)],
+      ),
       confirmText: 'حذف دسته‌بندی',
       destructive: true,
     });

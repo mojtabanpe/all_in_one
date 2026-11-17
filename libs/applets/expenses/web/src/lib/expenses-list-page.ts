@@ -20,6 +20,7 @@ import {
   AioEmptyState,
   AioIcon,
   AioLocale,
+  verbatim,
   AioNotifications,
   AioTranslate,
   provideIcons,
@@ -141,7 +142,9 @@ interface BatchExpenseDraft {
                 [(ngModel)]="newTitle"
                 name="title"
                 required
-                placeholder="مثال: خرید سوپرمارکت، اسنپ، قبض"
+                [attr.placeholder]="
+                  'مثال: خرید سوپرمارکت، اسنپ، قبض' | aioTranslate
+                "
                 class="h-11 rounded-xl border border-input bg-background/50 px-3.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
@@ -158,7 +161,7 @@ interface BatchExpenseDraft {
                 [(ngModel)]="newAmount"
                 name="amount"
                 required
-                placeholder="مثال: 120000"
+                [attr.placeholder]="'مثال: 120000' | aioTranslate"
                 class="h-11 rounded-xl border border-input bg-background/50 px-3.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
@@ -200,7 +203,10 @@ interface BatchExpenseDraft {
                 type="text"
                 [(ngModel)]="newNote"
                 name="note"
-                placeholder="یادداشت اختیاری (مثلاً با دوستان، تخفیف‌دار، ...)"
+                [attr.placeholder]="
+                  'یادداشت اختیاری (مثلاً با دوستان، تخفیف‌دار، ...)'
+                    | aioTranslate
+                "
                 class="h-10 w-full rounded-xl border border-input/60 bg-background/40 px-3 text-xs outline-none transition focus:border-primary focus:ring-1 focus:ring-primary/20"
               />
               <button
@@ -329,7 +335,7 @@ interface BatchExpenseDraft {
               type="text"
               [(ngModel)]="searchQuery"
               (ngModelChange)="onSearchChange()"
-              placeholder="جستجو در عنوان یا یادداشت..."
+              [attr.placeholder]="'جستجو در عنوان یا یادداشت...' | aioTranslate"
               class="h-8 w-44 max-w-full rounded-lg border border-input/60 bg-background/50 pr-7 pl-2 text-xs outline-none focus:w-56 focus:border-primary transition-all"
             />
             <span
@@ -420,7 +426,7 @@ interface BatchExpenseDraft {
                       class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground"
                     >
                       <span class="font-medium text-foreground/80">
-                        {{ item.categoryName || 'سایر' }}
+                        {{ item.categoryName || ('سایر' | aioTranslate) }}
                       </span>
                       <span>•</span>
                       <span>{{ formatDate(item.date) }}</span>
@@ -491,14 +497,14 @@ interface BatchExpenseDraft {
             <div
               class="rounded-xl bg-muted/40 p-2.5 text-[11px] font-mono text-muted-foreground"
             >
-              خرید میوه: 180000<br />
-              اسنپ رفت و برگشت: 65000<br />
-              قبض اینترنت: 120000
+              {{ 'خرید میوه: 180000' | aioTranslate }}<br />
+              {{ 'اسنپ رفت و برگشت: 65000' | aioTranslate }}<br />
+              {{ 'قبض اینترنت: 120000' | aioTranslate }}
             </div>
             <textarea
               [(ngModel)]="batchText"
               rows="6"
-              placeholder="مثال:&#10;شام رستوران: 350000&#10;کرایه تاکسی: 40000"
+              [attr.placeholder]="batchExample()"
               class="w-full rounded-xl border border-input bg-background/60 p-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
             ></textarea>
 
@@ -736,7 +742,9 @@ export class ExpensesListPage implements OnInit {
 
   applyAiSuggestion(res: ClassifyExpenseResult): void {
     this.newCategoryId.set(res.categoryId);
-    this.notifications.success(`دسته «${res.categoryName}» انتخاب شد`);
+    this.notifications.success(
+      this.locale.text('دسته «{0}» انتخاب شد', [verbatim(res.categoryName)]),
+    );
     this.aiPreview.set(null);
   }
 
@@ -756,7 +764,10 @@ export class ExpensesListPage implements OnInit {
       });
 
       this.notifications.success(
-        `هزینه «${item.title}» (${this.locale.number(item.amount)} تومان) ثبت شد`,
+        this.locale.text('هزینه «{0}» ({1} تومان) ثبت شد', [
+          verbatim(item.title),
+          this.locale.number(item.amount),
+        ]),
       );
       // Reset form
       this.newTitle.set('');
@@ -819,7 +830,9 @@ export class ExpensesListPage implements OnInit {
       });
 
       this.notifications.success(
-        `${this.locale.number(created.length)} هزینه با موفقیت ثبت شد`,
+        this.locale.text('{0} هزینه با موفقیت ثبت شد', [
+          this.locale.number(created.length),
+        ]),
       );
       this.batchText.set('');
       this.batchOpen.set(false);
@@ -871,7 +884,10 @@ export class ExpensesListPage implements OnInit {
   async deleteExpense(item: ExpenseItem): Promise<void> {
     const ok = await this.confirm.ask({
       title: 'حذف این هزینه؟',
-      description: `«${item.title}» به مبلغ ${this.locale.number(item.amount)} تومان حذف خواهد شد.`,
+      description: this.locale.text('«{0}» به مبلغ {1} تومان حذف خواهد شد.', [
+        verbatim(item.title),
+        this.locale.number(item.amount),
+      ]),
       confirmText: 'حذف هزینه',
       destructive: true,
     });
@@ -894,11 +910,18 @@ export class ExpensesListPage implements OnInit {
   }
 
   decisionLabel(source: string | null | undefined): string {
-    if (!source) return 'انتخاب شده';
-    return (
+    if (!source) return this.locale.text('انتخاب شده');
+    return this.locale.text(
       EXPENSE_DECISION_LABELS[source as ExpenseDecisionSource] ||
-      'تشخیص هوش مصنوعی'
+        'تشخیص هوش مصنوعی',
     );
+  }
+
+  /** Two example lines for the batch box, in the app language. */
+  protected batchExample(): string {
+    return ['مثال:', 'شام رستوران: 350000', 'کرایه تاکسی: 40000']
+      .map((line) => this.locale.text(line))
+      .join('\n');
   }
 
   getCategoryBadgeClass(color?: string | null): string {

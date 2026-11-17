@@ -226,8 +226,8 @@ interface DailyChartRow {
             </div>
             <p class="mt-1 text-[11px] text-muted-foreground">
               {{
-                'در بازهٔ ' + locale.number(rep.daysCount) + ' روزه'
-                  | aioTranslate
+                'در بازهٔ {0} روزه'
+                  | aioTranslate: [locale.number(rep.daysCount)]
               }}
             </p>
           </div>
@@ -475,7 +475,7 @@ interface DailyChartRow {
                           {{ item.title }}
                         </span>
                         <span class="text-[11px] text-muted-foreground">
-                          {{ item.categoryName || 'سایر' }} •
+                          {{ item.categoryName || ('سایر' | aioTranslate) }} •
                           {{ formatDate(item.date) }}
                         </span>
                       </div>
@@ -525,7 +525,7 @@ export class ExpensesReportPage implements OnInit {
     const maxVal = Math.max(...rows.map((r) => r.total), 1000);
 
     return {
-      ariaLabel: 'روند مخارج روزانه',
+      ariaLabel: this.locale.text('روند مخارج روزانه'),
       definition: defineChart({
         marks: [
           lineY(rows, { x: 'label', y: 'total' }),
