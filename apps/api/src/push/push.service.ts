@@ -73,6 +73,7 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
     };
   }
   onModuleInit() {
+    this.native.start();
     if (this.status().enabled || this.native.enabled) {
       this.timer = setInterval(() => {
         void this.tick();
@@ -83,6 +84,7 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
     }
   }
   onModuleDestroy() {
+    this.native.stop();
     if (this.timer) clearInterval(this.timer);
     for (const handle of this.focusTimers.values()) clearTimeout(handle);
     this.focusTimers.clear();
