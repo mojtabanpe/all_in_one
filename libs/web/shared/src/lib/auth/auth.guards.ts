@@ -6,7 +6,11 @@ import {
 } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { type CanActivateFn, Router } from '@angular/router';
-import type { Role } from '@all-in-one/shared/schemas';
+import {
+  type AppApplet,
+  resolveEnabledApplets,
+  type Role,
+} from '@all-in-one/shared/schemas';
 import { catchError, throwError } from 'rxjs';
 import { AuthStore } from './auth.store';
 
@@ -25,6 +29,24 @@ export function authGuard(role?: Role): CanActivateFn {
       return router.createUrlTree(['/login'], { queryParams: { denied: 1 } });
     }
     return true;
+  };
+}
+
+/** An applet the user turned off (or never turned on, for an experiment) opens the account page, where it is switched. */
+export function appletGuard(applet: AppApplet): CanActivateFn {
+  return async (_route, state) => {
+    const auth = inject(AuthStore);
+    const router = inject(Router);
+    const user = await auth.load();
+    if (!user)
+      return router.createUrlTree(['/login'], {
+        queryParams: { redirect: state.url },
+      });
+    return resolveEnabledApplets(user.enabledApplets, user.role).includes(
+      applet,
+    )
+      ? true
+      : router.createUrlTree(['/account']);
   };
 }
 

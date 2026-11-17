@@ -163,6 +163,15 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['حساب‌های مشتری تازه', 'New customer accounts'],
   ['هنوز هدف انتخاب نکرده‌اند', 'No goal selected yet'],
   ['راهنما را رد کرده‌اند', 'Skipped the guide'],
+  // Experimental expenses applet in account settings and on home (directive 160).
+  ['مدیریت مخارج', 'Expenses'],
+  [
+    'ثبت مخارج، دسته‌بندی با هوش مصنوعی و گزارش مالی',
+    'Log expenses, sort them with AI and see spending reports',
+  ],
+  ['آزمایشی', 'Experimental'],
+  ['ثبت و گزارش مخارج', 'Log and review expenses'],
+  ['مخارج', 'Expenses'],
   // Admin dashboard: first-step page and notification offer.
   ['صفحهٔ شروع و پیشنهاد اعلان', 'First-step page and notification offer'],
   [

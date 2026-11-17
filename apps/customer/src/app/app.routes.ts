@@ -1,6 +1,7 @@
 import type { Route } from '@angular/router';
 import {
   AccountPage,
+  appletGuard,
   authGuard,
   ForgotPasswordPage,
   guestGuard,
@@ -78,7 +79,7 @@ export const appRoutes: Route[] = [
       },
       {
         path: 'expenses',
-        canActivate: [authGuard('ADMIN')],
+        canActivate: [appletGuard('expenses')],
         loadChildren: () =>
           import('@all-in-one/applets/expenses/web').then(
             (m) => m.expensesRoutes,

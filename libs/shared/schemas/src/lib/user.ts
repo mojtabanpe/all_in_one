@@ -16,28 +16,32 @@ export const appAppletSchema = z.enum([
 ]);
 export type AppApplet = z.infer<typeof appAppletSchema>;
 
+/** Every account may turn on every applet (expenses opened to customers on 2026-11-17, directive 160). */
 export const CUSTOMER_APPLETS: readonly AppApplet[] = [
-  'planner',
-  'english',
-  'health',
-];
-
-export const ADMIN_APPLETS: readonly AppApplet[] = [
   'planner',
   'english',
   'health',
   'expenses',
 ];
 
-/** Returns the applets permitted for a role, filtered to the user's enabled list (defaulting to all permitted). */
+export const ADMIN_APPLETS: readonly AppApplet[] = CUSTOMER_APPLETS;
+
+/** Experimental applets: off until the user turns them on, and labelled «آزمایشی» in the picker. */
+export const EXPERIMENTAL_APPLETS: readonly AppApplet[] = ['expenses'];
+
+/** What a customer starts with; admins start with everything, as before. */
+export const DEFAULT_CUSTOMER_APPLETS: readonly AppApplet[] =
+  CUSTOMER_APPLETS.filter((item) => !EXPERIMENTAL_APPLETS.includes(item));
+
+/** The applets a user has on: their saved list, or the defaults for their role when nothing is saved. */
 export function resolveEnabledApplets(
   enabledApplets: readonly string[] | undefined | null,
   role: Role | undefined | null,
 ): AppApplet[] {
-  const allowed = role === 'ADMIN' ? ADMIN_APPLETS : CUSTOMER_APPLETS;
-  if (!enabledApplets) return [...allowed];
+  if (!enabledApplets)
+    return [...(role === 'ADMIN' ? ADMIN_APPLETS : DEFAULT_CUSTOMER_APPLETS)];
   const set = new Set(enabledApplets);
-  return allowed.filter((item) => set.has(item));
+  return CUSTOMER_APPLETS.filter((item) => set.has(item));
 }
 
 /** A user as the api returns it: never includes the password hash. */

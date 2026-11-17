@@ -722,7 +722,7 @@ Rules:
 
 142. **Publish the reviewed Persian English AI Reel (2026-11-15).** After receiving the reviewed 13-second vertical MP4, the owner explicitly instructed «پابلیش کن». This authorizes publishing that Reel to the established Poshtetgarm Instagram account; it is not a standing authorization for future posts. Publication evidence and the exact caption live in the Instagram roadmap.
 
-143. **Admin-only expense management applet (2026-11-15).** The owner requested a new expense management section («مدیریت مخارج») visible only to admin users for now (`role === 'ADMIN'`). Features: expense categories with icons, colors, monthly budget tracking, and AI keywords; logging individual and batch expenses; financial analytics and daily spending charts; full AI decision-making support using the decision model (`LocalScopeClassifier` / `AiScopeGuard.chooseOption` / Jev / Chat classification, with keyword fallback) to automatically determine the appropriate category for any expense.
+143. **Admin-only expense management applet (2026-11-15; admin-only superseded by 160).** The owner requested a new expense management section («مدیریت مخارج») visible only to admin users for now (`role === 'ADMIN'`). Features: expense categories with icons, colors, monthly budget tracking, and AI keywords; logging individual and batch expenses; financial analytics and daily spending charts; full AI decision-making support using the decision model (`LocalScopeClassifier` / `AiScopeGuard.chooseOption` / Jev / Chat classification, with keyword fallback) to automatically determine the appropriate category for any expense.
 
 144. **Persian dinner-choice health advertisement (2026-11-16).** The owner requested an approximately 30-second Persian comedy ad: a wife asks what to cook, her husband repeatedly says he does not know, their verbal disagreement escalates, and he gets a recipe from the app's health section. The owner asked to send the prompt to Higgsfield and produce narration and captions, selected the Primary connection, and explicitly approved its active unlimited allowance. Keep the cooking/recipe capability concrete, preserve Persian dialogue and copy, and do not infer authorization to publish this new ad from directive 142.
 
@@ -760,3 +760,15 @@ Rules:
      earned-week accounts still had 5,000, more than paying customers. The owner chose to lower them in the same
      release («With trial limit»): `DEFAULT_AI_QUOTAS.trial.tts` and `.earned.tts` are 3,000. Chat and recordings are
      unchanged; limits saved in `/admin/ai` still override the defaults.
+
+159. **Expenses has its own ambient colour (2026-11-17).** The owner: «رنگ پس زمینه مخارج رو هم از سلامت متمایز کن».
+     `.applet-expenses` ambient light is warm amber and peach (`--lx-1..4` at hues 75, 40, 100, 15, L ≥ 0.88), no
+     longer green like health. Its accent `--expenses` is unchanged. Recorded in `design-system/all-in-one/MASTER.md`.
+
+160. **Expenses is an opt-in experiment for every account (2026-11-17).** The owner: «مخارج رو هم برای همه کاربران
+     اجازه بده ک فعال کنن ولی دیفالت فعال نباشه، فقط جلوش بنویس آزمایش». Every account can turn on «مدیریت مخارج» in
+     the account page's applet list, where it carries an «آزمایشی» badge; it is off by default (`EXPERIMENTAL_APPLETS`,
+     `DEFAULT_CUSTOMER_APPLETS` in the shared user schema; column default without `expenses`; migration
+     `20261117155633_expenses_opt_in` removes the default-given `expenses` from customer rows). The api reaches
+     customers only after they turn it on (`ExpensesEnabledGuard`); the default-category routes stay admin-only; the
+     route uses `appletGuard('expenses')`. Admins keep their current choice. This supersedes the admin-only part of 143.

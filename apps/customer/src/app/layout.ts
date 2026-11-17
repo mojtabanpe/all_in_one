@@ -273,7 +273,7 @@ export class Layout {
         link: '/health',
       });
     }
-    if (user?.role === 'ADMIN' && enabled.has('expenses')) {
+    if (enabled.has('expenses')) {
       items.push({
         label: 'مخارج',
         icon: 'lucideWallet',

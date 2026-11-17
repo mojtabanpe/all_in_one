@@ -617,7 +617,7 @@ export class Home {
             },
           ]
         : []),
-      ...(this.auth.user()?.role === 'ADMIN' && enabled.has('expenses')
+      ...(enabled.has('expenses')
         ? [
             {
               title: 'مدیریت مخارج',
@@ -625,7 +625,7 @@ export class Home {
               action: 'ثبت و گزارش مخارج',
               icon: 'lucideWallet',
               link: '/expenses',
-              value: 'بخش ویژه مدیر',
+              value: 'آزمایشی',
               accent: 'applet-expenses',
             },
           ]

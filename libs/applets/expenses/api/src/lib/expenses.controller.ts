@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { type AuthUser, CurrentUser, Roles } from '@all-in-one/api/auth';
 import {
@@ -37,26 +38,31 @@ import {
   type UpdateExpenseCategoryInput,
   type UpdateExpenseInput,
 } from '@all-in-one/applets/expenses/contracts';
+import { ExpensesEnabledGuard } from './expenses-enabled.guard';
 import { ExpensesService } from './expenses.service';
 
 /**
- * Expenses management API. Restricted to ADMIN users as requested.
+ * Expenses management API. Customers who turned the experiment on, and admins (directive 160); the default-category
+ * routes stay admin-only.
  */
-@Roles('ADMIN')
+@UseGuards(ExpensesEnabledGuard)
 @Controller('expenses')
 export class ExpensesController {
   constructor(private readonly expenses: ExpensesService) {}
 
+  @Roles('ADMIN')
   @Get('admin/overview')
   getAdminOverview(): Promise<AdminExpensesOverview> {
     return this.expenses.getAdminOverview();
   }
 
+  @Roles('ADMIN')
   @Get('admin/default-categories')
   listDefaultCategories(): Promise<DefaultExpenseCategoryItem[]> {
     return this.expenses.listDefaultCategories();
   }
 
+  @Roles('ADMIN')
   @Post('admin/default-categories')
   createDefaultCategory(
     @Body({ schema: createDefaultExpenseCategorySchema })
@@ -65,6 +71,7 @@ export class ExpensesController {
     return this.expenses.createDefaultCategory(input);
   }
 
+  @Roles('ADMIN')
   @Patch('admin/default-categories/:id')
   updateDefaultCategory(
     @Param('id', ParseUUIDPipe) id: string,
@@ -74,6 +81,7 @@ export class ExpensesController {
     return this.expenses.updateDefaultCategory(id, input);
   }
 
+  @Roles('ADMIN')
   @Delete('admin/default-categories/:id')
   @HttpCode(204)
   deleteDefaultCategory(@Param('id', ParseUUIDPipe) id: string): Promise<void> {

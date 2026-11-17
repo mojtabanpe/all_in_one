@@ -23,6 +23,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
+  AioBadge,
   AioLanguageSwitcher,
   AioTranslate,
   AioButton,
@@ -348,6 +349,7 @@ export class VerifyEmailPage implements OnInit {
 @Component({
   selector: 'web-account-page',
   imports: [
+    AioBadge,
     PhoneSettings,
     RouterLink,
     AioButton,
@@ -420,9 +422,14 @@ export class VerifyEmailPage implements OnInit {
                   class="flex cursor-pointer flex-col gap-0.5"
                   [attr.for]="'applet-' + option.key"
                 >
-                  <span class="text-sm font-medium">{{
-                    option.label | aioTranslate
-                  }}</span>
+                  <span class="flex items-center gap-2 text-sm font-medium"
+                    >{{ option.label | aioTranslate }}
+                    @if (option.experimental) {
+                      <span aioBadge variant="secondary">{{
+                        'آزمایشی' | aioTranslate
+                      }}</span>
+                    }
+                  </span>
                   <span class="text-xs text-muted-foreground">{{
                     option.description | aioTranslate
                   }}</span>
@@ -988,31 +995,35 @@ export class AccountPage implements OnInit {
   protected readonly busy = signal(false);
   protected readonly appletsSaving = signal(false);
   protected readonly availableAppletOptions = computed(() => {
-    const base: Array<{ key: AppApplet; label: string; description: string }> =
-      [
-        {
-          key: 'planner',
-          label: 'برنامه‌ریز',
-          description: 'مدیریت کارها، عادت‌ها، تقویم و تمرکز',
-        },
-        {
-          key: 'english',
-          label: 'یادگیری زبان',
-          description: 'فلش‌کارت‌ها، مرور هوشمند و تمرین زبان انگلیسی',
-        },
-        {
-          key: 'health',
-          label: 'سلامت و ورزش',
-          description: 'تغذیه، برنامه تمرینی و پیگیری فعالیت بدنی',
-        },
-      ];
-    if (this.auth.user()?.role === 'ADMIN') {
-      base.push({
+    const base: Array<{
+      key: AppApplet;
+      label: string;
+      description: string;
+      experimental?: boolean;
+    }> = [
+      {
+        key: 'planner',
+        label: 'برنامه‌ریز',
+        description: 'مدیریت کارها، عادت‌ها، تقویم و تمرکز',
+      },
+      {
+        key: 'english',
+        label: 'یادگیری زبان',
+        description: 'فلش‌کارت‌ها، مرور هوشمند و تمرین زبان انگلیسی',
+      },
+      {
+        key: 'health',
+        label: 'سلامت و ورزش',
+        description: 'تغذیه، برنامه تمرینی و پیگیری فعالیت بدنی',
+      },
+      // Experimental (directive 160): open to everyone, off until turned on here.
+      {
         key: 'expenses',
         label: 'مدیریت مخارج',
         description: 'ثبت مخارج، دسته‌بندی با هوش مصنوعی و گزارش مالی',
-      });
-    }
+        experimental: true,
+      },
+    ];
     return base;
   });
 

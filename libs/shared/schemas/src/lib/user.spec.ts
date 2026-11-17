@@ -75,13 +75,16 @@ describe('updateProfileSchema', () => {
 });
 
 describe('resolveEnabledApplets & updateEnabledAppletsSchema', () => {
-  it('filters out expenses for non-admin users', () => {
+  it('lets customers turn expenses on (directive 160)', () => {
     expect(
       resolveEnabledApplets(
         ['planner', 'english', 'health', 'expenses'],
         'CUSTOMER',
       ),
-    ).toEqual(['planner', 'english', 'health']);
+    ).toEqual(['planner', 'english', 'health', 'expenses']);
+    expect(resolveEnabledApplets(['planner', 'unknown'], 'CUSTOMER')).toEqual([
+      'planner',
+    ]);
     expect(
       resolveEnabledApplets(
         ['planner', 'english', 'health', 'expenses'],
@@ -90,7 +93,7 @@ describe('resolveEnabledApplets & updateEnabledAppletsSchema', () => {
     ).toEqual(['planner', 'english', 'health', 'expenses']);
   });
 
-  it('defaults to all role-allowed applets when unset', () => {
+  it('leaves experimental expenses off for customers by default', () => {
     expect(resolveEnabledApplets(undefined, 'CUSTOMER')).toEqual([
       'planner',
       'english',
