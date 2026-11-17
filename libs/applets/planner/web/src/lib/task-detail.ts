@@ -20,6 +20,7 @@ import {
   TASK_PRIORITY_LABELS,
   toIsoDate,
   type UpdateTaskInput,
+  normalizeReminders,
 } from '@all-in-one/applets/planner/contracts';
 import {
   AioTranslate,
@@ -217,7 +218,7 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
         <aio-native-select
           selectId="task-reminder"
           [disabled]="!t.date || !t.time"
-          [value]="t.reminders[0] ?? ''"
+          [value]="shownReminder(t.reminders)"
           (valueChange)="save({ reminders: $event ? [$event] : [] })"
         >
           <option aioNativeSelectOption value="">
@@ -610,6 +611,18 @@ export const PRIORITY_FLAG: Record<TaskPriority, string> = {
 })
 export class TaskDetail {
   protected readonly verbatim = verbatim;
+  /** The menu option for a reminder another client spelled differently (the assistant may save `PT0S`). */
+  protected shownReminder(reminders: readonly string[]): string {
+    const first = normalizeReminders(reminders.slice(0, 1))[0] ?? '';
+    return [
+      'TRIGGER:PT0M',
+      'TRIGGER:-PT5M',
+      'TRIGGER:-PT15M',
+      'TRIGGER:-PT60M',
+    ].includes(first)
+      ? first
+      : (reminders[0] ?? '');
+  }
   protected readonly locale = inject(AioLocale);
 
   private readonly notifications = inject(AioNotifications);

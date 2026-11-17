@@ -23,6 +23,7 @@ import {
   type TimeWindow,
   type UpdateChecklistItemInput,
   type UpdateTaskInput,
+  normalizeReminders,
 } from '@all-in-one/applets/planner/contracts';
 import { PlannerAccess } from './access.service';
 
@@ -281,7 +282,7 @@ export class TasksService {
         priority: input.priority ?? 'NONE',
         externalSourceId: input.externalSourceId ?? null,
         recurrenceRule: input.recurrenceRule ?? null,
-        reminders: input.reminders ?? [],
+        reminders: normalizeReminders(input.reminders ?? []),
         links: [...new Set(input.links ?? [])],
         timeZone: input.timeZone ?? null,
         endTime: input.endTime ?? null,
@@ -533,7 +534,9 @@ export class TasksService {
       ...(input.recurrenceRule !== undefined
         ? { recurrenceRule: input.recurrenceRule }
         : {}),
-      ...(input.reminders !== undefined ? { reminders: input.reminders } : {}),
+      ...(input.reminders !== undefined
+        ? { reminders: normalizeReminders(input.reminders) }
+        : {}),
       ...(input.links !== undefined
         ? { links: [...new Set(input.links)] }
         : {}),

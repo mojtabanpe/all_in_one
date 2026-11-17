@@ -15,6 +15,7 @@ import {
   isoDateIn,
   habitDueOn,
   zonedInstant,
+  reminderMinutesBefore,
 } from '@all-in-one/applets/planner/contracts';
 import type {
   PushSubscriptionInput,
@@ -29,11 +30,10 @@ import * as webpush from 'web-push';
 import { createHash } from 'node:crypto';
 import { NativePush } from './native-push';
 
+/** Milliseconds from the task's time to its reminder (≤ 0), for every ISO spelling a client may have saved. */
 export function reminderOffset(value: string): number | null {
-  const match = /^(?:TRIGGER:)?-?PT(?:(\d+)H)?(?:(\d+)M)?$/.exec(value);
-  if (!match || (!match[1] && !match[2])) return null;
-  const minutes = Number(match[1] ?? 0) * 60 + Number(match[2] ?? 0);
-  return minutes <= 7 * 1440 ? -minutes * 60000 : null;
+  const minutes = reminderMinutesBefore(value);
+  return minutes === null ? null : -minutes * 60000;
 }
 const PROGRESS_FIELDS = {
   firstWeek: true,

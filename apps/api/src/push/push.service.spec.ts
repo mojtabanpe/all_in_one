@@ -175,6 +175,9 @@ describe('Web Push reminders', () => {
     expect(reminderOffset('-PT1H30M')).toBe(-5400000);
     expect(reminderOffset('TRIGGER:-PT999999H')).toBeNull();
     expect(reminderOffset('unrecognized')).toBeNull();
+    // The assistant saved `PT0S` (2026-11-18); it must still fire at the task's time.
+    expect(reminderOffset('TRIGGER:PT0S')).toBe(-0);
+    expect(reminderOffset('TRIGGER:-P1D')).toBe(-86400000);
   });
   it('deduplicates sends, ignores stale sessions, and rechecks current task state', async () => {
     const keys = new Set<string>();

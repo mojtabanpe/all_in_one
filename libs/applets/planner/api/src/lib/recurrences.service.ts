@@ -14,6 +14,7 @@ import {
   timeIn,
   type TaskFilter,
   type UpdateTaskInput,
+  normalizeReminders,
 } from '@all-in-one/applets/planner/contracts';
 import { RRule } from 'rrule';
 import { TASK_INCLUDE, toTask, type DbTask } from './task-mapping';
@@ -442,7 +443,9 @@ export class RecurrencesService {
             ? (input.recurrenceTimezone ?? root.recurrenceTimezone)
             : null,
         endTime: input.endTime !== undefined ? input.endTime : root.endTime,
-        reminders: input.reminders ?? root.reminders,
+        reminders: input.reminders
+          ? normalizeReminders(input.reminders)
+          : root.reminders,
         links: input.links ?? root.links,
         status: 'TODO',
         completedAt: null,

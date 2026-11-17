@@ -139,7 +139,9 @@ const taskFields = {
     .array(z.string().max(150))
     .max(30)
     .optional()
-    .describe('Preserved TickTick reminder metadata'),
+    .describe(
+      'Relative reminders before the task time (needs date and time): "TRIGGER:PT0M" at the time, "TRIGGER:-PT15M" 15 minutes before, "TRIGGER:-PT1H" an hour before. Other ISO durations are normalised. [] removes reminders.',
+    ),
   time_zone: z
     .string()
     .max(80)
