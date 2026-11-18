@@ -807,3 +807,9 @@ Rules:
      failed setup offers «ورود به برنامه» and a retry. Each account keeps the app or browser it signed up in
      (`users.signupClient`, `/onboarding/source`), shown in the admin dashboard; in-app browsers of Instagram, LinkedIn,
      Telegram and Facebook are their own clients. The owner rejected a «از کجا آشنا شدی؟» question: do not ask it.
+
+166. **No filler; reach the first action fast (2026-11-18).** The owner: «چرت و پرت ننویسی تو سایت. کاربر باید خیلی
+     سریع برسه به شروع کار». The public site and the customer app carry no slogans, motivational lines, intro text or
+     feature tours. Every page shows only what the user needs to act, and the path from landing to the first real
+     action (add a task, review a card, log a meal) takes as few taps and screens as possible. A new step or text that
+     delays the first action needs a reason; otherwise leave it out. This extends 165.
