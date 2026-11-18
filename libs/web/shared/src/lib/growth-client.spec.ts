@@ -10,6 +10,23 @@ describe('Observed app distribution', () => {
     [android + ' PoshtetgarmStore/myket', false, false, 'myket'],
     [android, true, false, 'direct_apk'],
     [android, false, false, 'unknown_app'],
+    [
+      android + ' Instagram 350.0.0.0 Android',
+      false,
+      false,
+      'instagram_browser',
+    ],
+    [
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0) AppleWebKit/605.1.15 Mobile/15E148 Instagram 350.0',
+      false,
+      false,
+      'instagram_browser',
+    ],
+    [android + ' LinkedInApp/9.30', false, false, 'linkedin_browser'],
+    [android + ' Telegram-Android/11.2.0', false, false, 'telegram_browser'],
+    [android + ' [FB_IAB/FB4A;FBAV/480.0.0]', false, false, 'facebook_browser'],
+    // Our own APK wins even if a social label were present.
+    [android + ' Instagram 350.0', true, false, 'direct_apk'],
     ['Mozilla/5.0 (Linux; Android 14) Chrome/130.0.0.0', false, true, 'pwa'],
     ['Mozilla/5.0 (Linux; Android 14) Chrome/130.0.0.0', false, false, 'web'],
     [

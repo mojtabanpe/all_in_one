@@ -76,7 +76,10 @@ describe('first-step gate', () => {
 });
 
 describe('welcome page', () => {
-  function setup(push: Partial<PushSettings> = { supported: false }) {
+  function setup(
+    push: Partial<PushSettings> = { supported: false },
+    client?: string,
+  ) {
     const success = vi.fn();
     const track = vi.fn(async () => undefined);
     TestBed.configureTestingModule({
@@ -86,7 +89,10 @@ describe('welcome page', () => {
         provideRouter([]),
         { provide: API_BASE_URL, useValue: '/api' },
         { provide: AioNotifications, useValue: { success } },
-        { provide: GrowthAnalytics, useValue: { track } },
+        {
+          provide: GrowthAnalytics,
+          useValue: { track, client: () => client },
+        },
         {
           provide: PushSettings,
           useValue: {
@@ -227,14 +233,26 @@ describe('welcome page', () => {
     await click('روشن کردن اعلان‌ها');
     expect(enable).toHaveBeenCalledTimes(1);
     expect(navigate).not.toHaveBeenCalled();
-    await click('ادامه بدون اعلان');
+    // A failed setup still lets the account into the app, without counting it as a refusal.
+    await click('ورود به برنامه');
     expect(navigate).toHaveBeenCalledWith('/planner');
     expect(track.mock.calls).toEqual([
       ['welcome_viewed'],
       ['notify_prompt_viewed'],
       ['notify_failed'],
-      ['notify_declined'],
     ]);
+  });
+
+  it('records the app the account was made in, once', async () => {
+    const { http, settle } = setup({ supported: false }, 'direct_apk');
+    http.expectOne('/api/onboarding').flush(fresh);
+    await settle();
+    const source = http.expectOne('/api/onboarding/source');
+    expect(source.request.method).toBe('PUT');
+    expect(source.request.body).toEqual({ client: 'direct_apk' });
+    source.flush(null);
+    await settle();
+    http.expectNone('/api/onboarding/source');
   });
 
   it('skips the guide on request', async () => {

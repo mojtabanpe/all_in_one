@@ -12,6 +12,7 @@ import {
   extractGrowthCampaign,
   growthAttributionSchema,
   type GrowthAttribution,
+  type GrowthClient,
   type GrowthEventInput,
 } from '@all-in-one/shared/schemas';
 import { firstValueFrom } from 'rxjs';
@@ -113,18 +114,8 @@ export class GrowthAnalytics {
   private async observeClient(): Promise<void> {
     if (!this.trackClients) return;
     const context = this.context();
-    const win = this.document.defaultView;
-    if (!context || !win) return;
-    const bridge = win as Window & { NativePushChannel?: unknown };
-    const client = detectGrowthClient({
-      userAgent: win.navigator.userAgent,
-      // Raw channel is installed before the first page load, even with push off.
-      nativeBridge: !!(bridge.NativePushChannel || bridge.PoshtetgarmNative),
-      standalone:
-        win.matchMedia?.('(display-mode: standalone)').matches === true ||
-        (win.navigator as Navigator & { standalone?: boolean }).standalone ===
-          true,
-    });
+    const client = this.client();
+    if (!context || !client) return;
     const key = `${context.visitorId}:${client}:${new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Tehran' })}`;
     if (this.clientSent.has(key)) return;
     this.clientSent.add(key);
@@ -138,6 +129,22 @@ export class GrowthAnalytics {
     } catch {
       this.clientSent.delete(key);
     }
+  }
+
+  /** The app or browser this page runs in (not who installed it or where they came from). */
+  client(): GrowthClient | undefined {
+    const win = this.document.defaultView;
+    if (!win) return;
+    const bridge = win as Window & { NativePushChannel?: unknown };
+    return detectGrowthClient({
+      userAgent: win.navigator.userAgent,
+      // Raw channel is installed before the first page load, even with push off.
+      nativeBridge: !!(bridge.NativePushChannel || bridge.PoshtetgarmNative),
+      standalone:
+        win.matchMedia?.('(display-mode: standalone)').matches === true ||
+        (win.navigator as Navigator & { standalone?: boolean }).standalone ===
+          true,
+    });
   }
 
   campaign() {

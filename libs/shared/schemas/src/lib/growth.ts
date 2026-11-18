@@ -8,6 +8,11 @@ export const GROWTH_CLIENTS = [
   'pwa',
   'web',
   'macos',
+  // In-app browsers of the apps our links are shared in (not our own app).
+  'instagram_browser',
+  'linkedin_browser',
+  'telegram_browser',
+  'facebook_browser',
   'unknown_app',
 ] as const;
 export type GrowthClient = (typeof GROWTH_CLIENTS)[number];
@@ -136,6 +141,8 @@ export interface GrowthSummary {
     notifyFailedVisitors: number;
     notifyDeclinedVisitors: number;
   };
+  /** New customer accounts in the window by the app or browser they signed up in; `null` = not recorded. */
+  signupClients: { client: string | null; accounts: number }[];
   channels: GrowthChannel[];
 }
 

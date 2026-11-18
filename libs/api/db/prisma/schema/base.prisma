@@ -36,6 +36,8 @@ model User {
   onboardingGoal String? @db.VarChar(16)
   onboardingSkipped Boolean @default(false)
   onboardingCompletedAt DateTime?
+  /// App or browser the first-step page was opened in (`GROWTH_CLIENTS`); set once.
+  signupClient String? @db.VarChar(24)
   /// Expenses is experimental and opt-in (directive 160), so it is not in the default.
   enabledApplets String[] @default(["planner", "english", "health"])
   onboardingGoalChanges OnboardingGoalChange[]

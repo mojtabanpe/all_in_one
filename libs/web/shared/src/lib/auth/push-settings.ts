@@ -16,6 +16,9 @@ import { firstValueFrom, take, timeout } from 'rxjs';
 import { API_BASE_URL } from '../api/api-base-url';
 import { NativePush } from './native-push';
 
+/** Longest wait for enabling, testing or disabling push before the controls come back. */
+export const PUSH_ACTION_TIMEOUT_MS = 20_000;
+
 @Injectable({ providedIn: 'root' })
 export class PushSettings {
   private readonly locale = inject(AioLocale);
@@ -254,8 +257,24 @@ export class PushSettings {
   private async run(action: () => Promise<void>) {
     if (this.busy()) return;
     this.busy.set(true);
+    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
-      await action();
+      // A push service that never answers (blocked FCM, a stuck native bridge) must not keep the
+      // buttons disabled forever; the late result still updates `enabled` through the effects.
+      await Promise.race([
+        action(),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(
+            () =>
+              reject(
+                new Error(
+                  'سرویس اعلان این گوشی جواب نداد؛ بعداً از حساب کاربری دوباره امتحان کن.',
+                ),
+              ),
+            PUSH_ACTION_TIMEOUT_MS,
+          );
+        }),
+      ]);
     } catch (error) {
       const denied =
         typeof Notification !== 'undefined' &&
@@ -268,6 +287,7 @@ export class PushSettings {
             : 'ارتباط برقرار نشد؛ دوباره تلاش کن.',
       );
     } finally {
+      clearTimeout(timer);
       this.busy.set(false);
     }
   }

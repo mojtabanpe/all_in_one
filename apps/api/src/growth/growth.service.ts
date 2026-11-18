@@ -567,6 +567,16 @@ export class GrowthService {
       FROM cohort
       GROUP BY GROUPING SETS ((bucket), (first_goal))
     `;
+    // New customer accounts by the app or browser they signed up in (directive 165).
+    const clientRows = await this.prisma.$queryRaw<
+      { value: string | null; accounts: bigint }[]
+    >`
+      SELECT "signupClient" AS value, COUNT(*) AS accounts FROM users
+      WHERE role = 'CUSTOMER'
+        AND "createdAt" >= ((${since}::date::timestamp AT TIME ZONE 'Asia/Tehran') AT TIME ZONE 'UTC')
+        AND "createdAt" < (((${until}::date + 1)::timestamp AT TIME ZONE 'Asia/Tehran') AT TIME ZONE 'UTC')
+      GROUP BY 1 ORDER BY 2 DESC
+    `;
     const bucketCount = (bucket: string) =>
       Number(onboarding.find((row) => row.bucket === bucket)?.accounts ?? 0);
     return {
@@ -622,6 +632,10 @@ export class GrowthService {
         notifyFailedVisitors: count('notify_failed'),
         notifyDeclinedVisitors: count('notify_declined'),
       },
+      signupClients: clientRows.map((row) => ({
+        client: row.value,
+        accounts: Number(row.accounts),
+      })),
       channels: channelRows.map((row) => ({
         source: row.source,
         medium: row.medium,

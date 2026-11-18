@@ -527,4 +527,66 @@ export const MARKETING_MESSAGES: readonly (readonly [string, string])[] = [
     'کلید پیامک خالی است؛ فرم برای بررسی نمایش داده می‌شود و پیامکی ارسال نمی‌شود.',
     'The SMS key is empty. This form is shown for visual review; no text message will be sent.',
   ],
+  [
+    'کارهای روزانه، تمرین انگلیسی و ثبت غذا و ورزش، در یک اپ',
+    'Daily tasks, English practice and food and exercise logging, in one app',
+  ],
+  [
+    'کارهایت را بنویس و تیک بزن، هر روز چند لغت انگلیسی مرور کن و بنویس چه خوردی تا کالری‌اش حساب شود. رایگان است و فارسی.',
+    'Write your tasks and tick them off, review a few English words every day, and type what you ate to get its calories. Free, in Persian and English.',
+  ],
+  ['شروع رایگان', 'Start for free'],
+  ['نصب از:', 'Install from:'],
+  ['راه‌های دیگر', 'Other ways'],
+  ['صفحهٔ کارهای امروز در اپ', "The app's today tasks screen"],
+  ['در اپ چه کار می‌توانی بکنی', 'What you can do in the app'],
+  ['صفحهٔ مرور فلش‌کارت در اپ', "The app's flashcard review screen"],
+  ['صفحهٔ سلامت امروز در اپ', "The app's health today screen"],
+  [
+    'کارهای امروز و فردا را بنویس و تیک بزن',
+    'Write tasks for today and tomorrow and tick them off',
+  ],
+  ['عادت‌های روزانه و یادآور', 'Daily habits and reminders'],
+  ['تایمر تمرکز (پومودورو)', 'Focus timer (Pomodoro)'],
+  [
+    'فلش‌کارت با مرور فاصله‌دار؛ هر لغت را درست وقتی داری فراموشش می‌کنی می‌بینی',
+    'Spaced-repetition flashcards: you see each word right before you would forget it',
+  ],
+  [
+    'مجموعه‌های آماده از مبتدی تا پیشرفته',
+    'Ready-made decks from beginner to advanced',
+  ],
+  ['تمرین شنیدن و تلفظ', 'Listening and pronunciation practice'],
+  [
+    'بنویس چه خوردی؛ کالری و درشت‌مغذی‌ها حساب می‌شود',
+    'Type what you ate; calories and macros are worked out',
+  ],
+  [
+    'برنامهٔ ورزش در خانه، باشگاه یا با TRX',
+    'Workout plans for home, the gym or TRX',
+  ],
+  ['وزن، هدف و روزه‌داری متناوب', 'Weight, goals and intermittent fasting'],
+  [
+    'برنامه‌ریز، فلش‌کارت و ثبت سلامت رایگان‌اند. دستیار هوش مصنوعی یک هفته رایگان است و بعد از آن با اشتراک.',
+    'The planner, flashcards and health logging are free. The AI assistant is free for a week, then part of a subscription.',
+  ],
+  ['نصب روی گوشی', 'Install on your phone'],
+  ['دریافت از کافه‌بازار', 'Get it on Cafe Bazaar'],
+  ['دریافت از مایکت', 'Get it on Myket'],
+  ['دانلود مستقیم برای اندروید', 'Direct download for Android'],
+  ['دانلود فایل نصب ({0})', 'Download the installer ({0})'],
+  [
+    'اگر گوشی پرسید، نصب از این منبع را اجازه بده.',
+    'If your phone asks, allow installs from this source.',
+  ],
+  ['آیفون', 'iPhone'],
+  [
+    'اپ را در Safari باز کن، دکمهٔ اشتراک‌گذاری را بزن و «Add to Home Screen» را انتخاب کن.',
+    'Open the app in Safari, tap Share and choose “Add to Home Screen”.',
+  ],
+  [
+    'بدون نصب هم در مرورگر کار می‌کند.',
+    'It also works in the browser without installing.',
+  ],
+  ['باز کردن در مرورگر', 'Open in the browser'],
 ];

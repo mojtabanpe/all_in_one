@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@all-in-one/api/db';
 import {
   onboardingGoalSchema,
+  type OnboardingSourceInput,
   type OnboardingGoal,
   type OnboardingInput,
   type OnboardingState,
@@ -59,6 +60,14 @@ export class OnboardingService {
       }
     });
     return this.state(userId);
+  }
+
+  /** The app or browser the account signed up in; the first one seen is kept. */
+  async source(userId: string, input: OnboardingSourceInput): Promise<void> {
+    await this.prisma.user.updateMany({
+      where: { id: userId, signupClient: null },
+      data: { signupClient: input.client },
+    });
   }
 
   /** Someone who already used the app (before or outside the guide) does not need a first step. */

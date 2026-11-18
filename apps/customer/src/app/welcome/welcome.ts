@@ -21,6 +21,7 @@ import {
   GOAL_APP_PATHS,
   toIsoDate,
   type BillingAccessState,
+  type OnboardingSourceInput,
   type OnboardingGoal,
   type OnboardingState,
 } from '@all-in-one/shared/schemas';
@@ -341,34 +342,61 @@ export function mealTypeAt(hour: number): MealType {
               </p>
             </div>
             <div aioCardContent class="flex flex-col gap-3">
-              <button
-                aioAsyncButton
-                type="button"
-                class="min-h-11"
-                icon="lucideBell"
-                label="روشن کردن اعلان‌ها"
-                busyLabel="در حال فعال‌سازی"
-                [busy]="push.busy()"
-                [disabled]="push.busy()"
-                (click)="enableReminders()"
-              ></button>
-              <button
-                aioBtn
-                variant="ghost"
-                type="button"
-                class="min-h-11"
-                [disabled]="push.busy()"
-                (click)="decline()"
-              >
-                {{
-                  (reminderFailed() ? 'ادامه بدون اعلان' : 'فعلاً نه')
-                    | aioTranslate
-                }}
-              </button>
               @if (reminderFailed()) {
-                <p role="alert" class="text-sm leading-7">
-                  {{ push.message() | aioTranslate }}
-                </p>
+                <div
+                  role="alert"
+                  class="bg-muted flex flex-col gap-1 rounded-2xl p-4 text-sm leading-7"
+                >
+                  <p class="font-medium">{{ push.message() | aioTranslate }}</p>
+                  <p class="text-muted-foreground">
+                    {{
+                      'مشکلی نیست؛ بعداً از «حساب کاربری» هم می‌توانی روشنش کنی.'
+                        | aioTranslate
+                    }}
+                  </p>
+                </div>
+                <!-- Never blocked by a push request still pending in the background. -->
+                <button
+                  aioBtn
+                  type="button"
+                  class="min-h-11"
+                  (click)="finish()"
+                >
+                  {{ 'ورود به برنامه' | aioTranslate }}
+                </button>
+                <button
+                  aioAsyncButton
+                  variant="outline"
+                  type="button"
+                  class="min-h-11"
+                  icon="lucideBell"
+                  label="دوباره امتحان کن"
+                  busyLabel="در حال فعال‌سازی"
+                  [busy]="push.busy()"
+                  [disabled]="push.busy()"
+                  (click)="enableReminders()"
+                ></button>
+              } @else {
+                <button
+                  aioAsyncButton
+                  type="button"
+                  class="min-h-11"
+                  icon="lucideBell"
+                  label="روشن کردن اعلان‌ها"
+                  busyLabel="در حال فعال‌سازی"
+                  [busy]="push.busy()"
+                  [disabled]="push.busy()"
+                  (click)="enableReminders()"
+                ></button>
+                <button
+                  aioBtn
+                  variant="ghost"
+                  type="button"
+                  class="min-h-11"
+                  (click)="decline()"
+                >
+                  {{ 'فعلاً نه' | aioTranslate }}
+                </button>
               }
             </div>
           </section>
@@ -505,7 +533,12 @@ export class Welcome {
     const viewed = effect(() => {
       const step = this.step();
       if (step === 'loading' || step === 'reminder') return;
-      untracked(() => void this.growth.track('welcome_viewed'));
+      untracked(() => {
+        void this.growth.track('welcome_viewed');
+        // Where the account was made (APK, store, a social app's browser); kept once on the account.
+        const client = this.growth.client();
+        if (client) void this.saveSource({ client });
+      });
       viewed.destroy();
     });
   }
@@ -513,6 +546,12 @@ export class Welcome {
   /** Copy of ours that becomes the user's own task title, in the chosen language. */
   protected text(message: string): string {
     return this.locale.text(message);
+  }
+
+  private saveSource(input: OnboardingSourceInput): Promise<unknown> {
+    return firstValueFrom(
+      this.http.put(`${this.api}/onboarding/source`, input),
+    ).catch(() => undefined);
   }
 
   private async put(goal: OnboardingGoal | null): Promise<boolean> {

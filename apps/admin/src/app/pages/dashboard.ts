@@ -10,6 +10,7 @@ import type {
   GrowthClient,
   GrowthClientReport,
 } from '@all-in-one/shared/schemas';
+import { GROWTH_CLIENTS } from '@all-in-one/shared/schemas';
 import {
   AioTranslate,
   AioCardDirectives,
@@ -303,6 +304,46 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
                             )
                           : ('هنوز قابل سنجش نیست' | aioTranslate)
                       }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <h3 class="mt-4 font-semibold">
+            {{ 'حساب‌های تازه بر اساس محل ثبت‌نام' | aioTranslate }}
+          </h3>
+          <p class="text-sm leading-7 text-muted-foreground">
+            {{
+              'حساب‌های مشتری ۳۰ روز اخیر، بر اساس برنامه یا مرورگری که صفحهٔ شروع در آن باز شد. حساب‌های قبل از این تغییر «ثبت نشده» هستند.'
+                | aioTranslate
+            }}
+          </p>
+          <div
+            aioTableContainer
+            class="max-w-full overflow-x-auto"
+            tabindex="0"
+            [attr.aria-label]="'محل ثبت‌نام' | aioTranslate"
+          >
+            <table aioTable>
+              <thead aioTHead>
+                <tr aioTr>
+                  <th aioTh scope="col">{{ 'محل ثبت‌نام' | aioTranslate }}</th>
+                  <th aioTh scope="col">{{ 'حساب‌ها' | aioTranslate }}</th>
+                </tr>
+              </thead>
+              <tbody aioTBody>
+                @for (row of growth.value().signupClients; track row.client) {
+                  <tr aioTr>
+                    <th aioTh scope="row">
+                      {{ signupClientLabel(row.client) | aioTranslate }}
+                    </th>
+                    <td aioTd>{{ fa(row.accounts) }}</td>
+                  </tr>
+                } @empty {
+                  <tr aioTr>
+                    <td aioTd colspan="2">
+                      {{ 'هنوز حسابی نیست.' | aioTranslate }}
                     </td>
                   </tr>
                 }
@@ -882,6 +923,13 @@ export class Dashboard {
   protected readonly clients = httpResource<GrowthClientReport>(
     () => `${this.api}/growth/clients`,
   );
+  protected readonly signupClientLabel = (value: string | null): string =>
+    value === null
+      ? 'ثبت نشده'
+      : (GROWTH_CLIENTS as readonly string[]).includes(value)
+        ? this.clientLabel(value as GrowthClient)
+        : value;
+
   protected clientLabel(client: GrowthClient): string {
     return {
       bazaar: 'کافه‌بازار',
@@ -890,6 +938,10 @@ export class Dashboard {
       pwa: 'وب‌اپ نصب‌شده (PWA)',
       web: 'مرورگر وب',
       macos: 'برنامهٔ مک',
+      instagram_browser: 'مرورگر داخل اینستاگرام',
+      linkedin_browser: 'مرورگر داخل لینکدین',
+      telegram_browser: 'مرورگر داخل تلگرام',
+      facebook_browser: 'مرورگر داخل فیسبوک',
       unknown_app: 'برنامهٔ شناسایی‌نشده',
     }[client];
   }

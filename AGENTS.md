@@ -797,3 +797,13 @@ Rules:
      video link: «تو فولدر ywa توی گوگل درایو» (rclone remote `ywa:`, as the ywa_ai pipeline uses). This authorizes that
      one Reel on @poshtetgarm only; it is not standing authorization for future posts. Future Reel files that need a
      public URL for Windsor go to the same Drive folder (never to @ywa_ai or its channel, as 162).
+
+165. **Clear first screens and signup source (2026-11-18).** The owner's friends found the landing page and the
+     signed-in home crowded with slogans and unclear about what to do, a failed notification setup on `/welcome` left
+     only «I won't turn it on» as a way in, and signups from LinkedIn and the APK were not attributed. The landing page
+     says plainly what the app does, shows real screens and one next step (start free; Cafe Bazaar and Myket first,
+     direct APK and iPhone folded away). The home page is a today view with actions (add and tick today's tasks, cards
+     due, calories and exercise), no slogans. Push actions give the controls back after `PUSH_ACTION_TIMEOUT_MS`, and a
+     failed setup offers «ورود به برنامه» and a retry. Each account keeps the app or browser it signed up in
+     (`users.signupClient`, `/onboarding/source`), shown in the admin dashboard; in-app browsers of Instagram, LinkedIn,
+     Telegram and Facebook are their own clients. The owner rejected a «از کجا آشنا شدی؟» question: do not ask it.

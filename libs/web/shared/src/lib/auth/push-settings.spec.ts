@@ -9,7 +9,7 @@ import { SwPush } from '@angular/service-worker';
 import { BehaviorSubject } from 'rxjs';
 import { AioLocale } from '@all-in-one/ui';
 import { NativePush } from './native-push';
-import { PushSettings } from './push-settings';
+import { PUSH_ACTION_TIMEOUT_MS, PushSettings } from './push-settings';
 
 describe('PWA push registration', () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -149,5 +149,43 @@ describe('PWA push registration', () => {
     });
     expect(service.enabled()).toBe(true);
     http.verify();
+  });
+
+  it('gives the controls back when the native push service never answers', async () => {
+    vi.useFakeTimers();
+    try {
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          {
+            provide: SwPush,
+            useValue: {
+              isEnabled: false,
+              subscription: new BehaviorSubject(null),
+            },
+          },
+          {
+            provide: NativePush,
+            useValue: {
+              available: signal(true),
+              enabled: signal(false),
+              enable: () => new Promise<void>(() => undefined),
+            },
+          },
+          { provide: AioLocale, useValue: { language: signal('fa') } },
+        ],
+      });
+      const service = TestBed.inject(PushSettings);
+      const pending = service.enable();
+      expect(service.busy()).toBe(true);
+      await vi.advanceTimersByTimeAsync(PUSH_ACTION_TIMEOUT_MS);
+      await pending;
+      expect(service.busy()).toBe(false);
+      expect(service.enabled()).toBe(false);
+      expect(service.message()).toContain('جواب نداد');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
