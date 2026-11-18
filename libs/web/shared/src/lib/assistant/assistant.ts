@@ -18,6 +18,7 @@ import {
   viewChild,
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { formatReply } from './reply-format';
 import type {
   AiStatus,
   AssistantContext,
@@ -185,19 +186,61 @@ export class AssistantStore {
         }
         <div
           #log
-          class="flex max-h-[50dvh] min-h-40 flex-col gap-3 overflow-y-auto pb-2"
+          class="flex max-h-[min(50dvh,calc(var(--aio-sheet-viewport-height,100dvh)-21rem))] min-h-20 flex-col gap-3 overflow-y-auto overscroll-contain pb-2"
           aria-live="polite"
         >
-          @for (m of conversation(); track $index) {
+          @for (m of conversation(); track $index; let i = $index) {
             <div
-              class="min-w-0 max-w-[85%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap wrap-anywhere"
+              class="min-w-0 max-w-[85%] rounded-2xl px-4 py-2.5 text-sm wrap-anywhere"
               [class]="
                 m.role === 'user'
-                  ? 'bg-primary text-primary-foreground self-start'
-                  : 'bg-muted self-end'
+                  ? 'bg-primary text-primary-foreground self-start whitespace-pre-wrap'
+                  : 'bg-muted self-end leading-7'
               "
             >
-              {{ m.content }}
+              @if (replies()[i]; as blocks) {
+                @for (b of blocks; track $index) {
+                  @switch (b.kind) {
+                    @case ('gap') {
+                      <span class="block h-2" aria-hidden="true"></span>
+                    }
+                    @case ('item') {
+                      <span class="flex gap-2">
+                        <span class="text-muted-foreground shrink-0">{{
+                          b.marker ?? '•'
+                        }}</span>
+                        <span class="min-w-0">
+                          @for (s of b.spans; track $index) {
+                            @if (s.bold) {
+                              <strong class="font-semibold">{{
+                                s.text
+                              }}</strong>
+                            } @else {
+                              {{ s.text }}
+                            }
+                          }
+                        </span>
+                      </span>
+                    }
+                    @default {
+                      <span
+                        class="block"
+                        [class.font-semibold]="b.kind === 'heading'"
+                      >
+                        @for (s of b.spans; track $index) {
+                          @if (s.bold) {
+                            <strong class="font-semibold">{{ s.text }}</strong>
+                          } @else {
+                            {{ s.text }}
+                          }
+                        }
+                      </span>
+                    }
+                  }
+                }
+              } @else {
+                {{ m.content }}
+              }
               @if (m.actions) {
                 <span class="mt-1 block text-xs opacity-70"
                   >{{ fa(m.actions) }}
@@ -243,7 +286,7 @@ export class AssistantStore {
             aioInputGroupTextarea
             id="assistant-message"
             name="assistant-message"
-            class="min-h-24 max-h-48 w-full min-w-0 resize-none overflow-x-hidden overflow-y-auto whitespace-pre-wrap wrap-anywhere [field-sizing:content]"
+            class="min-h-16 max-h-48 w-full min-w-0 resize-none overflow-x-hidden overflow-y-auto whitespace-pre-wrap wrap-anywhere [field-sizing:content]"
             rows="3"
             wrap="soft"
             autocomplete="off"
@@ -258,6 +301,7 @@ export class AssistantStore {
             [disabled]="busy()"
             [value]="draft()"
             (input)="draft.set($any($event.target).value)"
+            (focus)="keepLatestVisible()"
           ></textarea>
           <aio-input-group-addon align="block-end" class="justify-end">
             @if (status.hasValue() && status.value().stt) {
@@ -350,6 +394,12 @@ export class Assistant implements OnDestroy {
 
   protected readonly status = httpResource<AiStatus>(() =>
     this.open() ? `${this.api}/ai/status` : undefined,
+  );
+  /** Replies as formatted blocks (bold, lists); the user's own messages stay as typed. */
+  protected readonly replies = computed(() =>
+    this.conversation().map((m) =>
+      m.role === 'user' ? null : formatReply(m.content),
+    ),
   );
   protected readonly suggestions = computed(() =>
     SUGGESTIONS[this.context()].map((s) => this.locale.text(s)),
@@ -509,6 +559,14 @@ export class Assistant implements OnDestroy {
       }
       this.notifications.error(this.errorMessage(error));
     }
+  }
+
+  /**
+   * The phone keyboard shrinks the sheet (its height follows the visible viewport), so the message list gets shorter;
+   * once it has settled, bring the latest messages back into view.
+   */
+  protected keepLatestVisible() {
+    setTimeout(() => this.scroll(), 350);
   }
 
   private scroll() {
