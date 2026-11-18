@@ -87,7 +87,11 @@ export function recurrencePreset(rule: string | null | undefined): string {
   ],
   host: { class: 'block min-w-0 w-full' },
   template: `
-    <fieldset aioFieldSet class="min-w-0 gap-4 border-t border-border pt-5">
+    <fieldset
+      aioFieldSet
+      class="min-w-0"
+      [class]="embedded() ? 'gap-3' : 'gap-4 border-t border-border pt-5'"
+    >
       <aio-form-field
         class="min-w-0 gap-2"
         [label]="'تکرار' | aioTranslate"
@@ -237,21 +241,24 @@ export function recurrencePreset(rule: string | null | undefined): string {
           }
         </aio-form-field>
       }
-      <button
-        aioBtn
-        type="button"
-        variant="ghost"
-        class="min-w-0 self-start px-0 text-muted-foreground"
-        [attr.aria-expanded]="advanced()"
-        [attr.aria-controls]="prefix() + 'advanced'"
-        (click)="advanced.set(!advanced())"
-      >
-        {{
-          (advanced() ? 'بستن تنظیمات پیشرفته' : 'تنظیمات پیشرفته')
-            | aioTranslate
-        }}
-      </button>
-      @if (advanced()) {
+      @if (preset() !== 'NONE' || showDuration()) {
+        <button
+          aioBtn
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="min-w-0 self-start px-0 text-xs text-muted-foreground"
+          [attr.aria-expanded]="advanced()"
+          [attr.aria-controls]="prefix() + 'advanced'"
+          (click)="advanced.set(!advanced())"
+        >
+          {{
+            (advanced() ? 'بستن تنظیمات پیشرفته' : 'تنظیمات پیشرفته')
+              | aioTranslate
+          }}
+        </button>
+      }
+      @if (advanced() && (preset() !== 'NONE' || showDuration())) {
         <div [id]="prefix() + 'advanced'" class="flex min-w-0 flex-col gap-4">
           @if (preset() !== 'NONE') {
             <aio-form-field
@@ -338,16 +345,18 @@ export function recurrencePreset(rule: string | null | undefined): string {
           {{ error() | aioTranslate }}
         </p>
       }
-      <button
-        aioBtn
-        type="button"
-        variant="outline"
-        class="w-full min-w-0"
-        [disabled]="!!error()"
-        (click)="apply()"
-      >
-        {{ 'ثبت تنظیمات تکرار' | aioTranslate }}
-      </button>
+      @if (!embedded() || preset() !== 'NONE' || !!value().repeatRule) {
+        <button
+          aioBtn
+          type="button"
+          variant="outline"
+          class="w-full min-w-0"
+          [disabled]="!!error()"
+          (click)="apply()"
+        >
+          {{ 'ثبت تنظیمات تکرار' | aioTranslate }}
+        </button>
+      }
     </fieldset>
   `,
 })
@@ -356,6 +365,8 @@ export class RecurrenceEditor {
   readonly prefix = input('repeat-');
   /** Off where the host form has its own duration field (task detail). */
   readonly showDuration = input(true);
+  /** Compact inline layout without top border or idle apply button. */
+  readonly embedded = input(false);
   readonly changed = output<Settings>();
   protected readonly weekdays = days;
   protected readonly advanced = signal(false);

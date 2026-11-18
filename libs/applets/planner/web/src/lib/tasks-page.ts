@@ -34,7 +34,6 @@ import {
   AioConfirm,
   AioDialog,
   AioDialogBody,
-  AioDialogActions,
   AioIcon,
   AioInputGroupDirectives,
   AioSkeleton,
@@ -59,7 +58,7 @@ import {
   lucideCircleSlash,
   lucideTrash2,
 } from '@ng-icons/lucide';
-import { TONE } from './colors';
+import { PRIORITY_BOX, TONE } from './colors';
 import { ListSettings, TagSettings } from './list-settings';
 import { ListsSheet, SMART_VIEWS } from './lists-sheet';
 import { PlannerApi } from './planner-api';
@@ -71,15 +70,6 @@ interface Group {
   overdue?: boolean;
   tasks: PlannerTask[];
 }
-
-/** Round checkbox colours by priority (TickTick): none grey, low blue, medium amber, high red. */
-const PRIORITY_BOX: Record<TaskPriority, string> = {
-  NONE: 'border-muted-foreground/50 data-checked:bg-muted-foreground data-checked:border-muted-foreground',
-  LOW: 'border-sky-600 data-checked:bg-sky-600 data-checked:border-sky-600',
-  MEDIUM:
-    'border-amber-600 bg-amber-500/8 data-checked:bg-amber-600 data-checked:border-amber-600',
-  HIGH: 'border-destructive bg-destructive/8 data-checked:bg-destructive data-checked:border-destructive',
-};
 
 const DONE_DAYS = 30;
 
@@ -97,7 +87,6 @@ const DONE_DAYS = 30;
     AioCollapsibleDirectives,
     AioDialog,
     AioDialogBody,
-    AioDialogActions,
     AioIcon,
     AioInputGroupDirectives,
     AioSkeleton,
@@ -489,21 +478,11 @@ const DONE_DAYS = 30;
             [task]="task"
             [lists]="lists()"
             (changed)="replace($event); reloadMeta()"
+            (toggled)="toggle(task, $event)"
             (trashed)="trashTask($event)"
             (focusRequested)="startFocus($event)"
           />
         }
-      </ng-template>
-      <ng-template aioDialogActions>
-        <button
-          aioBtn
-          type="button"
-          variant="outline"
-          class="w-full rounded-[12px]"
-          (click)="selectedId.set(null)"
-        >
-          {{ 'بستن جزئیات' | aioTranslate }}
-        </button>
       </ng-template>
     </aio-dialog>
 

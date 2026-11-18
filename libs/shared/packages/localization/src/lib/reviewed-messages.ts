@@ -221,4 +221,18 @@ export const REVIEWED_MESSAGES: readonly (readonly [string, string])[] = [
     'یک متن خواندنی سطح B1 درباره ورزش بساز و ذخیره کن',
     'Create and save a B1 reading about sports',
   ],
+  ['توضیح یا یادداشت اضافه کن…', 'Add notes or details…'],
+  ['تنظیم نشده', 'Not set'],
+  ['فهرست و برچسب', 'List & tags'],
+  ['زیرکار', 'Subtask'],
+  ['لینک', 'Link'],
+  ['نوع کار', 'Task type'],
+  [
+    'برای یادآوری و مدت، ابتدا ساعت را مشخص کن.',
+    'Set a time first to add a reminder or duration.',
+  ],
+  ['با هوش مصنوعی', 'Split with AI'],
+  ['برداشتن برچسب {0}', 'Remove tag {0}'],
+  ['{0} از {1}', '{0} of {1}'],
+  ['دارای یادآوری', 'Has reminder'],
 ];

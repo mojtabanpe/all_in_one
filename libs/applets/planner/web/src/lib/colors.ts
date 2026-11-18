@@ -1,4 +1,16 @@
-import type { PlannerColor } from '@all-in-one/applets/planner/contracts';
+import type {
+  PlannerColor,
+  TaskPriority,
+} from '@all-in-one/applets/planner/contracts';
+
+/** Round checkbox colours by priority (TickTick): none grey, low blue, medium amber, high red. */
+export const PRIORITY_BOX: Record<TaskPriority, string> = {
+  NONE: 'border-muted-foreground/50 data-checked:bg-muted-foreground data-checked:border-muted-foreground',
+  LOW: 'border-sky-600 data-checked:bg-sky-600 data-checked:border-sky-600',
+  MEDIUM:
+    'border-amber-600 bg-amber-500/8 data-checked:bg-amber-600 data-checked:border-amber-600',
+  HIGH: 'border-destructive bg-destructive/8 data-checked:bg-destructive data-checked:border-destructive',
+};
 
 /** Colour classes per planner colour (literal so Tailwind finds them). */
 export const TONE: Record<
