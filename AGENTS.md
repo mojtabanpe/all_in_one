@@ -789,3 +789,5 @@ Rules:
      Veo API, then Higgsfield; Reels stay under 25 s; 1080×1920 edit with timed Persian captions. Only the generation
      settings are shared: Poshtetgarm content is never published to `@ywa_ai` or its YouTube channel, and spending
      credits or publishing still needs the owner's yes for each piece.
+
+163. **Task detail save button and duration-gated focus action (2026-11-18).** The owner: «یه دکمه واسه سیو بذار / تسک اگه دیوریشن نداره هم شروع تمرکز رو بردار از کارت». In `planner-task-detail`, provide an explicit Save button («ذخیره», with Cancel when dirty) for title and description edits rather than saving silently only on blur, and show the «شروع تمرکز» button only when the task has `durationMin` set.

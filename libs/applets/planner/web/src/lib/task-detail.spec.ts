@@ -172,4 +172,43 @@ describe('TaskDetail', () => {
     );
     expect(el.querySelector('#task-edit-scope')).not.toBeNull();
   });
+
+  it('saves title and description edits through the explicit save button', async () => {
+    const { fixture, http, el } = await setup(makeTask());
+    const changed = vi.fn();
+    fixture.componentInstance.changed.subscribe(changed);
+    const saveButton = () =>
+      [...el.querySelectorAll('button')].find(
+        (b) => b.textContent?.trim() === 'ذخیره',
+      ) as HTMLButtonElement;
+    expect(saveButton().disabled).toBe(true);
+
+    const textarea = el.querySelector('#task-content') as HTMLTextAreaElement;
+    textarea.value = 'سیب و پرتقال بگیر';
+    textarea.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(saveButton().disabled).toBe(false);
+
+    saveButton().click();
+    const req = http.expectOne('/api/planner/tasks/t1');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({
+      recurrenceScope: 'OCCURRENCE',
+      content: 'سیب و پرتقال بگیر',
+    });
+    const updated = makeTask({ content: 'سیب و پرتقال بگیر' });
+    req.flush(updated);
+    await fixture.whenStable();
+    expect(changed).toHaveBeenCalledWith(updated);
+  });
+
+  it('shows Start Focus only when the task has a duration', async () => {
+    const first = await setup(makeTask({ durationMin: null }));
+    expect(first.el.textContent).not.toContain('شروع تمرکز');
+    TestBed.inject(HttpTestingController).verify();
+    TestBed.resetTestingModule();
+
+    const second = await setup(makeTask({ durationMin: 30 }));
+    expect(second.el.textContent).toContain('شروع تمرکز');
+  });
 });

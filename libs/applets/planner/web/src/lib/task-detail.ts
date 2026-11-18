@@ -188,8 +188,9 @@ type PropertyPanel = 'schedule' | 'priority' | 'organize' | null;
               [class.line-through]="t.done || t.wontDo"
               [class.text-muted-foreground]="t.done || t.wontDo"
               [attr.aria-label]="'عنوان' | aioTranslate"
-              [value]="t.title"
-              (change)="saveTitle($any($event.target).value)"
+              [value]="draftTitle()"
+              (input)="draftTitle.set($any($event.target).value)"
+              (keydown.enter)="$event.preventDefault(); saveText()"
             />
 
             @if (t.wontDo || t.done || t.kind === 'NOTE') {
@@ -229,9 +230,42 @@ type PropertyPanel = 'schedule' | 'priority' | 'organize' | null;
             class="min-h-16 min-w-0 resize-y rounded-xl border-0 bg-transparent px-2 py-1 text-sm leading-7 shadow-none focus-visible:bg-background"
             [attr.aria-label]="'توضیح' | aioTranslate"
             [placeholder]="'توضیح یا یادداشت اضافه کن…' | aioTranslate"
-            [value]="t.content"
-            (change)="save({ content: $any($event.target).value })"
+            [value]="draftContent()"
+            (input)="draftContent.set($any($event.target).value)"
+            (keydown.control.enter)="$event.preventDefault(); saveText()"
+            (keydown.meta.enter)="$event.preventDefault(); saveText()"
           ></textarea>
+        </div>
+
+        <div
+          class="border-border/50 mt-2 flex items-center justify-end gap-2 border-t pt-2.5"
+        >
+          @if (canSaveText()) {
+            <button
+              aioBtn
+              type="button"
+              variant="ghost"
+              size="sm"
+              class="text-muted-foreground h-10 rounded-xl px-3 text-xs"
+              [disabled]="savingText()"
+              (click)="resetText()"
+            >
+              {{ 'انصراف' | aioTranslate }}
+            </button>
+          }
+          <button
+            type="button"
+            size="sm"
+            class="h-10 rounded-xl px-4 text-xs"
+            [variant]="canSaveText() ? 'default' : 'secondary'"
+            [disabled]="!canSaveText() || savingText()"
+            (click)="saveText()"
+            aioAsyncButton
+            [busy]="savingText()"
+            [label]="'ذخیره' | aioTranslate"
+            icon="lucideCheck"
+            iconSize="xs"
+          ></button>
         </div>
       </section>
 
@@ -1000,16 +1034,18 @@ type PropertyPanel = 'schedule' | 'priority' | 'organize' | null;
       <div
         class="border-border/50 flex flex-wrap items-center gap-2 border-t pt-3"
       >
-        <button
-          aioBtn
-          variant="outline"
-          type="button"
-          class="min-w-36 flex-1 rounded-xl shadow-none"
-          (click)="focusRequested.emit(t)"
-        >
-          <aio-icon name="lucideTimer" size="sm" />
-          {{ 'شروع تمرکز' | aioTranslate }}
-        </button>
+        @if (t.durationMin) {
+          <button
+            aioBtn
+            variant="outline"
+            type="button"
+            class="min-w-36 flex-1 rounded-xl shadow-none"
+            (click)="focusRequested.emit(t)"
+          >
+            <aio-icon name="lucideTimer" size="sm" />
+            {{ 'شروع تمرکز' | aioTranslate }}
+          </button>
+        }
         @if (t.wontDo) {
           <button
             aioBtn
@@ -1038,6 +1074,7 @@ type PropertyPanel = 'schedule' | 'priority' | 'organize' | null;
           variant="ghost"
           type="button"
           class="text-destructive hover:bg-destructive/10 hover:text-destructive rounded-xl"
+          [class.ms-auto]="!t.durationMin"
           (click)="trashed.emit(t)"
         >
           <aio-icon name="lucideTrash2" size="sm" />
@@ -1075,6 +1112,26 @@ export class TaskDetail {
   readonly focusRequested = output<PlannerTask>();
 
   private readonly taskId = computed(() => this.task().id);
+  private readonly textSource = computed(
+    () => `${this.task().id}\0${this.task().title}\0${this.task().content}`,
+  );
+  protected readonly draftTitle = linkedSignal<string, string>({
+    source: this.textSource,
+    computation: () => this.task().title,
+  });
+  protected readonly draftContent = linkedSignal<string, string>({
+    source: this.textSource,
+    computation: () => this.task().content,
+  });
+  protected readonly savingText = signal(false);
+  protected readonly canSaveText = computed(() => {
+    const title = this.draftTitle().trim();
+    const content = this.draftContent();
+    return (
+      !!title &&
+      (title !== this.task().title || content !== this.task().content)
+    );
+  });
   protected readonly openPanel = linkedSignal<string, PropertyPanel>({
     source: this.taskId,
     computation: () => null,
@@ -1263,9 +1320,35 @@ export class TaskDetail {
       void this.save({ durationMin: value });
   }
 
-  protected saveTitle(value: string) {
-    const title = value.trim();
-    if (title && title !== this.task().title) void this.save({ title });
+  protected resetText() {
+    this.draftTitle.set(this.task().title);
+    this.draftContent.set(this.task().content);
+  }
+
+  protected async saveText() {
+    const title = this.draftTitle().trim();
+    const content = this.draftContent();
+    if (!title) {
+      this.draftTitle.set(this.task().title);
+      return;
+    }
+    const change: UpdateTaskInput = {};
+    if (title !== this.task().title) change.title = title;
+    if (content !== this.task().content) change.content = content;
+    if (!Object.keys(change).length) return;
+    this.savingText.set(true);
+    try {
+      const updated = await this.api.updateTask(this.task().id, {
+        recurrenceScope: this.editScope(),
+        ...change,
+      });
+      this.changed.emit(updated);
+      this.notifications.success('تغییرات ذخیره شد');
+    } catch (error) {
+      this.notifications.error(apiErrorMessage(error));
+    } finally {
+      this.savingText.set(false);
+    }
   }
 
   protected setPriority(value: unknown) {

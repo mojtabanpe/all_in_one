@@ -235,4 +235,5 @@ export const REVIEWED_MESSAGES: readonly (readonly [string, string])[] = [
   ['برداشتن برچسب {0}', 'Remove tag {0}'],
   ['{0} از {1}', '{0} of {1}'],
   ['دارای یادآوری', 'Has reminder'],
+  ['تغییرات ذخیره شد', 'Changes saved'],
 ];
