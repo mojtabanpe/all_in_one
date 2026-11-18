@@ -579,6 +579,28 @@ Read-only production check after the owner reported a LinkedIn signup that the c
 - **Most new accounts now come from the Android stores, not from campaigns.** Of 22 `signup_completed` events in 7 days, the client seen for that visitor (X10, `growth_client_days`) was Cafe Bazaar 10, Myket 9, direct APK 1, web/PWA 2. Only 2 of them had a landing-page visit. Store installs open `/app` directly, so they never touch a tagged link and correctly appear as untagged. This is not an attribution bug. Client mix over 7 days (unique visitors): Bazaar 28, Myket 11, web 8, PWA 4, direct APK 1.
 - Reading: since Myket (2026-11-15) and Cafe Bazaar went live, store discovery brings far more signups than every tagged campaign together. Store listing quality (screenshots, description, ratings) is now the main acquisition lever. The campaign report cannot show it, because the stores pass no `utm_*`.
 
+## Store install attribution — research (2026-11-19, Claude, `TODO` owner decision)
+
+Same-browser signups already keep their source: `AuthService.signupCampaign` copies the visitor's first tagged event
+when the signup URL has no campaign. The source is lost only when the visitor goes from the landing page to Cafe
+Bazaar or Myket, installs, and signs up in the app (separate cookie jar). That is how the LinkedIn signup of
+2026-11-17 was lost.
+
+- **Myket:** `ir.myket:referrersdk:1.0.3` (repository `https://maven.myket.ir`). The store link carries the value:
+  `https://myket.ir/app/<package>?referrer=<value>` or `myket://details?id=<package>&referrer=<value>`; the app reads
+  it once with `MyketReferrerClient` (`installReferrer`, click and install times). Works only for installs from
+  Myket; older Myket returns `FEATURE_NOT_SUPPORTED`. Source: github.com/myketstore/referrer-sample.
+- **Cafe Bazaar:** `com.github.cafebazaar:ReferrerSDK` (JitPack, Apache-2.0); `ReferrerClient.getReferrerDetails()`
+  returns `referrer` and timestamps, kept 90 days. The docs say the value comes "through the deep link" but give no
+  link format: it must be confirmed (Bazaar support or a device test) before relying on it. Source:
+  github.com/cafebazaar/ReferrerSDK and its wiki.
+- **Proposed design:** the landing page's store buttons add `referrer=vid%3D<visitor id>` (the random growth ID,
+  nothing else, per directive 78). The store flavors read the referrer on first launch and open
+  `/app/?aio_vid=<id>`; the customer app adopts that ID when it has none, so the existing first-touch lookup credits
+  the web campaign. Needs: web change (public links + customer adoption), Android change in `native/poshtetgarm`
+  (both store flavors, R8 keep rules for Myket), and a new APK version in both stores. Measurable only for installs
+  after the update.
+
 ## Reel idea 6 «با یه جمله» — script draft (2026-11-18)
 
 Owner picked idea 6 of six proposed Reel ideas (story-led, like the dinner ad, the only Reel that held viewers: 9.1 s average watch, 36% skipped). Claim checked against the code: the assistant logs a meal with estimated calories and macros (`log_meal`, `estimate_meal`), reports what is left for the day (`get_nutrition_day`) and accepts voice. Status: `TODO` owner approval of the script; nothing generated or published.
