@@ -791,3 +791,9 @@ Rules:
      credits or publishing still needs the owner's yes for each piece.
 
 163. **Task detail save button and duration-gated focus action (2026-11-18).** The owner: «یه دکمه واسه سیو بذار / تسک اگه دیوریشن نداره هم شروع تمرکز رو بردار از کارت». In `planner-task-detail`, provide an explicit Save button («ذخیره», with Cancel when dirty) for title and description edits rather than saving silently only on blur, and show the «شروع تمرکز» button only when the task has `durationMin` set.
+
+164. **Publish the «با یه جمله» Reel; host Reel files in the `ywa` Drive folder (2026-11-18).** The owner approved the
+     assembled draft and caption («Good, write caption»), then said «Publish», and named the hosting place for the public
+     video link: «تو فولدر ywa توی گوگل درایو» (rclone remote `ywa:`, as the ywa_ai pipeline uses). This authorizes that
+     one Reel on @poshtetgarm only; it is not standing authorization for future posts. Future Reel files that need a
+     public URL for Windsor go to the same Drive folder (never to @ywa_ai or its channel, as 162).
