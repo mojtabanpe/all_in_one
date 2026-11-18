@@ -244,7 +244,7 @@ export class AssistantStore {
               @if (m.actions) {
                 <span class="mt-1 block text-xs opacity-70"
                   >{{ fa(m.actions) }}
-                  {{ copy('کار انجام شد', 'actions completed') }}</span
+                  {{ copy('تغییر ثبت شد', 'changes saved') }}</span
                 >
               }
             </div>
