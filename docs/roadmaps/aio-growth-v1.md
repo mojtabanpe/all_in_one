@@ -578,3 +578,17 @@ Read-only production check after the owner reported a LinkedIn signup that the c
 - `linkedin / organic_social / linkedin_launch`: 3 landing visitors, 1 `signup_started` (19:23 Tehran), 0 `signup_completed`. No customer account was created after 18:22 Tehran (checked about 19:30), so that visit did not finish creating a new account. It may have signed in to an existing number instead, which creates no signup event.
 - **Most new accounts now come from the Android stores, not from campaigns.** Of 22 `signup_completed` events in 7 days, the client seen for that visitor (X10, `growth_client_days`) was Cafe Bazaar 10, Myket 9, direct APK 1, web/PWA 2. Only 2 of them had a landing-page visit. Store installs open `/app` directly, so they never touch a tagged link and correctly appear as untagged. This is not an attribution bug. Client mix over 7 days (unique visitors): Bazaar 28, Myket 11, web 8, PWA 4, direct APK 1.
 - Reading: since Myket (2026-11-15) and Cafe Bazaar went live, store discovery brings far more signups than every tagged campaign together. Store listing quality (screenshots, description, ratings) is now the main acquisition lever. The campaign report cannot show it, because the stores pass no `utm_*`.
+
+## Reel idea 6 «با یه جمله» — script draft (2026-11-18)
+
+Owner picked idea 6 of six proposed Reel ideas (story-led, like the dinner ad, the only Reel that held viewers: 9.1 s average watch, 36% skipped). Claim checked against the code: the assistant logs a meal with estimated calories and macros (`log_meal`, `estimate_meal`), reports what is left for the day (`get_nutrition_day`) and accepts voice. Status: `TODO` owner approval of the script; nothing generated or published.
+
+- Format: vertical 9:16, about 22 seconds, Persian on-screen text and speech, ending with the official logo card.
+- 0–3 s: an office worker after lunch, phone in hand. On screen: «من فقط گفتم چی خوردم…»
+- 3–7 s: quick flashback, grey and comic: kitchen scale, a calorie table, searching for "قورمه‌سبزی چند گرمه؟". On screen: «قبلاً: ترازو، جدول، حساب‌وکتاب»
+- 7–13 s: real app screen. They open the assistant and say, by voice: «ناهار یه بشقاب قورمه‌سبزی با برنج خوردم». The assistant answers that it logged lunch, with an estimated calorie figure. On screen: «ثبت شد. کالری هم حساب شد.»
+- 13–18 s: they ask: «امروز چقدر دیگه جا دارم؟». The assistant answers with the remaining calories to today's goal. On screen: «تا هدف امروز چقدر مانده؟ معلومه.»
+- 18–22 s: logo card. On screen: «با یه جمله. Poshtetgarm» and «در کافه‌بازار و مایکت».
+- Caption: «دیگه لازم نیست کالری غذا رو حساب کنی. فقط بگو چی خوردی؛ Poshtetgarm ثبتش می‌کنه و می‌گه امروز چقدر دیگه جا داری. برنامه‌ریز، فلش‌کارت و بخش سلامت رایگان‌اند؛ دستیار هوش مصنوعی برای حساب تازه یک هفته رایگان است. پشتت گرم رو در کافه‌بازار یا مایکت جست‌وجو کن.»
+- Production: the app part is a real screen recording on a phone (the assistant's real answer, not mocked numbers); the person scenes can be filmed or generated. The calorie figure must be whatever the app really answers.
+- Measurement: no tagged link inside a Reel. Compare Bazaar/Myket signups in the 3 days after publishing with the 3 days before (`growth_client_days`, `signup_completed`).
