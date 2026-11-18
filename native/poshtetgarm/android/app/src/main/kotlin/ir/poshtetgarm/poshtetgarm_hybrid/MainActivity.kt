@@ -14,6 +14,11 @@ class MainActivity : FlutterFragmentActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         billing = createStoreBilling(this)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "ir.poshtetgarm.hybrid/install")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "referrer") InstallReferrer.read(this) { result.success(it) }
+                else result.notImplemented()
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "ir.poshtetgarm.hybrid/store")
             .setMethodCallHandler { call, result ->
                 val store = billing

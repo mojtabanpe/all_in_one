@@ -3,9 +3,34 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:poshtetgarm_hybrid/main.dart';
 import 'package:poshtetgarm_hybrid/app_settings.dart';
 import 'package:poshtetgarm_hybrid/native_push.dart';
+import 'package:poshtetgarm_hybrid/install_referrer.dart';
 import 'package:poshtetgarm_hybrid/store_billing.dart';
 
 void main() {
+  test(
+    'store install referrer passes only a visitor ID into the start URL',
+    () {
+      const id = '0f8fad5b-d9cb-469f-a165-70867728950e';
+      expect(visitorFromReferrer('vid=$id'), id);
+      for (final value in [
+        null,
+        '',
+        id,
+        'vid=x',
+        'utm_source=linkedin',
+        'vid=$id&a=1',
+      ]) {
+        expect(visitorFromReferrer(value), isNull);
+      }
+      final app = Uri.parse('https://poshtetgarm.ir/app/');
+      expect(withVisitor(app, null), app);
+      expect(
+        withVisitor(app, id).toString(),
+        'https://poshtetgarm.ir/app/?aio_vid=$id',
+      );
+    },
+  );
+
   test('notification links stay inside the trusted app', () {
     expect(notificationDestination('/app/english')?.path, '/app/english');
     expect(

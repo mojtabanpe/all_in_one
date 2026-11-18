@@ -37,6 +37,29 @@ describe('Optional acquisition analytics', () => {
     document.cookie = 'aio_growth_preference=; Path=/; Max-Age=0';
   });
 
+  it('keeps the landing visit ID a store build passes after install, and only a valid one', () => {
+    const id = '0f8fad5b-d9cb-469f-a165-70867728950e';
+    const path = document.location.pathname;
+    try {
+      history.replaceState(null, '', `${path}?aio_vid=not-an-id`);
+      const fresh = service.context()?.visitorId;
+      expect(fresh).toBeDefined();
+      expect(fresh).not.toBe('not-an-id');
+      document.cookie = 'aio_growth_visitor=; Path=/; Max-Age=0';
+      history.replaceState(null, '', `${path}?aio_vid=${id}`);
+      expect(service.context()?.visitorId).toBe(id);
+      // An existing visitor keeps its own ID.
+      history.replaceState(
+        null,
+        '',
+        `${path}?aio_vid=1f8fad5b-d9cb-469f-a165-70867728950e`,
+      );
+      expect(service.context()?.visitorId).toBe(id);
+    } finally {
+      history.replaceState(null, '', path);
+    }
+  });
+
   it('makes no request or ID after opting out', async () => {
     service.choose('denied');
     await service.track('signup_started');

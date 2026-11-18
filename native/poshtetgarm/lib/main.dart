@@ -9,6 +9,7 @@ import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 import 'app_settings.dart';
 import 'native_push.dart';
+import 'install_referrer.dart';
 import 'store_billing.dart';
 
 void main() {
@@ -173,7 +174,7 @@ class _PoshtetgarmWindowState extends State<PoshtetgarmWindow>
         _appUrl = url;
         _error = null;
       });
-      await _load(url);
+      await _load(await installStartUrl(url));
     } catch (error) {
       if (mounted) {
         setState(() {

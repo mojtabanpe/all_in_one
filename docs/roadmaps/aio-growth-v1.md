@@ -579,7 +579,7 @@ Read-only production check after the owner reported a LinkedIn signup that the c
 - **Most new accounts now come from the Android stores, not from campaigns.** Of 22 `signup_completed` events in 7 days, the client seen for that visitor (X10, `growth_client_days`) was Cafe Bazaar 10, Myket 9, direct APK 1, web/PWA 2. Only 2 of them had a landing-page visit. Store installs open `/app` directly, so they never touch a tagged link and correctly appear as untagged. This is not an attribution bug. Client mix over 7 days (unique visitors): Bazaar 28, Myket 11, web 8, PWA 4, direct APK 1.
 - Reading: since Myket (2026-11-15) and Cafe Bazaar went live, store discovery brings far more signups than every tagged campaign together. Store listing quality (screenshots, description, ratings) is now the main acquisition lever. The campaign report cannot show it, because the stores pass no `utm_*`.
 
-## Store install attribution — research (2026-11-19, Claude, `TODO` owner decision)
+## Store install attribution — Myket (2026-11-19, Claude, `IN_PROGRESS`)
 
 Same-browser signups already keep their source: `AuthService.signupCampaign` copies the visitor's first tagged event
 when the signup URL has no campaign. The source is lost only when the visitor goes from the landing page to Cafe
@@ -600,6 +600,15 @@ Bazaar or Myket, installs, and signs up in the app (separate cookie jar). That i
   the web campaign. Needs: web change (public links + customer adoption), Android change in `native/poshtetgarm`
   (both store flavors, R8 keep rules for Myket), and a new APK version in both stores. Measurable only for installs
   after the update.
+- **Built (owner approved Myket first, 2026-11-19; local, not released):** `storeReferrer`/`storeVisitorId` in
+  `libs/shared/schemas` (UUID only); the landing page's Myket buttons carry `referrer=vid%3D<visitor id>`;
+  `GrowthAnalytics` adopts a valid `aio_vid` only when the browser has no visitor ID; the shell's `myket` flavor reads
+  the referrer once per install (`InstallReferrer.kt`, `ir.myket:referrersdk:1.0.3`, R8 keep rules) and opens
+  `/app/?aio_vid=<id>` (`lib/install_referrer.dart`, 3 s timeout, never blocks opening). `direct` reads nothing;
+  `bazaar` reads nothing until its link format is confirmed.
+- `TODO` release the web change, publish a new APK to Myket, then install from a tagged landing link on a real phone
+  and check the signup's campaign in the admin report.
+- `TODO` (owner) ask Cafe Bazaar support how a link passes the install referrer to `ReferrerSDK`.
 
 ## Reel idea 6 «با یه جمله» — script draft (2026-11-18)
 

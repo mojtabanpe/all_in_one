@@ -87,6 +87,7 @@ android {
     buildTypes {
         release {
             // Each flavor above picks its signing key.
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }
@@ -107,4 +108,5 @@ dependencies {
     implementation("androidx.fragment:fragment-ktx:1.8.5")
     "bazaarImplementation"("com.github.cafebazaar.Poolakey:poolakey:2.3.0")
     "myketImplementation"("ir.myket:billing:2.2")
+    "myketImplementation"("ir.myket:referrersdk:1.0.3")
 }

@@ -1,5 +1,6 @@
 import { Component, computed, effect, inject } from '@angular/core';
 import { GrowthAnalytics } from '@all-in-one/web/shared';
+import { storeReferrer } from '@all-in-one/shared/schemas';
 import {
   AioTranslate,
   AioLocale,
@@ -110,7 +111,7 @@ export const STORE_LINKS = {
               variant="outline"
               size="sm"
               class="min-h-11"
-              [href]="stores.myket"
+              [href]="myketLink()"
               >{{ 'مایکت' | aioTranslate }}</a
             >
             <a
@@ -213,7 +214,7 @@ export const STORE_LINKS = {
             size="lg"
             variant="outline"
             class="min-h-12"
-            [href]="stores.myket"
+            [href]="myketLink()"
             >{{ 'دریافت از مایکت' | aioTranslate }}</a
           >
         </div>
@@ -296,6 +297,16 @@ export class Home {
   }
   protected readonly customerLinks = injectCustomerLinks();
   protected readonly stores = STORE_LINKS;
+  /** Myket hands this to the app on first launch, so an in-app signup keeps this visit's source. */
+  protected readonly myketLink = computed(() => {
+    const id = this.analytics.ready()
+      ? this.analytics.context()?.visitorId
+      : undefined;
+    const referrer = id ? storeReferrer(id) : null;
+    return referrer
+      ? `${STORE_LINKS.myket}?referrer=${encodeURIComponent(referrer)}`
+      : STORE_LINKS.myket;
+  });
   protected readonly android = ANDROID_RELEASE;
   private readonly lang = computed(() => (this.locale.english() ? 'en' : 'fa'));
   protected shot(image: 'planner' | 'english' | 'health'): string {

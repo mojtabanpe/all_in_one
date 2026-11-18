@@ -11,6 +11,8 @@ import { AioLocale } from '@all-in-one/ui';
 import {
   extractGrowthCampaign,
   growthAttributionSchema,
+  STORE_VISITOR_PARAM,
+  storeVisitorId,
   type GrowthAttribution,
   type GrowthClient,
   type GrowthEventInput,
@@ -160,7 +162,14 @@ export class GrowthAnalytics {
     // Cookies may be blocked: do not send an event without a persisted random ID.
     let visitorId = this.read(VISITOR);
     if (!visitorId || !/^[0-9a-f-]{36}$/i.test(visitorId)) {
-      visitorId = this.document.defaultView?.crypto.randomUUID();
+      // A store build opened after a Myket install passes the landing visit's ID (storeVisitorId), so the
+      // signup inherits that visit's first touch; otherwise a fresh random ID.
+      visitorId =
+        storeVisitorId(
+          new URLSearchParams(this.document.location?.search ?? '').get(
+            STORE_VISITOR_PARAM,
+          ),
+        ) ?? this.document.defaultView?.crypto.randomUUID();
       if (!visitorId) return;
       this.write(VISITOR, visitorId);
       if (this.read(VISITOR) !== visitorId) return;

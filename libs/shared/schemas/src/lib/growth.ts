@@ -83,6 +83,25 @@ export function extractGrowthCampaign(params: {
   return campaign;
 }
 
+/**
+ * Store install handoff (Myket install referrer): the landing page puts only the random growth visitor ID into the
+ * store link, the store build reads it on first launch and opens the app with `?aio_vid=`, and the app keeps that ID
+ * so the signup inherits the web visit's first touch. Nothing else crosses.
+ */
+export const STORE_VISITOR_PARAM = 'aio_vid';
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export function storeReferrer(visitorId: string): string | null {
+  return UUID.test(visitorId) ? `vid=${visitorId.toLowerCase()}` : null;
+}
+/** The visitor ID from a store referrer or the `aio_vid` query value, or null for anything else. */
+export function storeVisitorId(
+  value: string | null | undefined,
+): string | null {
+  if (!value) return null;
+  const id = value.startsWith('vid=') ? value.slice(4) : value;
+  return UUID.test(id) ? id.toLowerCase() : null;
+}
+
 /** No arbitrary properties, page URLs, referrers or user-authored content. */
 export const growthEventSchema = z.strictObject({
   visitorId: z.string().check(z.uuid()),
