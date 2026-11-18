@@ -781,3 +781,11 @@ Rules:
      separate Tehran days (`RATE_PROMPT_ACTIVE_DAYS`). Its button opens that store's app page; closing or tapping it
      ends it for good. In store builds outside links open with a plain navigation, which the Android shell hands to the
      store app or browser, so existing APKs need no update.
+
+162. **Generate Poshtetgarm ad shots with the ywa_ai video settings (2026-11-18).** The owner: «از تنظیمات ساخت ویدیو در
+     پروژه ywa_ai استفاده کن». Video shots follow `/Users/mojtabanpe/Projects/personal/ywa-ai` (README «Episode pipeline»,
+     `tools/episode/brief.ts`): one continuous 9:16 shot of about 8 s per English prompt, fixed character descriptions for a
+     consistent face, Google Flow with Omni 1.2 Flash by default (24 credits per 8 s shot; `veo-3.1-lite` 10), then the
+     Veo API, then Higgsfield; Reels stay under 25 s; 1080×1920 edit with timed Persian captions. Only the generation
+     settings are shared: Poshtetgarm content is never published to `@ywa_ai` or its YouTube channel, and spending
+     credits or publishing still needs the owner's yes for each piece.
