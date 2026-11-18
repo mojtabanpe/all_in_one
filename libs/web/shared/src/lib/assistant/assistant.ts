@@ -56,6 +56,9 @@ interface Message {
   log?: string;
 }
 
+/** How long the page must stop scrolling before the tucked floating button comes back. */
+const ASSISTANT_SCROLL_IDLE_MS = 600;
+
 const SUGGESTIONS: Record<AssistantContext, string[]> = {
   home: [
     'امروز چه کارهایی دارم؟',
@@ -372,7 +375,8 @@ export class Assistant implements OnDestroy {
   readonly floating = input(false, { transform: booleanAttribute });
   /**
    * The floating button steps aside while the page scrolls down (it would cover whatever passes under it) and comes
-   * back on scrolling up or near the top. Pages also leave room under their content for it (app shell).
+   * back on scrolling up, near the top or bottom, and once scrolling stops. Pages also leave room under their
+   * content for it (app shell).
    */
   protected readonly tucked = signal(false);
   private stopScrollWatch?: () => void;
@@ -580,17 +584,28 @@ export class Assistant implements OnDestroy {
     afterNextRender(() => {
       if (!this.floating()) return;
       let last = window.scrollY;
+      let idle: ReturnType<typeof setTimeout> | undefined;
       const onScroll = () => {
         const y = window.scrollY;
         const delta = y - last;
-        if (y < 80) this.tucked.set(false);
+        const atEnd =
+          y + window.innerHeight >= document.documentElement.scrollHeight - 80;
+        if (y < 80 || atEnd) this.tucked.set(false);
         else if (delta > 8) this.tucked.set(true);
         else if (delta < -8) this.tucked.set(false);
         if (Math.abs(delta) > 8 || y < 80) last = y;
+        // Back as soon as the page stops moving, so it never stays hidden at the end of a scroll.
+        clearTimeout(idle);
+        idle = setTimeout(
+          () => this.tucked.set(false),
+          ASSISTANT_SCROLL_IDLE_MS,
+        );
       };
       window.addEventListener('scroll', onScroll, { passive: true });
-      this.stopScrollWatch = () =>
+      this.stopScrollWatch = () => {
+        clearTimeout(idle);
         window.removeEventListener('scroll', onScroll);
+      };
     });
   }
 

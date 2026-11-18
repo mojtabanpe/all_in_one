@@ -589,4 +589,43 @@ export const MARKETING_MESSAGES: readonly (readonly [string, string])[] = [
     'It also works in the browser without installing.',
   ],
   ['باز کردن در مرورگر', 'Open in the browser'],
+  ['شروع با {0}', 'Start with {0}'],
+  ['کارهای امروزت را بنویس و تیک بزن', "Write today's tasks and tick them off"],
+  ['هر روز چند لغت انگلیسی مرور کن', 'Review a few English words every day'],
+  [
+    'برنامهٔ ورزش در خانه را انتخاب کن و جلسه\u200cات را ثبت کن',
+    'Pick a home workout and log your session',
+  ],
+  [
+    'عادت روزانه بساز و هر روز تیکش بزن',
+    'Create a daily habit and tick it off each day',
+  ],
+  [
+    'بنویس چه خوردی تا کالری\u200cاش حساب شود',
+    'Write what you ate and get its calories',
+  ],
+  [
+    'کارهای امروز را بنویس، اولویت بگذار و انجام\u200cشده\u200cها را تیک بزن. عادت\u200cها و تایمر تمرکز هم همین\u200cجاست.',
+    "Write today's tasks, set priorities and tick off what's done. Habits and the focus timer are here too.",
+  ],
+  [
+    'یک مجموعهٔ آماده بردار یا لغت\u200cهای خودت را وارد کن و کارت\u200cهای امروز را مرور کن.',
+    "Take a ready-made deck or add your own words, then review today's cards.",
+  ],
+  [
+    'یک مجموعهٔ آماده از مبتدی تا پیشرفته بردار و کارت\u200cهای امروز را مرور کن. متن خواندنی و تمرین شنیدن هم هست.',
+    "Take a ready-made deck from beginner to advanced and review today's cards. Reading texts and listening practice are there too.",
+  ],
+  [
+    'یک برنامهٔ خانگی، باشگاه یا TRX انتخاب کن. هر حرکت با تصویر و توضیح نشان داده می\u200cشود و جلسه ثبت می\u200cشود.',
+    'Pick a home, gym or TRX program. Each move comes with a picture and instructions, and the session is logged.',
+  ],
+  [
+    'عادت را با روزها و ساعت یادآورش بساز و هر روز انجامش را تیک بزن.',
+    'Create the habit with its days and reminder time, and tick it off each day.',
+  ],
+  [
+    'غذایت را بنویس تا کالری و درشت\u200cمغذی\u200cها حساب شود. وزن، هدف و برنامهٔ ورزش هم همین\u200cجاست.',
+    'Write what you ate to get its calories and macros. Weight, goal and workouts are here too.',
+  ],
 ];

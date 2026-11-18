@@ -16,6 +16,7 @@ import {
   resolveLandingGoal,
   GOAL_APP_PATHS,
   LANDING_GOAL_COOKIE,
+  type OnboardingGoal,
 } from '@all-in-one/shared/schemas';
 
 export const CUSTOMER_APP_URL = new InjectionToken<string>('CUSTOMER_APP_URL', {
@@ -62,8 +63,16 @@ export function injectCustomerLinks() {
     () =>
       `${base}/login?${new URLSearchParams({ mode: 'register', ...query() })}`,
   );
+  /** Signup that opens the given applet afterwards (applet cards). */
+  const signupFor = (selected: OnboardingGoal) =>
+    `${base}/login?${new URLSearchParams({
+      mode: 'register',
+      ...campaign(),
+      goal: selected,
+      redirect: GOAL_APP_PATHS[selected],
+    })}`;
   const login = computed(
     () => `${base}/login${goal() ? '?' + new URLSearchParams(query()) : ''}`,
   );
-  return { signup, login, campaign, goal };
+  return { signup, signupFor, login, campaign, goal };
 }

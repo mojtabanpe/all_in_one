@@ -1,6 +1,5 @@
 import { Component, computed, effect, inject } from '@angular/core';
 import { GrowthAnalytics } from '@all-in-one/web/shared';
-import { RouterLink } from '@angular/router';
 import {
   AioTranslate,
   AioLocale,
@@ -43,7 +42,6 @@ export const STORE_LINKS = {
     AioAccordionContent,
     AioAccordionDirectives,
     AioAccordionTrigger,
-    RouterLink,
     AioTranslate,
   ],
   providers: [
@@ -175,11 +173,12 @@ export const STORE_LINKS = {
                 </ul>
                 <a
                   aioBtn
-                  variant="link"
-                  class="min-h-11 self-start px-0"
-                  [routerLink]="feature.slug"
-                  [queryParams]="customerLinks.campaign()"
-                  >{{ 'بیشتر' | aioTranslate
+                  variant="outline"
+                  class="min-h-11 self-start"
+                  [href]="customerLinks.signupFor(feature.goal)"
+                  >{{
+                    'شروع با {0}'
+                      | aioTranslate: [feature.title | aioTranslate]
                   }}<aio-icon
                     name="lucideChevronLeft"
                     size="sm"
@@ -305,6 +304,7 @@ export class Home {
   protected readonly features = [
     {
       slug: '/daily-planner',
+      goal: 'planner',
       image: 'planner',
       accent: 'applet-planner',
       icon: 'lucideCalendarCheck',
@@ -318,6 +318,7 @@ export class Home {
     },
     {
       slug: '/daily-english',
+      goal: 'english',
       image: 'english',
       accent: 'applet-english',
       icon: 'lucideLanguages',
@@ -331,6 +332,7 @@ export class Home {
     },
     {
       slug: '/health-tracking',
+      goal: 'health',
       image: 'health',
       accent: 'applet-health',
       icon: 'lucideHeartPulse',

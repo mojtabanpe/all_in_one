@@ -1,5 +1,6 @@
 export const APPLETS = [
   {
+    goal: 'planner' as const,
     icon: 'lucideCalendarCheck',
     title: 'برنامه‌ریز',
     summary: 'کارهای هر روز را با ساعت، اولویت و حوزه بچینید و پیش بروید.',
@@ -10,6 +11,7 @@ export const APPLETS = [
     ],
   },
   {
+    goal: 'english' as const,
     icon: 'lucideLanguages',
     title: 'یادگیری انگلیسی',
     summary:
@@ -21,6 +23,7 @@ export const APPLETS = [
     ],
   },
   {
+    goal: 'health' as const,
     icon: 'lucideHeartPulse',
     title: 'سلامت',
     summary:

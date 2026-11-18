@@ -813,3 +813,10 @@ Rules:
      feature tours. Every page shows only what the user needs to act, and the path from landing to the first real
      action (add a task, review a card, log a meal) takes as few taps and screens as possible. A new step or text that
      delays the first action needs a reason; otherwise leave it out. This extends 165.
+
+167. **Clean up every listener (2026-11-19).** The owner: «unsubscribe this fucking events every where you have to».
+     Every `addEventListener`, RxJS subscription, `setInterval`/repeating `setTimeout` and observer (`ResizeObserver`,
+     `MutationObserver`, `IntersectionObserver`) in frontend code is removed when its owner is destroyed:
+     `takeUntilDestroyed()`, `DestroyRef.onDestroy`, an `AbortController` `signal` on the listener, or `{ once: true }`.
+     One-shot HTTP calls that complete on their own and timers that clear themselves are fine. Check this in every
+     change and fix any leak you find in passing.

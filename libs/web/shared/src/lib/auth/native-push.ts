@@ -1,6 +1,6 @@
 import { AioLocale } from '@all-in-one/ui';
 import { HttpClient } from '@angular/common/http';
-import { effect, inject, Injectable, signal } from '@angular/core';
+import { DestroyRef, effect, inject, Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../api/api-base-url';
 
@@ -32,11 +32,24 @@ export class NativePush {
 
   constructor() {
     if (typeof window !== 'undefined') {
-      window.addEventListener('poshtetgarm-native-ready', () => {
-        this.available.set(true);
-        void this.sync();
-      });
-      window.addEventListener('poshtetgarm-push-token', () => void this.sync());
+      // Every listener is removed with the service (directive 167).
+      const listeners = new AbortController();
+      inject(DestroyRef).onDestroy(() => listeners.abort());
+      window.addEventListener(
+        'poshtetgarm-native-ready',
+        () => {
+          this.available.set(true);
+          void this.sync();
+        },
+        { signal: listeners.signal },
+      );
+      window.addEventListener(
+        'poshtetgarm-push-token',
+        () => void this.sync(),
+        {
+          signal: listeners.signal,
+        },
+      );
     }
     effect(() => {
       this.locale.language();
