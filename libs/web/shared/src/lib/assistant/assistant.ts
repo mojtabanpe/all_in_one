@@ -4,6 +4,7 @@ import {
   httpResource,
 } from '@angular/common/http';
 import {
+  afterNextRender,
   booleanAttribute,
   Component,
   computed,
@@ -125,7 +126,12 @@ export class AssistantStore {
       <button
         aioBtn
         size="icon"
-        class="fixed end-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 size-14 rounded-full shadow-lg md:end-6 md:bottom-6"
+        class="fixed end-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 size-14 rounded-full shadow-lg transition-[translate,opacity] duration-200 ease-out motion-reduce:transition-none md:end-6 md:bottom-6"
+        [class.translate-y-[calc(100%+6rem)]]="tucked()"
+        [class.opacity-0]="tucked()"
+        [class.pointer-events-none]="tucked()"
+        [attr.aria-hidden]="tucked() ? 'true' : null"
+        [attr.tabindex]="tucked() ? -1 : null"
         [attr.aria-label]="
           copy('دستیار هوش مصنوعی', 'AI assistant') | aioTranslate
         "
@@ -320,6 +326,12 @@ export class Assistant implements OnDestroy {
 
   /** Show the trigger as a floating round button instead of a header button. */
   readonly floating = input(false, { transform: booleanAttribute });
+  /**
+   * The floating button steps aside while the page scrolls down (it would cover whatever passes under it) and comes
+   * back on scrolling up or near the top. Pages also leave room under their content for it (app shell).
+   */
+  protected readonly tucked = signal(false);
+  private stopScrollWatch?: () => void;
   protected readonly open = signal(false);
   protected readonly busy = signal(false);
   protected readonly draft = signal('');
@@ -506,7 +518,26 @@ export class Assistant implements OnDestroy {
     });
   }
 
+  constructor() {
+    afterNextRender(() => {
+      if (!this.floating()) return;
+      let last = window.scrollY;
+      const onScroll = () => {
+        const y = window.scrollY;
+        const delta = y - last;
+        if (y < 80) this.tucked.set(false);
+        else if (delta > 8) this.tucked.set(true);
+        else if (delta < -8) this.tucked.set(false);
+        if (Math.abs(delta) > 8 || y < 80) last = y;
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      this.stopScrollWatch = () =>
+        window.removeEventListener('scroll', onScroll);
+    });
+  }
+
   ngOnDestroy() {
     this.stopRecording();
+    this.stopScrollWatch?.();
   }
 }

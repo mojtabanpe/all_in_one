@@ -132,8 +132,9 @@ import { AioIcon } from './icon';
             <ng-content select="[aioShellActions]" />
           </div>
         </header>
+        <!-- Room under the content for the bottom nav and the floating assistant button above it. -->
         <div
-          class="mx-auto w-full max-w-6xl px-5 pt-7 pb-[var(--bottom-nav-space)] md:px-8 md:pt-10 md:pb-12"
+          class="mx-auto w-full max-w-6xl px-5 pt-7 pb-[calc(var(--bottom-nav-space)+4.5rem)] md:px-8 md:pt-10 md:pb-24"
         >
           <ng-content />
         </div>
