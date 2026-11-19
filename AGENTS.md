@@ -820,3 +820,12 @@ Rules:
      `takeUntilDestroyed()`, `DestroyRef.onDestroy`, an `AbortController` `signal` on the listener, or `{ once: true }`.
      One-shot HTTP calls that complete on their own and timers that clear themselves are fine. Check this in every
      change and fix any leak you find in passing.
+
+168. **Telegram bot for return and quick logging (2026-11-19).** The owner chose the Telegram bot («۱») and its
+     open points: a **new user-facing bot** (the owner creates it with BotFather; `@poshtetgarm_develop_bot` stays for
+     channel posts), reached through a **small relay outside Iran** (a Cloudflare Worker that forwards calls to
+     `api.telegram.org` and the webhook back to `poshtetgarm.ir`; it holds no bot token and accepts only a shared
+     key), and a message from an account **without AI access gets a «subscription needed» reply** instead of a task.
+     Version 1: link an account with a one-time `t.me/<bot>?start=<code>` link, the 10:00 morning summary (154) in
+     Telegram, and logging by message through the assistant's tools, scope check (110) and daily limits. Plan and
+     status: «ربات تلگرام» in `docs/roadmaps/aio-activation-v1.fa.md`.
