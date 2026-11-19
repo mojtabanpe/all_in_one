@@ -15,7 +15,7 @@ const env: Record<string, string> = {
 };
 const config = { get: (key: string) => env[key] } as unknown as ConfigService;
 
-function setup() {
+function setup(membership: string | Error = 'member') {
   const sent: { chat: string; text: string; buttons?: unknown }[] = [];
   const db = {
     telegramLink: {
@@ -49,8 +49,14 @@ function setup() {
       sent.push({ chat: chat.toString(), text, buttons });
     },
   );
-  api.call = vi.fn(async () => true);
-  return { service, db, assistant, tasks, sent };
+  const calls: { method: string; body: Record<string, unknown> }[] = [];
+  api.call = vi.fn(async (method: string, body: Record<string, unknown>) => {
+    calls.push({ method, body });
+    if (method !== 'getChatMember') return true;
+    if (membership instanceof Error) throw membership;
+    return { status: membership };
+  });
+  return { service, db, assistant, tasks, sent, calls };
 }
 const message = (text: string, id = 42) => ({
   message: { text, chat: { id, type: 'private' } },
@@ -185,5 +191,74 @@ describe('Telegram bot', () => {
       'Today: 1 open task\n• a\n2 cards ready to review',
     );
     expect(plainReply('## Title\n**bold** text')).toBe('Title\nbold text');
+  });
+
+  describe('main channel membership (directive 170)', () => {
+    const code = 'abcdefghijklmnopqrstuvwx';
+    const valid = {
+      userId: 'u1',
+      language: 'fa',
+      expiresAt: new Date(Date.now() + 60_000),
+    };
+
+    it('asks a non-member to join before linking, then links on «I joined»', async () => {
+      const { service, db, sent, calls } = setup('left');
+      db.telegramLink.findUnique.mockResolvedValue(null);
+      db.telegramLinkCode.findUnique.mockResolvedValue(valid);
+      await service.handle(message(`/start ${code}`));
+      expect(db.telegramLink.create).not.toHaveBeenCalled();
+      expect(calls.find((c) => c.method === 'getChatMember')?.body).toEqual({
+        chat_id: '@poshtetgarm',
+        user_id: 42,
+      });
+      expect(sent[0].text).toContain('@poshtetgarm');
+      expect(JSON.stringify(sent[0].buttons)).toContain(`j:${code}`);
+
+      // Still not a member: an alert, no link.
+      await service.handle({
+        callback_query: {
+          id: 'q',
+          data: `j:${code}`,
+          message: { chat: { id: 42 } },
+        },
+      });
+      expect(db.telegramLink.create).not.toHaveBeenCalled();
+
+      const joined = setup('member');
+      joined.db.telegramLink.findUnique.mockResolvedValue(null);
+      joined.db.telegramLinkCode.findUnique.mockResolvedValue(valid);
+      await joined.service.handle({
+        callback_query: {
+          id: 'q',
+          data: `j:${code}`,
+          message: { chat: { id: 42 } },
+        },
+      });
+      expect(joined.db.telegramLink.create).toHaveBeenCalled();
+    });
+
+    it("does not pass a linked non-member's message to the assistant", async () => {
+      const { service, db, assistant, sent } = setup('kicked');
+      db.telegramLink.findUnique.mockResolvedValue({
+        userId: 'u1',
+        chatId: 42n,
+        language: 'fa',
+      });
+      await service.handle(message('خرید نان'));
+      expect(assistant.chat).not.toHaveBeenCalled();
+      expect(sent[0].text).toContain('عضو شو');
+    });
+
+    it('lets users through while the bot cannot read the channel members', async () => {
+      const { service, db, assistant } = setup(new Error('400'));
+      db.telegramLink.findUnique.mockResolvedValue({
+        userId: 'u1',
+        chatId: 42n,
+        language: 'fa',
+      });
+      assistant.chat.mockResolvedValue({ reply: 'ok' });
+      await service.handle(message('خرید نان'));
+      expect(assistant.chat).toHaveBeenCalled();
+    });
   });
 });

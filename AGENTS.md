@@ -836,3 +836,10 @@ Rules:
      wrote `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET`, `TELEGRAM_API_URL` and
      `TELEGRAM_RELAY_KEY` into the server's `/opt/all-in-one/shared/.env` over `ssh flashcard`, like 81 and 115: back up
      the file, keep its owner and mode, never print or commit the values. Code still deploys only through GitHub (38).
+
+170. **The Telegram bot requires the main channel (2026-11-19).** The owner: «اینم توی ربات بذار که برای استفاده باید
+     تو کانال اصلی پشتت گرم جوین شن». Linking, logging by message, the ✓ buttons and the morning summary work only
+     for members of `@poshtetgarm` (`TELEGRAM_REQUIRED_CHANNEL`; `getChatMember`). A non-member gets a join button
+     and «عضو شدم», which checks again and finishes a pending link. Only a channel admin can read members, so
+     `@poshtetgarm_bot` must be an admin of the channel; until then, or when Telegram cannot be reached, the check
+     lets users through (logged) rather than locking everyone out.

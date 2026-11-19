@@ -22,6 +22,8 @@ export const envSchema = z.object({
   /** Relay outside Iran (deploy/telegram-relay); defaults to Telegram itself. */
   TELEGRAM_API_URL: z.url().optional(),
   TELEGRAM_RELAY_KEY: z.string().optional(),
+  /** Channel a user must join to use the bot (directive 170); empty turns it off. */
+  TELEGRAM_REQUIRED_CHANNEL: z.string().optional(),
   // First-party acquisition analytics, enabled without an end-user control.
   GROWTH_ANALYTICS_ENABLED: z.enum(['true', 'false']).default('true'),
   DATABASE_URL: z.url(),

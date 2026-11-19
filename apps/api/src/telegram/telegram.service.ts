@@ -79,11 +79,12 @@ interface TelegramUpdate {
   message?: {
     text?: string;
     chat: { id: number; type: string };
-    from?: { language_code?: string };
+    from?: { id?: number; language_code?: string };
   };
   callback_query?: {
     id: string;
     data?: string;
+    from?: { id?: number };
     message?: { chat: { id: number } };
   };
 }
@@ -91,7 +92,8 @@ interface TelegramUpdate {
 /**
  * Telegram bot (directive 168): link an account with a one-time `/start` code, a morning summary of today's tasks
  * and due cards, and logging by message through the assistant (its tools, scope check and daily limits). Accounts
- * without AI access get a «subscription needed» reply instead.
+ * without AI access get a «subscription needed» reply instead. Using the bot requires membership of the main
+ * channel (`TELEGRAM_REQUIRED_CHANNEL`, default `@poshtetgarm`, directive 170).
  */
 @Injectable()
 export class TelegramService implements OnModuleInit, OnModuleDestroy {
@@ -118,6 +120,64 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   private get secret(): string | undefined {
     return this.config.get<string>('TELEGRAM_WEBHOOK_SECRET') || undefined;
   }
+  /** The channel users must join; an empty value turns the requirement off. */
+  private get channel(): string {
+    return (
+      this.config.get<string>('TELEGRAM_REQUIRED_CHANNEL') ?? '@poshtetgarm'
+    );
+  }
+
+  /**
+   * Whether the Telegram user is a member of the required channel. Only a channel admin can read members, so while
+   * the bot is not an admin (or Telegram is unreachable) the check lets the user through instead of locking everyone
+   * out; it is logged so the setup can be fixed.
+   */
+  async member(telegramUserId: bigint | number): Promise<boolean> {
+    if (!this.channel) return true;
+    try {
+      const result = await this.api.call<{
+        status: string;
+        is_member?: boolean;
+      }>('getChatMember', {
+        chat_id: this.channel,
+        user_id: Number(telegramUserId),
+      });
+      return (
+        ['creator', 'administrator', 'member'].includes(result.status) ||
+        (result.status === 'restricted' && result.is_member === true)
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Channel membership check unavailable (${error instanceof TelegramError ? error.code : 'network'}); allowing`,
+      );
+      return true;
+    }
+  }
+
+  private joinPrompt(chatId: bigint, language: Lang, code?: string) {
+    const channel = this.channel.replace(/^@/, '');
+    return this.reply(
+      chatId,
+      language === 'en'
+        ? `To use the bot, join the Poshtetgarm channel first (@${channel}), then tap «I joined».`
+        : `برای استفاده از ربات، اول در کانال Poshtetgarm (@${channel}) عضو شو و بعد «عضو شدم» را بزن.`,
+      [
+        [
+          {
+            text: language === 'en' ? 'Join the channel' : 'عضویت در کانال',
+            url: `https://t.me/${channel}`,
+          },
+        ],
+        [
+          {
+            text: language === 'en' ? 'I joined' : 'عضو شدم',
+            callback_data: code ? `j:${code}` : 'j',
+          },
+        ],
+      ],
+    );
+  }
+
   get enabled(): boolean {
     return this.api.enabled && !!this.username && !!this.secret;
   }
@@ -220,9 +280,13 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     const say = (fa: string, en: string, buttons?: TelegramButton[][]) =>
       this.reply(chatId, language === 'en' ? en : fa, buttons);
 
-    const start = /^\/start(?:\s+([A-Za-z0-9_-]{16,64}))?$/.exec(text);
+    const from = BigInt(message.from?.id ?? message.chat.id);
+    const start = /^\/start(?:\s+([A-Za-z0-9_-]{16,60}))?$/.exec(text);
     if (start) {
-      if (start[1]) return this.link(chatId, start[1]);
+      if (start[1])
+        return (await this.member(from))
+          ? this.link(chatId, start[1])
+          : this.joinPrompt(chatId, language, start[1]);
       return link
         ? say(
             'حسابت وصل است. هر کاری داری بنویس تا ثبت کنم؛ هر صبح هم کارهای امروز را می‌فرستم.',
@@ -247,6 +311,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
         'Unlinked. I will not send anything else.',
       );
     }
+    if (!(await this.member(from))) return this.joinPrompt(chatId, language);
     if (!text)
       return say(
         'فعلاً فقط پیام متنی را ثبت می‌کنم.',
@@ -332,22 +397,52 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async callback(query: NonNullable<TelegramUpdate['callback_query']>) {
-    const answer = (text: string) =>
+    const answer = (text: string, alert = false) =>
       this.api
-        .call('answerCallbackQuery', { callback_query_id: query.id, text })
+        .call('answerCallbackQuery', {
+          callback_query_id: query.id,
+          text,
+          show_alert: alert,
+        })
         .catch(() => undefined);
     const chat = query.message?.chat.id;
+    if (chat === undefined) return void (await answer(''));
+    const chatId = BigInt(chat);
+    const from = BigInt(query.from?.id ?? chat);
+    const link = await this.db.telegramLink.findUnique({ where: { chatId } });
+    const english = link?.language === 'en';
+
+    // «I joined»: check again, then finish the link the user started (if any).
+    const joined = /^j(?::([A-Za-z0-9_-]{16,60}))?$/.exec(query.data ?? '');
+    if (joined) {
+      if (!(await this.member(from)))
+        return void (await answer(
+          english
+            ? 'You have not joined the channel yet.'
+            : 'هنوز در کانال عضو نشده‌ای.',
+          true,
+        ));
+      await answer('');
+      if (joined[1]) return this.link(chatId, joined[1]);
+      return this.reply(
+        chatId,
+        english
+          ? 'Thanks. Now write anything you need to do.'
+          : 'ممنون. حالا هر کاری داری بنویس.',
+      );
+    }
+
     const taskId = /^d:(.{1,60})$/.exec(query.data ?? '')?.[1];
-    if (chat === undefined || !taskId) return void (await answer(''));
-    const link = await this.db.telegramLink.findUnique({
-      where: { chatId: BigInt(chat) },
-    });
-    if (!link) return void (await answer(''));
+    if (!taskId || !link) return void (await answer(''));
+    if (!(await this.member(from))) {
+      await answer('');
+      return this.joinPrompt(chatId, english ? 'en' : 'fa');
+    }
     try {
       await this.tasks.update(link.userId, taskId, { done: true });
-      await answer(link.language === 'en' ? 'Done' : 'انجام شد');
+      await answer(english ? 'Done' : 'انجام شد');
     } catch {
-      await answer(link.language === 'en' ? 'Not saved' : 'ثبت نشد');
+      await answer(english ? 'Not saved' : 'ثبت نشد');
     }
   }
 
@@ -426,6 +521,8 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     now: Date,
   ) {
     const language: Lang = lang === 'en' ? 'en' : 'fa';
+    // The private chat id is the Telegram user id.
+    if (!(await this.member(chatId))) return;
     const open = (
       await this.tasks.filter(
         userId,
