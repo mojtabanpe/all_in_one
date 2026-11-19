@@ -194,7 +194,7 @@ export class AuthController {
   resendVerification(
     @Body({ schema: resendVerificationSchema }) input: ResendVerificationInput,
   ): void {
-    this.auth.requestVerification(input.email, input.campaign);
+    this.auth.requestVerification(input.email, input.campaign, input.redirect);
   }
 
   @Public()

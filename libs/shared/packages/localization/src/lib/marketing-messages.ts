@@ -1,4 +1,114 @@
 export const MARKETING_MESSAGES: readonly (readonly [string, string])[] = [
+  [
+    'مرور لغات انگلیسی با فلش‌کارت؛ پنج کارت برای یک صبح معمولی',
+    'Review everyday English with five flashcards',
+  ],
+  [
+    'پنج لغت انگلیسی را با تعریف و مثال مرور کن و همین پنج کارت را در حساب خودت نگه دار.',
+    'Practise five everyday words with definitions and examples, then save the same cards to your account.',
+  ],
+  [
+    'فرض کن می‌خواهی صبحت را به انگلیسی تعریف کنی. روی هر کارت فقط کلمه را ببین، یک جمله درباره خودت بگو، بعد کارت را باز کن و جمله‌ات را با مثال مقایسه کن.',
+    'Imagine describing your morning in English. Read the word, say a sentence about yourself, then open the card and compare it with the example.',
+  ],
+  ['یک دور بدون نگاه کردن', 'One round from memory'],
+  [
+    'کارت‌ها را ببند. چطور می‌گویی «ساعت هفت بیدار می‌شوم»؟ حالا بگو بعد از کار چه حسی داری. اگر واژه یادت آمد ولی جمله سخت بود، مثال همان کارت را بخوان و فقط ساعت یا فاعل جمله را عوض کن.',
+    'Close the cards. How would you say you wake up at seven? Now describe how you feel after work. If you know the word but struggle with the sentence, read the example and change just the time or the subject.',
+  ],
+  [
+    'با دکمه زیر همین پنج کارت در مجموعه شخصی‌ات ذخیره می‌شوند. اگر قبلاً ذخیره‌شان کرده‌ای، همان مجموعه با سابقه مرور خودت باز می‌شود.',
+    'The button saves these five cards to your personal library. If you saved them earlier, it opens the same deck with your review history.',
+  ],
+  ['ذخیره و مرور همین ۵ کارت', 'Save and review these 5 cards'],
+  [
+    'فرق کار تکرارشونده و عادت؛ قبض، کلاس زبان یا پیاده‌روی؟',
+    'Recurring task or habit? Bills, classes and walks',
+  ],
+  [
+    'با سه مثال تصمیم بگیر چه چیزی را به تقویم بسپاری و برای چه کاری سابقه روزانه نگه داری.',
+    'Use three examples to decide what belongs on your calendar and what to track each day.',
+  ],
+  [
+    'اول ببین آخر هفته چه چیزی می‌خواهی بدانی. برای قبض می‌پرسی «پرداخت شد؟» برای پیاده‌روی می‌پرسی «این هفته چند روز راه رفتم؟» همین دو سؤال کمک می‌کنند جای درست هر مورد را پیدا کنی.',
+    'Decide what you want to know at the end of the week. For a bill, you ask whether you paid it. For walking, you ask how many days you went out. Use those questions to choose where each item belongs.',
+  ],
+  ['قبض اینترنت؛ کار تکرارشونده', 'Internet bill: recurring task'],
+  [
+    'اگر موعد پرداخت پنجم هر ماه است، «پرداخت قبض اینترنت» را برای پنجم ثبت کن و تکرار ماهانه بگذار. وقتی پرداخت شد همان نوبت را تیک بزن.',
+    'If payment is due on the fifth, schedule the bill for that date and repeat it monthly. Check off the occurrence when you pay.',
+  ],
+  ['کلاس زبان؛ قرار هفتگی', 'Language class: weekly appointment'],
+  [
+    'کلاس چهارشنبه ساعت هفت یک کار هفتگی است. اگر تمرین مکالمه بین کلاس‌ها هم برایت مهم است، «ده دقیقه بلند حرف زدن» را جداگانه به‌عنوان عادت ثبت کن. آن‌وقت حضور در کلاس و روزهای تمرین را جدا می‌بینی.',
+    'A Wednesday class at seven is a weekly task. If practice between classes matters too, track ten minutes of speaking aloud as a separate habit. You can then distinguish attendance from practice.',
+  ],
+  [
+    'پیاده‌روی؛ ثبت روزهایی که انجامش دادی',
+    'Walking: record the days you went',
+  ],
+  [
+    'اگر هدفت سه روز پیاده‌روی در هفته است، برای هر روزی که واقعاً راه رفتی یک بار ثبت کن. اگر پنجشنبه با دوستی برای پیاده‌روی قرار داری، خود قرار را هم با ساعت در برنامه‌ریز بگذار.',
+    'If your goal is three walks per week, log each day you actually walk. If you arrange to meet a friend on Thursday, put the appointment in your planner with its time.',
+  ],
+  ['دیدن بخش ثبت عادت‌ها', 'Explore habit tracking'],
+  ['دسترسی به کارت‌ها ممکن نشد.', 'Could not open your cards.'],
+  ['در حال باز کردن کارت‌ها…', 'Opening your cards…'],
+  [
+    'پرداخت قبض را برای سه‌شنبه ثبت کن و بعد از پرداخت تیک بزن. برای کلاس زبان چهارشنبه‌ها تکرار هفتگی بگذار تا هر هفته دوباره آن را ننویسی.',
+    'Schedule a bill for Tuesday and check it off after paying. Set your Wednesday language class to repeat weekly so you only enter it once.',
+  ],
+  [
+    'برنامه‌ریز آنلاین با تقویم شمسی | پشتت‌گرم',
+    'Online daily planner with a Persian calendar | Poshtetgarm',
+  ],
+  [
+    'نمونه برنامه هفتگی برای افراد شاغل؛ جدول شنبه تا جمعه',
+    'Sample weekly schedule for working adults, Saturday to Friday',
+  ],
+  [
+    'برای یک هفته کاری با دو جلسه زبان، خرید و وقت استراحت برنامه بچین و ببین اگر یک روز اضافه‌کاری پیش آمد چطور برنامه را تغییر بدهی.',
+    'Plan a workweek with two language classes, errands and downtime, and adapt it if overtime comes up.',
+  ],
+  [
+    'فرض کن شنبه تا چهارشنبه تا ساعت پنج سر کاری و حدود شش به خانه می‌رسی. اول ساعت کلاس‌ها را بنویس. بعد برای خرید و تمرین زبان جا پیدا کن و یک عصر را برای کارهای پیش‌بینی‌نشده باز بگذار.',
+    'Suppose you work until five from Saturday to Wednesday and get home around six. Block out your classes first, then add errands and practice. Leave one evening free for surprises.',
+  ],
+  ['روز', 'Day'],
+  ['برنامه بعد از کار', 'After-work plan'],
+  ['اگر دوشنبه اضافه‌کاری شد', 'If you work late on Monday'],
+  [
+    'خرید دوشنبه را به عصر سه‌شنبه منتقل کن. اگر برای شام همان شب چیزی لازم داری، فقط همان را در راه برگشت بگیر. کلاس چهارشنبه سر جایش می‌ماند.',
+    'Move Monday’s grocery run to Tuesday evening. If you need something for dinner tonight, pick up just that on your way home. Wednesday’s class stays put.',
+  ],
+  ['این هفته را در برنامه‌ریز بچین', 'Set up this week in the planner'],
+  [
+    'کلاس شنبه و چهارشنبه را با تکرار هفتگی ثبت کن. خرید دوشنبه را یک کار تاریخ‌دار بگذار تا اگر اضافه‌کاری شد فقط همان خرید را جابه‌جا کنی.',
+    'Set up Saturday and Wednesday classes as weekly repeats. Give Monday’s grocery run its own date so you can move just that task if work runs late.',
+  ],
+  ['باز کردن برنامه‌ریز روزانه', 'Open the daily planner'],
+  ['این صفحه پیدا نشد', 'Page not found'],
+  ['بازگشت به صفحه اصلی', 'Back to home'],
+  ['۱۸:۳۰ تا ۱۹:۳۰ کلاس زبان', '18:30–19:30 language class'],
+  ['۱۹ تا ۱۹:۲۰ مرور لغت‌های کلاس', '19:00–19:20 review vocabulary'],
+  ['۱۸:۳۰ تا ۱۹ خرید هفتگی', '18:30–19:00 groceries'],
+  [
+    'عصر آزاد برای استراحت یا کار عقب‌افتاده',
+    'Free evening for rest or a delayed task',
+  ],
+  ['۱۸:۳۰ تا ۱۹:۳۰ کلاس زبان', '18:30–19:30 language class'],
+  ['۱۰ تا ۱۰:۳۰ پیاده‌روی', '10:00–10:30 walk'],
+  [
+    '۱۹ تا ۱۹:۱۵ مرور هفته و انتخاب کارهای شنبه',
+    '19:00–19:15 review the week and plan Saturday',
+  ],
+  ['شنبه', 'Saturday'],
+  ['یکشنبه', 'Sunday'],
+  ['دوشنبه', 'Monday'],
+  ['سه‌شنبه', 'Tuesday'],
+  ['چهارشنبه', 'Wednesday'],
+  ['پنجشنبه', 'Thursday'],
+  ['جمعه', 'Friday'],
   ['ورود به حساب', 'Sign in'],
   ['نصب اپ', 'Install the app'],
   ['اپ را روی گوشی نصب کن', 'Install the app on your phone'],

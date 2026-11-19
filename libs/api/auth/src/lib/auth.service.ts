@@ -116,9 +116,12 @@ export class AuthService {
     });
     await this.recordSignup(input.acquisition);
     if (verify)
-      this.sendVerificationLink(email, input.acquisition?.campaign).catch(
-        (error: Error) =>
-          this.logger.error('Verification email failed: ' + error.message),
+      this.sendVerificationLink(
+        email,
+        input.acquisition?.campaign,
+        input.redirect,
+      ).catch((error: Error) =>
+        this.logger.error('Verification email failed: ' + error.message),
       );
     return user;
   }
@@ -252,10 +255,14 @@ export class AuthService {
   }
 
   /** Emails a fresh confirmation link; silent for unknown or confirmed accounts. */
-  requestVerification(email: string, campaign?: GrowthCampaign): void {
+  requestVerification(
+    email: string,
+    campaign?: GrowthCampaign,
+    redirect?: RegisterInput['redirect'],
+  ): void {
     if (!this.mail.enabled)
       throw new ServiceUnavailableException('ایمیل فعلاً در دسترس نیست.');
-    this.sendVerificationLink(email, campaign).catch((error: Error) =>
+    this.sendVerificationLink(email, campaign, redirect).catch((error: Error) =>
       this.logger.error('Verification email failed: ' + error.message),
     );
   }
@@ -263,6 +270,7 @@ export class AuthService {
   private async sendVerificationLink(
     email: string,
     campaign?: GrowthCampaign,
+    redirect?: RegisterInput['redirect'],
   ): Promise<void> {
     const user = await this.prisma.user.findUnique({
       where: { email: email.trim().toLowerCase() },
@@ -285,7 +293,7 @@ export class AuthService {
       text: [
         'خوش آمدی! برای تمام کردن ساخت حساب، ایمیلت را تأیید کن',
         '(لینک یک بار و تا ۲۴ ساعت کار می‌کند):',
-        this.mail.link('verify-email', token, campaign),
+        this.mail.link('verify-email', token, campaign, redirect),
         '',
         'اگر ثبت‌نام نکرده‌ای، این ایمیل را نادیده بگیر.',
       ].join('\n'),

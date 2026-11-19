@@ -28,6 +28,7 @@ import {
   lucideLanguages,
   lucideSmartphone,
 } from '@ng-icons/lucide';
+import { RouterLink } from '@angular/router';
 import { injectCustomerLinks } from '../customer-url';
 import { ANDROID_RELEASE } from './android-release';
 
@@ -44,6 +45,7 @@ export const STORE_LINKS = {
 @Component({
   selector: 'public-home',
   imports: [
+    RouterLink,
     AioButton,
     AioCardDirectives,
     AioIcon,
@@ -163,7 +165,12 @@ export const STORE_LINKS = {
               <div aioCardHeader>
                 <h3 aioCardTitle class="flex items-center gap-2">
                   <aio-icon [name]="feature.icon" class="text-primary" />
-                  {{ feature.title | aioTranslate }}
+                  <a
+                    class="inline-flex min-h-11 items-center underline"
+                    [routerLink]="feature.slug"
+                    [queryParams]="customerLinks.campaign()"
+                    >{{ feature.title | aioTranslate }}</a
+                  >
                 </h3>
               </div>
               <div aioCardContent class="flex flex-col gap-3">

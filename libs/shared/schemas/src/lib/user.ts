@@ -66,7 +66,11 @@ export const loginSchema = z.object({
 });
 export type LoginInput = z.infer<typeof loginSchema>;
 
+export const SAMPLE_CARDS_PATH = '/saved-sample-cards';
+const sampleCardsRedirect = z.optional(z.literal(SAMPLE_CARDS_PATH));
+
 export const registerSchema = z.object({
+  redirect: sampleCardsRedirect,
   acquisition: z.optional(growthAttributionSchema),
   goal: z.optional(onboardingGoalSchema),
   email: z.email(),
@@ -103,6 +107,7 @@ export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export const emailOnlySchema = z.object({ email: z.email() });
 export type EmailOnlyInput = z.infer<typeof emailOnlySchema>;
 export const resendVerificationSchema = z.object({
+  redirect: sampleCardsRedirect,
   email: z.email(),
   campaign: z.optional(growthCampaignSchema),
 });
