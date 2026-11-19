@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { HttpClient, httpResource } from '@angular/common/http';
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, DestroyRef, inject, input, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import type { TelegramStatus } from '@all-in-one/shared/schemas';
 import {
@@ -21,61 +22,80 @@ import { apiErrorMessage } from './auth.guards';
  */
 @Component({
   selector: 'web-telegram-settings',
-  imports: [AioButton, AioCardDirectives, AioCardHeading, AioTranslate],
+  imports: [
+    AioButton,
+    AioCardDirectives,
+    AioCardHeading,
+    AioTranslate,
+    NgTemplateOutlet,
+  ],
   template: `
     @if (state.hasValue() && state.value().available) {
-      <section aioCard id="telegram">
-        <div
-          aioCardHeading
-          [title]="'تلگرام' | aioTranslate"
-          [level]="2"
-          [description]="
-            'هر صبح کارهای امروز را در تلگرام بگیر و با فرستادن یک پیام کار یا وعده ثبت کن.'
-              | aioTranslate
-          "
-        ></div>
-        <div aioCardContent class="flex flex-col items-start gap-3">
-          @if (state.value().linked) {
-            <p class="text-sm">{{ 'به تلگرام وصل است.' | aioTranslate }}</p>
-            <button
-              aioBtn
-              type="button"
-              variant="outline"
-              class="min-h-11"
-              [disabled]="busy()"
-              (click)="unlink()"
-            >
-              {{ 'قطع اتصال' | aioTranslate }}
-            </button>
-          } @else if (url(); as href) {
-            <a
-              aioBtn
-              class="min-h-11"
-              target="_blank"
-              rel="noopener"
-              [href]="href"
-              >{{ 'باز کردن تلگرام و زدن Start' | aioTranslate }}</a
-            >
-            <p class="text-muted-foreground text-xs">
-              {{ 'لینک ۱۰ دقیقه اعتبار دارد.' | aioTranslate }}
-            </p>
-          } @else {
-            <button
-              aioBtn
-              type="button"
-              class="min-h-11"
-              [disabled]="busy()"
-              (click)="link()"
-            >
-              {{ 'وصل به تلگرام' | aioTranslate }}
-            </button>
-          }
+      @if (chrome()) {
+        <section aioCard id="telegram">
+          <div
+            aioCardHeading
+            [title]="'تلگرام' | aioTranslate"
+            [level]="2"
+            [description]="
+              'هر صبح کارهای امروز را در تلگرام بگیر و با فرستادن یک پیام کار یا وعده ثبت کن.'
+                | aioTranslate
+            "
+          ></div>
+          <div aioCardContent class="flex flex-col items-start gap-3">
+            <ng-container *ngTemplateOutlet="body" />
+          </div>
+        </section>
+      } @else {
+        <div class="flex flex-col items-start gap-3">
+          <ng-container *ngTemplateOutlet="body" />
         </div>
-      </section>
+      }
     }
+    <ng-template #body>
+      @if (state.value(); as st) {
+        @if (st.linked) {
+          <p class="text-sm">{{ 'به تلگرام وصل است.' | aioTranslate }}</p>
+          <button
+            aioBtn
+            type="button"
+            variant="outline"
+            class="min-h-11"
+            [disabled]="busy()"
+            (click)="unlink()"
+          >
+            {{ 'قطع اتصال' | aioTranslate }}
+          </button>
+        } @else if (url(); as href) {
+          <a
+            aioBtn
+            class="min-h-11"
+            target="_blank"
+            rel="noopener"
+            [href]="href"
+            >{{ 'باز کردن تلگرام و زدن Start' | aioTranslate }}</a
+          >
+          <p class="text-muted-foreground text-xs">
+            {{ 'لینک ۱۰ دقیقه اعتبار دارد.' | aioTranslate }}
+          </p>
+        } @else {
+          <button
+            aioBtn
+            type="button"
+            class="min-h-11"
+            [disabled]="busy()"
+            (click)="link()"
+          >
+            {{ 'وصل به تلگرام' | aioTranslate }}
+          </button>
+        }
+      }
+    </ng-template>
   `,
 })
 export class TelegramSettings {
+  /** false inside a bottom sheet, which has its own title. */
+  readonly chrome = input(true);
   private readonly api = inject(API_BASE_URL);
   private readonly http = inject(HttpClient);
   private readonly notifications = inject(AioNotifications);

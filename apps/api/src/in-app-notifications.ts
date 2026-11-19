@@ -5,6 +5,7 @@ import {
   Headers,
   HttpCode,
   Injectable,
+  Optional,
   Param,
   ParseUUIDPipe,
   Post,
@@ -19,6 +20,7 @@ import {
   type InAppNotification,
 } from '@all-in-one/shared/schemas';
 import { BillingService } from './billing/billing.service';
+import { InAppPrompts } from './in-app-prompts';
 
 /** Store builds announce themselves in the user agent (directive 120). */
 export function storeFromUserAgent(
@@ -48,6 +50,7 @@ export class InAppNotificationsService {
   constructor(
     private readonly db: PrismaService,
     private readonly billing: BillingService,
+    @Optional() private readonly prompts?: InAppPrompts,
   ) {}
 
   async pending(
@@ -138,6 +141,8 @@ export class InAppNotificationsService {
         update: { content },
       });
     }
+    // Last: a hard step done in the sheet, only when no other notice is waiting (one sheet at a time).
+    await this.prompts?.offer(userId, now, () => this.activeDays(userId));
     const rows = await this.db.inAppNotification.findMany({
       where: { userId, dismissedAt: null, expiresAt: { gt: now } },
       orderBy: { createdAt: 'asc' },

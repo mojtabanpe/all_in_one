@@ -10,5 +10,7 @@ export * from './lib/auth/login-page';
 export * from './lib/format/fa';
 export * from './lib/auth/account-pages';
 export * from './lib/auth/ai-connection';
+export { TelegramSettings } from './lib/auth/telegram-settings';
+export { PhoneSettings } from './lib/auth/phone-settings';
 export * from './lib/assistant/assistant';
 export * from './lib/growth-analytics';

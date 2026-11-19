@@ -1,5 +1,6 @@
 import { HttpClient, httpResource } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, inject, input, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { iranMobile, type PhoneState } from '@all-in-one/shared/schemas';
 import {
@@ -34,139 +35,146 @@ export const localMobile = (phone: string) =>
     AioFormField,
     AioInput,
     AioTranslate,
+    NgTemplateOutlet,
   ],
   template: `
     @if (state.hasValue() && state.value().enabled) {
-      @let s = state.value();
-      <section aioCard>
-        <div
-          aioCardHeading
-          [title]="'شمارهٔ موبایل' | aioTranslate"
-          [level]="2"
-          [description]="
-            'برای بازیابی رمز با پیامک و خبر تمدید یا پایان اشتراک.'
-              | aioTranslate
-          "
-        ></div>
-        <div aioCardContent class="flex flex-col gap-4">
-          @if (!s.phone) {
-            <p class="bg-accent text-accent-foreground rounded-2xl p-3 text-sm">
-              {{
-                'با تأیید شماره، یک هفته هوش مصنوعی هدیه می‌گیری.'
-                  | aioTranslate
-              }}
-            </p>
+      @if (chrome()) {
+        <section aioCard>
+          <div
+            aioCardHeading
+            [title]="'شمارهٔ موبایل' | aioTranslate"
+            [level]="2"
+            [description]="
+              'برای بازیابی رمز با پیامک و خبر تمدید یا پایان اشتراک.'
+                | aioTranslate
+            "
+          ></div>
+          <div aioCardContent class="flex flex-col gap-4">
+            <ng-container *ngTemplateOutlet="body" />
+          </div>
+        </section>
+      } @else {
+        <div class="flex flex-col gap-4">
+          <ng-container *ngTemplateOutlet="body" />
+        </div>
+      }
+    }
+    <ng-template #body>
+      @if (state.value(); as s) {
+        @if (!s.phone) {
+          <p class="bg-accent text-accent-foreground rounded-2xl p-3 text-sm">
+            {{
+              'با تأیید شماره، یک هفته هوش مصنوعی هدیه می‌گیری.' | aioTranslate
+            }}
+          </p>
+        }
+        @if (s.phone) {
+          <p class="flex flex-wrap items-center justify-between gap-2">
+            <span>{{ 'تأییدشده' | aioTranslate }}</span>
+            <bdi dir="ltr" class="font-medium">{{ local(s.phone) }}</bdi>
+          </p>
+          @if (auth.user()?.email) {
+            <button
+              aioBtn
+              type="button"
+              variant="outline"
+              class="min-h-11 self-start"
+              [disabled]="busy()"
+              (click)="remove()"
+            >
+              {{ 'حذف شماره' | aioTranslate }}
+            </button>
           }
-          @if (s.phone) {
-            <p class="flex flex-wrap items-center justify-between gap-2">
-              <span>{{ 'تأییدشده' | aioTranslate }}</span>
-              <bdi dir="ltr" class="font-medium">{{ local(s.phone) }}</bdi>
-            </p>
-            @if (auth.user()?.email) {
+        } @else if (s.pending && !changing()) {
+          <form
+            class="flex flex-col gap-4"
+            (submit)="$event.preventDefault(); confirm()"
+          >
+            <aio-form-field
+              [label]="
+                'کد ۶ رقمی فرستاده‌شده به {0}'
+                  | aioTranslate: [local(s.pending)]
+              "
+              controlId="phone-code"
+            >
+              <input
+                aioInput
+                id="phone-code"
+                dir="ltr"
+                lang="en"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                maxlength="6"
+                [value]="code()"
+                (input)="code.set($any($event.target).value)"
+              />
+            </aio-form-field>
+            <div class="flex flex-wrap gap-2">
+              <button aioBtn type="submit" class="min-h-11" [disabled]="busy()">
+                {{ 'تأیید شماره' | aioTranslate }}
+              </button>
               <button
                 aioBtn
                 type="button"
                 variant="outline"
-                class="min-h-11 self-start"
+                class="min-h-11"
                 [disabled]="busy()"
-                (click)="remove()"
+                (click)="send(s.pending)"
               >
-                {{ 'حذف شماره' | aioTranslate }}
+                {{ 'ارسال دوباره' | aioTranslate }}
               </button>
-            }
-          } @else if (s.pending && !changing()) {
-            <form
-              class="flex flex-col gap-4"
-              (submit)="$event.preventDefault(); confirm()"
-            >
-              <aio-form-field
-                [label]="
-                  'کد ۶ رقمی فرستاده‌شده به {0}'
-                    | aioTranslate: [local(s.pending)]
-                "
-                controlId="phone-code"
-              >
-                <input
-                  aioInput
-                  id="phone-code"
-                  dir="ltr"
-                  lang="en"
-                  inputmode="numeric"
-                  autocomplete="one-time-code"
-                  maxlength="6"
-                  [value]="code()"
-                  (input)="code.set($any($event.target).value)"
-                />
-              </aio-form-field>
-              <div class="flex flex-wrap gap-2">
-                <button
-                  aioBtn
-                  type="submit"
-                  class="min-h-11"
-                  [disabled]="busy()"
-                >
-                  {{ 'تأیید شماره' | aioTranslate }}
-                </button>
-                <button
-                  aioBtn
-                  type="button"
-                  variant="outline"
-                  class="min-h-11"
-                  [disabled]="busy()"
-                  (click)="send(s.pending)"
-                >
-                  {{ 'ارسال دوباره' | aioTranslate }}
-                </button>
-                <button
-                  aioBtn
-                  type="button"
-                  variant="ghost"
-                  class="min-h-11"
-                  [disabled]="busy()"
-                  (click)="changing.set(true)"
-                >
-                  {{ 'شمارهٔ دیگر' | aioTranslate }}
-                </button>
-              </div>
-            </form>
-          } @else {
-            <form
-              class="flex flex-col gap-4"
-              (submit)="$event.preventDefault(); send(phone())"
-            >
-              <aio-form-field
-                [label]="'شمارهٔ موبایل' | aioTranslate"
-                controlId="phone-number"
-              >
-                <input
-                  aioInput
-                  id="phone-number"
-                  type="tel"
-                  dir="ltr"
-                  lang="en"
-                  inputmode="tel"
-                  autocomplete="tel"
-                  placeholder="09121234567"
-                  [value]="phone()"
-                  (input)="phone.set($any($event.target).value)"
-                />
-              </aio-form-field>
               <button
                 aioBtn
-                type="submit"
-                class="min-h-11 self-start"
+                type="button"
+                variant="ghost"
+                class="min-h-11"
                 [disabled]="busy()"
+                (click)="changing.set(true)"
               >
-                {{ 'ارسال کد' | aioTranslate }}
+                {{ 'شمارهٔ دیگر' | aioTranslate }}
               </button>
-            </form>
-          }
-        </div>
-      </section>
-    }
+            </div>
+          </form>
+        } @else {
+          <form
+            class="flex flex-col gap-4"
+            (submit)="$event.preventDefault(); send(phone())"
+          >
+            <aio-form-field
+              [label]="'شمارهٔ موبایل' | aioTranslate"
+              controlId="phone-number"
+            >
+              <input
+                aioInput
+                id="phone-number"
+                type="tel"
+                dir="ltr"
+                lang="en"
+                inputmode="tel"
+                autocomplete="tel"
+                placeholder="09121234567"
+                [value]="phone()"
+                (input)="phone.set($any($event.target).value)"
+              />
+            </aio-form-field>
+            <button
+              aioBtn
+              type="submit"
+              class="min-h-11 self-start"
+              [disabled]="busy()"
+            >
+              {{ 'ارسال کد' | aioTranslate }}
+            </button>
+          </form>
+        }
+      }
+    </ng-template>
   `,
 })
 export class PhoneSettings {
+  /** false inside a bottom sheet, which has its own title. */
+  readonly chrome = input(true);
   private readonly api = inject(API_BASE_URL);
   private readonly http = inject(HttpClient);
   private readonly notifications = inject(AioNotifications);

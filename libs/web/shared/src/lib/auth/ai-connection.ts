@@ -1,5 +1,6 @@
 import { HttpClient, httpResource } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import {
   MCP_SCOPE_LABELS,
   MCP_SCOPES,
@@ -55,216 +56,223 @@ interface KeysResponse {
     AioCardHeading,
     AioTranslate,
     AioTabsDirectives,
+    NgTemplateOutlet,
   ],
   providers: [provideIcons({ lucideCopy, lucideKeyRound, lucideTrash2 })],
   template: `
-    <section aioCard>
-      <div
-        aioCardHeading
-        [title]="'اتصال به ChatGPT و Claude' | aioTranslate"
-        [level]="2"
-        [description]="
-          'از داخل ChatGPT یا Claude کارت انگلیسی بساز، متن ذخیره کن و کارها، عادت‌ها، تمرکز و سلامتت را مدیریت کن.'
-            | aioTranslate
-        "
-      ></div>
-      <div aioCardContent class="flex flex-col gap-4">
-        <aio-tabs [tab]="target()" (tabActivated)="pick($event)">
-          <aio-tabs-list
-            class="w-full"
-            [attr.aria-label]="'برنامه‌ای که وصل می‌کنی' | aioTranslate"
-          >
-            <button aioTabsTrigger hlmTabsTrigger="chatgpt" class="min-h-11">
-              ChatGPT
-            </button>
-            <button aioTabsTrigger hlmTabsTrigger="claude" class="min-h-11">
-              Claude
-            </button>
-            <button
-              aioTabsTrigger
-              hlmTabsTrigger="claude-code"
-              class="min-h-11"
-            >
-              Claude Code
-            </button>
-          </aio-tabs-list>
-          <div aioTabsContent hlmTabsContent="chatgpt">
-            <ol class="text-muted-foreground list-decimal space-y-1 ps-5">
-              <li>
-                {{
-                  'در ChatGPT یک «اتصال» (MCP سفارشی) با این نشانی بساز و احراز هویت را OAuth بگذار:'
-                    | aioTranslate
-                }}
-              </li>
-            </ol>
-          </div>
-          <div aioTabsContent hlmTabsContent="claude">
-            <ol class="text-muted-foreground list-decimal space-y-1 ps-5">
-              <li>
-                {{
-                  'در Claude (وب، دسکتاپ یا موبایل) به Settings ← Connectors برو، «Add custom connector» را بزن و این نشانی را بگذار؛ Client ID و Secret را خالی بگذار:'
-                    | aioTranslate
-                }}
-              </li>
-            </ol>
-          </div>
-          <div aioTabsContent hlmTabsContent="claude-code">
-            <ol class="text-muted-foreground list-decimal space-y-1 ps-5">
-              <li>
-                {{
-                  'در Claude Code سرور را با این نشانی و یک کلید شخصی اضافه کن (دستور کامل پایین‌تر است):'
-                    | aioTranslate
-                }}
-              </li>
-            </ol>
-          </div>
-        </aio-tabs>
-        <div class="flex items-center gap-2">
-          <code
-            class="bg-muted flex-1 truncate rounded-xl px-3 py-2 text-sm"
+    @if (chrome()) {
+      <section aioCard>
+        <div
+          aioCardHeading
+          [title]="'اتصال به ChatGPT و Claude' | aioTranslate"
+          [level]="2"
+          [description]="
+            'از داخل ChatGPT یا Claude کارت انگلیسی بساز، متن ذخیره کن و کارها، عادت‌ها، تمرکز و سلامتت را مدیریت کن.'
+              | aioTranslate
+          "
+        ></div>
+        <div aioCardContent class="flex flex-col gap-4">
+          <ng-container *ngTemplateOutlet="body" />
+        </div>
+      </section>
+    } @else {
+      <div class="flex flex-col gap-4">
+        <ng-container *ngTemplateOutlet="body" />
+      </div>
+    }
+    <ng-template #body>
+      <aio-tabs [tab]="target()" (tabActivated)="pick($event)">
+        <aio-tabs-list
+          class="w-full"
+          [attr.aria-label]="'برنامه‌ای که وصل می‌کنی' | aioTranslate"
+        >
+          <button aioTabsTrigger hlmTabsTrigger="chatgpt" class="min-h-11">
+            ChatGPT
+          </button>
+          <button aioTabsTrigger hlmTabsTrigger="claude" class="min-h-11">
+            Claude
+          </button>
+          <button aioTabsTrigger hlmTabsTrigger="claude-code" class="min-h-11">
+            Claude Code
+          </button>
+        </aio-tabs-list>
+        <div aioTabsContent hlmTabsContent="chatgpt">
+          <ol class="text-muted-foreground list-decimal space-y-1 ps-5">
+            <li>
+              {{
+                'در ChatGPT یک «اتصال» (MCP سفارشی) با این نشانی بساز و احراز هویت را OAuth بگذار:'
+                  | aioTranslate
+              }}
+            </li>
+          </ol>
+        </div>
+        <div aioTabsContent hlmTabsContent="claude">
+          <ol class="text-muted-foreground list-decimal space-y-1 ps-5">
+            <li>
+              {{
+                'در Claude (وب، دسکتاپ یا موبایل) به Settings ← Connectors برو، «Add custom connector» را بزن و این نشانی را بگذار؛ Client ID و Secret را خالی بگذار:'
+                  | aioTranslate
+              }}
+            </li>
+          </ol>
+        </div>
+        <div aioTabsContent hlmTabsContent="claude-code">
+          <ol class="text-muted-foreground list-decimal space-y-1 ps-5">
+            <li>
+              {{
+                'در Claude Code سرور را با این نشانی و یک کلید شخصی اضافه کن (دستور کامل پایین‌تر است):'
+                  | aioTranslate
+              }}
+            </li>
+          </ol>
+        </div>
+      </aio-tabs>
+      <div class="flex items-center gap-2">
+        <code
+          class="bg-muted flex-1 truncate rounded-xl px-3 py-2 text-sm"
+          dir="ltr"
+          >{{ serverUrl() }}</code
+        >
+        <button
+          aioBtn
+          variant="outline"
+          size="icon"
+          [attr.aria-label]="'کپی نشانی' | aioTranslate"
+          (click)="copy(serverUrl())"
+        >
+          <aio-icon name="lucideCopy" size="sm" />
+        </button>
+      </div>
+      <ol
+        start="2"
+        class="text-muted-foreground list-decimal space-y-1 ps-5 text-sm"
+      >
+        <li>
+          @if (target() === 'claude-code') {
+            {{
+              'اینجا یک کلید شخصی بساز؛ دستور اتصال با همان کلید آماده می‌شود.'
+                | aioTranslate
+            }}
+          } @else {
+            {{
+              'اینجا یک کلید شخصی بساز و در صفحه تأییدی که {0} باز می‌کند بگذار.'
+                | aioTranslate: [app()]
+            }}
+          }
+        </li>
+      </ol>
+
+      <form class="flex gap-2" (submit)="$event.preventDefault(); create()">
+        <aio-form-field
+          class="flex-1"
+          [label]="'نام کلید' | aioTranslate"
+          controlId="mcp-name"
+          labelClass="sr-only"
+        >
+          <input
+            aioInput
+            id="mcp-name"
+            maxlength="80"
+            [value]="name()"
+            (input)="name.set($any($event.target).value)"
+          />
+        </aio-form-field>
+        <button aioBtn type="submit" [disabled]="busy()">
+          <aio-icon name="lucideKeyRound" size="sm" />
+          {{ 'ساخت کلید' | aioTranslate }}
+        </button>
+      </form>
+
+      @if (fresh(); as token) {
+        <aio-form-field
+          class="bg-accent rounded-2xl p-3"
+          [label]="
+            'کلید تازه؛ همین حالا کپی کن، دیگر نشان داده نمی‌شود' | aioTranslate
+          "
+          controlId="mcp-token"
+        >
+          <textarea
+            aioTextarea
+            id="mcp-token"
+            rows="2"
+            readonly
             dir="ltr"
-            >{{ serverUrl() }}</code
+            class="font-mono text-xs"
+            [value]="token"
+          ></textarea>
+          <button
+            aioBtn
+            variant="outline"
+            size="sm"
+            class="self-start"
+            (click)="copy(token)"
+          >
+            <aio-icon name="lucideCopy" size="sm" />
+            {{ 'کپی کلید' | aioTranslate }}
+          </button>
+        </aio-form-field>
+      }
+
+      @if (target() === 'claude-code') {
+        <div class="flex items-start gap-2">
+          <code
+            class="bg-muted flex-1 rounded-xl px-3 py-2 text-xs break-all"
+            dir="ltr"
+            lang="en"
+            >{{ claudeCodeCommand() }}</code
           >
           <button
             aioBtn
             variant="outline"
             size="icon"
-            [attr.aria-label]="'کپی نشانی' | aioTranslate"
-            (click)="copy(serverUrl())"
+            [attr.aria-label]="'کپی دستور' | aioTranslate"
+            (click)="copy(claudeCodeCommand())"
           >
             <aio-icon name="lucideCopy" size="sm" />
           </button>
         </div>
-        <ol
-          start="2"
-          class="text-muted-foreground list-decimal space-y-1 ps-5 text-sm"
-        >
-          <li>
-            @if (target() === 'claude-code') {
-              {{
-                'اینجا یک کلید شخصی بساز؛ دستور اتصال با همان کلید آماده می‌شود.'
-                  | aioTranslate
-              }}
-            } @else {
-              {{
-                'اینجا یک کلید شخصی بساز و در صفحه تأییدی که {0} باز می‌کند بگذار.'
-                  | aioTranslate: [app()]
-              }}
-            }
-          </li>
-        </ol>
+      }
 
-        <form class="flex gap-2" (submit)="$event.preventDefault(); create()">
-          <aio-form-field
-            class="flex-1"
-            [label]="'نام کلید' | aioTranslate"
-            controlId="mcp-name"
-            labelClass="sr-only"
-          >
-            <input
-              aioInput
-              id="mcp-name"
-              maxlength="80"
-              [value]="name()"
-              (input)="name.set($any($event.target).value)"
-            />
-          </aio-form-field>
-          <button aioBtn type="submit" [disabled]="busy()">
-            <aio-icon name="lucideKeyRound" size="sm" />
-            {{ 'ساخت کلید' | aioTranslate }}
-          </button>
-        </form>
-
-        @if (fresh(); as token) {
-          <aio-form-field
-            class="bg-accent rounded-2xl p-3"
-            [label]="
-              'کلید تازه؛ همین حالا کپی کن، دیگر نشان داده نمی‌شود'
-                | aioTranslate
-            "
-            controlId="mcp-token"
-          >
-            <textarea
-              aioTextarea
-              id="mcp-token"
-              rows="2"
-              readonly
-              dir="ltr"
-              class="font-mono text-xs"
-              [value]="token"
-            ></textarea>
-            <button
-              aioBtn
-              variant="outline"
-              size="sm"
-              class="self-start"
-              (click)="copy(token)"
-            >
-              <aio-icon name="lucideCopy" size="sm" />
-              {{ 'کپی کلید' | aioTranslate }}
-            </button>
-          </aio-form-field>
-        }
-
-        @if (target() === 'claude-code') {
-          <div class="flex items-start gap-2">
-            <code
-              class="bg-muted flex-1 rounded-xl px-3 py-2 text-xs break-all"
-              dir="ltr"
-              lang="en"
-              >{{ claudeCodeCommand() }}</code
-            >
-            <button
-              aioBtn
-              variant="outline"
-              size="icon"
-              [attr.aria-label]="'کپی دستور' | aioTranslate"
-              (click)="copy(claudeCodeCommand())"
-            >
-              <aio-icon name="lucideCopy" size="sm" />
-            </button>
-          </div>
-        }
-
-        <ul class="divide-border/60 flex flex-col divide-y">
-          @for (key of keys(); track key.id) {
-            <li class="flex min-h-12 items-center gap-3 py-2 text-sm">
-              <span class="flex-1">
-                {{ key.name
-                }}<span class="text-muted-foreground block text-xs">
-                  {{
-                    '{0}، تا {1}'
-                      | aioTranslate: [scopeSummary(key), date(key.expiresAt)]
-                  }}</span
-                >
-              </span>
-              <button
-                aioBtn
-                variant="ghost"
-                size="icon"
-                [attr.aria-label]="'باطل کردن ' + key.name | aioTranslate"
-                (click)="revoke(key)"
+      <ul class="divide-border/60 flex flex-col divide-y">
+        @for (key of keys(); track key.id) {
+          <li class="flex min-h-12 items-center gap-3 py-2 text-sm">
+            <span class="flex-1">
+              {{ key.name
+              }}<span class="text-muted-foreground block text-xs">
+                {{
+                  '{0}، تا {1}'
+                    | aioTranslate: [scopeSummary(key), date(key.expiresAt)]
+                }}</span
               >
-                <aio-icon name="lucideTrash2" size="sm" />
-              </button>
-            </li>
-          } @empty {
-            <li class="text-muted-foreground py-2 text-sm">
-              {{ 'هنوز کلیدی نساخته‌ای.' | aioTranslate }}
-            </li>
-          }
-        </ul>
-        <p class="text-muted-foreground text-xs">
-          {{
-            'کلیدها ۹۰ روز اعتبار دارند. باطل کردن کلید، اتصال‌های ساخته‌شده با آن را هم قطع می‌کند.'
-              | aioTranslate
-          }}
-        </p>
-      </div>
-    </section>
+            </span>
+            <button
+              aioBtn
+              variant="ghost"
+              size="icon"
+              [attr.aria-label]="'باطل کردن ' + key.name | aioTranslate"
+              (click)="revoke(key)"
+            >
+              <aio-icon name="lucideTrash2" size="sm" />
+            </button>
+          </li>
+        } @empty {
+          <li class="text-muted-foreground py-2 text-sm">
+            {{ 'هنوز کلیدی نساخته‌ای.' | aioTranslate }}
+          </li>
+        }
+      </ul>
+      <p class="text-muted-foreground text-xs">
+        {{
+          'کلیدها ۹۰ روز اعتبار دارند. باطل کردن کلید، اتصال‌های ساخته‌شده با آن را هم قطع می‌کند.'
+            | aioTranslate
+        }}
+      </p>
+    </ng-template>
   `,
 })
 export class AiConnection {
+  /** false inside a bottom sheet, which has its own title. */
+  readonly chrome = input(true);
   protected readonly locale = inject(AioLocale);
 
   private readonly notifications = inject(AioNotifications);

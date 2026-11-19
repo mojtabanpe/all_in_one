@@ -31,8 +31,14 @@ import {
   AioSkeletonLines,
   AioInAppNotifications,
   AioInAppNotificationHost,
+  type AioInAppNotification,
 } from '@all-in-one/ui';
-import { API_BASE_URL, Assistant, AuthStore } from '@all-in-one/web/shared';
+import {
+  API_BASE_URL,
+  Assistant,
+  AuthStore,
+  PushSettings,
+} from '@all-in-one/web/shared';
 import {
   resolveEnabledApplets,
   type AssistantContext,
@@ -338,6 +344,17 @@ export class Layout {
     this.browserReady() ? `${this.api}/in-app-notifications` : undefined,
   );
 
+  private readonly push = inject(PushSettings);
+  /** Push works in the Android/macOS app, a desktop browser and an installed iPhone PWA, not in an iPhone tab. */
+  private canPush(): boolean {
+    if (!this.push.supported) return false;
+    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    const standalone =
+      matchMedia('(display-mode: standalone)').matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    return !ios || standalone;
+  }
+
   constructor() {
     afterNextRender(() => this.browserReady.set(true));
     const seen = new Set<string>();
@@ -349,29 +366,44 @@ export class Layout {
         if (!live.has(id)) this.inApp.remove(id);
       }
       previousNotices = live;
-      for (const notice of this.notices.value()) {
+      for (const { widget, ...notice } of this.notices.value()) {
         if (seen.has(notice.id)) continue;
         seen.add(notice.id);
-        this.inApp.enqueue({
-          ...notice,
-          actions: notice.actions.map((action) => ({
-            ...action,
-            run: () => {
-              if (action.url.startsWith('/'))
-                void this.router.navigateByUrl(action.url);
-              // Inside the Android shell a new window may never open; a plain navigation is handed to the
-              // store app or the browser by the shell (it never loads outside links in the WebView).
-              else if (/PoshtetgarmStore\//.test(navigator.userAgent))
-                window.location.assign(action.url);
-              else window.open(action.url, '_blank', 'noopener,noreferrer');
+        // A reminders prompt is useless where this device cannot get them (an iPhone browser tab).
+        if (widget?.kind === 'push' && !this.canPush()) continue;
+        const enqueue = (embedded?: AioInAppNotification['widget']) =>
+          this.inApp.enqueue({
+            ...notice,
+            widget: embedded,
+            actions: notice.actions.map((action) => ({
+              ...action,
+              run: () => {
+                if (action.url.startsWith('/'))
+                  void this.router.navigateByUrl(action.url);
+                // Inside the Android shell a new window may never open; a plain navigation is handed to the
+                // store app or the browser by the shell (it never loads outside links in the WebView).
+                else if (/PoshtetgarmStore\//.test(navigator.userAgent))
+                  window.location.assign(action.url);
+                else window.open(action.url, '_blank', 'noopener,noreferrer');
+              },
+            })),
+            onDismiss: () => {
+              this.http
+                .post(
+                  `${this.api}/in-app-notifications/${notice.id}/dismiss`,
+                  {},
+                )
+                .subscribe({ error: () => undefined });
             },
-          })),
-          onDismiss: () => {
-            this.http
-              .post(`${this.api}/in-app-notifications/${notice.id}/dismiss`, {})
-              .subscribe({ error: () => undefined });
-          },
-        });
+          });
+        if (!widget) enqueue();
+        // The prompt widgets (forms for the hard steps) load only when a prompt arrives.
+        else
+          void import('./prompts/prompt-registry').then(
+            ({ promptWidget }) =>
+              enqueue(promptWidget(widget.kind, widget.data)),
+            () => undefined,
+          );
       }
     });
     // A payment or reward changes access on the billing page; refresh the header after leaving it.

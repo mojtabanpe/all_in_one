@@ -1,3 +1,4 @@
+import { InAppPrompts } from '../in-app-prompts';
 import {
   InAppNotificationsController,
   InAppNotificationsService,
@@ -60,6 +61,7 @@ import { BillingModule } from '../billing/billing.module';
   ],
   providers: [
     InAppNotificationsService,
+    InAppPrompts,
     AppService,
     CatalogSeeder,
     GrowthService,

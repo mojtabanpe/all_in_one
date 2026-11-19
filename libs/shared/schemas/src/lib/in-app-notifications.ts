@@ -12,10 +12,35 @@ const destination = z.string().check(
     'Use an app route or HTTPS URL',
   ),
 );
+/**
+ * A task done inside the notice itself (a form or button in the bottom sheet) instead of only a link: the hard
+ * steps users leave half done. The customer app maps each kind to a component.
+ */
+export const IN_APP_WIDGETS = [
+  'push',
+  'telegram',
+  'phone',
+  'email',
+  'rewards',
+  'repeat-task',
+  'weight-goal',
+  'review-cards',
+  'ai-connection',
+] as const;
+export type InAppWidgetKind = (typeof IN_APP_WIDGETS)[number];
 export const inAppContentSchema = z.strictObject({
   title: copy,
   message: copy,
   detail: z.optional(copy),
+  widget: z.optional(
+    z.strictObject({
+      kind: z.enum(IN_APP_WIDGETS),
+      /** Values the widget needs, e.g. the repeated task's title. */
+      data: z.optional(
+        z.record(z.string(), z.string().check(z.maxLength(200))),
+      ),
+    }),
+  ),
   actions: z
     .array(
       z.strictObject({

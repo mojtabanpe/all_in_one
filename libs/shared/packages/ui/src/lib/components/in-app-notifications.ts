@@ -1,3 +1,4 @@
+import { NgComponentOutlet } from '@angular/common';
 import {
   Component,
   Injectable,
@@ -5,6 +6,7 @@ import {
   inject,
   input,
   signal,
+  type Type,
 } from '@angular/core';
 import { AioButton } from '../spartan/button';
 import { AioLocale, AioTranslate } from '../locale';
@@ -19,6 +21,8 @@ export interface AioInAppNotification {
   message: NotificationCopy;
   values?: readonly string[];
   detail?: NotificationCopy;
+  /** A form or button that finishes the step inside the sheet; it calls `AioInAppNotifications.finish()` when done. */
+  widget?: { component: Type<unknown>; inputs?: Record<string, unknown> };
   actions: readonly {
     label: NotificationCopy;
     run: () => void;
@@ -49,6 +53,10 @@ export class AioInAppNotifications {
     this.queue.update((items) => items.slice(1));
     current?.onDismiss?.();
   }
+  /** The step in the current sheet is done: close it for good (same as dismissing). */
+  finish(): void {
+    this.dismiss();
+  }
 }
 
 /** Shared Spartan composition for actionable in-app messages, separate from transient toasts. */
@@ -60,6 +68,7 @@ export class AioInAppNotifications {
     AioDialogActions,
     AioButton,
     AioTranslate,
+    NgComponentOutlet,
   ],
   template: `
     @let notice = notifications.current();
@@ -79,7 +88,14 @@ export class AioInAppNotifications {
             {{ copy(detail) | aioTranslate }}
           </p>
         }
-        <div class="mt-5 flex flex-col gap-3">
+        @if (notice?.widget; as widget) {
+          <div class="mt-5">
+            <ng-container
+              *ngComponentOutlet="widget.component; inputs: widget.inputs"
+            />
+          </div>
+        }
+        <div class="mt-5 flex flex-col gap-3 empty:hidden">
           @for (action of notice?.actions ?? []; track action) {
             <button
               aioBtn

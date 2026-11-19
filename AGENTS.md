@@ -886,3 +886,13 @@ Rules:
      after every saved change in the app (`localScheduleInterceptor`: non-GET planner, push, English and assistant
      requests, a burst resyncs once), and on open and return to the front for changes made in Telegram or ChatGPT.
      macOS and the PWA are unchanged.
+
+176. **Hard steps are done inside a bottom sheet (2026-11-19).** The owner: «ما میتونیم از قابلیت باتم شیت استفاده کنیم
+     برای کارهایی که کاربر سخت انجام میده… توی همون باتم شیت بهش اجازه اتصال تلگرامو بدیم», then «هر ۷ تا ی اینارو
+     درست کن». The in-app notices (131) carry a `widget` (`IN_APP_WIDGETS`), and the sheet embeds the form that finishes
+     the step: turning on reminders, linking Telegram, confirming a phone or adding an email (the week of 121), a daily
+     repeat for a task added on several days, a weight goal, five quick card reviews, the Telegram/Instagram weeks (108)
+     and the ChatGPT/Claude connection. The server decides (`InAppPrompts`, `apps/api/src/in-app-prompts.ts`): only after
+     the account has used the app on 2 separate days (166), one prompt at a time and never while another notice is open,
+     3 days apart, each kind once (a review again only after a new idle spell). A new hard step gets a widget there
+     rather than a link to a settings page. The widgets load lazily (`apps/customer/src/app/prompts`).
