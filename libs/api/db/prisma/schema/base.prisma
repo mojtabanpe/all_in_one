@@ -48,6 +48,8 @@ model User {
   reviewReminder ReviewReminderSetting?
   progressNotification ProgressNotificationSetting?
   smsNotices SmsNotice[]
+  telegramLink TelegramLink?
+  telegramLinkCodes TelegramLinkCode[]
   passwordResets     PasswordReset[]
   phoneCodes         PhoneCode[]
   emailVerifications EmailVerification[]

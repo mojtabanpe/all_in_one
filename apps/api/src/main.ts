@@ -17,6 +17,7 @@ import { RECORDING_TYPES } from '@all-in-one/applets/english-learning/api';
 import { config as zodConfig, locales } from 'zod/mini';
 import { AppModule } from './app/app.module';
 import { McpService } from './mcp/mcp.service';
+import { TelegramService } from './telegram/telegram.service';
 
 // Persian validation messages (users see them in the RTL apps).
 zodConfig(locales.fa());
@@ -38,6 +39,8 @@ async function bootstrap() {
   });
   // ChatGPT/Claude (MCP + OAuth) routes use bearer tokens: mount them before the cookie CSRF check.
   app.get(McpService).mount(app.getHttpAdapter().getInstance());
+  // Telegram's webhook proves itself with its secret token header, not a session cookie.
+  app.get(TelegramService).mount(app.getHttpAdapter().getInstance());
   // Public, read-only exercise clips. Persist data/exercise-videos across deployments.
   app.use(
     '/api/exercise-videos',

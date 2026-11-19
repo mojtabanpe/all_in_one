@@ -42,6 +42,7 @@ import { apiErrorMessage } from './auth.guards';
 import { APP_VERSION } from '../release-version';
 import { AiConnection } from './ai-connection';
 import { localMobile, PhoneSettings } from './phone-settings';
+import { TelegramSettings } from './telegram-settings';
 import { PhoneReset } from './phone-reset';
 import { AuthStore } from './auth.store';
 
@@ -351,6 +352,7 @@ export class VerifyEmailPage implements OnInit {
   imports: [
     AioBadge,
     PhoneSettings,
+    TelegramSettings,
     RouterLink,
     AioButton,
     AioCheckbox,
@@ -769,6 +771,7 @@ export class VerifyEmailPage implements OnInit {
           </form>
         </div>
       </section>
+      <web-telegram-settings />
       <section aioCard id="weekly-progress">
         <div
           aioCardHeading

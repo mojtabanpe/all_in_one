@@ -5096,4 +5096,13 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['ثبت خرج امروز', 'Log an expense'],
   ['کار انجام شد.', 'Task done.'],
   ['انتخاب مجموعه', 'Pick a deck'],
+  [
+    'هر صبح کارهای امروز را در تلگرام بگیر و با فرستادن یک پیام کار یا وعده ثبت کن.',
+    "Get today's tasks in Telegram each morning, and log a task or meal by sending a message.",
+  ],
+  ['به تلگرام وصل است.', 'Connected to Telegram.'],
+  ['قطع اتصال', 'Disconnect'],
+  ['باز کردن تلگرام و زدن Start', 'Open Telegram and tap Start'],
+  ['لینک ۱۰ دقیقه اعتبار دارد.', 'The link is valid for 10 minutes.'],
+  ['وصل به تلگرام', 'Connect Telegram'],
 ];

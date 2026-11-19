@@ -11,3 +11,4 @@ export * from './lib/onboarding';
 export * from './lib/billing';
 export * from './lib/in-app-notifications';
 export * from './lib/landing-goal';
+export * from './lib/telegram';

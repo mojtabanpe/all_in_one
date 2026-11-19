@@ -15,6 +15,13 @@ export const envSchema = z.object({
   ZIBAL_CALLBACK_URL: z.url().optional(),
   BILLING_TELEGRAM_OFFER_ENABLED: z.enum(['true', 'false']).default('false'),
   BILLING_INSTAGRAM_OFFER_ENABLED: z.enum(['true', 'false']).default('false'),
+  /** Telegram bot (directive 168): token and username from BotFather, a random webhook secret. */
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
+  TELEGRAM_BOT_USERNAME: z.string().optional(),
+  TELEGRAM_WEBHOOK_SECRET: z.string().min(24).optional(),
+  /** Relay outside Iran (deploy/telegram-relay); defaults to Telegram itself. */
+  TELEGRAM_API_URL: z.url().optional(),
+  TELEGRAM_RELAY_KEY: z.string().optional(),
   // First-party acquisition analytics, enabled without an end-user control.
   GROWTH_ANALYTICS_ENABLED: z.enum(['true', 'false']).default('true'),
   DATABASE_URL: z.url(),

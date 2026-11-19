@@ -1,0 +1,23 @@
+/// A Telegram private chat linked to one account (directive 168). One chat per account, one account per chat.
+model TelegramLink {
+  userId String @id @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatId BigInt @unique
+  /// Language of the bot's replies, taken from the app when the link was made.
+  language String @default("fa") @db.VarChar(2)
+  /// Tehran day of the last morning summary, so one goes out per day.
+  lastSummaryDay String? @db.VarChar(10)
+  createdAt DateTime @default(now())
+  @@map("telegram_links")
+}
+
+/// One-time code in the `t.me/<bot>?start=<code>` link; only its SHA-256 is stored, valid 10 minutes.
+model TelegramLinkCode {
+  codeHash String @id
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  language String @default("fa") @db.VarChar(2)
+  expiresAt DateTime
+  @@index([userId])
+  @@map("telegram_link_codes")
+}

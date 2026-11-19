@@ -9,5 +9,6 @@ import { EnglishApiModule } from '@all-in-one/applets/english-learning/api';
   imports: [ToolsModule, EnglishApiModule],
   providers: [AssistantService],
   controllers: [AssistantController],
+  exports: [AssistantService],
 })
 export class AssistantModule {}
