@@ -306,5 +306,8 @@ poshtetgarm.ir/app/billing
   دکمهٔ ✓ و خلاصهٔ صبح. غیرعضو دکمهٔ «عضویت در کانال» و «عضو شدم» می‌گیرد. ۱۱ آزمون ربات موفق.
 - `DONE` (2026-11-19) مالک `@poshtetgarm_bot` را ادمین کانال `@poshtetgarm` کرد. `getChatMember` حالا جواب می‌دهد
   (وضعیت ربات `administrator`، کاربر غیرعضو `left`)، پس بررسی عضویت واقعاً اعمال می‌شود.
-- `TODO` بعد از انتشار کد ربات: `setWebhook` روی `https://poshtetgarm.ir/api/telegram/webhook` (از بیرون ایران پاسخ
-  ۲۰۰ داد) با `secret_token`؛ اگر تلگرام نرسید، روی `<رله>/webhook`. بعد آزمایش با یک حساب واقعی.
+- `DONE` (2026-11-19) منتشر شد: CI `44474500146`، Deploy `44475028839` («Release f5c40a9 is live»)، APK `44474500204`.
+  `POST /api/telegram/webhook` بدون secret پاسخ ۴۰۱ می‌دهد.
+- `DONE` (2026-11-19) وب‌هوک: تلگرام مستقیم به `poshtetgarm.ir` نرسید («Connection refused» روی IP سرور)، پس وب‌هوک
+  روی `<رله>/webhook` گذاشته شد؛ رله به سایت می‌رسد (بدون secret ۴۰۱). دستورهای `/start` و `/stop` ثبت شد.
+- `TODO` آزمایش با حساب واقعی: وصل شدن از حساب کاربری، یک پیام، دکمهٔ ✓ و خلاصهٔ صبح فردا.
