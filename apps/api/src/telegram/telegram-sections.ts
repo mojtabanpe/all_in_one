@@ -125,7 +125,7 @@ export function activePending(raw: unknown, now = Date.now()): Pending | null {
 
 /** The section each callback prefix belongs to; its use needs that applet on. */
 export function callbackSection(data: string): AppApplet | null {
-  if (/^(p|hb):/.test(data)) return 'planner';
+  if (/^(p|hb|hm):/.test(data)) return 'planner';
   if (/^H:/.test(data)) return 'health';
   if (/^(E|c):/.test(data)) return 'english';
   if (/^X:/.test(data)) return 'expenses';
@@ -267,6 +267,8 @@ export class TelegramSectionsService {
       };
     if (data === 'p:h') return { outs: await this.habitList(ctx) };
     if ((m = /^hb:(.{1,60})$/.exec(data))) return this.toggleHabit(ctx, m[1]);
+    if ((m = /^hm:(.{1,60})$/.exec(data)))
+      return this.toggleHabit(ctx, m[1], -1);
 
     // ---------------------------------------------------------------- health
     if (data === 'H:d') return { outs: await this.healthMenu(ctx) };
@@ -699,38 +701,58 @@ export class TelegramSectionsService {
     return [
       {
         text: en
-          ? "Today's habits: tap to check in or undo."
-          : 'عادت‌های امروز: بزن تا ثبت یا برداشته شود.',
+          ? "Today's habits: tap to check in (one at a time for counted habits); − takes one back."
+          : 'عادت‌های امروز: بزن تا ثبت شود (عادت‌های شمارشی یکی‌یکی)؛ «−» یکی کم می‌کند.',
         markup: habits.slice(0, 20).map((h) => {
-          const done = h.checkins.some(
-            (c) => c.date === today && c.value >= h.goal,
-          );
-          return [
+          const value = h.checkins.find((c) => c.date === today)?.value ?? 0;
+          const done = value >= h.goal;
+          const n = (x: number) => (en ? String(x) : x.toLocaleString('fa-IR'));
+          // Like the app: a counted habit (goal > 1) adds one per tap, with − to take one back.
+          const counted = h.goal > 1;
+          const row = [
             {
-              text: `${done ? '✓' : '○'} ${h.name}`.slice(0, 60),
+              text: `${done ? '✓' : '○'} ${h.name}${
+                counted ? ` ${n(value)}/${n(h.goal)}` : ''
+              }`.slice(0, 60),
               callback_data: `hb:${h.id}`,
             },
           ];
+          if (counted && value > 0)
+            row.push({ text: '−', callback_data: `hm:${h.id}` });
+          return row;
         }),
       },
     ];
   }
 
-  private async toggleHabit(ctx: SectionContext, id: string) {
+  /**
+   * A tap on a habit, as in the app: a single-check habit toggles done/undone; a counted habit (goal > 1, e.g. four
+   * glasses of water) adds one, and `step = -1` (the − button) takes one back.
+   */
+  private async toggleHabit(ctx: SectionContext, id: string, step: 1 | -1 = 1) {
     const today = isoDateIn(new Date());
     const habit = await this.habits.get(ctx.userId, id);
-    const done = habit.checkins.some(
-      (c) => c.date === today && c.value >= habit.goal,
-    );
-    await this.habits.checkin(ctx.userId, id, {
-      date: today,
-      value: done ? 0 : habit.goal,
-    });
+    const current = habit.checkins.find((c) => c.date === today)?.value ?? 0;
+    const value =
+      habit.goal > 1
+        ? Math.max(0, current + step)
+        : current >= habit.goal
+          ? 0
+          : habit.goal;
+    await this.habits.checkin(ctx.userId, id, { date: today, value });
     const en = ctx.language === 'en';
-    return {
-      outs: await this.habitList(ctx),
-      toast: done ? (en ? 'Undone' : 'برداشته شد') : en ? 'Done' : 'ثبت شد',
-    };
+    const n = (x: number) => (en ? String(x) : x.toLocaleString('fa-IR'));
+    const toast =
+      habit.goal > 1
+        ? `${n(value)}/${n(habit.goal)}`
+        : value
+          ? en
+            ? 'Done'
+            : 'ثبت شد'
+          : en
+            ? 'Undone'
+            : 'برداشته شد';
+    return { outs: await this.habitList(ctx), toast };
   }
 
   // ======================================================================= health

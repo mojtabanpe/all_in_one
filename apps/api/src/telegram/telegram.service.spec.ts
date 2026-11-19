@@ -778,6 +778,29 @@ describe('Telegram bot', () => {
       });
     });
 
+    it('a counted habit (4 glasses of water) adds one per tap and − takes one back', async () => {
+      const t = setup();
+      t.db.telegramLink.findUnique.mockResolvedValue(linked());
+      const today = new Date().toLocaleDateString('en-CA', {
+        timeZone: 'Asia/Tehran',
+      });
+      t.habits.get.mockResolvedValue({
+        id: 'h2',
+        goal: 4,
+        checkins: [{ date: today, value: 2 }],
+      });
+      await t.service.handle(press('hb:h2'));
+      expect(t.habits.checkin).toHaveBeenLastCalledWith('u1', 'h2', {
+        date: today,
+        value: 3,
+      });
+      await t.service.handle(press('hm:h2'));
+      expect(t.habits.checkin).toHaveBeenLastCalledWith('u1', 'h2', {
+        date: today,
+        value: 1,
+      });
+    });
+
     it('a menu tap drops the pending question', async () => {
       const t = setup();
       t.db.telegramLink.findUnique.mockResolvedValue(
