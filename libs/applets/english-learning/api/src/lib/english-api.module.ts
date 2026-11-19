@@ -48,6 +48,7 @@ import { TextsService } from './texts.service';
     TextsService,
     StarterDecksService,
     PracticeScoresService,
+    SpeechService,
   ],
 })
 export class EnglishApiModule {}

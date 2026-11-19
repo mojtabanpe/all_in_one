@@ -7,6 +7,8 @@ model TelegramLink {
   language String @default("fa") @db.VarChar(2)
   /// Tehran day of the last morning summary, so one goes out per day.
   lastSummaryDay String? @db.VarChar(10)
+  /// The running shadowing practice in Telegram: title, sentences, current index and per-sentence scores.
+  shadow Json?
   createdAt DateTime @default(now())
   @@map("telegram_links")
 }

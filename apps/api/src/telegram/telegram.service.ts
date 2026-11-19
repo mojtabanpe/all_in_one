@@ -10,13 +10,24 @@ import { ConfigService } from '@nestjs/config';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import express, { type Express } from 'express';
 import { rateLimit } from 'express-rate-limit';
-import { PrismaService } from '@all-in-one/api/db';
+import { Prisma, PrismaService } from '@all-in-one/api/db';
 import { TasksService } from '@all-in-one/applets/planner/api';
 import { isoDateIn, zonedInstant } from '@all-in-one/applets/planner/contracts';
 import {
   DAILY_TASKS_DEFAULT_TIME,
   type TelegramStatus,
 } from '@all-in-one/shared/schemas';
+import { AiGateway, MAX_RECORDING_BYTES } from '@all-in-one/api/ai';
+import {
+  EnglishAiService,
+  PracticeScoresService,
+  SpeechService,
+} from '@all-in-one/applets/english-learning/api';
+import {
+  CONVERSATION_SITUATIONS,
+  checkShadowing,
+  shadowSessionScore,
+} from '@all-in-one/applets/english-learning/contracts';
 import { AssistantService } from '../assistant/assistant.service';
 import {
   TelegramApi,
@@ -29,6 +40,61 @@ const CODE_TTL_MS = 10 * 60_000;
 const SUMMARY_WINDOW_MS = 3 * 3_600_000;
 const SUMMARY_TASKS = 5;
 type Lang = 'fa' | 'en';
+/** At most this many sentences of a generated dialogue are practised in Telegram. */
+const SHADOW_SENTENCES = 8;
+
+/** A shadowing practice running in a Telegram chat (`telegram_links.shadow`). */
+export interface ShadowState {
+  title: string;
+  lines: string[];
+  index: number;
+  /** Latest check of each sentence; null until it is recorded. */
+  scores: (number | null)[];
+  mistakes: number;
+}
+
+/** The reply to one recorded sentence: its score and the words to fix. */
+export function shadowFeedback(
+  language: Lang,
+  check: ReturnType<typeof checkShadowing>,
+): string {
+  const n = (value: number) =>
+    language === 'en' ? String(value) : value.toLocaleString('fa-IR');
+  const missed = check.words.filter((w) => w.status === 'missed');
+  const wrong = check.words.filter((w) => w.status === 'wrong');
+  const lines = [
+    language === 'en'
+      ? `Score: ${n(check.score)} / 100`
+      : `امتیاز این جمله: ${n(check.score)} از ۱۰۰`,
+  ];
+  if (missed.length)
+    lines.push(
+      (language === 'en' ? 'Missed: ' : 'جاافتاده: ') +
+        missed.map((w) => w.word).join(', '),
+    );
+  if (wrong.length)
+    lines.push(
+      (language === 'en' ? 'Wrong: ' : 'اشتباه: ') +
+        wrong
+          .map((w) =>
+            w.heard
+              ? `${w.word} (${language === 'en' ? 'heard' : 'شنیدم'} ${w.heard})`
+              : w.word,
+          )
+          .join(', '),
+    );
+  if (check.extra.length)
+    lines.push(
+      (language === 'en' ? 'Extra: ' : 'اضافه: ') + check.extra.join(', '),
+    );
+  if (!check.heard.trim())
+    lines.push(
+      language === 'en'
+        ? 'I could not hear any words. Record again, a little closer to the microphone.'
+        : 'کلمه‌ای نشنیدم. دوباره ضبط کن، کمی نزدیک‌تر به میکروفون.',
+    );
+  return lines.join('\n');
+}
 
 export const telegramCodeHash = (code: string) =>
   createHash('sha256').update(code).digest('hex');
@@ -78,6 +144,8 @@ export function summaryText(
 interface TelegramUpdate {
   message?: {
     text?: string;
+    voice?: { file_id: string; file_size?: number };
+    audio?: { file_id: string; file_size?: number };
     chat: { id: number; type: string };
     from?: { id?: number; language_code?: string };
   };
@@ -107,6 +175,10 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     private readonly config: ConfigService,
     private readonly assistant: AssistantService,
     private readonly tasks: TasksService,
+    private readonly gateway: AiGateway,
+    private readonly englishAi: EnglishAiService,
+    private readonly speech: SpeechService,
+    private readonly scores: PracticeScoresService,
   ) {
     this.api = new TelegramApi(config);
   }
@@ -312,6 +384,18 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       );
     }
     if (!(await this.member(from))) return this.joinPrompt(chatId, language);
+    if (text === '/shadow' || /^(شادوینگ|shadowing|shadow)$/i.test(text))
+      return this.startShadow(link.userId, chatId, language);
+    const voice = message.voice ?? message.audio;
+    if (voice) {
+      const state = link.shadow as ShadowState | null;
+      if (state)
+        return this.checkVoice(link.userId, chatId, language, state, voice);
+      return say(
+        'برای تمرین شادوینگ /shadow را بفرست؛ بعد هر جمله را بشنو و با پیام صوتی تکرار کن.',
+        'Send /shadow to practise shadowing: listen to each sentence and repeat it in a voice message.',
+      );
+    }
     if (!text)
       return say(
         'فعلاً فقط پیام متنی را ثبت می‌کنم.',
@@ -363,37 +447,223 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       });
       await this.reply(chatId, plainReply(reply.reply));
     } catch (error) {
-      const status = error instanceof HttpException ? error.getStatus() : 0;
-      if (status === 402)
-        return this.reply(
-          chatId,
-          language === 'en'
-            ? 'Logging by message needs a subscription. Your trial and earned weeks have ended.'
-            : 'ثبت با پیام به اشتراک نیاز دارد. دورهٔ آزمایشی و هفته‌های هدیه‌ات تمام شده است.',
-          [
-            [
-              {
-                text: language === 'en' ? 'Plans' : 'پلن‌ها',
-                url: this.appUrl('/billing'),
-              },
-            ],
-          ],
-        );
-      if (status === 429)
-        return this.reply(
-          chatId,
-          language === 'en'
-            ? "Today's AI limit is used up. Try again tomorrow."
-            : 'سقف هوش مصنوعی امروز پر شده است. فردا دوباره بفرست.',
-        );
-      this.logger.warn(`Telegram assistant failed (${status || 'error'})`);
+      await this.aiError(chatId, language, error);
+    }
+  }
+
+  /** No AI access → plans link; daily limit → try tomorrow; anything else → try again. */
+  private async aiError(chatId: bigint, language: Lang, error: unknown) {
+    const status = error instanceof HttpException ? error.getStatus() : 0;
+    if (status === 402)
       return this.reply(
         chatId,
         language === 'en'
-          ? 'Could not log that. Try again in a minute.'
-          : 'ثبت نشد. یک دقیقهٔ دیگر دوباره بفرست.',
+          ? 'This needs a subscription. Your trial and earned weeks have ended.'
+          : 'این کار به اشتراک نیاز دارد. دورهٔ آزمایشی و هفته‌های هدیه‌ات تمام شده است.',
+        [
+          [
+            {
+              text: language === 'en' ? 'Plans' : 'پلن‌ها',
+              url: this.appUrl('/billing'),
+            },
+          ],
+        ],
+      );
+    if (status === 429)
+      return this.reply(
+        chatId,
+        language === 'en'
+          ? "Today's AI limit is used up. Try again tomorrow."
+          : 'سقف هوش مصنوعی امروز پر شده است. فردا دوباره بفرست.',
+      );
+    this.logger.warn(`Telegram AI request failed (${status || 'error'})`);
+    return this.reply(
+      chatId,
+      language === 'en'
+        ? 'That did not work. Try again in a minute.'
+        : 'انجام نشد. یک دقیقهٔ دیگر دوباره بفرست.',
+    );
+  }
+
+  private saveShadow(chatId: bigint, state: ShadowState | null) {
+    return this.db.telegramLink.updateMany({
+      where: { chatId },
+      data: { shadow: state === null ? Prisma.DbNull : (state as object) },
+    });
+  }
+
+  /** A fresh dialogue from the app's generator; its sentences are practised one by one. */
+  private async startShadow(userId: string, chatId: bigint, language: Lang) {
+    void this.api
+      .call('sendChatAction', { chat_id: chatId.toString(), action: 'typing' })
+      .catch(() => undefined);
+    try {
+      const situation =
+        CONVERSATION_SITUATIONS[
+          Math.floor(Math.random() * CONVERSATION_SITUATIONS.length)
+        ].id;
+      const dialogue = await this.englishAi.dialogue(userId, situation);
+      const lines = dialogue.lines
+        .map((line) => line.text.trim())
+        .filter(Boolean)
+        .slice(0, SHADOW_SENTENCES);
+      if (!lines.length) throw new Error('empty dialogue');
+      const state: ShadowState = {
+        title: dialogue.title,
+        lines,
+        index: 0,
+        scores: lines.map(() => null),
+        mistakes: 0,
+      };
+      await this.saveShadow(chatId, state);
+      await this.reply(
+        chatId,
+        language === 'en'
+          ? `Shadowing: ${dialogue.title}\nListen to each sentence, then repeat it in a voice message.`
+          : `شادوینگ: ${dialogue.title}\nهر جمله را بشنو و بعد با پیام صوتی تکرارش کن.`,
+      );
+      await this.sendSentence(userId, chatId, language, state);
+    } catch (error) {
+      await this.aiError(chatId, language, error);
+    }
+  }
+
+  private shadowButtons(language: Lang): TelegramButton[][] {
+    return [
+      [
+        {
+          text: language === 'en' ? 'Listen again' : 'دوباره بشنو',
+          callback_data: 's:r',
+        },
+        {
+          text: language === 'en' ? 'Next' : 'جملهٔ بعد',
+          callback_data: 's:n',
+        },
+      ],
+      [{ text: language === 'en' ? 'Finish' : 'پایان', callback_data: 's:x' }],
+    ];
+  }
+
+  /** The sentence as speech (the app's TTS and shared cache) with its text; text alone if speech is unavailable. */
+  private async sendSentence(
+    userId: string,
+    chatId: bigint,
+    language: Lang,
+    state: ShadowState,
+  ) {
+    const sentence = state.lines[state.index];
+    const n = (value: number) =>
+      language === 'en' ? String(value) : value.toLocaleString('fa-IR');
+    const caption = `${n(state.index + 1)}/${n(state.lines.length)}\n${sentence}`;
+    try {
+      const audio = await this.speech.speak(userId, sentence, 'primary');
+      await this.api.sendVoice(
+        chatId,
+        { data: audio.audio, contentType: audio.contentType },
+        caption,
+        this.shadowButtons(language),
+      );
+    } catch (error) {
+      const status = error instanceof HttpException ? error.getStatus() : 0;
+      if (status !== 402 && status !== 429)
+        this.logger.warn(`Telegram shadow audio failed (${status || 'error'})`);
+      await this.reply(
+        chatId,
+        `${caption}\n\n${
+          language === 'en'
+            ? 'Audio is not available now; read the sentence aloud and record it.'
+            : 'صدای جمله الان در دسترس نیست؛ جمله را بلند بخوان و ضبط کن.'
+        }`,
+        this.shadowButtons(language),
       );
     }
+  }
+
+  /** A voice message: transcribe it, compare word by word, then move to the next sentence. */
+  private async checkVoice(
+    userId: string,
+    chatId: bigint,
+    language: Lang,
+    state: ShadowState,
+    voice: { file_id: string; file_size?: number },
+  ) {
+    if ((voice.file_size ?? 0) > MAX_RECORDING_BYTES)
+      return this.reply(
+        chatId,
+        language === 'en'
+          ? 'That recording is too long. Record just this sentence.'
+          : 'این ضبط خیلی طولانی است. فقط همین جمله را ضبط کن.',
+      );
+    try {
+      const audio = await this.api.download(voice.file_id, MAX_RECORDING_BYTES);
+      const heard = await this.gateway.transcribe(userId, audio, 'audio/ogg');
+      const check = checkShadowing(state.lines[state.index], heard);
+      state.scores[state.index] = check.score;
+      state.mistakes += check.words.filter((w) => w.status !== 'ok').length;
+      await this.reply(chatId, shadowFeedback(language, check));
+      await this.advance(userId, chatId, language, state);
+    } catch (error) {
+      await this.aiError(chatId, language, error);
+    }
+  }
+
+  private async advance(
+    userId: string,
+    chatId: bigint,
+    language: Lang,
+    state: ShadowState,
+  ) {
+    if (state.index + 1 >= state.lines.length)
+      return this.finishShadow(userId, chatId, language, state);
+    state.index += 1;
+    await this.saveShadow(chatId, state);
+    await this.sendSentence(userId, chatId, language, state);
+  }
+
+  /** Session score (unrecorded sentences count 0), saved with the app's practice scores. */
+  private async finishShadow(
+    userId: string,
+    chatId: bigint,
+    language: Lang,
+    state: ShadowState,
+  ) {
+    await this.saveShadow(chatId, null);
+    const recorded = state.scores.filter((x) => x !== null).length;
+    if (!recorded)
+      return this.reply(
+        chatId,
+        language === 'en'
+          ? 'Practice ended without a recording.'
+          : 'تمرین بدون ضبط تمام شد.',
+      );
+    const score = shadowSessionScore(
+      state.lines.length,
+      state.scores.map((x) => x ?? undefined),
+    );
+    await this.scores.save(userId, {
+      kind: 'SHADOWING',
+      title: state.title.slice(0, 200),
+      score,
+      items: state.lines.length,
+      attempted: recorded,
+      mistakes: state.mistakes,
+    });
+    const n = (value: number) =>
+      language === 'en' ? String(value) : value.toLocaleString('fa-IR');
+    await this.reply(
+      chatId,
+      language === 'en'
+        ? `Practice finished. Score: ${n(score)} / 100 (${n(recorded)} of ${n(state.lines.length)} sentences recorded).`
+        : `تمرین تمام شد. امتیاز: ${n(score)} از ۱۰۰ (${n(recorded)} از ${n(state.lines.length)} جمله ضبط شد).`,
+      [
+        [
+          {
+            text: language === 'en' ? 'Scores in the app' : 'امتیازها در اپ',
+            url: this.appUrl('/english/practice/scores'),
+          },
+        ],
+      ],
+    );
   }
 
   private async callback(query: NonNullable<TelegramUpdate['callback_query']>) {
@@ -430,6 +700,27 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
           ? 'Thanks. Now write anything you need to do.'
           : 'ممنون. حالا هر کاری داری بنویس.',
       );
+    }
+
+    const shadow = /^s:([rnx])$/.exec(query.data ?? '')?.[1];
+    if (shadow && link) {
+      await answer('');
+      if (!(await this.member(from)))
+        return this.joinPrompt(chatId, english ? 'en' : 'fa');
+      const state = link.shadow as ShadowState | null;
+      const language: Lang = english ? 'en' : 'fa';
+      if (!state)
+        return this.reply(
+          chatId,
+          english
+            ? 'No practice is running. Send /shadow to start one.'
+            : 'تمرینی در جریان نیست. برای شروع /shadow را بفرست.',
+        );
+      if (shadow === 'r')
+        return this.sendSentence(link.userId, chatId, language, state);
+      if (shadow === 'n')
+        return this.advance(link.userId, chatId, language, state);
+      return this.finishShadow(link.userId, chatId, language, state);
     }
 
     const taskId = /^d:(.{1,60})$/.exec(query.data ?? '')?.[1];

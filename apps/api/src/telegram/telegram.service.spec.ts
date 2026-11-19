@@ -35,15 +35,47 @@ function setup(membership: string | Error = 'member') {
   };
   const assistant = { chat: vi.fn() };
   const tasks = { filter: vi.fn(() => []), update: vi.fn() };
+  const gateway = { transcribe: vi.fn() };
+  const englishAi = { dialogue: vi.fn() };
+  const speech = {
+    speak: vi.fn(async () => ({
+      audio: Buffer.from('mp3'),
+      contentType: 'audio/mpeg',
+    })),
+  };
+  const scores = { save: vi.fn() };
   const service = new TelegramService(
     db as never,
     config,
     assistant as never,
     tasks as never,
+    gateway as never,
+    englishAi as never,
+    speech as never,
+    scores as never,
   );
   const api = (
-    service as unknown as { api: { call: unknown; sendMessage: unknown } }
+    service as unknown as {
+      api: {
+        call: unknown;
+        sendMessage: unknown;
+        sendVoice: unknown;
+        download: unknown;
+      };
+    }
   ).api;
+  const voices: { caption: string; buttons?: unknown }[] = [];
+  api.sendVoice = vi.fn(
+    async (
+      _chat: bigint,
+      _audio: unknown,
+      caption: string,
+      buttons?: unknown,
+    ) => {
+      voices.push({ caption, buttons });
+    },
+  );
+  api.download = vi.fn(async () => Buffer.from('ogg'));
   api.sendMessage = vi.fn(
     async (chat: bigint, text: string, buttons?: unknown) => {
       sent.push({ chat: chat.toString(), text, buttons });
@@ -56,7 +88,19 @@ function setup(membership: string | Error = 'member') {
     if (membership instanceof Error) throw membership;
     return { status: membership };
   });
-  return { service, db, assistant, tasks, sent, calls };
+  return {
+    service,
+    db,
+    assistant,
+    tasks,
+    sent,
+    calls,
+    gateway,
+    englishAi,
+    speech,
+    scores,
+    voices,
+  };
 }
 const message = (text: string, id = 42) => ({
   message: { text, chat: { id, type: 'private' } },
@@ -259,6 +303,98 @@ describe('Telegram bot', () => {
       assistant.chat.mockResolvedValue({ reply: 'ok' });
       await service.handle(message('خرید نان'));
       expect(assistant.chat).toHaveBeenCalled();
+    });
+  });
+
+  describe('shadowing in Telegram', () => {
+    const linked = (shadow: unknown = null) => ({
+      userId: 'u1',
+      chatId: 42n,
+      language: 'fa',
+      shadow,
+    });
+    const voice = (id = 42) => ({
+      message: {
+        voice: { file_id: 'f1', file_size: 2000 },
+        chat: { id, type: 'private' },
+      },
+    });
+
+    it('/shadow starts a dialogue and sends the first sentence as speech', async () => {
+      const t = setup();
+      t.db.telegramLink.findUnique.mockResolvedValue(linked());
+      t.englishAi.dialogue.mockResolvedValue({
+        title: 'At the café',
+        lines: [
+          { speaker: 'A', text: 'Can I get a coffee?' },
+          { speaker: 'B', text: 'Sure, anything else?' },
+        ],
+      });
+      await t.service.handle(message('/shadow'));
+      const saved = t.db.telegramLink.updateMany.mock.calls[0][0].data.shadow;
+      expect(saved).toMatchObject({ index: 0, scores: [null, null] });
+      expect(t.speech.speak).toHaveBeenCalledWith(
+        'u1',
+        'Can I get a coffee?',
+        'primary',
+      );
+      expect(t.voices[0].caption).toContain('Can I get a coffee?');
+      expect(JSON.stringify(t.voices[0].buttons)).toContain('s:n');
+    });
+
+    it('checks a voice message word by word and moves on', async () => {
+      const t = setup();
+      const state = {
+        title: 'At the café',
+        lines: ['Can I get a coffee?', 'Sure, anything else?'],
+        index: 0,
+        scores: [null, null],
+        mistakes: 0,
+      };
+      t.db.telegramLink.findUnique.mockResolvedValue(linked(state));
+      t.gateway.transcribe.mockResolvedValue('can I get coffee');
+      await t.service.handle(voice());
+      expect(t.gateway.transcribe).toHaveBeenCalledWith(
+        'u1',
+        expect.any(Buffer),
+        'audio/ogg',
+      );
+      expect(t.sent[0].text).toContain('جاافتاده: a');
+      expect(
+        t.db.telegramLink.updateMany.mock.calls[0][0].data.shadow,
+      ).toMatchObject({ index: 1 });
+      expect(t.voices[0].caption).toContain('Sure, anything else?');
+    });
+
+    it('saves the session score at the end, counting unrecorded sentences as 0', async () => {
+      const t = setup();
+      const state = {
+        title: 'At the café',
+        lines: ['Can I get a coffee?', 'Sure, anything else?'],
+        index: 1,
+        scores: [null, null],
+        mistakes: 0,
+      };
+      t.db.telegramLink.findUnique.mockResolvedValue(linked(state));
+      t.gateway.transcribe.mockResolvedValue('sure anything else');
+      await t.service.handle(voice());
+      expect(t.scores.save).toHaveBeenCalledWith('u1', {
+        kind: 'SHADOWING',
+        title: 'At the café',
+        score: 50,
+        items: 2,
+        attempted: 1,
+        mistakes: 0,
+      });
+      expect(t.sent.at(-1)?.text).toContain('۵۰');
+    });
+
+    it('a voice message without a practice suggests /shadow', async () => {
+      const t = setup();
+      t.db.telegramLink.findUnique.mockResolvedValue(linked());
+      await t.service.handle(voice());
+      expect(t.gateway.transcribe).not.toHaveBeenCalled();
+      expect(t.sent[0].text).toContain('/shadow');
     });
   });
 });
