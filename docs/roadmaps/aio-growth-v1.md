@@ -606,7 +606,10 @@ Bazaar or Myket, installs, and signs up in the app (separate cookie jar). That i
   the referrer once per install (`InstallReferrer.kt`, `ir.myket:referrersdk:1.0.3`, R8 keep rules) and opens
   `/app/?aio_vid=<id>` (`lib/install_referrer.dart`, 3 s timeout, never blocks opening). `direct` reads nothing;
   `bazaar` reads nothing until its link format is confirmed.
-- `TODO` release the web change, publish a new APK to Myket, then install from a tagged landing link on a real phone
+- `DONE` (2026-11-19) web released: `645a16f` (Deploy 44402611472) and the NG0600 fix `afd4817` (CI 44467521952,
+  Deploy 44467889338). On the live landing page the Myket links carry `referrer=vid%3D<uuid>`, no console error.
+  Shell version bumped to `1.0.5+6` so Myket accepts the upload.
+- `TODO` publish the 1.0.5 Myket APK, then install from a tagged landing link on a real phone
   and check the signup's campaign in the admin report.
 - `TODO` (owner) ask Cafe Bazaar support how a link passes the install referrer to `ReferrerSDK`.
 
