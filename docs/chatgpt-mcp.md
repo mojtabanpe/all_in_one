@@ -8,6 +8,12 @@ client-specific except the OAuth callback hosts.
 
 ## Connecting
 
+**Public address (2026-11-19):** OpenAI's and Anthropic's servers stopped reaching `poshtetgarm.ir` in November 2026
+(an Iranian network), so the connection goes through the Cloudflare Worker in `deploy/mcp-front`
+(`https://poshtetgarm-mcp.memnpe.workers.dev`), which forwards only the MCP and OAuth paths. `MCP_PUBLIC_URL` on the
+server is that address; the account card shows it. ChatGPT custom connectors can only be added on chatgpt.com (web);
+once added they also work in the desktop and mobile apps.
+
 Sign in to the customer app → **حساب کاربری** → **اتصال به ChatGPT و Claude**, pick the app tab, copy the
 server url (`https://poshtetgarm.ir/api/mcp`) and create a personal token (shown once).
 

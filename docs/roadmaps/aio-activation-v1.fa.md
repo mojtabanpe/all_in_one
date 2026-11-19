@@ -339,3 +339,16 @@ poshtetgarm.ir/app/billing
 - منوی دستورهای تلگرام (`/today`، `/shadow`، `/help`، `/stop`) و توضیح ربات به فارسی و انگلیسی، با `registerMenu` هنگام
   شروع api.
 - بررسی: ۱۹ آزمون ربات (۴ آزمون تازهٔ منو).
+
+### اتصال ChatGPT و Claude از راه Cloudflare (2026-11-19، `IN_PROGRESS`)
+
+- **مشکل:** Claude «Couldn’t check the server» داد و ChatGPT فقط از وب وصل می‌شد. سرور MCP درست جواب می‌دهد (بررسی از
+  بیرون ایران: متادیتای OAuth و ۴۰۱ با `WWW-Authenticate` طبق استاندارد)، ولی در لاگ nginx آخرین درخواست سرورهای
+  OpenAI ۵ آبان و Anthropic ۱۱ آبان است و امروز هیچ درخواستی از آن‌ها نرسید؛ دیوار آتش سرور خاموش است. پس ورودی
+  بین‌المللی بیرون از سرور بسته شده، مثل «Connection refused» تلگرام.
+- **راه‌حل (مالک: «بله، بساز»):** Worker `poshtetgarm-mcp` (`deploy/mcp-front`) مستقر شد:
+  `https://poshtetgarm-mcp.memnpe.workers.dev`. فقط مسیرهای MCP/OAuth را عبور می‌دهد؛ آزمون: متادیتا ۲۰۰، `/api/mcp`
+  ۴۰۱، `/api/mcp/keys` و `/` ۴۰۴.
+- ساختن کانکتور دلخواه در ChatGPT فقط در وب است (راهنمای OpenAI)؛ بعد از ساخت در دسکتاپ و موبایل هم کار می‌کند.
+- `TODO` (اجازهٔ مالک) `MCP_PUBLIC_URL` در env سرور روی آدرس Worker و راه‌اندازی دوبارهٔ api؛ بعد اتصال واقعی از Claude
+  و ChatGPT.
