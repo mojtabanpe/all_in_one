@@ -896,3 +896,9 @@ Rules:
      the account has used the app on 2 separate days (166), one prompt at a time and never while another notice is open,
      3 days apart, each kind once (a review again only after a new idle spell). A new hard step gets a widget there
      rather than a link to a settings page. The widgets load lazily (`apps/customer/src/app/prompts`).
+
+177. **Publish the Telegram bot motion graphic to Instagram and Telegram (2026-11-19).** After the expenses video (173),
+     the owner said «موشن گرافی تلگرام رو هم پست کن» and approved the drafted captions («Yes, publish to both»). This
+     authorizes that one 20-second video (`poshtetgarm-telegram-fa.mp4`) with those captions on @poshtetgarm Instagram
+     and the @poshtetgarm Telegram channel only; it supersedes 173's «not approved» note for this video and is not
+     standing authorization for future posts. Evidence lives in the growth roadmap.

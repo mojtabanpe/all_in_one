@@ -643,4 +643,22 @@ Owner picked idea 6 of six proposed Reel ideas (story-led, like the dinner ad, t
 - `DONE` Telegram: `sendVideo` to `@poshtetgarm` through the channel bot, message 7, 20 s video with the channel caption
   (how to turn expenses on: app → account → expenses).
 - `VERIFY` reach and watch time, and how many accounts turn on expenses in the 3 days after vs before.
-- A matching Telegram-bot video (`poshtetgarm-telegram-fa.mp4`) is ready locally but not approved for publishing.
+- The matching Telegram-bot video was published the same day: see the next section.
+
+## Telegram bot motion graphic — published 2026-11-19 (directive 177)
+
+- Video: 20 s, 1080×1920, rendered locally (`marketing/promo-videos/src/telegram.html`, local and gitignored): logging a
+  task by message, the 10:00 morning summary with ✓ buttons, shadowing by voice message. File
+  `poshtetgarm-telegram-fa.mp4`, SHA-256 `2e9ea604f802a2a4a7c371c577789aef66ce17376ba24ba40fe6c0a40eb735e3`,
+  2,213,235 bytes, hosted in Drive folder `ywa` (`Poshtetgarm_Telegram_Bot_Reel.mp4`); anonymous range request returned
+  206 `video/mp4` and the downloaded copy had the same hash.
+- `DONE` Instagram: Windsor `create_video_post` to `poshtetgarm` (`17841425571593489`), `share_to_feed=true`,
+  `thumb_offset=4000`, 2026-11-19 19:08:55 Tehran: [Reel](https://www.instagram.com/reel/Df7a5afjUB_/), media
+  `18197014084405502`. Read-back matched ID, permalink, exact caption and `REELS`. Caption: «کارهات رو توی تلگرام
+  بنویس؛ ربات Poshtetgarm ثبتشون می‌کنه. هر صبح ساعت ۱۰ کارهای امروز رو برات می‌فرسته و شادوینگ انگلیسی رو هم با پیام
+  صوتی تمرین می‌کنی. ربات: @poshtetgarm_bot (اول عضو کانال @poshtetgarm شو). ثبت با پیام بخشی از دستیار هوش مصنوعی است
+  و برای حساب تازه یک هفته رایگانه. #پشتت_گرم #تلگرام #برنامه_ریزی #یادگیری_زبان #هوش_مصنوعی»
+- `DONE` Telegram: `sendVideo` to `@poshtetgarm` through the channel bot, message 8, 20 s video. Caption: «ربات
+  Poshtetgarm آماده است: @poshtetgarm_bot / کارهات رو با یک پیام ثبت کن، هر صبح ساعت ۱۰ کارهای امروز رو بگیر و شادوینگ
+  رو با پیام صوتی تمرین کن. / وصل کردن حساب: اپ ← حساب کاربری ← تلگرام»
+- `VERIFY` reach and watch time, and how many accounts link Telegram in the 3 days after vs before.
