@@ -50,8 +50,9 @@ android {
     // Releases) build keeps the web gateway. The store public keys are public values from each store's panel
     // (gradle property or environment variable); the stores' server API secrets never belong in the app.
     signingConfigs {
-        // Store uploads must always be signed with the same release key (ANDROID_KEYSTORE_* in CI). The direct
-        // build keeps the debug key its installed users already have, so it still updates in place.
+        // Every flavor is signed with the same release key (ANDROID_KEYSTORE_* in CI) so each new APK updates the
+        // installed one in place. Never fall back to the debug key in CI: a GitHub runner makes a new random debug
+        // key per build (direct 1.0.3, 1.0.4 and the first 1.0.6 build all had different certificates).
         System.getenv("ANDROID_KEYSTORE_PATH")?.takeIf { it.isNotBlank() }?.let { path ->
             create("release") {
                 storeFile = file(path)
@@ -67,7 +68,7 @@ android {
         create("direct") {
             dimension = "store"
             buildConfigField("String", "STORE_PUBLIC_KEY", "\"\"")
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
         create("bazaar") {
             dimension = "store"

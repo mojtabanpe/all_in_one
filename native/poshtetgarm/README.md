@@ -13,7 +13,7 @@ sh scripts/build-android.sh
 
 اسکریپت تنظیم Dart را از `android/app/google-services.json` تولید می‌کند تا پیکربندی Dart و منابع بومی Android یکسان باشند. این فایل فقط تنظیمات عمومی اپ Firebase است و طبق مستندات Firebase محرمانه نیست. هیچ کلید حساب سرویس، کلید امضای انتشار یا مسیر SDK محلی در مخزن نیست.
 
-خروجی: `build/app/outputs/flutter-apk/app-release.apk`. فعلاً Release مانند پوستهٔ قبلی با کلید debug امضا می‌شود؛ خروجی برای نصب و آزمون مستقیم است. کلید debug در محیط ساخت GitHub ایجاد می‌شود و ممکن است با نصب قبلی دستگاه متفاوت باشد. این خروجی جای نسخهٔ فروشگاهی با keystore ثابت را نمی‌گیرد.
+خروجی: `build/app/outputs/flutter-apk/app-release.apk`. بیلد محلی بدون `ANDROID_KEYSTORE_PATH` با کلید debug امضا می‌شود و فقط برای آزمون است. در GitHub هر سه flavor (`direct`، `bazaar`، `myket`) از ۱.۰.۶ با کلید انتشار ثابت (secrets `ANDROID_KEYSTORE_*`) امضا می‌شوند تا هر نسخه روی قبلی نصب شود.
 
 ## اعلان
 
