@@ -397,4 +397,58 @@ describe('Telegram bot', () => {
       expect(t.sent[0].text).toContain('/shadow');
     });
   });
+
+  describe('menu (directive 172)', () => {
+    const linked = { userId: 'u1', chatId: 42n, language: 'fa', shadow: null };
+
+    it('shows the reply keyboard after linking and on /help', async () => {
+      const t = setup();
+      t.db.telegramLink.findUnique.mockResolvedValue(null);
+      t.db.telegramLinkCode.findUnique.mockResolvedValue({
+        userId: 'u1',
+        language: 'fa',
+        expiresAt: new Date(Date.now() + 60_000),
+      });
+      await t.service.handle(message('/start abcdefghijklmnopqrstuvwx'));
+      expect(t.sent[0].buttons).toMatchObject({
+        keyboard: [
+          [{ text: 'کارهای امروز' }, { text: 'شادوینگ' }],
+          [{ text: 'راهنما' }],
+        ],
+      });
+      t.db.telegramLink.findUnique.mockResolvedValue(linked);
+      await t.service.handle(message('راهنما'));
+      expect(t.sent[1].text).toContain('شادوینگ');
+      expect(t.assistant.chat).not.toHaveBeenCalled();
+    });
+
+    it('«کارهای امروز» sends today on demand, or says the day is empty', async () => {
+      const t = setup();
+      t.db.telegramLink.findUnique.mockResolvedValue(linked);
+      await t.service.handle(message('کارهای امروز'));
+      expect(t.sent[0].text).toContain('کار باز');
+      t.tasks.filter.mockResolvedValue([
+        { id: 't1', title: 'خرید نان', kind: 'TASK' },
+      ] as never);
+      await t.service.handle(message('/today'));
+      expect(t.sent[1].text).toContain('خرید نان');
+      expect(t.assistant.chat).not.toHaveBeenCalled();
+    });
+
+    it('/stop removes the keyboard', async () => {
+      const t = setup();
+      t.db.telegramLink.findUnique.mockResolvedValue(linked);
+      await t.service.handle(message('/stop'));
+      expect(t.sent[0].buttons).toEqual({ remove_keyboard: true });
+    });
+
+    it('registers commands and descriptions in both languages', async () => {
+      const t = setup();
+      await t.service.registerMenu();
+      const commands = t.calls.filter((c) => c.method === 'setMyCommands');
+      expect(commands).toHaveLength(2);
+      expect(commands[1].body.language_code).toBe('en');
+      expect(JSON.stringify(commands[0].body)).toContain('today');
+    });
+  });
 });

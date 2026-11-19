@@ -849,3 +849,9 @@ Rules:
      configuration file names and read-only database queries. Reading never prints secrets or personal data into the
      chat beyond what the task needs; anything that changes the server, its files or its data still needs the owner's
      word (38, 81, 115, 169).
+
+172. **A clear menu in the Telegram bot (2026-11-19).** The owner asked whether the bot has a proper menu, then said
+     «بله» to the proposal. After linking, the bot shows persistent buttons above the keyboard: «کارهای امروز»
+     (today's open tasks and due cards on demand), «شادوینگ» and «راهنما» (a short, direct help, 166); `/stop` removes
+     them. The Telegram Menu lists `/today`, `/shadow`, `/help` and `/stop`, with the bot's description, in Persian and
+     English; the api registers them at startup (`registerMenu`), so they stay in code, not set by hand.

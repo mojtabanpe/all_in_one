@@ -33,6 +33,7 @@ import {
   TelegramApi,
   TelegramError,
   type TelegramButton,
+  type TelegramMarkup,
 } from './telegram-api';
 
 const CODE_TTL_MS = 10 * 60_000;
@@ -40,6 +41,73 @@ const CODE_TTL_MS = 10 * 60_000;
 const SUMMARY_WINDOW_MS = 3 * 3_600_000;
 const SUMMARY_TASKS = 5;
 type Lang = 'fa' | 'en';
+
+/** Labels of the reply keyboard (directive 172); a tap sends the label as a message. */
+export const MENU_LABELS = {
+  today: { fa: 'کارهای امروز', en: "Today's tasks" },
+  shadow: { fa: 'شادوینگ', en: 'Shadowing' },
+  help: { fa: 'راهنما', en: 'Help' },
+} as const;
+const isMenu = (text: string, key: keyof typeof MENU_LABELS) =>
+  text === MENU_LABELS[key].fa || text === MENU_LABELS[key].en;
+
+/** The persistent buttons above the keyboard once the account is linked. */
+export function menuKeyboard(language: Lang) {
+  return {
+    keyboard: [
+      [
+        { text: MENU_LABELS.today[language] },
+        { text: MENU_LABELS.shadow[language] },
+      ],
+      [{ text: MENU_LABELS.help[language] }],
+    ],
+    resize_keyboard: true,
+    is_persistent: true,
+  };
+}
+
+export const HELP_TEXT = {
+  fa: [
+    'با این ربات:',
+    '• هر کاری داری بنویس تا ثبت شود، مثلاً «فردا ساعت ۵ دندانپزشکی» یا «ناهار قرمه‌سبزی خوردم».',
+    '• «کارهای امروز» کارهای باز امروز و کارت‌های آمادهٔ مرور را نشان می‌دهد.',
+    '• «شادوینگ» تمرین تلفظ است: جمله را بشنو و با پیام صوتی تکرار کن.',
+    '• هر صبح در ساعت خلاصهٔ حسابت، کارهای امروز را می‌فرستم.',
+    '/stop اتصال را قطع می‌کند.',
+  ].join('\n'),
+  en: [
+    'With this bot:',
+    '• Write anything you need to do and it is logged, for example «dentist tomorrow at 5» or «had pasta for lunch».',
+    "• «Today's tasks» shows today's open tasks and the cards ready to review.",
+    '• «Shadowing» is pronunciation practice: listen to a sentence and repeat it in a voice message.',
+    "• Each morning, at your account's summary time, I send your tasks for the day.",
+    '/stop unlinks.',
+  ].join('\n'),
+};
+
+/** Telegram's Menu button: commands per language, and the bot's description before «Start». */
+const COMMANDS = {
+  fa: [
+    { command: 'today', description: 'کارهای امروز' },
+    { command: 'shadow', description: 'تمرین شادوینگ' },
+    { command: 'help', description: 'راهنما' },
+    { command: 'stop', description: 'قطع اتصال' },
+  ],
+  en: [
+    { command: 'today', description: "Today's tasks" },
+    { command: 'shadow', description: 'Shadowing practice' },
+    { command: 'help', description: 'Help' },
+    { command: 'stop', description: 'Unlink' },
+  ],
+};
+const DESCRIPTION = {
+  fa: 'ربات Poshtetgarm: کارهایت را با یک پیام ثبت کن، هر صبح کارهای امروز را بگیر و شادوینگ انگلیسی تمرین کن. اول در اپ «حساب کاربری ← وصل به تلگرام» را بزن.',
+  en: 'Poshtetgarm bot: log tasks with one message, get your day each morning and practise English shadowing. First tap «Account → Connect Telegram» in the app.',
+};
+const SHORT_DESCRIPTION = {
+  fa: 'کارها، خلاصهٔ صبح و شادوینگ Poshtetgarm در تلگرام',
+  en: 'Poshtetgarm tasks, morning summary and shadowing in Telegram',
+};
 /** At most this many sentences of a generated dialogue are practised in Telegram. */
 const SHADOW_SENTENCES = 8;
 
@@ -270,6 +338,30 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     if (!this.enabled) return;
     this.timer = setInterval(() => void this.tick(), 60_000);
     this.timer.unref();
+    void this.registerMenu();
+  }
+
+  /** Commands and descriptions in Persian (default) and English; failures only log. */
+  async registerMenu() {
+    try {
+      for (const language of ['fa', 'en'] as const) {
+        const scope = language === 'fa' ? {} : { language_code: 'en' };
+        await this.api.call('setMyCommands', {
+          commands: COMMANDS[language],
+          ...scope,
+        });
+        await this.api.call('setMyDescription', {
+          description: DESCRIPTION[language],
+          ...scope,
+        });
+        await this.api.call('setMyShortDescription', {
+          short_description: SHORT_DESCRIPTION[language],
+          ...scope,
+        });
+      }
+    } catch {
+      this.logger.warn('Telegram menu registration failed');
+    }
   }
 
   onModuleDestroy() {
@@ -349,8 +441,8 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       link?.language === 'en' || (!link && message.from?.language_code === 'en')
         ? 'en'
         : 'fa';
-    const say = (fa: string, en: string, buttons?: TelegramButton[][]) =>
-      this.reply(chatId, language === 'en' ? en : fa, buttons);
+    const say = (fa: string, en: string, markup?: TelegramMarkup) =>
+      this.reply(chatId, language === 'en' ? en : fa, markup);
 
     const from = BigInt(message.from?.id ?? message.chat.id);
     const start = /^\/start(?:\s+([A-Za-z0-9_-]{16,60}))?$/.exec(text);
@@ -360,10 +452,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
           ? this.link(chatId, start[1])
           : this.joinPrompt(chatId, language, start[1]);
       return link
-        ? say(
-            'حسابت وصل است. هر کاری داری بنویس تا ثبت کنم؛ هر صبح هم کارهای امروز را می‌فرستم.',
-            'Your account is linked. Write anything you need to do and I will log it; each morning I send your day.',
-          )
+        ? say(HELP_TEXT.fa, HELP_TEXT.en, menuKeyboard(language))
         : say(
             'برای وصل شدن، در اپ به «حساب کاربری» برو و «وصل به تلگرام» را بزن.',
             'To link, open «Account» in the app and tap «Connect Telegram».',
@@ -381,9 +470,14 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       return say(
         'اتصال قطع شد. دیگر پیامی نمی‌فرستم.',
         'Unlinked. I will not send anything else.',
+        { remove_keyboard: true },
       );
     }
     if (!(await this.member(from))) return this.joinPrompt(chatId, language);
+    if (text === '/help' || isMenu(text, 'help'))
+      return say(HELP_TEXT.fa, HELP_TEXT.en, menuKeyboard(language));
+    if (text === '/today' || isMenu(text, 'today'))
+      return this.today(link.userId, chatId, language);
     if (text === '/shadow' || /^(شادوینگ|shadowing|shadow)$/i.test(text))
       return this.startShadow(link.userId, chatId, language);
     const voice = message.voice ?? message.audio;
@@ -422,11 +516,11 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       }),
       this.db.telegramLinkCode.deleteMany({ where: { userId: row.userId } }),
     ]);
+    const language: Lang = row.language === 'en' ? 'en' : 'fa';
     return this.reply(
       chatId,
-      row.language === 'en'
-        ? 'Linked. Write anything you need to do, for example «dentist tomorrow at 5», and I will log it. Each morning I send your tasks for the day. /stop unlinks.'
-        : 'وصل شد. هر کاری داری بنویس، مثلاً «فردا ساعت ۵ دندانپزشکی»، تا ثبتش کنم. هر صبح هم کارهای امروز را می‌فرستم. برای قطع اتصال /stop را بفرست.',
+      `${language === 'en' ? 'Linked.' : 'وصل شد.'}\n\n${HELP_TEXT[language]}`,
+      menuKeyboard(language),
     );
   }
 
@@ -737,13 +831,9 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async reply(
-    chatId: bigint,
-    text: string,
-    buttons?: TelegramButton[][],
-  ) {
+  private async reply(chatId: bigint, text: string, markup?: TelegramMarkup) {
     try {
-      await this.api.sendMessage(chatId, text, buttons);
+      await this.api.sendMessage(chatId, text, markup);
     } catch (error) {
       if (error instanceof TelegramError && error.gone)
         await this.db.telegramLink.deleteMany({ where: { chatId } });
@@ -813,7 +903,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   ) {
     const language: Lang = lang === 'en' ? 'en' : 'fa';
     // The private chat id is the Telegram user id.
-    if (!(await this.member(chatId))) return;
+    if (!(await this.member(chatId))) return false;
     const open = (
       await this.tasks.filter(
         userId,
@@ -830,7 +920,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       },
     });
     const text = summaryText(language, open, cards);
-    if (!text) return;
+    if (!text) return false;
     const buttons: TelegramButton[][] = open
       .slice(0, SUMMARY_TASKS)
       .filter((task) => `d:${task.id}`.length <= 64)
@@ -844,5 +934,25 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       },
     ]);
     await this.reply(chatId, text, buttons);
+    return true;
+  }
+
+  /** «Today's tasks» on demand: the same summary, or a short note when the day is empty. */
+  private async today(userId: string, chatId: bigint, language: Lang) {
+    const now = new Date();
+    const sent = await this.summary(
+      userId,
+      chatId,
+      language,
+      isoDateIn(now, 'Asia/Tehran'),
+      now,
+    );
+    if (!sent)
+      await this.reply(
+        chatId,
+        language === 'en'
+          ? 'Nothing open for today and no cards to review.'
+          : 'امروز کار باز یا کارت آمادهٔ مرور نداری.',
+      );
   }
 }

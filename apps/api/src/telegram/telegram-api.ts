@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 /** Inline keyboard button: a link or a callback (≤ 64 bytes of data). */
 export type TelegramButton =
   { text: string; url: string } | { text: string; callback_data: string };
+export type TelegramMarkup = TelegramButton[][] | Record<string, unknown>;
 
 /**
  * Bot API calls (directive 168). The server in Iran cannot reach `api.telegram.org`, so production sets
@@ -106,18 +107,22 @@ export class TelegramApi {
     return data;
   }
 
+  /** Inline buttons (an array of rows) or another reply markup (a reply keyboard, or removing it). */
   sendMessage(
     chatId: bigint | number | string,
     text: string,
-    buttons?: TelegramButton[][],
+    markup?: TelegramMarkup,
   ) {
+    const replyMarkup = Array.isArray(markup)
+      ? markup.length
+        ? { inline_keyboard: markup }
+        : undefined
+      : markup;
     return this.call('sendMessage', {
       chat_id: chatId.toString(),
       text: text.slice(0, 4000),
       link_preview_options: { is_disabled: true },
-      ...(buttons?.length
-        ? { reply_markup: { inline_keyboard: buttons } }
-        : {}),
+      ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
     });
   }
 }
