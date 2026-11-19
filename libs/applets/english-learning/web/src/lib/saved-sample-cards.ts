@@ -1,7 +1,7 @@
 import { Component, DestroyRef, inject, signal, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { EnglishApi } from '@all-in-one/applets/english-learning/web';
 import { AioButton, AioTranslate } from '@all-in-one/ui';
+import { EnglishApi } from './english-api';
 
 @Component({
   imports: [AioButton, AioTranslate],

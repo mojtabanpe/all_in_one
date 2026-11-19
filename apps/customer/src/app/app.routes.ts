@@ -41,7 +41,9 @@ export const appRoutes: Route[] = [
       {
         path: 'saved-sample-cards',
         loadComponent: () =>
-          import('./saved-sample-cards').then((m) => m.SavedSampleCards),
+          import('@all-in-one/applets/english-learning/web').then(
+            (m) => m.SavedSampleCards,
+          ),
       },
       {
         path: 'account',
