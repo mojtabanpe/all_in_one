@@ -88,4 +88,4 @@ docker compose -f deploy/compose.yml exec -T postgres pg_dump -U aio -Fc all_in_
 
 - کانتینرها فقط روی loopback گوش می‌دهند (`API_HOST`، `HOST`، `listen 127.0.0.1:4320`).
 - `NG_ALLOWED_HOSTS` باید دامنه باشد؛ وگرنه سایت SSR پاسخ 400 می‌دهد.
-- Service worker فقط در `/app/` کار می‌کند و درخواست‌های `/api` را کش نمی‌کند. `index.html`، `ngsw.json` و `ngsw-worker.js` با `no-cache` سرو می‌شوند تا نسخه تازه زود برسد و نوار «نسخه تازه آماده است» نشان داده شود.
+- Service worker فقط در `/app/` کار می‌کند و درخواست‌های `/api` را کش نمی‌کند. `index.html`، `ngsw.json`، `ngsw-worker.js` و `push-sw.js` (سرویس‌ورکر ثبت‌شده که `ngsw-worker.js` را بار می‌کند و کلیک اعلان را در آیفون مطمئن می‌کند) با `no-cache` سرو می‌شوند تا نسخه تازه زود برسد و نوار «نسخه تازه آماده است» نشان داده شود.

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
 import { httpResource } from '@angular/common/http';
 import type {
   BillingAccessState,
@@ -29,6 +29,35 @@ export function pushRoute(url: unknown): string | null {
   )
     return null;
   return url.slice('/app'.length);
+}
+
+/** A tap is acted on only shortly after it happened, never on a later visit. */
+export const PUSH_CLICK_MAX_AGE_MS = 120_000;
+
+/** Reads and removes the tap push-sw.js remembered; the url when it is recent. */
+export async function takePendingPushClick(
+  now = Date.now(),
+): Promise<string | null> {
+  if (typeof caches === 'undefined') return null;
+  try {
+    if (!(await caches.has('aio-push-click'))) return null;
+    const cache = await caches.open('aio-push-click');
+    const response = await cache.match('pending');
+    if (!response) return null;
+    await cache.delete('pending');
+    const { url, at } = (await response.json()) as {
+      url?: unknown;
+      at?: unknown;
+    };
+    return typeof url === 'string' &&
+      typeof at === 'number' &&
+      now - at >= 0 &&
+      now - at <= PUSH_CLICK_MAX_AGE_MS
+      ? url
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 @Component({
@@ -126,10 +155,39 @@ export class App {
     inject(SwPush, { optional: true })
       ?.notificationClicks.pipe(takeUntilDestroyed())
       .subscribe(({ notification }) => {
+        void takePendingPushClick();
         const route = pushRoute(
           (notification.data as { url?: unknown } | undefined)?.url,
         );
         if (route) void router.navigateByUrl(route);
       });
+    this.watchPendingPushClicks(router);
+  }
+
+  /** iPhone PWAs can miss ngsw's click message; push-sw.js also keeps the tap in a cache. */
+  private watchPendingPushClicks(router: Router) {
+    if (typeof document === 'undefined' || !('serviceWorker' in navigator))
+      return;
+    const open = async () => {
+      const route = pushRoute(await takePendingPushClick());
+      if (route) void router.navigateByUrl(route);
+    };
+    const visible = () => {
+      if (document.visibilityState === 'visible') void open();
+    };
+    const message = (event: MessageEvent) => {
+      if ((event.data as { type?: unknown } | null)?.type === 'AIO_PUSH_CLICK')
+        void open();
+    };
+    const stop = new AbortController();
+    document.addEventListener('visibilitychange', visible, {
+      signal: stop.signal,
+    });
+    window.addEventListener('pageshow', visible, { signal: stop.signal });
+    navigator.serviceWorker.addEventListener('message', message, {
+      signal: stop.signal,
+    });
+    inject(DestroyRef).onDestroy(() => stop.abort());
+    void open();
   }
 }

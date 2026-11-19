@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import type {
   CheckinInput,
   CreateCalendarInput,
@@ -156,8 +156,18 @@ export class PlannerApi {
   createHabitSection(name: string): Promise<HabitSection> {
     return this.post('/habit-sections', { name });
   }
-  checkin(id: string, input: CheckinInput): Promise<PlannerHabit> {
-    return this.post(`/habits/${id}/checkins`, input);
+  /** The last habit saved by a check-in, so a page that shows it updates when another part
+   * of the app (the reminder sheet) checks it in. */
+  private readonly checkedIn = signal<PlannerHabit | null>(null);
+  readonly habitCheckedIn = this.checkedIn.asReadonly();
+
+  async checkin(id: string, input: CheckinInput): Promise<PlannerHabit> {
+    const saved = await this.post<PlannerHabit>(
+      `/habits/${id}/checkins`,
+      input,
+    );
+    this.checkedIn.set(saved);
+    return saved;
   }
 
   // ---- focus, calendars, countdowns

@@ -53,7 +53,8 @@ export const appConfig: ApplicationConfig = {
       ]),
     ),
     // PWA (install on phone, offline shell, updates); production builds only.
-    provideServiceWorker('ngsw-worker.js', {
+    // push-sw.js wraps ngsw-worker.js and makes notification taps reliable on iPhone.
+    provideServiceWorker('push-sw.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000',
     }),

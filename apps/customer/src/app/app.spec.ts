@@ -13,7 +13,7 @@ import { provideServiceWorker } from '@angular/service-worker';
 import { ONBOARDING_COMPLETED_HEADER } from '@all-in-one/shared/schemas';
 import { AioNotifications } from '@all-in-one/ui';
 import { API_BASE_URL, GrowthAnalytics } from '@all-in-one/web/shared';
-import { App } from './app';
+import { App, PUSH_CLICK_MAX_AGE_MS, takePendingPushClick } from './app';
 import { AiPaywall, aiPaywallInterceptor } from './billing/ai-paywall';
 import { onboardingFeedbackInterceptor } from './onboarding-feedback';
 
@@ -108,5 +108,37 @@ describe('App', () => {
     http.expectOne(path).flush({}, { headers });
     expect(success).toHaveBeenCalledOnce();
     http.verify();
+  });
+});
+
+describe('takePendingPushClick', () => {
+  function fakeCaches(entry: unknown) {
+    const store = new Map<string, Response>();
+    if (entry) store.set('pending', new Response(JSON.stringify(entry)));
+    const cache = {
+      match: async (key: string) => store.get(key),
+      delete: async (key: string) => store.delete(key),
+    };
+    vi.stubGlobal('caches', {
+      has: async () => true,
+      open: async () => cache,
+    });
+    return store;
+  }
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('returns a recent tap once and removes it', async () => {
+    const store = fakeCaches({ url: '/app/planner/habits?remind=x', at: 1000 });
+    expect(await takePendingPushClick(1500)).toBe(
+      '/app/planner/habits?remind=x',
+    );
+    expect(store.size).toBe(0);
+    expect(await takePendingPushClick(1600)).toBeNull();
+  });
+
+  it('ignores a tap from an earlier visit', async () => {
+    const store = fakeCaches({ url: '/app/planner', at: 0 });
+    expect(await takePendingPushClick(PUSH_CLICK_MAX_AGE_MS + 1)).toBeNull();
+    expect(store.size).toBe(0);
   });
 });

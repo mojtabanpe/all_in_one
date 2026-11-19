@@ -2,9 +2,11 @@ import { httpResource } from '@angular/common/http';
 import {
   Component,
   computed,
+  effect,
   inject,
   linkedSignal,
   signal,
+  untracked,
 } from '@angular/core';
 import {
   addDays,
@@ -586,6 +588,14 @@ export class HabitsPage {
   protected readonly habits = linkedSignal(() =>
     this.res.hasValue() ? this.res.value() : [],
   );
+  /** A check-in saved elsewhere (the reminder sheet) shows on its card at once. */
+  private readonly checkinSync = (() => {
+    const before = this.api.habitCheckedIn();
+    return effect(() => {
+      const saved = this.api.habitCheckedIn();
+      if (saved && saved !== before) untracked(() => this.replace(saved));
+    });
+  })();
   protected readonly initialLoading = computed(
     () =>
       (this.res.isLoading() && !this.res.hasValue()) ||
