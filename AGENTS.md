@@ -829,3 +829,10 @@ Rules:
      Version 1: link an account with a one-time `t.me/<bot>?start=<code>` link, the 10:00 morning summary (154) in
      Telegram, and logging by message through the assistant's tools, scope check (110) and daily limits. Plan and
      status: «ربات تلگرام» in `docs/roadmaps/aio-activation-v1.fa.md`.
+
+169. **Telegram relay and server settings by Claude (2026-11-19).** The owner: «۲ و ۳ رو خودت انجام بده» and sent the
+     token of the new bot `@poshtetgarm_bot`. Claude deployed the relay as the Cloudflare Worker
+     `poshtetgarm-telegram-relay` (`https://poshtetgarm-telegram-relay.memnpe.workers.dev`, secret `RELAY_KEY`) and
+     wrote `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET`, `TELEGRAM_API_URL` and
+     `TELEGRAM_RELAY_KEY` into the server's `/opt/all-in-one/shared/.env` over `ssh flashcard`, like 81 and 115: back up
+     the file, keep its owner and mode, never print or commit the values. Code still deploys only through GitHub (38).

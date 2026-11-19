@@ -296,5 +296,11 @@ poshtetgarm.ir/app/billing
   - رله: `deploy/telegram-relay` (Worker، بدون ذخیرهٔ توکن، کلید `x-relay-key`) و راهنمای `README.fa.md`.
   - بررسی: ۸ آزمون ربات، آزمون محلی رله، و `lint test typecheck build` برای api، web-shared، customer،
     shared-schemas و localization (۱۷ از ۱۷).
-- `TODO` (مالک) ساخت ربات با BotFather و گذاشتن توکن در env سرور.
-- `TODO` (مالک) حساب Cloudflare برای استقرار رله (کد رله در مخزن نوشته می‌شود).
+- `DONE` (2026-11-19) مالک ربات `@poshtetgarm_bot` را ساخت و توکنش را داد؛ `getMe` موفق بود.
+- `DONE` (2026-11-19، دستور ۱۶۹) رله روی Cloudflare مستقر شد: `https://poshtetgarm-telegram-relay.memnpe.workers.dev`.
+  از سرور: `api.telegram.org` مستقیم timeout می‌دهد (۱۲ ثانیه)، ولی `getMe` از راه رله `ok` برگرداند و درخواست بدون
+  کلید ۴۰۴ گرفت.
+- `DONE` (2026-11-19، دستور ۱۶۹) پنج متغیر `TELEGRAM_*` در `/opt/all-in-one/shared/.env` سرور نوشته شد (نسخهٔ پشتیبان
+  گرفته شد، مالک و مجوز فایل همان ماند، مقدارها چاپ نشد). `compose.yml` این فایل را به کانتینر api می‌دهد.
+- `TODO` بعد از انتشار کد ربات: `setWebhook` روی `https://poshtetgarm.ir/api/telegram/webhook` (از بیرون ایران پاسخ
+  ۲۰۰ داد) با `secret_token`؛ اگر تلگرام نرسید، روی `<رله>/webhook`. بعد آزمایش با یک حساب واقعی.
