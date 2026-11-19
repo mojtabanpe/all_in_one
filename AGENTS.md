@@ -843,3 +843,9 @@ Rules:
      and «عضو شدم», which checks again and finishes a pending link. Only a channel admin can read members, so
      `@poshtetgarm_bot` must be an admin of the channel; until then, or when Telegram cannot be reached, the check
      lets users through (logged) rather than locking everyone out.
+
+171. **Read anything on the server (2026-11-19).** The owner: «رو سرور هر چی دوس داری بخون» (then «ssh flashcard»).
+     Claude may read the production server over `ssh flashcard` without asking each time: logs, container state,
+     configuration file names and read-only database queries. Reading never prints secrets or personal data into the
+     chat beyond what the task needs; anything that changes the server, its files or its data still needs the owner's
+     word (38, 81, 115, 169).
