@@ -1,7 +1,11 @@
 import { AioLocale } from '@all-in-one/ui';
-import { HttpClient } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpResponse,
+  type HttpInterceptorFn,
+} from '@angular/common/http';
 import { DestroyRef, effect, inject, Injectable, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, tap } from 'rxjs';
 import type { LocalReminder } from '@all-in-one/shared/schemas';
 import { API_BASE_URL } from '../api/api-base-url';
 
@@ -19,8 +23,10 @@ declare global {
     };
   }
 }
-/** How often an open app refreshes the reminders scheduled on the device. */
-const LOCAL_REFRESH_MS = 10 * 60_000;
+/** Changes made in a burst (several requests) resync the device schedule once. */
+const LOCAL_RESYNC_DELAY_MS = 1500;
+/** Requests that can add, move or remove a reminder: planner, notification settings, English, the assistant. */
+const SCHEDULE_PATHS = /\/api\/(planner|push|english|assistant)\//;
 
 /** The shell only provides OS permission/token; all API calls use our session cookie. */
 @Injectable({ providedIn: 'root' })
@@ -37,6 +43,14 @@ export class NativePush {
   private pendingSync?: Promise<void>;
   private paused = false;
   private local = false;
+  private resync?: ReturnType<typeof setTimeout>;
+
+  /** A change was saved: reschedule the device's reminders shortly after (one resync for a burst). */
+  changed() {
+    if (!this.local) return;
+    clearTimeout(this.resync);
+    this.resync = setTimeout(() => void this.schedule(), LOCAL_RESYNC_DELAY_MS);
+  }
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -58,7 +72,8 @@ export class NativePush {
           signal: listeners.signal,
         },
       );
-      // Local reminders: refresh when the app comes back to the front and every 10 minutes while it is open.
+      // Local reminders: changes made elsewhere (Telegram, ChatGPT) are picked up when the app comes back to the
+      // front; changes made in the app resync at once through `localScheduleInterceptor`.
       const refresh = () => {
         if (this.local && document.visibilityState === 'visible')
           void this.schedule();
@@ -66,8 +81,9 @@ export class NativePush {
       document.addEventListener('visibilitychange', refresh, {
         signal: listeners.signal,
       });
-      const timer = setInterval(refresh, LOCAL_REFRESH_MS);
-      listeners.signal.addEventListener('abort', () => clearInterval(timer));
+      listeners.signal.addEventListener('abort', () =>
+        clearTimeout(this.resync),
+      );
     }
     effect(() => {
       this.locale.language();
@@ -209,3 +225,17 @@ export class NativePush {
     ).join('');
   }
 }
+
+/**
+ * After every successful change to the planner, notification settings, English or the assistant, the reminders
+ * scheduled on the Android device are resynced (a Pomodoro start or pause included), so they match at once.
+ */
+export const localScheduleInterceptor: HttpInterceptorFn = (req, next) => {
+  if (req.method === 'GET' || !SCHEDULE_PATHS.test(req.url)) return next(req);
+  const native = inject(NativePush);
+  return next(req).pipe(
+    tap((event) => {
+      if (event instanceof HttpResponse && event.ok) native.changed();
+    }),
+  );
+};

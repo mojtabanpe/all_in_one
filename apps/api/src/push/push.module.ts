@@ -26,6 +26,7 @@ import {
   nativePushSchema,
   type NativePushInput,
   localScheduleQuerySchema,
+  LOCAL_SCHEDULE_LIMIT,
   type LocalScheduleQuery,
 } from '@all-in-one/shared/schemas';
 import { PushService } from './push.service';
@@ -34,7 +35,10 @@ import { TrialEndingPush } from './trial-ending';
 
 @Controller('push')
 class PushController {
-  constructor(private readonly push: PushService) {}
+  constructor(
+    private readonly push: PushService,
+    private readonly trialEnding: TrialEndingPush,
+  ) {}
   @Get('review-settings') reviewSettings(@CurrentUser() user: AuthUser) {
     return this.push.reviewSettings(user.id);
   }
@@ -58,11 +62,18 @@ class PushController {
   }
   /** Upcoming timed reminders for the Android app to schedule on the device (Google push is blocked in Iran). */
   @Get('local-schedule')
-  localSchedule(
+  async localSchedule(
     @CurrentUser() user: AuthUser,
     @Query({ schema: localScheduleQuerySchema }) query: LocalScheduleQuery,
   ) {
-    return this.push.localSchedule(user.id, query.language);
+    const language = query.language ?? 'fa';
+    const [items, trial] = await Promise.all([
+      this.push.localSchedule(user.id, language),
+      this.trialEnding.localReminder(user.id, language).catch(() => null),
+    ]);
+    return (trial ? [...items, trial] : items)
+      .sort((a, b) => a.at - b.at)
+      .slice(0, LOCAL_SCHEDULE_LIMIT);
   }
   @Get('weekly-progress')
   weeklyProgress(@CurrentUser() user: AuthUser) {

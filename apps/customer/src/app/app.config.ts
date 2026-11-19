@@ -20,6 +20,7 @@ import {
 import { provideServiceWorker } from '@angular/service-worker';
 import {
   authInterceptor,
+  localScheduleInterceptor,
   restartRetryInterceptor,
 } from '@all-in-one/web/shared';
 import { aiPaywallInterceptor } from './billing/ai-paywall';
@@ -48,6 +49,7 @@ export const appConfig: ApplicationConfig = {
         authInterceptor,
         aiPaywallInterceptor,
         onboardingFeedbackInterceptor,
+        localScheduleInterceptor,
       ]),
     ),
     // PWA (install on phone, offline shell, updates); production builds only.

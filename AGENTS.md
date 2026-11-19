@@ -879,7 +879,10 @@ Rules:
      the Bazaar/Myket apps and never reached the server: FCM needs the phone itself to reach Google, which is blocked
      in Iran, and no relay can fix that leg. The owner agreed («اوکی») to local notifications: from shell 1.0.6 the
      Android app does not use Firebase; the web app sends the next week's timed reminders
-     (`GET /api/push/local-schedule`: task reminders, habit reminders, language review, morning summary; at most 60)
-     to the app on open, on return to the front and every 10 minutes, and the app schedules them with
-     `flutter_local_notifications` (inexact, no exact-alarm permission, kept across reboots). Server-only notices
-     (trial ending, weekly report) reach Android users through the Telegram bot and SMS. macOS and the PWA are unchanged.
+     (`GET /api/push/local-schedule`: task and habit reminders, language review, morning summary, a running
+     Pomodoro's end, the Saturday report and first-week nudges, and the trial-ending reminder; at most 60) to the app;
+     the app schedules them with `flutter_local_notifications` (inexact, no exact-alarm permission, kept across
+     reboots). The owner asked why every 10 minutes and not at the moment of change: the schedule is resent right
+     after every saved change in the app (`localScheduleInterceptor`: non-GET planner, push, English and assistant
+     requests, a burst resyncs once), and on open and return to the front for changes made in Telegram or ChatGPT.
+     macOS and the PWA are unchanged.

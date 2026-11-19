@@ -848,11 +848,30 @@ describe('Local schedule for the Android app', () => {
         findUnique: vi.fn().mockResolvedValue({ enabled: true, time: '20:30' }),
       },
       progressNotificationSetting: {
-        findUnique: vi
-          .fn()
-          .mockResolvedValue({ dailyTasks: true, dailyTasksTime: '10:00' }),
+        findUnique: vi.fn().mockResolvedValue({
+          dailyTasks: true,
+          dailyTasksTime: '10:00',
+          weekly: true,
+          firstWeek: false,
+        }),
       },
       englishCard: { count: vi.fn().mockResolvedValue(3) },
+      focusPushTimer: {
+        // A running Pomodoro ending at 11:00 Tehran.
+        findMany: vi
+          .fn()
+          .mockResolvedValue([
+            { id: 'f1', dueAt: new Date('2026-11-19T07:30:00Z') },
+          ]),
+      },
+      user: {
+        findUnique: vi.fn().mockResolvedValue({
+          createdAt: new Date('2026-11-01T08:00:00Z'),
+          role: 'CUSTOMER',
+          emailVerifiedAt: null,
+          phoneVerifiedAt: new Date('2026-11-01T08:00:00Z'),
+        }),
+      },
     };
     const tasks = {
       filter: vi.fn().mockResolvedValue([
@@ -891,14 +910,21 @@ describe('Local schedule for the Android app', () => {
     // 09:00 now: the 08:00 task and 08:00 habit are past; 10:00 summary, 16:30 and 17:00 task, 20:00 habit, 20:30 review.
     expect(today.map((i) => i.id.split(':')[0])).toEqual([
       'daily-tasks',
+      'focus',
       'task',
       'task',
       'habit',
       'review',
     ]);
     expect(today[0].title).toBe('You have 2 tasks planned for today');
-    expect(today[1].title).toBe('Dentist');
-    expect(today[1].at).toBe(Date.parse('2026-11-19T13:00:00Z'));
+    expect(today[1].title).toBe('Pomodoro complete. Time for a break.');
+    expect(today[2].title).toBe('Dentist');
+    expect(today[2].at).toBe(Date.parse('2026-11-19T13:00:00Z'));
+    // Saturday 2026-11-21, 18:00 Tehran: the weekly report.
+    expect(items.find((i) => i.id === 'progress:2026-11-21')).toMatchObject({
+      at: Date.parse('2026-11-21T14:30:00Z'),
+      url: '/app/account#weekly-progress',
+    });
     expect(items.every((i) => i.at > now.getTime())).toBe(true);
     expect(items.every((i) => i.url.startsWith('/app/'))).toBe(true);
     expect(items.length).toBeLessThanOrEqual(60);

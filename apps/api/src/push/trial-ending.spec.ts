@@ -96,4 +96,32 @@ describe('trial-ending push', () => {
     expect(db.pushSubscription.findMany).not.toHaveBeenCalled();
     expect(send).not.toHaveBeenCalled();
   });
+
+  describe('on-device reminder (Android)', () => {
+    it('is scheduled one day before the end, inside 09:00–20:00 Tehran', async () => {
+      // Ends 2026-11-20 03:00 Tehran → a day before is 03:00, moved to 09:00 on 11-19.
+      const { sweep } = setup({
+        tier: 'trial',
+        trialUntil: '2026-11-19T23:30:00Z',
+        aiUntil: '2026-11-19T23:30:00Z',
+      });
+      const reminder = await sweep.localReminder('u1', 'en', now);
+      expect(reminder).toMatchObject({
+        at: Date.parse('2026-11-19T05:30:00Z'),
+        url: '/app/billing',
+      });
+      expect(reminder?.title).not.toContain('هوش');
+    });
+
+    it('is not scheduled when paid time or an earned week follows, or outside a trial', async () => {
+      for (const access of [
+        { tier: 'trial', trialUntil: hours(60), aiUntil: hours(200) },
+        { tier: 'paid', trialUntil: null, aiUntil: hours(200) },
+        { tier: 'trial', trialUntil: hours(-1), aiUntil: hours(-1) },
+      ]) {
+        const { sweep } = setup(access);
+        expect(await sweep.localReminder('u1', 'fa', now)).toBeNull();
+      }
+    });
+  });
 });

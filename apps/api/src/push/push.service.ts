@@ -421,8 +421,10 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * The timed reminders of the next week for the Android app to schedule on the device: task reminders, habit
-   * reminders on their weekdays, the language review time (when the account has cards) and the morning summary on
-   * days with open tasks. Same wording as the server push; soonest first, at most `LOCAL_SCHEDULE_LIMIT`.
+   * reminders on their weekdays, the language review time (when the account has cards), the morning summary on
+   * days with open tasks, a running Pomodoro's end (the web app resyncs right after start, pause or reset), the
+   * Saturday report and the first-week nudges at 18:00. Same wording as the server push; soonest first, at most
+   * `LOCAL_SCHEDULE_LIMIT`. The trial-ending reminder is added by the controller (`TrialEndingPush`).
    */
   async localSchedule(
     userId: string,
@@ -495,13 +497,62 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
         }
       }
 
-    const [review, progress, cards] = await Promise.all([
+    const [review, progress, cards, focus, user] = await Promise.all([
       this.db.reviewReminderSetting.findUnique({ where: { userId } }),
       this.db.progressNotificationSetting.findUnique({ where: { userId } }),
       this.db.englishCard.count({
         where: { userId, suspended: false, deck: { userId } },
       }),
+      this.db.focusPushTimer.findMany({
+        where: { userId, dueAt: { gt: now } },
+        select: { id: true, dueAt: true },
+      }),
+      this.db.user.findUnique({
+        where: { id: userId },
+        select: {
+          createdAt: true,
+          role: true,
+          emailVerifiedAt: true,
+          phoneVerifiedAt: true,
+        },
+      }),
     ]);
+    for (const timer of focus)
+      add(
+        `focus:${timer.id}`,
+        timer.dueAt.getTime(),
+        t('پومودورو تمام شد؛ وقت استراحت است.'),
+        '/app/planner/focus',
+      );
+    // Same rule as sendProgress: confirmed customers, 18:00 Tehran, at most one a day (the report wins).
+    if (
+      progress &&
+      user?.role === 'CUSTOMER' &&
+      (user.emailVerifiedAt || user.phoneVerifiedAt)
+    ) {
+      const signup = isoDateIn(user.createdAt, 'Asia/Tehran');
+      for (const date of days) {
+        const at = zonedInstant(date, '18:00', 'Asia/Tehran')?.getTime();
+        const saturday = new Date(date).getUTCDay() === 6;
+        if (progress.weekly && saturday)
+          add(
+            `progress:${date}`,
+            at,
+            t('گزارش هفتگی‌ات آماده است'),
+            '/app/account#weekly-progress',
+          );
+        else if (
+          progress.firstWeek &&
+          [1, 3, 5].some((day) => addDays(signup, day) === date)
+        )
+          add(
+            `progress:${date}`,
+            at,
+            t('برای یک قدم کوچک به Poshtetgarm برگرد'),
+            '/app/',
+          );
+      }
+    }
     if (review?.enabled && cards)
       for (const date of days) {
         const at = zonedInstant(date, review.time, 'Asia/Tehran')?.getTime();

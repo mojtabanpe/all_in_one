@@ -8,6 +8,8 @@ import { PrismaService } from '@all-in-one/api/db';
 import { isoDateIn, zonedInstant } from '@all-in-one/applets/planner/contracts';
 import { BillingService } from '../billing/billing.service';
 import { PushService } from './push.service';
+import { loadMessages, translateMessage } from '@all-in-one/localization';
+import type { LocalReminder } from '@all-in-one/shared/schemas';
 
 const DAY = 86_400_000;
 
@@ -34,6 +36,42 @@ export class TrialEndingPush implements OnModuleInit, OnModuleDestroy {
   }
   onModuleDestroy() {
     if (this.timer) clearInterval(this.timer);
+  }
+
+  /**
+   * The same reminder for the Android app to schedule on the device: one day before a trial that nothing follows
+   * ends, moved into the 09:00–21:00 Tehran window of that day.
+   */
+  async localReminder(
+    userId: string,
+    language: 'fa' | 'en',
+    now = new Date(),
+  ): Promise<LocalReminder | null> {
+    const access = await this.billing.access(userId, now);
+    const end = access.trialUntil ? Date.parse(access.trialUntil) : 0;
+    if (
+      access.tier !== 'trial' ||
+      end <= now.getTime() ||
+      (access.aiUntil && Date.parse(access.aiUntil) > end)
+    )
+      return null;
+    let at = end - DAY;
+    const day = isoDateIn(new Date(at), 'Asia/Tehran');
+    const from = zonedInstant(day, '09:00', 'Asia/Tehran')?.getTime();
+    const until = zonedInstant(day, '20:00', 'Asia/Tehran')?.getTime();
+    if (from !== undefined && at < from) at = from;
+    if (until !== undefined && at > until) at = until;
+    if (at <= now.getTime()) return null;
+    await loadMessages();
+    return {
+      id: `trial-ending:${end}`,
+      at,
+      title: translateMessage(
+        'دسترسی آزمایشی هوش مصنوعی‌ات فردا تمام می‌شود',
+        language,
+      ),
+      url: '/app/billing',
+    };
   }
 
   async tick(now = new Date()) {
