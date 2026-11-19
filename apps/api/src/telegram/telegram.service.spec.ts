@@ -5,6 +5,7 @@ import {
   summaryText,
   telegramCodeHash,
   TelegramService,
+  MENU_VERSION,
 } from './telegram.service';
 import { TelegramSectionsService } from './telegram-sections';
 import { parseExpenseLines } from './telegram-format';
@@ -232,7 +233,12 @@ describe('Telegram bot', () => {
     });
     await service.handle(message('/start abcdefghijklmnopqrstuvwx'));
     expect(db.telegramLink.create).toHaveBeenCalledWith({
-      data: { userId: 'u1', chatId: 42n, language: 'fa' },
+      data: {
+        userId: 'u1',
+        chatId: 42n,
+        language: 'fa',
+        menuVersion: MENU_VERSION,
+      },
     });
     expect(sent[0].text).toContain('وصل شد');
 
@@ -517,15 +523,43 @@ describe('Telegram bot', () => {
       await t.service.handle(message('/start abcdefghijklmnopqrstuvwx'));
       expect(t.sent[0].buttons).toMatchObject({
         keyboard: [
-          [{ text: 'برنامه‌ریز' }, { text: 'زبان' }],
-          [{ text: 'سلامت' }],
-          [{ text: 'کارهای امروز' }, { text: 'راهنما' }],
+          [{ text: '📋 کارهای امروز' }, { text: '➕ کار جدید' }],
+          [{ text: '🗓 برنامه‌ریز' }, { text: '🔤 زبان' }],
+          [{ text: '🥗 سلامت' }],
+          [{ text: '❓ راهنما' }],
         ],
       });
       t.db.telegramLink.findUnique.mockResolvedValue(linked);
-      await t.service.handle(message('راهنما'));
+      await t.service.handle(message('❓ راهنما'));
       expect(t.sent[1].text).toContain('سلامت');
       expect(t.assistant.chat).not.toHaveBeenCalled();
+    });
+
+    it('a chat with an older keyboard gets the new one once, then carries on', async () => {
+      const t = setup();
+      t.db.telegramLink.findUnique.mockResolvedValue({
+        ...linked,
+        menuVersion: 1,
+      });
+      // An old keyboard's label without an icon still works.
+      await t.service.handle(message('کارهای امروز'));
+      expect(t.db.telegramLink.updateMany).toHaveBeenCalledWith({
+        where: { chatId: 42n },
+        data: { menuVersion: MENU_VERSION },
+      });
+      expect(t.sent[0].text).toContain('منوی ربات به‌روز شد');
+      expect(JSON.stringify(t.sent[0].buttons)).toContain('➕ کار جدید');
+      expect(t.sent[1].text).toContain('کار باز');
+    });
+
+    it('«➕ کار جدید» asks for the task like the planner section', async () => {
+      const t = setup();
+      t.db.telegramLink.findUnique.mockResolvedValue(linked);
+      await t.service.handle(message('➕ کار جدید'));
+      expect(t.db.telegramLink.updateMany).toHaveBeenCalledWith({
+        where: { chatId: 42n },
+        data: { pending: expect.objectContaining({ kind: 'task' }) },
+      });
     });
 
     it('«کارهای امروز» sends today on demand, or says the day is empty', async () => {

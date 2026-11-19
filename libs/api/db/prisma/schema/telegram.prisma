@@ -7,6 +7,8 @@ model TelegramLink {
   language String @default("fa") @db.VarChar(2)
   /// Tehran day of the last morning summary, so one goes out per day.
   lastSummaryDay String? @db.VarChar(10)
+  /// Version of the reply keyboard this chat last got (MENU_VERSION in the bot); older ones get the new one.
+  menuVersion Int @default(0)
   /// The running shadowing practice in Telegram: title, sentences, current index and per-sentence scores.
   shadow Json?
   /// What the bot waits for in the next message (a meal, an expense, a weight, a writing answer…) and when it asked.

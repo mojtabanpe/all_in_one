@@ -60,6 +60,7 @@ export const MENU_LABELS = {
   health: { fa: 'سلامت', en: 'Health' },
   expenses: { fa: 'مخارج', en: 'Expenses' },
   today: { fa: 'کارهای امروز', en: "Today's tasks" },
+  newTask: { fa: 'کار جدید', en: 'New task' },
   /** Kept for keyboards sent before directive 174. */
   shadow: { fa: 'شادوینگ', en: 'Shadowing' },
   help: { fa: 'راهنما', en: 'Help' },
@@ -70,25 +71,57 @@ const SECTIONS: readonly AppApplet[] = [
   'health',
   'expenses',
 ];
-const isMenu = (text: string, key: keyof typeof MENU_LABELS) =>
-  text === MENU_LABELS[key].fa || text === MENU_LABELS[key].en;
+/** An icon in front of each button, so the menu is quick to scan (the text alone still works when typed). */
+const MENU_ICONS: Partial<Record<keyof typeof MENU_LABELS, string>> = {
+  today: '📋',
+  newTask: '➕',
+  planner: '🗓',
+  english: '🔤',
+  health: '🥗',
+  expenses: '💰',
+  help: '❓',
+};
+/**
+ * Raised when the keyboard changes: a chat whose saved version is lower gets the new keyboard on its next message
+ * or button, since Telegram keeps showing the last keyboard the bot sent.
+ */
+export const MENU_VERSION = 2;
+const button = (key: keyof typeof MENU_LABELS, language: Lang) => ({
+  text: `${MENU_ICONS[key] ? `${MENU_ICONS[key]} ` : ''}${MENU_LABELS[key][language]}`,
+});
+/** Matches a label with or without its icon (older keyboards had none). */
+const isMenu = (text: string, key: keyof typeof MENU_LABELS) => {
+  const plain = text.replace(/^[^\p{L}]+/u, '').trim();
+  return plain === MENU_LABELS[key].fa || plain === MENU_LABELS[key].en;
+};
 
 /** The persistent buttons above the keyboard once the account is linked: the sections the account has on. */
 export function menuKeyboard(
   language: Lang,
   applets: readonly AppApplet[] = DEFAULT_CUSTOMER_APPLETS,
 ) {
+  // Most used first: today's tasks and a new task; then the sections two by two; help last.
+  const rows: { text: string }[][] = [
+    [
+      button('today', language),
+      ...(applets.includes('planner') ? [button('newTask', language)] : []),
+    ],
+  ];
   const sections = SECTIONS.filter((section) => applets.includes(section)).map(
-    (section) => ({ text: MENU_LABELS[section][language] }),
+    (section) => button(section, language),
   );
-  const rows: { text: string }[][] = [];
   for (let i = 0; i < sections.length; i += 2)
     rows.push(sections.slice(i, i + 2));
-  rows.push([
-    { text: MENU_LABELS.today[language] },
-    { text: MENU_LABELS.help[language] },
-  ]);
-  return { keyboard: rows, resize_keyboard: true, is_persistent: true };
+  rows.push([button('help', language)]);
+  return {
+    keyboard: rows,
+    resize_keyboard: true,
+    is_persistent: true,
+    input_field_placeholder:
+      language === 'en'
+        ? 'Write a task or a meal…'
+        : 'کار یا وعده‌ات را بنویس…',
+  };
 }
 
 export const HELP_TEXT = {
@@ -118,6 +151,7 @@ export const HELP_TEXT = {
 const COMMANDS = {
   fa: [
     { command: 'today', description: 'کارهای امروز' },
+    { command: 'new', description: 'کار جدید' },
     { command: 'planner', description: 'برنامه‌ریز' },
     { command: 'english', description: 'زبان' },
     { command: 'health', description: 'سلامت' },
@@ -128,6 +162,7 @@ const COMMANDS = {
   ],
   en: [
     { command: 'today', description: "Today's tasks" },
+    { command: 'new', description: 'New task' },
     { command: 'planner', description: 'Planner' },
     { command: 'english', description: 'English' },
     { command: 'health', description: 'Health' },
@@ -508,6 +543,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       );
     }
     if (!(await this.member(from))) return this.joinPrompt(chatId, language);
+    await this.refreshMenu(link, chatId, language);
     const pending = activePending(link.pending);
     const ctx: SectionContext = {
       userId: link.userId,
@@ -522,7 +558,11 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     );
     if (
       pending &&
-      (command || section || isMenu(text, 'today') || isMenu(text, 'help'))
+      (command ||
+        section ||
+        isMenu(text, 'today') ||
+        isMenu(text, 'newTask') ||
+        isMenu(text, 'help'))
     )
       await this.sections.savePending(chatId, null);
     if (text === '/help' || isMenu(text, 'help'))
@@ -533,6 +573,11 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       );
     if (text === '/today' || isMenu(text, 'today'))
       return this.today(link.userId, chatId, language);
+    if (text === '/new' || isMenu(text, 'newTask'))
+      return this.run(
+        ctx,
+        async () => (await this.sections.callback('p:a', ctx))?.outs ?? [],
+      );
     if (section) return this.run(ctx, () => this.sections.menu(section, ctx));
     if (text === '/shadow' || /^(شادوینگ|shadowing|shadow)$/i.test(text))
       return this.startShadow(link.userId, chatId, language);
@@ -572,6 +617,25 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
         async () => (await this.sections.text(text.slice(0, 4000), ctx)) ?? [],
       );
     await this.chat(link.userId, chatId, language, text.slice(0, 4000));
+  }
+
+  /** A chat still showing an older keyboard gets the current one once (Telegram keeps the last one sent). */
+  private async refreshMenu(
+    link: { userId: string; menuVersion?: number | null },
+    chatId: bigint,
+    language: Lang,
+  ) {
+    // The column is never null in the database (default 0); a missing value is treated as current.
+    if ((link.menuVersion ?? MENU_VERSION) >= MENU_VERSION) return;
+    await this.db.telegramLink.updateMany({
+      where: { chatId },
+      data: { menuVersion: MENU_VERSION },
+    });
+    await this.reply(
+      chatId,
+      language === 'en' ? 'The bot menu is updated.' : 'منوی ربات به‌روز شد.',
+      await this.keyboard(link.userId, language),
+    );
   }
 
   /** The reply keyboard with the sections this account has on. */
@@ -628,7 +692,12 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
         where: { OR: [{ chatId }, { userId: row.userId }] },
       }),
       this.db.telegramLink.create({
-        data: { userId: row.userId, chatId, language: row.language },
+        data: {
+          userId: row.userId,
+          chatId,
+          language: row.language,
+          menuVersion: MENU_VERSION,
+        },
       }),
       this.db.telegramLinkCode.deleteMany({ where: { userId: row.userId } }),
     ]);
@@ -940,6 +1009,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
         await answer('');
         return this.joinPrompt(chatId, language);
       }
+      await this.refreshMenu(link, chatId, language);
       const ctx: SectionContext = {
         userId: link.userId,
         chatId,
