@@ -874,3 +874,12 @@ Rules:
      typed values that need no AI work for every linked account; meals, practice generation and feedback, AI reading
      texts and assistant fallbacks need AI access, with the scope check (110) and daily limits. Channel membership (170)
      still gates everything.
+
+175. **Android reminders are scheduled on the device (2026-11-19).** All four failed notification opt-ins were in
+     the Bazaar/Myket apps and never reached the server: FCM needs the phone itself to reach Google, which is blocked
+     in Iran, and no relay can fix that leg. The owner agreed («اوکی») to local notifications: from shell 1.0.6 the
+     Android app does not use Firebase; the web app sends the next week's timed reminders
+     (`GET /api/push/local-schedule`: task reminders, habit reminders, language review, morning summary; at most 60)
+     to the app on open, on return to the front and every 10 minutes, and the app schedules them with
+     `flutter_local_notifications` (inexact, no exact-alarm permission, kept across reboots). Server-only notices
+     (trial ending, weekly report) reach Android users through the Telegram bot and SMS. macOS and the PWA are unchanged.

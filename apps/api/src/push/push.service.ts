@@ -25,7 +25,12 @@ import type {
   ProgressNotificationSettings,
   WeeklyProgress,
 } from '@all-in-one/shared/schemas';
-import { DAILY_TASKS_DEFAULT_TIME } from '@all-in-one/shared/schemas';
+import {
+  DAILY_TASKS_DEFAULT_TIME,
+  LOCAL_SCHEDULE_DAYS,
+  LOCAL_SCHEDULE_LIMIT,
+  type LocalReminder,
+} from '@all-in-one/shared/schemas';
 import * as webpush from 'web-push';
 import { createHash } from 'node:crypto';
 import { NativePush } from './native-push';
@@ -412,6 +417,118 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
           });
       }
     }
+  }
+
+  /**
+   * The timed reminders of the next week for the Android app to schedule on the device: task reminders, habit
+   * reminders on their weekdays, the language review time (when the account has cards) and the morning summary on
+   * days with open tasks. Same wording as the server push; soonest first, at most `LOCAL_SCHEDULE_LIMIT`.
+   */
+  async localSchedule(
+    userId: string,
+    language: 'fa' | 'en' = 'fa',
+    now = new Date(),
+  ): Promise<LocalReminder[]> {
+    await loadMessages();
+    const t = (text: string, values: readonly (string | number)[] = []) =>
+      translateMessage(text, language, values);
+    const today = isoDateIn(now, 'Asia/Tehran');
+    const last = addDays(today, LOCAL_SCHEDULE_DAYS - 1);
+    const end = now.getTime() + LOCAL_SCHEDULE_DAYS * 86_400_000;
+    const items: LocalReminder[] = [];
+    const add = (
+      id: string,
+      at: number | undefined,
+      title: string,
+      url: string,
+    ) => {
+      if (at !== undefined && at > now.getTime() && at <= end)
+        items.push({ id, at, title, url });
+    };
+    const days = Array.from({ length: LOCAL_SCHEDULE_DAYS }, (_, i) =>
+      addDays(today, i),
+    );
+
+    const tasks = (
+      await this.tasks.filter(
+        userId,
+        { from: today, to: last, status: 'open' },
+        true,
+      )
+    ).filter((task) => task.kind === 'TASK');
+    for (const task of tasks) {
+      if (!task.date || !task.time) continue;
+      const at = zonedInstant(task.date, task.time, 'Asia/Tehran');
+      if (!at) continue;
+      const offsets = task.reminders
+        .map(reminderOffset)
+        .filter((x): x is number => x !== null);
+      for (const offset of new Set(offsets))
+        add(
+          `task:${task.id}:${at.getTime() + offset}`,
+          at.getTime() + offset,
+          task.title,
+          `/app/planner?remind=${encodeURIComponent(`task:${task.id}`)}`,
+        );
+    }
+
+    const habits = await this.db.plannerHabit.findMany({
+      where: { userId, archived: false, NOT: { reminders: { isEmpty: true } } },
+      include: {
+        checkins: { where: { date: new Date(`${today}T00:00:00Z`) } },
+      },
+    });
+    for (const habit of habits)
+      for (const date of days) {
+        if (!habitDueOn(habit, date)) continue;
+        if (date === today && habit.checkins.some((c) => c.value >= habit.goal))
+          continue;
+        for (const time of new Set(habit.reminders)) {
+          if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) continue;
+          const at = zonedInstant(date, time, 'Asia/Tehran')?.getTime();
+          add(
+            `habit:${habit.id}:${at}`,
+            at,
+            t('وقت {0} است', [habit.name]),
+            `/app/planner/habits?remind=${encodeURIComponent(`habit:${habit.id}:${date}`)}`,
+          );
+        }
+      }
+
+    const [review, progress, cards] = await Promise.all([
+      this.db.reviewReminderSetting.findUnique({ where: { userId } }),
+      this.db.progressNotificationSetting.findUnique({ where: { userId } }),
+      this.db.englishCard.count({
+        where: { userId, suspended: false, deck: { userId } },
+      }),
+    ]);
+    if (review?.enabled && cards)
+      for (const date of days) {
+        const at = zonedInstant(date, review.time, 'Asia/Tehran')?.getTime();
+        add(
+          `review:${date}`,
+          at,
+          t('وقت مرور کارت‌های زبان است'),
+          '/app/english',
+        );
+      }
+    if (progress?.dailyTasks)
+      for (const date of days) {
+        const open = tasks.filter((task) => task.date === date).length;
+        if (!open) continue;
+        const at = zonedInstant(
+          date,
+          progress.dailyTasksTime,
+          'Asia/Tehran',
+        )?.getTime();
+        add(
+          `daily-tasks:${date}`,
+          at,
+          t('امروز {0} کار در برنامه‌ات داری', [open]),
+          '/app/planner',
+        );
+      }
+    return items.sort((a, b) => a.at - b.at).slice(0, LOCAL_SCHEDULE_LIMIT);
   }
 
   async subscribe(userId: string, input: PushSubscriptionInput) {

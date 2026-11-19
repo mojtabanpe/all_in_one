@@ -89,3 +89,21 @@ export interface FocusPushDeadline {
   id: string;
   dueAt: string;
 }
+
+/**
+ * A reminder the Android app schedules on the device itself (no Google push service, which is blocked in Iran).
+ * `at` is epoch milliseconds; `url` is an `/app/…` path opened on tap.
+ */
+export interface LocalReminder {
+  id: string;
+  at: number;
+  title: string;
+  url: string;
+}
+/** At most this many reminders, over the next `LOCAL_SCHEDULE_DAYS` days, are scheduled on a device. */
+export const LOCAL_SCHEDULE_LIMIT = 60;
+export const LOCAL_SCHEDULE_DAYS = 7;
+export const localScheduleQuerySchema = z.object({
+  language: z.optional(z.enum(['fa', 'en'])),
+});
+export type LocalScheduleQuery = z.infer<typeof localScheduleQuerySchema>;

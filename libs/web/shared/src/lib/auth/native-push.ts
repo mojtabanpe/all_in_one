@@ -2,18 +2,25 @@ import { AioLocale } from '@all-in-one/ui';
 import { HttpClient } from '@angular/common/http';
 import { DestroyRef, effect, inject, Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import type { LocalReminder } from '@all-in-one/shared/schemas';
 import { API_BASE_URL } from '../api/api-base-url';
 
 interface NativeState {
   enabled: boolean;
   token?: string;
   platform: 'ANDROID' | 'MACOS';
+  /** Android builds from 1.0.6 schedule reminders on the device instead of using Google's push service. */
+  local?: boolean;
 }
 declare global {
   interface Window {
-    PoshtetgarmNative?: { request(method: string): Promise<NativeState> };
+    PoshtetgarmNative?: {
+      request(method: string, data?: unknown): Promise<NativeState>;
+    };
   }
 }
+/** How often an open app refreshes the reminders scheduled on the device. */
+const LOCAL_REFRESH_MS = 10 * 60_000;
 
 /** The shell only provides OS permission/token; all API calls use our session cookie. */
 @Injectable({ providedIn: 'root' })
@@ -29,6 +36,7 @@ export class NativePush {
   private endpoint?: string;
   private pendingSync?: Promise<void>;
   private paused = false;
+  private local = false;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -50,6 +58,16 @@ export class NativePush {
           signal: listeners.signal,
         },
       );
+      // Local reminders: refresh when the app comes back to the front and every 10 minutes while it is open.
+      const refresh = () => {
+        if (this.local && document.visibilityState === 'visible')
+          void this.schedule();
+      };
+      document.addEventListener('visibilitychange', refresh, {
+        signal: listeners.signal,
+      });
+      const timer = setInterval(refresh, LOCAL_REFRESH_MS);
+      listeners.signal.addEventListener('abort', () => clearInterval(timer));
     }
     effect(() => {
       this.locale.language();
@@ -61,12 +79,28 @@ export class NativePush {
     this.userId.set(userId);
     if (!userId) this.enabled.set(false);
   }
-  private request(method: string) {
+  private request(method: string, data?: unknown) {
     if (!window.PoshtetgarmNative)
       throw new Error('اتصال به اپ در دسترس نیست.');
-    return window.PoshtetgarmNative.request(method);
+    return window.PoshtetgarmNative.request(method, data);
+  }
+  /** The next week's reminders, from the server, scheduled on the device by the app. */
+  private async schedule() {
+    const items = await firstValueFrom(
+      this.http.get<LocalReminder[]>(`${this.api}/push/local-schedule`, {
+        params: { language: this.locale.language() },
+      }),
+    ).catch(() => null);
+    if (items && this.local && !this.paused)
+      await this.request('schedule', items).catch(() => undefined);
   }
   private async register(state: NativeState) {
+    this.local = !!state.local && state.enabled;
+    if (this.local) {
+      this.enabled.set(true);
+      await this.schedule();
+      return;
+    }
     if (!state.enabled || !state.token) return;
     const result = await firstValueFrom(
       this.http.put<{ endpoint: string }>(
@@ -110,9 +144,16 @@ export class NativePush {
     const status = await firstValueFrom(
       this.http.get<{ nativeEnabled: boolean }>(`${this.api}/push/status`),
     );
-    if (!status.nativeEnabled)
-      throw new Error('اعلان‌های اپ هنوز روی سرور تنظیم نشده‌اند.');
     const state = await this.request('enable');
+    if (state.local) {
+      if (!state.enabled) throw new Error('اجازهٔ دریافت اعلان داده نشد.');
+      await this.register(state);
+      return;
+    }
+    if (!status.nativeEnabled) {
+      await this.request('disable').catch(() => undefined);
+      throw new Error('اعلان‌های اپ هنوز روی سرور تنظیم نشده‌اند.');
+    }
     if (!state.enabled || !state.token)
       throw new Error('اجازهٔ دریافت اعلان داده نشد.');
     try {
@@ -128,6 +169,12 @@ export class NativePush {
     await this.pendingSync;
     // Restore the current token after a reload, without requiring permission again.
     const state = await this.request('status');
+    if (state.local) {
+      await this.request('disable');
+      this.local = false;
+      this.enabled.set(false);
+      return;
+    }
     const endpoint =
       this.endpoint ??
       (state.token ? `native:${await this.hash(state.token)}` : undefined);
@@ -141,6 +188,11 @@ export class NativePush {
   }
   async test() {
     await this.sync();
+    if (this.local) {
+      // A local reminder in a few seconds proves the device side without Google.
+      await this.request('test');
+      return;
+    }
     if (!this.enabled() || !this.endpoint)
       throw new Error('ابتدا اعلان‌ها را فعال کن.');
     await firstValueFrom(

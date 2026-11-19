@@ -7,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:timezone/timezone.dart' as tz;
 import 'package:webview_flutter/webview_flutter.dart';
 
 // Public Firebase app configuration only. A service-account key NEVER belongs here.
@@ -36,6 +37,62 @@ class NativePush {
   Uri? _pendingDestination;
   bool get configured => _firebaseConfig.isNotEmpty;
 
+  /// Android schedules reminders on the device: Google's push service (FCM) needs the phone to reach Google,
+  /// which is blocked in Iran. The web app sends the next week's reminders (`schedule`). No Firebase on Android,
+  /// so nothing arrives twice.
+  bool get localMode => Platform.isAndroid;
+
+  static const _details = NotificationDetails(
+    android: AndroidNotificationDetails(
+      'reminders',
+      'یادآوری‌ها',
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: 'ic_stat_notification',
+    ),
+  );
+
+  AndroidFlutterLocalNotificationsPlugin? get _android => _local
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >();
+
+  Future<bool> _permitted() async =>
+      (await _android?.areNotificationsEnabled()) ?? false;
+
+  /// Replaces every pending reminder with [items] (`{id, at, title, url}`, `at` in epoch ms).
+  Future<int> _schedule(Object? items) async {
+    await _local.cancelAllPendingNotifications();
+    if (!_enabled || items is! List) return 0;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    var count = 0;
+    for (final raw in items.take(60)) {
+      if (raw is! Map) continue;
+      final at = raw['at'];
+      final title = raw['title'];
+      final id = raw['id'];
+      final url = raw['url'];
+      if (at is! num || title is! String || id is! String) continue;
+      if (at <= now || notificationDestination(url as String?) == null) {
+        continue;
+      }
+      await _local.zonedSchedule(
+        id: id.hashCode & 0x7fffffff,
+        scheduledDate: tz.TZDateTime.fromMillisecondsSinceEpoch(
+          tz.UTC,
+          at.toInt(),
+        ),
+        notificationDetails: _details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        title: title,
+        body: 'Poshtetgarm',
+        payload: url,
+      );
+      count++;
+    }
+    return count;
+  }
+
   Future<File> get _preferences async {
     final dir = await getApplicationSupportDirectory();
     return File('${dir.path}/native-push.json');
@@ -50,7 +107,7 @@ class NativePush {
 
   Future<void> initialize() => _initializing ??= _initialize();
   Future<void> _initialize() async {
-    if (!configured) return;
+    if (!configured && !localMode) return;
     try {
       final data = jsonDecode(await (await _preferences).readAsString());
       _enabled = data['enabled'] == true;
@@ -59,18 +116,6 @@ class NativePush {
     } on FormatException {
       /* Invalid preference: opt out. */
     }
-    final config = Map<String, dynamic>.from(
-      jsonDecode(_firebaseConfig) as Map,
-    );
-    final options = FirebaseOptions(
-      apiKey: config['apiKey'] as String,
-      appId: config['appId'] as String,
-      messagingSenderId: config['messagingSenderId'] as String,
-      projectId: config['projectId'] as String,
-      iosBundleId: config['iosBundleId'] as String?,
-    );
-    await Firebase.initializeApp(options: options);
-    await FirebaseMessaging.instance.setAutoInitEnabled(_enabled);
     await _local.initialize(
       settings: const InitializationSettings(
         android: AndroidInitializationSettings('ic_stat_notification'),
@@ -94,6 +139,23 @@ class NativePush {
             importance: Importance.high,
           ),
         );
+    final launch = await _local.getNotificationAppLaunchDetails();
+    if (launch?.didNotificationLaunchApp == true) {
+      _open(launch?.notificationResponse?.payload);
+    }
+    if (localMode) return;
+    final config = Map<String, dynamic>.from(
+      jsonDecode(_firebaseConfig) as Map,
+    );
+    final options = FirebaseOptions(
+      apiKey: config['apiKey'] as String,
+      appId: config['appId'] as String,
+      messagingSenderId: config['messagingSenderId'] as String,
+      projectId: config['projectId'] as String,
+      iosBundleId: config['iosBundleId'] as String?,
+    );
+    await Firebase.initializeApp(options: options);
+    await FirebaseMessaging.instance.setAutoInitEnabled(_enabled);
     // Android foreground messages need a local OS notification; macOS uses APNs presentation.
     await FirebaseMessaging.instance
         .setForegroundNotificationPresentationOptions(
@@ -140,10 +202,6 @@ class NativePush {
     );
     final initial = await FirebaseMessaging.instance.getInitialMessage();
     if (initial != null) _open(initial.data['url']);
-    final launch = await _local.getNotificationAppLaunchDetails();
-    if (launch?.didNotificationLaunchApp == true) {
-      _open(launch?.notificationResponse?.payload);
-    }
   }
 
   void _open(String? path) {
@@ -182,12 +240,12 @@ class NativePush {
           pending.delete(reply.id); clearTimeout(task.timer);
           reply.error ? task.reject(new Error(reply.error)) : task.resolve(reply.result);
         };
-        window.PoshtetgarmNative = { request(method) {
+        window.PoshtetgarmNative = { request(method, data) {
           return new Promise((resolve, reject) => {
             const id = String(++sequence);
             const timer = setTimeout(() => { pending.delete(id); reject(new Error('ارتباط با اعلان‌های اپ برقرار نشد.')); }, 90000);
             pending.set(id, { resolve, reject, timer });
-            NativePushChannel.postMessage(JSON.stringify({ id, method, nonce }));
+            NativePushChannel.postMessage(JSON.stringify({ id, method, nonce, data }));
           });
         }};
         window.dispatchEvent(new Event('poshtetgarm-native-ready'));
@@ -214,6 +272,47 @@ class NativePush {
     final reply = <String, dynamic>{'id': request['id']};
     try {
       await initialize();
+      if (localMode) {
+        final method = request['method'];
+        if (method == 'disable') {
+          await _save(false);
+          await _local.cancelAll();
+        } else if (method == 'enable') {
+          final granted =
+              (await _android?.requestNotificationsPermission()) ??
+              await _permitted();
+          if (!granted) {
+            throw StateError(
+              'اجازهٔ اعلان بسته است؛ آن را در تنظیمات دستگاه فعال کن.',
+            );
+          }
+          await _save(true);
+        } else if (method == 'schedule') {
+          reply['result'] = {'scheduled': await _schedule(request['data'])};
+        } else if (method == 'test') {
+          await _local.show(
+            id: 1,
+            title: 'اعلان آزمایشی Poshtetgarm',
+            body: 'یادآورها روی همین گوشی زمان‌بندی می‌شوند.',
+            notificationDetails: _details,
+            payload: '/app/account',
+          );
+        } else if (method != 'status') {
+          return;
+        }
+        reply['result'] ??= {
+          'enabled': _enabled && await _permitted(),
+          'platform': 'ANDROID',
+          'local': true,
+        };
+        if (_nonce != nonce) return;
+        final page = Uri.tryParse(await controller.currentUrl() ?? '');
+        if (page == null || !trustedPushOrigin(page)) return;
+        await controller.runJavaScript(
+          "if (location.origin === 'https://poshtetgarm.ir') window.__poshtetgarmPushReply?.(${jsonEncode(reply)})",
+        );
+        return;
+      }
       if (request['method'] == 'disable') {
         await disable();
       } else if (request['method'] == 'enable') {
@@ -324,8 +423,7 @@ String pushErrorMessage(Object error) {
         code.contains('IO_ERROR')) {
       return 'به سرویس اعلان گوگل وصل نشدیم؛ شاید دسترسی به Google از این شبکه بسته باشد. با فیلترشکن دوباره امتحان کن. (${error.code})';
     }
-    if (code.contains('MISSING_INSTANCEID_SERVICE') ||
-        code.contains('PLAY')) {
+    if (code.contains('MISSING_INSTANCEID_SERVICE') || code.contains('PLAY')) {
       return 'سرویس‌های Google Play روی این دستگاه در دسترس نیست. (${error.code})';
     }
     return 'اتصال اعلان‌های اپ برقرار نشد. (${error.code})';

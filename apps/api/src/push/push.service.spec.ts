@@ -824,3 +824,84 @@ describe('daily tasks digest', () => {
     ).toEqual({ firstWeek: true, weekly: false });
   });
 });
+
+describe('Local schedule for the Android app', () => {
+  // 2026-11-19 09:00 Tehran (a Thursday).
+  const now = new Date('2026-11-19T05:30:00Z');
+  function setup() {
+    const db = {
+      plannerHabit: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: 'h1',
+            name: 'Walk',
+            goal: 1,
+            reminders: ['08:00', '20:00'],
+            weekdays: [0, 1, 2, 3, 4, 5, 6],
+            checkins: [],
+            startDate: null,
+            createdAt: new Date('2026-11-01T00:00:00Z'),
+          },
+        ]),
+      },
+      reviewReminderSetting: {
+        findUnique: vi.fn().mockResolvedValue({ enabled: true, time: '20:30' }),
+      },
+      progressNotificationSetting: {
+        findUnique: vi
+          .fn()
+          .mockResolvedValue({ dailyTasks: true, dailyTasksTime: '10:00' }),
+      },
+      englishCard: { count: vi.fn().mockResolvedValue(3) },
+    };
+    const tasks = {
+      filter: vi.fn().mockResolvedValue([
+        {
+          id: 't1',
+          kind: 'TASK',
+          title: 'Dentist',
+          date: '2026-11-19',
+          time: '17:00',
+          reminders: ['PT0S', '-PT30M'],
+        },
+        {
+          id: 't2',
+          kind: 'TASK',
+          title: 'Past',
+          date: '2026-11-19',
+          time: '08:00',
+          reminders: ['PT0S'],
+        },
+      ]),
+    };
+    const service = new PushService(
+      db as unknown as PrismaService,
+      new ConfigService({}),
+      tasks as unknown as TasksService,
+    );
+    return { service, tasks };
+  }
+
+  it('lists only future reminders of the next week, soonest first, in the chosen language', async () => {
+    const { service } = setup();
+    const items = await service.localSchedule('u1', 'en', now);
+    const today = items.filter(
+      (i) => i.at < Date.parse('2026-11-19T20:30:00Z'),
+    );
+    // 09:00 now: the 08:00 task and 08:00 habit are past; 10:00 summary, 16:30 and 17:00 task, 20:00 habit, 20:30 review.
+    expect(today.map((i) => i.id.split(':')[0])).toEqual([
+      'daily-tasks',
+      'task',
+      'task',
+      'habit',
+      'review',
+    ]);
+    expect(today[0].title).toBe('You have 2 tasks planned for today');
+    expect(today[1].title).toBe('Dentist');
+    expect(today[1].at).toBe(Date.parse('2026-11-19T13:00:00Z'));
+    expect(items.every((i) => i.at > now.getTime())).toBe(true);
+    expect(items.every((i) => i.url.startsWith('/app/'))).toBe(true);
+    expect(items.length).toBeLessThanOrEqual(60);
+    expect([...items].sort((a, b) => a.at - b.at)).toEqual(items);
+  });
+});

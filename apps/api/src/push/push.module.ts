@@ -8,6 +8,7 @@ import {
   Post,
   Put,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthModule, CurrentUser, type AuthUser } from '@all-in-one/api/auth';
@@ -24,6 +25,8 @@ import {
   type PushSubscriptionInput,
   nativePushSchema,
   type NativePushInput,
+  localScheduleQuerySchema,
+  type LocalScheduleQuery,
 } from '@all-in-one/shared/schemas';
 import { PushService } from './push.service';
 import { SmsNotices } from './sms-notices';
@@ -52,6 +55,14 @@ class PushController {
     input: ProgressNotificationInput,
   ) {
     return this.push.updateProgressSettings(user.id, input);
+  }
+  /** Upcoming timed reminders for the Android app to schedule on the device (Google push is blocked in Iran). */
+  @Get('local-schedule')
+  localSchedule(
+    @CurrentUser() user: AuthUser,
+    @Query({ schema: localScheduleQuerySchema }) query: LocalScheduleQuery,
+  ) {
+    return this.push.localSchedule(user.id, query.language);
   }
   @Get('weekly-progress')
   weeklyProgress(@CurrentUser() user: AuthUser) {

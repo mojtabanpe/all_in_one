@@ -5105,4 +5105,5 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['باز کردن تلگرام و زدن Start', 'Open Telegram and tap Start'],
   ['لینک ۱۰ دقیقه اعتبار دارد.', 'The link is valid for 10 minutes.'],
   ['وصل به تلگرام', 'Connect Telegram'],
+  ['وقت مرور کارت‌های زبان است', 'Time to review your English cards'],
 ];
