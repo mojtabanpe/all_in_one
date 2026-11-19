@@ -7,6 +7,6 @@
 
 - آدرس: `https://poshtetgarm-mcp.memnpe.workers.dev`
 - استقرار: در همین پوشه `npx wrangler deploy`.
-- سرور: `MCP_PUBLIC_URL=https://poshtetgarm-mcp.memnpe.workers.dev` در `/opt/all-in-one/shared/.env`، تا آدرس سرور
+- سرور: `MCP_PUBLIC_URL` در `deploy/compose.yml` روی آدرس این Worker است (مقدار env سرور را بی‌اثر می‌کند)، تا آدرس سرور
   در کارت «اتصال به ChatGPT و Claude» و اطلاعات OAuth به این ورودی اشاره کنند. اتصال‌های OAuth قبلی یک بار دوباره
   وصل می‌شوند؛ توکن‌های شخصی همان می‌مانند.

@@ -19,7 +19,9 @@ services:
       API_PORT: 4321
       APP_ORIGINS: https://${APP_DOMAIN:?Set APP_DOMAIN}
       APP_PUBLIC_URL: https://${APP_DOMAIN}/app
-      MCP_PUBLIC_URL: https://${APP_DOMAIN}
+      # ChatGPT/Claude reach the MCP server through the Cloudflare front (deploy/mcp-front): OpenAI's and
+      # Anthropic's servers cannot reach this host directly since November 2026.
+      MCP_PUBLIC_URL: https://poshtetgarm-mcp.memnpe.workers.dev
       DATABASE_URL: postgresql://aio:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@127.0.0.1:15433/all_in_one
       REDIS_URL: redis://127.0.0.1:16380
       # Supplied by the production GitHub Environment secret at release time.

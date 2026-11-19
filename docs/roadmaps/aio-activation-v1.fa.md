@@ -350,5 +350,7 @@ poshtetgarm.ir/app/billing
   `https://poshtetgarm-mcp.memnpe.workers.dev`. فقط مسیرهای MCP/OAuth را عبور می‌دهد؛ آزمون: متادیتا ۲۰۰، `/api/mcp`
   ۴۰۱، `/api/mcp/keys` و `/` ۴۰۴.
 - ساختن کانکتور دلخواه در ChatGPT فقط در وب است (راهنمای OpenAI)؛ بعد از ساخت در دسکتاپ و موبایل هم کار می‌کند.
-- `TODO` (اجازهٔ مالک) `MCP_PUBLIC_URL` در env سرور روی آدرس Worker و راه‌اندازی دوبارهٔ api؛ بعد اتصال واقعی از Claude
-  و ChatGPT.
+- مالک اجازه داد («بله، انجام بده»). `MCP_PUBLIC_URL` در env سرور نوشته شد، ولی `deploy/compose.yml` همین متغیر را
+  مستقیم روی کانتینر می‌گذارد و env را بی‌اثر می‌کند؛ پس مقدار درست در `compose.yml` گذاشته شد و با انتشار بعدی اثر
+  می‌کند.
+- `TODO` انتشار، بعد اتصال واقعی از Claude و ChatGPT.
