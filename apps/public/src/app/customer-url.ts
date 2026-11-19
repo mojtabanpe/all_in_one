@@ -15,6 +15,7 @@ import {
   landingGoalForPath,
   resolveLandingGoal,
   GOAL_APP_PATHS,
+  SAMPLE_CARDS_PATH,
   LANDING_GOAL_COOKIE,
   type OnboardingGoal,
 } from '@all-in-one/shared/schemas';
@@ -74,5 +75,15 @@ export function injectCustomerLinks() {
   const login = computed(
     () => `${base}/login${goal() ? '?' + new URLSearchParams(query()) : ''}`,
   );
-  return { signup, signupFor, login, campaign, goal };
+  const saveSample = computed(
+    () =>
+      base +
+      '/login?' +
+      new URLSearchParams({
+        ...campaign(),
+        goal: 'english',
+        redirect: SAMPLE_CARDS_PATH,
+      }),
+  );
+  return { signup, signupFor, login, campaign, goal, saveSample };
 }

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   extractGrowthCampaign,
   type GrowthCampaign,
+  type RegisterInput,
 } from '@all-in-one/shared/schemas';
 import { createTransport, type Transporter } from 'nodemailer';
 
@@ -47,9 +48,15 @@ export class MailService {
   }
 
   /** `link('reset-password', token)` → https://…/reset-password?token=… */
-  link(path: string, token: string, campaign?: GrowthCampaign): string {
+  link(
+    path: string,
+    token: string,
+    campaign?: GrowthCampaign,
+    redirect?: RegisterInput['redirect'],
+  ): string {
     const url = new URL(path, this.appUrl);
     url.searchParams.set('token', token);
+    if (redirect) url.searchParams.set('redirect', redirect);
     const safe = extractGrowthCampaign({
       get: (key) =>
         (campaign as Record<string, string> | undefined)?.[key] ?? null,

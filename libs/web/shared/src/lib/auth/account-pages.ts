@@ -10,6 +10,7 @@ import { Location } from '@angular/common';
 import {
   extractGrowthCampaign,
   resolveEnabledApplets,
+  SAMPLE_CARDS_PATH,
   type AppApplet,
 } from '@all-in-one/shared/schemas';
 import { PushSettings } from './push-settings';
@@ -322,7 +323,13 @@ export class VerifyEmailPage implements OnInit {
   protected readonly loginHref = inject(Location).prepareExternalUrl(
     this.router.serializeUrl(
       this.router.createUrlTree(['/login'], {
-        queryParams: extractGrowthCampaign(this.route.snapshot.queryParamMap),
+        queryParams: {
+          ...extractGrowthCampaign(this.route.snapshot.queryParamMap),
+          ...(this.route.snapshot.queryParamMap.get('redirect') ===
+          SAMPLE_CARDS_PATH
+            ? { redirect: SAMPLE_CARDS_PATH, goal: 'english' }
+            : {}),
+        },
       }),
     ),
   );

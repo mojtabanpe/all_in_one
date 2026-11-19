@@ -61,6 +61,9 @@ export class EnglishApi {
   removeDeck(id: string): Promise<void> {
     return this.delete(`/decks/${id}`);
   }
+  saveDailyLifeSample(): Promise<Deck> {
+    return this.post('/daily-life-sample');
+  }
   copyStarter(slug: string): Promise<Deck> {
     return this.post(`/starter-decks/${slug}`);
   }

@@ -113,6 +113,40 @@ export const appRoutes: Route[] = [
       import('./pages/weekly-plan').then((m) => m.WeeklyPlan),
   },
   {
+    path: 'everyday-english-flashcards',
+    title: () =>
+      inject(AioLocale).text(
+        'مرور لغات انگلیسی با فلش‌کارت؛ پنج کارت برای یک صبح معمولی',
+      ),
+    resolve: {
+      seo: pageSeo(
+        '/everyday-english-flashcards',
+        'مرور لغات انگلیسی با فلش‌کارت؛ پنج کارت برای یک صبح معمولی',
+        'پنج لغت انگلیسی را با تعریف و مثال مرور کن و همین پنج کارت را در حساب خودت نگه دار.',
+      ),
+    },
+    loadComponent: () =>
+      import('./pages/everyday-english-flashcards').then(
+        (m) => m.EnglishSample,
+      ),
+  },
+  {
+    path: 'recurring-task-or-habit',
+    title: () =>
+      inject(AioLocale).text(
+        'فرق کار تکرارشونده و عادت؛ قبض، کلاس زبان یا پیاده‌روی؟',
+      ),
+    resolve: {
+      seo: pageSeo(
+        '/recurring-task-or-habit',
+        'فرق کار تکرارشونده و عادت؛ قبض، کلاس زبان یا پیاده‌روی؟',
+        'با سه مثال تصمیم بگیر چه چیزی را به تقویم بسپاری و برای چه کاری سابقه روزانه نگه داری.',
+      ),
+    },
+    loadComponent: () =>
+      import('./pages/recurring-task-or-habit').then((m) => m.TaskOrHabit),
+  },
+  {
     path: '**',
     loadComponent: () => import('./pages/not-found').then((m) => m.NotFound),
   },

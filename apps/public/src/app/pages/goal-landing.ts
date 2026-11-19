@@ -76,6 +76,28 @@ import { GOAL_LANDINGS } from './goal-landing-data';
           }}</a
         >
       }
+      @if (page().image === 'english') {
+        <a
+          class="text-primary underline"
+          routerLink="/everyday-english-flashcards"
+          [queryParams]="customerLinks.campaign()"
+          >{{
+            'مرور لغات انگلیسی با فلش‌کارت؛ پنج کارت برای یک صبح معمولی'
+              | aioTranslate
+          }}</a
+        >
+      }
+      @if (page().image === 'planner') {
+        <a
+          class="text-primary underline"
+          routerLink="/recurring-task-or-habit"
+          [queryParams]="customerLinks.campaign()"
+          >{{
+            'فرق کار تکرارشونده و عادت؛ قبض، کلاس زبان یا پیاده‌روی؟'
+              | aioTranslate
+          }}</a
+        >
+      }
       <section aioCard aria-labelledby="guide-faq-title">
         <div aioCardHeader>
           <h2 id="guide-faq-title" aioCardTitle>

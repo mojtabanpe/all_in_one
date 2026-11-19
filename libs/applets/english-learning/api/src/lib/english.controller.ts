@@ -161,6 +161,11 @@ export class EnglishLibraryController {
     await this.decks.remove(user.id, deckId);
   }
 
+  @Post('daily-life-sample')
+  saveDailyLifeSample(@CurrentUser() user: AuthUser): Promise<Deck> {
+    return this.starters.saveDailyLifeSample(user.id);
+  }
+
   @Get('starter-decks')
   starterDecks(): StarterDeck[] {
     return this.starters.list();

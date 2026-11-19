@@ -39,6 +39,11 @@ export const appRoutes: Route[] = [
     canActivate: [authGuard()],
     children: [
       {
+        path: 'saved-sample-cards',
+        loadComponent: () =>
+          import('./saved-sample-cards').then((m) => m.SavedSampleCards),
+      },
+      {
         path: 'account',
         component: AccountPage,
         title: 'حساب کاربری',
