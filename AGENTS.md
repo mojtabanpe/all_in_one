@@ -855,3 +855,9 @@ Rules:
      (today's open tasks and due cards on demand), «شادوینگ» and «راهنما» (a short, direct help, 166); `/stop` removes
      them. The Telegram Menu lists `/today`, `/shadow`, `/help` and `/stop`, with the bot's description, in Persian and
      English; the api registers them at startup (`registerMenu`), so they stay in code, not set by hand.
+
+173. **Publish the expenses motion graphic to Instagram and Telegram (2026-11-19).** The owner approved the 20-second
+     expenses video with Persian narration (Gemini TTS, voice Kore, the ywa_ai voice settings: «Kore is good»), asked for
+     captions («آماده کن») and then said «مخارج رو تو جفتش بذار». This authorizes that one video with its prepared
+     captions on @poshtetgarm Instagram and the @poshtetgarm Telegram channel only; it is not standing authorization
+     for future posts (the Telegram bot video is not approved for publishing). Evidence lives in the growth roadmap.

@@ -629,3 +629,18 @@ Owner picked idea 6 of six proposed Reel ideas (story-led, like the dinner ad, t
 - 2026-11-18: owner approved the script («Yes, go ahead») and asked to use the ywa_ai video settings (directive 162). Brief in the ywa_ai format: `marketing/promo-videos/briefs/ba-ye-jomle.json` (local, gitignored) with one character (`sara`) and two 8 s Omni 1.2 Flash shots (after-lunch office; grey kitchen-scale flashback). 5 s end card rendered from the shared promo ending with «با یه جمله.» and «در کافه‌بازار و مایکت» (`marketing/promo-videos/src/sentence-end.html`). `TODO` owner: phone screen recording of the real assistant; owner yes for the ~48 Flow credits (2 shots) plus the reference portrait.
 - 2026-11-18: Reel assembled and approved as a draft («Good»): `marketing/promo-videos/out/ba-ye-jomle/poshtetgarm-ba-ye-jomle-reel.mp4` (local, 22.5 s, 1080×1920). Shot 1 Flow u0; shot 2 remade on Flow u0 with Sara's reference after a policy refusal (calorie wording softened); app part is the owner's real recording (typed meal, real reply; raw `**` from the assistant still visible); end card 5 s. Caption: «دیگه لازم نیست کالری غذا رو حساب کنی. فقط بنویس یا بگو چی خوردی؛ Poshtetgarm ثبتش می‌کنه و کالری و درشت‌مغذی‌هاش رو حساب می‌کنه. برنامه‌ریز، فلش‌کارت و بخش سلامت رایگان‌اند؛ دستیار هوش مصنوعی برای حساب تازه یک هفته رایگانه. «پشتت گرم» رو در کافه‌بازار یا مایکت جست‌وجو کن. #پشتت_گرم #کالری_شمار #رژیم_غذایی #تغذیه_سالم #هوش_مصنوعی #سلامتی». Owner said «Publish» (164).
 - `DONE` Published 2026-11-18 17:42:52 Tehran via Windsor `create_video_post` to `poshtetgarm` (`17841425571593489`), `share_to_feed=true`, `thumb_offset=1500`: [Reel](https://www.instagram.com/reel/Df4sRCFjOBI/), media `17964357713998664`. Separate read-back matched ID, permalink, exact caption and `REELS`. File SHA-256 `6a414a4cf4660e54b913ce27614c27e1048f29ac1e2a4de614562abb0aff47ac`, 5,673,177 bytes, hosted in the owner's Drive folder `ywa` (rclone `ywa:`, `Poshtetgarm_Ba_Ye_Jomle_Reel.mp4`); anonymous range request returned 206 `video/mp4`. `VERIFY` reach, watch time and store signups in the 3 days after vs before.
+
+## Expenses motion graphic — published 2026-11-19 (directive 173)
+
+- Video: 20 s, 1080×1920, motion graphic rendered locally (`marketing/promo-videos/src/expenses.html`, local and
+  gitignored) with Persian narration from Gemini TTS (Kore) through the local proxy; every line and the final mix were
+  transcribed back with ElevenLabs Scribe and matched the script. File `poshtetgarm-expenses-fa.mp4`, SHA-256
+  `99e55be53a66a89eb06b34cc0da1b101ce05b03eaf0d9be3b28ea91d61381f6c`, 2,051,930 bytes, hosted in Drive folder `ywa`
+  (`Poshtetgarm_Expenses_Reel.mp4`); anonymous range request returned 206 `video/mp4`.
+- `DONE` Instagram: Windsor `create_video_post` to `poshtetgarm` (`17841425571593489`), `share_to_feed=true`,
+  `thumb_offset=14200`: [Reel](https://www.instagram.com/reel/Df64U2bDTE-/), media `18150407503605033`. Read-back
+  matched ID, permalink, exact caption and `REELS`.
+- `DONE` Telegram: `sendVideo` to `@poshtetgarm` through the channel bot, message 7, 20 s video with the channel caption
+  (how to turn expenses on: app → account → expenses).
+- `VERIFY` reach and watch time, and how many accounts turn on expenses in the 3 days after vs before.
+- A matching Telegram-bot video (`poshtetgarm-telegram-fa.mp4`) is ready locally but not approved for publishing.
