@@ -40,6 +40,7 @@ import {
   loginSchema,
   onboardingGoalSchema,
   GOAL_APP_PATHS,
+  SAMPLE_CARDS_PATH,
   type OnboardingState,
 } from '@all-in-one/shared/schemas';
 import { API_BASE_URL } from '../api/api-base-url';
@@ -475,6 +476,13 @@ export class LoginPage implements OnInit {
   }
 
   private readonly http = inject(HttpClient);
+  private sampleRedirect() {
+    return this.route.snapshot.queryParamMap.get('redirect') ===
+      SAMPLE_CARDS_PATH
+      ? SAMPLE_CARDS_PATH
+      : undefined;
+  }
+
   private entryGoal() {
     const parsed = onboardingGoalSchema.safeParse(
       this.route.snapshot.queryParamMap.get('goal'),
@@ -526,6 +534,7 @@ export class LoginPage implements OnInit {
             email,
             password,
             goal: this.entryGoal(),
+            redirect: this.sampleRedirect(),
           });
           if (result.status === 'verify-email') {
             this.pendingEmail.set(result.email);
@@ -548,7 +557,10 @@ export class LoginPage implements OnInit {
   protected async resend() {
     this.busy.set(true);
     try {
-      await this.auth.resendVerification(this.pendingEmail());
+      await this.auth.resendVerification(
+        this.pendingEmail(),
+        this.sampleRedirect(),
+      );
       this.notifications.success(
         'اگر حسابی با این ایمیل منتظر تأیید باشد، لینک تازه فرستاده شد.',
       );

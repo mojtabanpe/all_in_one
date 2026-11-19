@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { DAILY_LIFE_SAMPLE } from '@all-in-one/applets/english-learning/contracts';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@all-in-one/api/db';
 import type {
@@ -59,6 +61,55 @@ export class StarterDecksService {
       },
     });
     return toDeck(deck);
+  }
+
+  /** A stable per-account UUID keeps retries from replacing cards or resetting review history. */
+  async saveDailyLifeSample(userId: string): Promise<Deck> {
+    const bytes = createHash('sha256')
+      .update('poshtetgarm:daily-life-sample:' + userId)
+      .digest()
+      .subarray(0, 16);
+    bytes[6] = (bytes[6] & 15) | 0x80;
+    bytes[8] = (bytes[8] & 63) | 128;
+    const hex = bytes.toString('hex');
+    const id = [
+      hex.slice(0, 8),
+      hex.slice(8, 12),
+      hex.slice(12, 16),
+      hex.slice(16, 20),
+      hex.slice(20),
+    ].join('-');
+    const find = () =>
+      this.prisma.englishDeck.findFirst({ where: { id, userId } });
+    const saved = await find();
+    if (saved) return toDeck(saved);
+    try {
+      return toDeck(
+        await this.prisma.englishDeck.create({
+          data: {
+            id,
+            userId,
+            name: 'Daily life · 5 cards',
+            color: 'sage',
+            cards: {
+              create: DAILY_LIFE_SAMPLE.map(
+                ({ term, definition, example }) => ({
+                  userId,
+                  front: term,
+                  back: definition,
+                  examples: '- ' + example,
+                }),
+              ),
+            },
+          },
+        }),
+      );
+    } catch (error) {
+      // A concurrent request may already have committed the complete deck.
+      const existing = await find();
+      if (existing) return toDeck(existing);
+      throw error;
+    }
   }
 
   async stats(userId: string): Promise<EnglishStats> {

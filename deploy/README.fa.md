@@ -70,7 +70,7 @@ docker compose -f deploy/compose.yml exec postgres psql -U aio all_in_one -c "UP
 ## ۴. جابه‌جایی از Recall
 
 1. از دیتابیس Recall یک بکاپ نهایی بگیرید (برای بایگانی؛ منتقل نمی‌شود).
-2. `deploy/nginx.conf` را جای server block فعلی `poshtetgarm.ir` بگذارید (گواهی همان قبلی است)، سپس:
+2. `deploy/nginx.conf` را جای server block فعلی `poshtetgarm.ir` بگذارید؛ ابتدا رکورد DNS برای `www.poshtetgarm.ir` را به همین میزبان متصل کنید و مطمئن شوید گواهی نصب‌شده هر دو نام دامنه را پوشش می‌دهد. سپس:
    ```sh
    sudo nginx -t && sudo systemctl reload nginx
    ```
