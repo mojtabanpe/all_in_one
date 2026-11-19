@@ -909,4 +909,5 @@ Rules:
      step is done, the in-app prompts (176) offer only a way back (the Telegram link; for the English goal first
      reminders with the 20:00 review reminder), the rest still waits for day two; the English `/welcome` step goes
      straight to the cards, with no reminders page before the first review; and an informational `FIRST_STEP` SMS on
-     day two for an account with nothing of its own, sent only once the owner supplies its Faraz pattern ID (83, 150).
+     day two for an account with nothing of its own (83, 150). The owner supplied its pattern ID: `FIRST_STEP=3Bqys4unKE`
+     (no variables).

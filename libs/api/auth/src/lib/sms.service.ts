@@ -35,16 +35,15 @@ export const SMS_TEMPLATES = {
   ACCOUNT_READY: { code: 'MThe3g4xrU', params: [] },
   DAILY_SUMMARY: { code: 'Y4Qm4Qf3pv', params: ['count'] },
   TRIAL_ENDING: { code: 'HAFXaRVsmQ', params: ['days'] },
-  /**
-   * Day two for an account that still has nothing of its own (2026-11-19). Empty until Faraz approves the pattern
-   * and the owner supplies its ID (directive 83: never invent one); nothing is sent while it is empty.
-   */
-  FIRST_STEP: { code: '', params: [] },
+  /** Day two for an account that still has nothing of its own (directive 178; ID from the owner, 2026-11-19). */
+  FIRST_STEP: { code: '3Bqys4unKE', params: [] },
 } as const;
 
 /** A template whose Faraz pattern ID is known; one without an ID is never sent. */
 export function smsTemplateReady(template: SmsTemplate): boolean {
-  return SMS_TEMPLATES[template].code !== '';
+  // Widened: a template waiting for its ID is listed with an empty code.
+  const code: string = SMS_TEMPLATES[template].code;
+  return code !== '';
 }
 export type SmsTemplate = keyof typeof SMS_TEMPLATES;
 type Params<T extends SmsTemplate> = Record<
