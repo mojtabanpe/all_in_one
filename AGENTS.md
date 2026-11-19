@@ -911,3 +911,9 @@ Rules:
      straight to the cards, with no reminders page before the first review; and an informational `FIRST_STEP` SMS on
      day two for an account with nothing of its own (83, 150). The owner supplied its pattern ID: `FIRST_STEP=3Bqys4unKE`
      (no variables).
+
+179. **Share progress across Codex, Claude Code and Gemini (2026-11-19).** The owner asked that other agents be able
+     to see what was done and continue. Extend directive 107 to Gemini. `AGENTS.md` remains the sole instruction
+     source. `GEMINI.md` only imports it, just as `CLAUDE.md` does. Keep the verified result, remaining work, and next
+     authorized step in the relevant roadmap and its index. Use that record when resuming in another agent. Follow
+     directive 124 for pushing.
