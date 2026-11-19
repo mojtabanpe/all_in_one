@@ -13,12 +13,14 @@ import {
   lucideHeartPulse,
   lucideLanguages,
 } from '@ng-icons/lucide';
+import { RouterLink } from '@angular/router';
 import { injectCustomerLinks } from '../customer-url';
+import { GOAL_LANDINGS } from './goal-landing-data';
 import { APPLETS } from './applets-data';
 
 @Component({
   selector: 'public-applets',
-  imports: [AioButton, AioCardDirectives, AioIcon, AioTranslate],
+  imports: [RouterLink, AioButton, AioCardDirectives, AioIcon, AioTranslate],
   providers: [
     provideIcons({
       lucideCalendarCheck,
@@ -32,11 +34,7 @@ import { APPLETS } from './applets-data';
     <div class="flex flex-col gap-4">
       <h1 class="text-2xl font-bold">{{ 'اپلت‌ها' | aioTranslate }}</h1>
       @for (applet of applets; track applet.title) {
-        <a
-          aioCard
-          class="hover:border-primary/40 focus-visible:ring-ring/50 transition-colors outline-none focus-visible:ring-3"
-          [href]="customerLinks.signupFor(applet.goal)"
-        >
+        <article aioCard>
           <div aioCardHeader>
             <h2 aioCardTitle class="flex items-center gap-2 text-lg">
               <aio-icon [name]="applet.icon" class="text-primary" />
@@ -55,17 +53,28 @@ import { APPLETS } from './applets-data';
               </li>
             }
           </ul>
-          <div aioCardFooter>
-            <span
+          <div aioCardFooter class="flex flex-wrap gap-4">
+            @for (guide of guides; track guide.slug) {
+              @if (guide.image === applet.goal) {
+                <a
+                  class="inline-flex min-h-11 items-center underline"
+                  [routerLink]="'/' + guide.slug"
+                  [queryParams]="customerLinks.campaign()"
+                  >{{ guide.title | aioTranslate }}</a
+                >
+              }
+            }
+            <a
+              [href]="customerLinks.signupFor(applet.goal)"
               class="text-primary flex min-h-11 items-center gap-1 font-medium"
               >{{ 'شروع با {0}' | aioTranslate: [applet.title | aioTranslate] }}
               <aio-icon
                 name="lucideChevronLeft"
                 size="sm"
                 class="ltr:-scale-x-100"
-            /></span>
+            /></a>
           </div>
-        </a>
+        </article>
       }
       <a aioBtn size="lg" class="self-start" [href]="customerLinks.signup()">{{
         'ساخت حساب رایگان' | aioTranslate
@@ -75,5 +84,6 @@ import { APPLETS } from './applets-data';
 })
 export class Applets {
   protected readonly customerLinks = injectCustomerLinks();
+  protected readonly guides = GOAL_LANDINGS;
   protected readonly applets = APPLETS;
 }

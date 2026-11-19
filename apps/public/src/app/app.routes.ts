@@ -96,5 +96,24 @@ export const appRoutes: Route[] = [
     loadComponent: () =>
       import('./pages/goal-landing').then((m) => m.GoalLanding),
   })),
-  { path: '**', redirectTo: '' },
+  {
+    path: 'weekly-plan-for-work',
+    title: () =>
+      inject(AioLocale).text(
+        'نمونه برنامه هفتگی برای افراد شاغل؛ جدول شنبه تا جمعه',
+      ),
+    resolve: {
+      seo: pageSeo(
+        '/weekly-plan-for-work',
+        'نمونه برنامه هفتگی برای افراد شاغل؛ جدول شنبه تا جمعه',
+        'برای یک هفته کاری با دو جلسه زبان، خرید و وقت استراحت برنامه بچین و ببین اگر یک روز اضافه‌کاری پیش آمد چطور برنامه را تغییر بدهی.',
+      ),
+    },
+    loadComponent: () =>
+      import('./pages/weekly-plan').then((m) => m.WeeklyPlan),
+  },
+  {
+    path: '**',
+    loadComponent: () => import('./pages/not-found').then((m) => m.NotFound),
+  },
 ];

@@ -65,6 +65,17 @@ import { GOAL_LANDINGS } from './goal-landing-data';
           />
         </figure>
       </header>
+      @if (page().slug === 'daily-planner') {
+        <a
+          class="text-primary underline"
+          routerLink="/weekly-plan-for-work"
+          [queryParams]="customerLinks.campaign()"
+          >{{
+            'نمونه برنامه هفتگی برای افراد شاغل؛ جدول شنبه تا جمعه'
+              | aioTranslate
+          }}</a
+        >
+      }
       <section aioCard aria-labelledby="guide-faq-title">
         <div aioCardHeader>
           <h2 id="guide-faq-title" aioCardTitle>
