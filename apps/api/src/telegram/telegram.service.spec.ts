@@ -6,6 +6,8 @@ import {
   telegramCodeHash,
   TelegramService,
 } from './telegram.service';
+import { TelegramSectionsService } from './telegram-sections';
+import { parseExpenseLines } from './telegram-format';
 
 const env: Record<string, string> = {
   TELEGRAM_BOT_TOKEN: 'token',
@@ -15,7 +17,10 @@ const env: Record<string, string> = {
 };
 const config = { get: (key: string) => env[key] } as unknown as ConfigService;
 
-function setup(membership: string | Error = 'member') {
+function setup(
+  membership: string | Error = 'member',
+  enabledApplets: string[] | null = null,
+) {
   const sent: { chat: string; text: string; buttons?: unknown }[] = [];
   const db = {
     telegramLink: {
@@ -30,13 +35,28 @@ function setup(membership: string | Error = 'member') {
       deleteMany: vi.fn((x) => x),
       create: vi.fn((x) => x),
     },
-    englishCard: { count: vi.fn(() => 0) },
+    englishCard: { count: vi.fn(() => 0), findFirst: vi.fn() },
+    user: {
+      findUnique: vi.fn(async () => ({ enabledApplets, role: 'CUSTOMER' })),
+    },
     $transaction: vi.fn(async (ops: unknown[]) => ops),
   };
   const assistant = { chat: vi.fn() };
-  const tasks = { filter: vi.fn(() => []), update: vi.fn() };
+  const tasks = {
+    filter: vi.fn(() => []),
+    update: vi.fn(),
+    create: vi.fn(async (_u: string, input: { title: string }) => ({
+      id: 't9',
+      title: input.title,
+    })),
+  };
   const gateway = { transcribe: vi.fn() };
-  const englishAi = { dialogue: vi.fn() };
+  const englishAi = {
+    dialogue: vi.fn(),
+    writingTask: vi.fn(),
+    writingFeedback: vi.fn(),
+    readingText: vi.fn(),
+  };
   const speech = {
     speak: vi.fn(async () => ({
       audio: Buffer.from('mp3'),
@@ -44,6 +64,84 @@ function setup(membership: string | Error = 'member') {
     })),
   };
   const scores = { save: vi.fn() };
+  const habits = { all: vi.fn(async () => []), get: vi.fn(), checkin: vi.fn() };
+  const health = {
+    nutritionDay: vi.fn(async () => ({
+      calories: 900,
+      calorieTarget: 2000,
+      proteinG: 40,
+      carbsG: 100,
+      fatG: 30,
+      meals: [],
+    })),
+    week: vi.fn(async () => ({ sessions: 1, minutes: 30, goalMinutes: 150 })),
+  };
+  const body = {
+    fasting: vi.fn(async () => ({ active: null, recent: [] })),
+    startFast: vi.fn(),
+    endFast: vi.fn(),
+    weight: vi.fn(async () => ({
+      currentKg: 82.5,
+      targetKg: null,
+      targetDate: null,
+      plan: null,
+      entries: [],
+    })),
+    logWeight: vi.fn(),
+    setGoal: vi.fn(),
+  };
+  const training = { routines: vi.fn(async () => []), exercises: vi.fn() };
+  const decks = { list: vi.fn(async () => []) };
+  const cards = { get: vi.fn(), review: vi.fn() };
+  const texts = { list: vi.fn(async () => []), get: vi.fn(), create: vi.fn() };
+  const report = (over = false) => ({
+    from: '2026-11-01',
+    to: '2026-11-30',
+    totalAmount: 130000,
+    todayAmount: 130000,
+    dailyAverage: 7000,
+    transactionCount: 2,
+    byCategory: [
+      {
+        categoryId: 'food',
+        name: 'خوراک',
+        amount: 130000,
+        percentage: 100,
+        monthlyBudget: 100000,
+        budgetUsedPercent: 130,
+        overBudget: over,
+      },
+    ],
+  });
+  const expenses = {
+    getReport: vi.fn(async () => report(true)),
+    listCategories: vi.fn(async () => []),
+    updateCategory: vi.fn(),
+    createExpense: vi.fn(
+      async (_u: string, input: { title: string; amount: number }) => ({
+        ...input,
+        categoryId: 'food',
+        categoryName: 'خوراک',
+      }),
+    ),
+  };
+  const sections = new TelegramSectionsService(
+    db as never,
+    assistant as never,
+    gateway as never,
+    tasks as never,
+    habits as never,
+    health as never,
+    body as never,
+    training as never,
+    decks as never,
+    cards as never,
+    texts as never,
+    englishAi as never,
+    speech as never,
+    scores as never,
+    expenses as never,
+  );
   const service = new TelegramService(
     db as never,
     config,
@@ -53,6 +151,7 @@ function setup(membership: string | Error = 'member') {
     englishAi as never,
     speech as never,
     scores as never,
+    sections,
   );
   const api = (
     service as unknown as {
@@ -100,6 +199,12 @@ function setup(membership: string | Error = 'member') {
     speech,
     scores,
     voices,
+    habits,
+    health,
+    body,
+    decks,
+    cards,
+    expenses,
   };
 }
 const message = (text: string, id = 42) => ({
@@ -412,13 +517,14 @@ describe('Telegram bot', () => {
       await t.service.handle(message('/start abcdefghijklmnopqrstuvwx'));
       expect(t.sent[0].buttons).toMatchObject({
         keyboard: [
-          [{ text: 'کارهای امروز' }, { text: 'شادوینگ' }],
-          [{ text: 'راهنما' }],
+          [{ text: 'برنامه‌ریز' }, { text: 'زبان' }],
+          [{ text: 'سلامت' }],
+          [{ text: 'کارهای امروز' }, { text: 'راهنما' }],
         ],
       });
       t.db.telegramLink.findUnique.mockResolvedValue(linked);
       await t.service.handle(message('راهنما'));
-      expect(t.sent[1].text).toContain('شادوینگ');
+      expect(t.sent[1].text).toContain('سلامت');
       expect(t.assistant.chat).not.toHaveBeenCalled();
     });
 
@@ -449,6 +555,253 @@ describe('Telegram bot', () => {
       expect(commands).toHaveLength(2);
       expect(commands[1].body.language_code).toBe('en');
       expect(JSON.stringify(commands[0].body)).toContain('today');
+    });
+  });
+
+  describe('app sections (directive 174)', () => {
+    const linked = (pending: unknown = null) => ({
+      userId: 'u1',
+      chatId: 42n,
+      language: 'fa',
+      shadow: null,
+      pending,
+    });
+    const press = (data: string) => ({
+      callback_query: { id: 'q', data, message: { chat: { id: 42 } } },
+    });
+    const savedPending = (t: ReturnType<typeof setup>) =>
+      (
+        t.db.telegramLink.updateMany.mock.calls.at(-1) as unknown as [
+          { data: { pending: unknown } },
+        ]
+      )[0].data.pending;
+
+    it('shows expenses in the keyboard only when the account turned it on', async () => {
+      const off = setup();
+      off.db.telegramLink.findUnique.mockResolvedValue(linked());
+      await off.service.handle(message('/help'));
+      expect(JSON.stringify(off.sent[0].buttons)).not.toContain('مخارج');
+      await off.service.handle(message('مخارج'));
+      expect(off.sent[1].text).toContain('خاموش');
+      expect(off.expenses.getReport).not.toHaveBeenCalled();
+
+      const on = setup('member', ['planner', 'english', 'health', 'expenses']);
+      on.db.telegramLink.findUnique.mockResolvedValue(linked());
+      await on.service.handle(message('/help'));
+      expect(JSON.stringify(on.sent[0].buttons)).toContain('مخارج');
+      await on.service.handle(message('مخارج'));
+      expect(on.sent[1].text).toContain('۱۳۰٬۰۰۰ تومان');
+      expect(on.sent[1].text).toContain('⚠️');
+      expect(on.assistant.chat).not.toHaveBeenCalled();
+    });
+
+    it('health menu shows calories; fasting starts and weight is logged without AI', async () => {
+      const t = setup();
+      t.db.telegramLink.findUnique.mockResolvedValue(linked());
+      await t.service.handle(message('سلامت'));
+      expect(t.sent[0].text).toContain('۹۰۰ از ۲٬۰۰۰ کالری');
+      expect(JSON.stringify(t.sent[0].buttons)).toContain('H:f');
+
+      await t.service.handle(press('H:fs:16'));
+      expect(t.body.startFast).toHaveBeenCalledWith('u1', { targetHours: 16 });
+
+      await t.service.handle(press('H:wl'));
+      expect(savedPending(t)).toMatchObject({ kind: 'weight' });
+      t.db.telegramLink.findUnique.mockResolvedValue(
+        linked({ kind: 'weight', at: Date.now() }),
+      );
+      await t.service.handle(message('۸۲٫۵'));
+      expect(t.body.logWeight).toHaveBeenCalledWith('u1', {
+        date: expect.any(String),
+        weightKg: 82.5,
+      });
+      expect(t.sent.at(-1)?.text).toContain('۸۲٫۵ کیلو');
+      expect(t.assistant.chat).not.toHaveBeenCalled();
+    });
+
+    it('a pending meal goes through the assistant and needs AI access', async () => {
+      const t = setup();
+      t.db.telegramLink.findUnique.mockResolvedValue(
+        linked({ kind: 'meal', mealType: 'LUNCH', at: Date.now() }),
+      );
+      t.assistant.chat.mockRejectedValue(
+        new HttpException({ code: 'AI_PLAN_REQUIRED' }, 402),
+      );
+      await t.service.handle(message('قرمه‌سبزی'));
+      expect(t.assistant.chat).toHaveBeenCalledWith('u1', {
+        language: 'fa',
+        messages: [
+          { role: 'user', content: 'این را ناهار امروز ثبت کن: قرمه‌سبزی' },
+        ],
+      });
+      expect(t.sent.at(-1)?.text).toContain('اشتراک');
+    });
+
+    it('an expired question is ignored and the message goes to the assistant', async () => {
+      const t = setup();
+      t.db.telegramLink.findUnique.mockResolvedValue(
+        linked({ kind: 'weight', at: Date.now() - 2 * 3_600_000 }),
+      );
+      t.assistant.chat.mockResolvedValue({ reply: 'ok' });
+      await t.service.handle(message('۸۲'));
+      expect(t.body.logWeight).not.toHaveBeenCalled();
+      expect(t.assistant.chat).toHaveBeenCalled();
+    });
+
+    it('reviews cards: front, answer, grade with SM-2, next card', async () => {
+      const t = setup();
+      const id = '11111111-1111-4111-8111-111111111111';
+      t.db.telegramLink.findUnique.mockResolvedValue(linked());
+      t.db.englishCard.findFirst.mockResolvedValue({
+        id,
+        front: 'ubiquitous',
+        unit: '',
+      });
+      t.db.englishCard.count.mockResolvedValue(3 as never);
+      await t.service.handle(press('E:cd:all'));
+      expect(t.sent[0].text).toContain('ubiquitous');
+      expect(JSON.stringify(t.sent[0].buttons)).toContain(`c:a:${id}:a`);
+
+      t.cards.get.mockResolvedValue({
+        id,
+        deckId: 'd1',
+        front: 'ubiquitous',
+        back: 'found everywhere',
+        examples: '',
+      });
+      await t.service.handle(press(`c:a:${id}:a`));
+      expect(t.sent[1].text).toContain('found everywhere');
+      expect(JSON.stringify(t.sent[1].buttons)).toContain(`c:g:${id}:2:a`);
+
+      t.cards.review.mockResolvedValue({ id, deckId: 'd1' });
+      t.db.englishCard.findFirst.mockResolvedValue(null);
+      await t.service.handle(press(`c:g:${id}:2:a`));
+      expect(t.cards.review).toHaveBeenCalledWith('u1', id, 'good');
+      expect(t.sent[2].text).toContain('مرور تمام شد');
+    });
+
+    it('writing practice: task, then feedback scored and saved like the app', async () => {
+      const t = setup();
+      t.db.telegramLink.findUnique.mockResolvedValue(linked());
+      t.englishAi.writingTask.mockResolvedValue({
+        scenario: 'Invite a friend',
+        message: 'Are you free?',
+      });
+      await t.service.handle(press('E:w'));
+      expect(t.sent[0].text).toContain('Invite a friend');
+      const pending = savedPending(t) as { situation: string };
+      expect(pending).toMatchObject({ kind: 'writing' });
+
+      t.db.telegramLink.findUnique.mockResolvedValue(
+        linked({ ...pending, at: Date.now() }),
+      );
+      t.englishAi.writingFeedback.mockResolvedValue({
+        corrected: 'Yes, I am free.',
+        natural: "Yeah, I'm free.",
+        mistakes: [{ original: 'is', fix: 'am', why: '' }],
+        phrases: [],
+        comment: '',
+      });
+      await t.service.handle(message('Yes I is free tonight'));
+      expect(t.scores.save).toHaveBeenCalledWith(
+        'u1',
+        expect.objectContaining({ kind: 'WRITING', items: 5, mistakes: 1 }),
+      );
+      expect(t.sent.at(-1)?.text).toContain('is → am');
+    });
+
+    it('listening: the last answer saves the score', async () => {
+      const t = setup();
+      t.db.telegramLink.findUnique.mockResolvedValue(
+        linked({
+          kind: 'listening',
+          title: 'Café',
+          lines: ['A: Hi'],
+          questions: [
+            { question: 'Where?', options: ['café', 'bank'], answer: 0 },
+          ],
+          index: 0,
+          correct: 0,
+          at: Date.now(),
+        }),
+      );
+      await t.service.handle(press('E:lq:0:0'));
+      expect(t.scores.save).toHaveBeenCalledWith('u1', {
+        kind: 'LISTENING',
+        title: 'Café',
+        score: 100,
+        items: 1,
+        attempted: 1,
+        mistakes: 0,
+      });
+      expect(t.sent[0].text).toContain('درست');
+    });
+
+    it('adds several expenses without AI and warns about the budget', async () => {
+      const t = setup('member', ['expenses']);
+      t.db.telegramLink.findUnique.mockResolvedValue(
+        linked({ kind: 'expense', at: Date.now() }),
+      );
+      await t.service.handle(message('نان ۵۰ هزار\nتاکسی 80000'));
+      expect(t.expenses.createExpense).toHaveBeenNthCalledWith(1, 'u1', {
+        title: 'نان',
+        amount: 50000,
+      });
+      expect(t.expenses.createExpense).toHaveBeenNthCalledWith(2, 'u1', {
+        title: 'تاکسی',
+        amount: 80000,
+      });
+      expect(t.sent[0].text).toContain('بودجهٔ ماهانهٔ «خوراک» رد شد');
+      expect(t.assistant.chat).not.toHaveBeenCalled();
+    });
+
+    it('planner: add a task for today and toggle a habit', async () => {
+      const t = setup();
+      t.db.telegramLink.findUnique.mockResolvedValue(
+        linked({ kind: 'task', at: Date.now() }),
+      );
+      await t.service.handle(message('خرید شیر'));
+      expect(t.tasks.create).toHaveBeenCalledWith(
+        'u1',
+        expect.objectContaining({
+          title: 'خرید شیر',
+          date: expect.any(String),
+        }),
+      );
+      expect(JSON.stringify(t.sent[0].buttons)).toContain('d:t9');
+
+      t.habits.get.mockResolvedValue({ id: 'h1', goal: 1, checkins: [] });
+      await t.service.handle(press('hb:h1'));
+      expect(t.habits.checkin).toHaveBeenCalledWith('u1', 'h1', {
+        date: expect.any(String),
+        value: 1,
+      });
+    });
+
+    it('a menu tap drops the pending question', async () => {
+      const t = setup();
+      t.db.telegramLink.findUnique.mockResolvedValue(
+        linked({ kind: 'weight', at: Date.now() }),
+      );
+      await t.service.handle(message('برنامه‌ریز'));
+      expect(t.db.telegramLink.updateMany).toHaveBeenCalledWith({
+        where: { chatId: 42n },
+        data: { pending: expect.anything() },
+      });
+      expect(t.body.logWeight).not.toHaveBeenCalled();
+      expect(t.sent[0].text).toContain('برنامه‌ریز');
+    });
+
+    it('parses expense lines', () => {
+      expect(parseExpenseLines('coffee 120k\nrent: 12 million')).toEqual([
+        { title: 'coffee', amount: 120000 },
+        { title: 'rent', amount: 12000000 },
+      ]);
+      expect(parseExpenseLines('نان ۵۰٬۰۰۰ تومان')).toEqual([
+        { title: 'نان', amount: 50000 },
+      ]);
+      expect(parseExpenseLines('دیروز کلی خرج کردم')).toBeNull();
+      expect(parseExpenseLines('۵۰۰۰')).toBeNull();
     });
   });
 });

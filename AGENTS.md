@@ -861,3 +861,16 @@ Rules:
      captions («آماده کن») and then said «مخارج رو تو جفتش بذار». This authorizes that one video with its prepared
      captions on @poshtetgarm Instagram and the @poshtetgarm Telegram channel only; it is not standing authorization
      for future posts (the Telegram bot video is not approved for publishing). Evidence lives in the growth roadmap.
+
+174. **Everything the app has, in the Telegram bot too (2026-11-19).** The owner: «من منوی سلامت و کامل زبان و مخارج رو
+     میخوام داشته باشم، یعنی هرچی ک اپ داره اینجام باشه». `@poshtetgarm_bot` shows the sections the account has on
+     (`resolveEnabledApplets`; expenses only after the user turns it on, as `ExpensesEnabledGuard`) in its reply
+     keyboard and as `/planner`, `/english`, `/health`, `/expenses`: planner (today, overdue, new task, habit check-in),
+     health (today's calories and macros, meal logging, fasting start/end, weigh-ins, weight goal, the routine day),
+     English (card review with show-answer and the app's four grades, deck choice, shadowing, listening, writing,
+     speaking, reading; scores saved like the app's) and expenses (one or several expenses with the decision-model
+     category, month report, per-category budgets with the over-budget warning). `TelegramSectionsService` calls the
+     applet services; free text it cannot read (a meal, an unclear expense) goes through the assistant. Buttons and
+     typed values that need no AI work for every linked account; meals, practice generation and feedback, AI reading
+     texts and assistant fallbacks need AI access, with the scope check (110) and daily limits. Channel membership (170)
+     still gates everything.

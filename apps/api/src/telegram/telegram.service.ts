@@ -15,6 +15,8 @@ import { TasksService } from '@all-in-one/applets/planner/api';
 import { isoDateIn, zonedInstant } from '@all-in-one/applets/planner/contracts';
 import {
   DAILY_TASKS_DEFAULT_TIME,
+  DEFAULT_CUSTOMER_APPLETS,
+  type AppApplet,
   type TelegramStatus,
 } from '@all-in-one/shared/schemas';
 import { AiGateway, MAX_RECORDING_BYTES } from '@all-in-one/api/ai';
@@ -35,51 +37,78 @@ import {
   type TelegramButton,
   type TelegramMarkup,
 } from './telegram-api';
+import { plainReply, type Lang } from './telegram-format';
+import {
+  activePending,
+  callbackSection,
+  TelegramSectionsService,
+  type Out,
+  type SectionContext,
+} from './telegram-sections';
+
+export { plainReply } from './telegram-format';
 
 const CODE_TTL_MS = 10 * 60_000;
 /** The morning summary is due from the chosen time for three hours, like the push digest (154). */
 const SUMMARY_WINDOW_MS = 3 * 3_600_000;
 const SUMMARY_TASKS = 5;
-type Lang = 'fa' | 'en';
 
 /** Labels of the reply keyboard (directive 172); a tap sends the label as a message. */
 export const MENU_LABELS = {
+  planner: { fa: 'برنامه‌ریز', en: 'Planner' },
+  english: { fa: 'زبان', en: 'English' },
+  health: { fa: 'سلامت', en: 'Health' },
+  expenses: { fa: 'مخارج', en: 'Expenses' },
   today: { fa: 'کارهای امروز', en: "Today's tasks" },
+  /** Kept for keyboards sent before directive 174. */
   shadow: { fa: 'شادوینگ', en: 'Shadowing' },
   help: { fa: 'راهنما', en: 'Help' },
 } as const;
+const SECTIONS: readonly AppApplet[] = [
+  'planner',
+  'english',
+  'health',
+  'expenses',
+];
 const isMenu = (text: string, key: keyof typeof MENU_LABELS) =>
   text === MENU_LABELS[key].fa || text === MENU_LABELS[key].en;
 
-/** The persistent buttons above the keyboard once the account is linked. */
-export function menuKeyboard(language: Lang) {
-  return {
-    keyboard: [
-      [
-        { text: MENU_LABELS.today[language] },
-        { text: MENU_LABELS.shadow[language] },
-      ],
-      [{ text: MENU_LABELS.help[language] }],
-    ],
-    resize_keyboard: true,
-    is_persistent: true,
-  };
+/** The persistent buttons above the keyboard once the account is linked: the sections the account has on. */
+export function menuKeyboard(
+  language: Lang,
+  applets: readonly AppApplet[] = DEFAULT_CUSTOMER_APPLETS,
+) {
+  const sections = SECTIONS.filter((section) => applets.includes(section)).map(
+    (section) => ({ text: MENU_LABELS[section][language] }),
+  );
+  const rows: { text: string }[][] = [];
+  for (let i = 0; i < sections.length; i += 2)
+    rows.push(sections.slice(i, i + 2));
+  rows.push([
+    { text: MENU_LABELS.today[language] },
+    { text: MENU_LABELS.help[language] },
+  ]);
+  return { keyboard: rows, resize_keyboard: true, is_persistent: true };
 }
 
 export const HELP_TEXT = {
   fa: [
     'با این ربات:',
     '• هر کاری داری بنویس تا ثبت شود، مثلاً «فردا ساعت ۵ دندانپزشکی» یا «ناهار قرمه‌سبزی خوردم».',
-    '• «کارهای امروز» کارهای باز امروز و کارت‌های آمادهٔ مرور را نشان می‌دهد.',
-    '• «شادوینگ» تمرین تلفظ است: جمله را بشنو و با پیام صوتی تکرار کن.',
+    '• «برنامه‌ریز»: امروز، عقب‌افتاده‌ها، کار جدید و عادت‌ها.',
+    '• «زبان»: مرور کارت‌ها، شادوینگ، شنیدن، نوشتن، صحبت و خواندن.',
+    '• «سلامت»: کالری امروز، ثبت وعده، روزه، وزن و تمرین.',
+    '• «مخارج»: ثبت هزینه، گزارش ماه و بودجه‌ها (اگر در حسابت روشن باشد).',
     '• هر صبح در ساعت خلاصهٔ حسابت، کارهای امروز را می‌فرستم.',
     '/stop اتصال را قطع می‌کند.',
   ].join('\n'),
   en: [
     'With this bot:',
     '• Write anything you need to do and it is logged, for example «dentist tomorrow at 5» or «had pasta for lunch».',
-    "• «Today's tasks» shows today's open tasks and the cards ready to review.",
-    '• «Shadowing» is pronunciation practice: listen to a sentence and repeat it in a voice message.',
+    '• «Planner»: today, overdue, new task and habits.',
+    '• «English»: card review, shadowing, listening, writing, speaking and reading.',
+    "• «Health»: today's calories, meals, fasting, weight and workouts.",
+    '• «Expenses»: add expenses, month report and budgets (when it is on in your account).',
     "• Each morning, at your account's summary time, I send your tasks for the day.",
     '/stop unlinks.',
   ].join('\n'),
@@ -89,24 +118,32 @@ export const HELP_TEXT = {
 const COMMANDS = {
   fa: [
     { command: 'today', description: 'کارهای امروز' },
+    { command: 'planner', description: 'برنامه‌ریز' },
+    { command: 'english', description: 'زبان' },
+    { command: 'health', description: 'سلامت' },
+    { command: 'expenses', description: 'مخارج' },
     { command: 'shadow', description: 'تمرین شادوینگ' },
     { command: 'help', description: 'راهنما' },
     { command: 'stop', description: 'قطع اتصال' },
   ],
   en: [
     { command: 'today', description: "Today's tasks" },
+    { command: 'planner', description: 'Planner' },
+    { command: 'english', description: 'English' },
+    { command: 'health', description: 'Health' },
+    { command: 'expenses', description: 'Expenses' },
     { command: 'shadow', description: 'Shadowing practice' },
     { command: 'help', description: 'Help' },
     { command: 'stop', description: 'Unlink' },
   ],
 };
 const DESCRIPTION = {
-  fa: 'ربات Poshtetgarm: کارهایت را با یک پیام ثبت کن، هر صبح کارهای امروز را بگیر و شادوینگ انگلیسی تمرین کن. اول در اپ «حساب کاربری ← وصل به تلگرام» را بزن.',
-  en: 'Poshtetgarm bot: log tasks with one message, get your day each morning and practise English shadowing. First tap «Account → Connect Telegram» in the app.',
+  fa: 'ربات Poshtetgarm: برنامه‌ریز، زبان، سلامت و مخارج اپ در تلگرام. کارهایت را با یک پیام ثبت کن و هر صبح کارهای امروز را بگیر. اول در اپ «حساب کاربری ← وصل به تلگرام» را بزن.',
+  en: "Poshtetgarm bot: the app's planner, English, health and expenses in Telegram. Log things with one message and get your day each morning. First tap «Account → Connect Telegram» in the app.",
 };
 const SHORT_DESCRIPTION = {
-  fa: 'کارها، خلاصهٔ صبح و شادوینگ Poshtetgarm در تلگرام',
-  en: 'Poshtetgarm tasks, morning summary and shadowing in Telegram',
+  fa: 'برنامه‌ریز، زبان، سلامت و مخارج Poshtetgarm در تلگرام',
+  en: 'Poshtetgarm planner, English, health and expenses in Telegram',
 };
 /** At most this many sentences of a generated dialogue are practised in Telegram. */
 const SHADOW_SENTENCES = 8;
@@ -166,14 +203,6 @@ export function shadowFeedback(
 
 export const telegramCodeHash = (code: string) =>
   createHash('sha256').update(code).digest('hex');
-
-/** Telegram text is plain: drop the assistant's markdown bold and headings. */
-export function plainReply(text: string): string {
-  return text
-    .replace(/\*\*(.+?)\*\*/gs, '$1')
-    .replace(/^#{1,6}\s+/gm, '')
-    .trim();
-}
 
 /** The open tasks and due cards of a morning summary, or null when the day has nothing. */
 export function summaryText(
@@ -247,6 +276,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     private readonly englishAi: EnglishAiService,
     private readonly speech: SpeechService,
     private readonly scores: PracticeScoresService,
+    private readonly sections: TelegramSectionsService,
   ) {
     this.api = new TelegramApi(config);
   }
@@ -452,7 +482,11 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
           ? this.link(chatId, start[1])
           : this.joinPrompt(chatId, language, start[1]);
       return link
-        ? say(HELP_TEXT.fa, HELP_TEXT.en, menuKeyboard(language))
+        ? say(
+            HELP_TEXT.fa,
+            HELP_TEXT.en,
+            await this.keyboard(link.userId, language),
+          )
         : say(
             'برای وصل شدن، در اپ به «حساب کاربری» برو و «وصل به تلگرام» را بزن.',
             'To link, open «Account» in the app and tap «Connect Telegram».',
@@ -474,14 +508,51 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       );
     }
     if (!(await this.member(from))) return this.joinPrompt(chatId, language);
+    const pending = activePending(link.pending);
+    const ctx: SectionContext = {
+      userId: link.userId,
+      chatId,
+      language,
+      pending,
+    };
+    // A menu or command means the user moved on from a question the bot asked.
+    const command = /^\/[a-z]+$/.test(text);
+    const section = SECTIONS.find(
+      (key) => text === `/${key}` || isMenu(text, key),
+    );
+    if (
+      pending &&
+      (command || section || isMenu(text, 'today') || isMenu(text, 'help'))
+    )
+      await this.sections.savePending(chatId, null);
     if (text === '/help' || isMenu(text, 'help'))
-      return say(HELP_TEXT.fa, HELP_TEXT.en, menuKeyboard(language));
+      return say(
+        HELP_TEXT.fa,
+        HELP_TEXT.en,
+        await this.keyboard(link.userId, language),
+      );
     if (text === '/today' || isMenu(text, 'today'))
       return this.today(link.userId, chatId, language);
+    if (section) return this.run(ctx, () => this.sections.menu(section, ctx));
     if (text === '/shadow' || /^(شادوینگ|shadowing|shadow)$/i.test(text))
       return this.startShadow(link.userId, chatId, language);
     const voice = message.voice ?? message.audio;
     if (voice) {
+      if (pending?.kind === 'speaking') {
+        if ((voice.file_size ?? 0) > MAX_RECORDING_BYTES)
+          return say(
+            'این ضبط خیلی طولانی است. کوتاه‌تر جواب بده.',
+            'That recording is too long. Answer a little shorter.',
+          );
+        return this.run(
+          ctx,
+          async () =>
+            (await this.sections.voice(
+              await this.api.download(voice.file_id, MAX_RECORDING_BYTES),
+              ctx,
+            )) ?? [],
+        );
+      }
       const state = link.shadow as ShadowState | null;
       if (state)
         return this.checkVoice(link.userId, chatId, language, state, voice);
@@ -495,7 +566,52 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
         'فعلاً فقط پیام متنی را ثبت می‌کنم.',
         'For now I only log text messages.',
       );
+    if (pending && pending.kind !== 'listening' && !command)
+      return this.run(
+        ctx,
+        async () => (await this.sections.text(text.slice(0, 4000), ctx)) ?? [],
+      );
     await this.chat(link.userId, chatId, language, text.slice(0, 4000));
+  }
+
+  /** The reply keyboard with the sections this account has on. */
+  private async keyboard(userId: string, language: Lang) {
+    return menuKeyboard(language, await this.sections.applets(userId));
+  }
+
+  /** Runs a section action and sends what it returns; AI and other errors get the usual replies. */
+  private async run(ctx: SectionContext, action: () => Promise<Out[]>) {
+    const ai = setTimeout(
+      () =>
+        void this.api
+          .call('sendChatAction', {
+            chat_id: ctx.chatId.toString(),
+            action: 'typing',
+          })
+          .catch(() => undefined),
+      800,
+    );
+    try {
+      await this.send(ctx.chatId, await action());
+    } catch (error) {
+      await this.aiError(ctx.chatId, ctx.language, error);
+    } finally {
+      clearTimeout(ai);
+    }
+  }
+
+  private async send(chatId: bigint, outs: Out[]) {
+    for (const out of outs) {
+      if ('text' in out) {
+        await this.reply(chatId, out.text, out.markup);
+        continue;
+      }
+      try {
+        await this.api.sendVoice(chatId, out.voice, out.caption, out.buttons);
+      } catch {
+        await this.reply(chatId, out.caption, out.buttons);
+      }
+    }
   }
 
   private async link(chatId: bigint, code: string) {
@@ -520,7 +636,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     return this.reply(
       chatId,
       `${language === 'en' ? 'Linked.' : 'وصل شد.'}\n\n${HELP_TEXT[language]}`,
-      menuKeyboard(language),
+      await this.keyboard(row.userId, language),
     );
   }
 
@@ -817,7 +933,41 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       return this.finishShadow(link.userId, chatId, language, state);
     }
 
-    const taskId = /^d:(.{1,60})$/.exec(query.data ?? '')?.[1];
+    const data = query.data ?? '';
+    if (link && (data === 'x' || data === 'E:s' || callbackSection(data))) {
+      const language: Lang = english ? 'en' : 'fa';
+      if (!(await this.member(from))) {
+        await answer('');
+        return this.joinPrompt(chatId, language);
+      }
+      const ctx: SectionContext = {
+        userId: link.userId,
+        chatId,
+        language,
+        pending: activePending(link.pending),
+      };
+      if (data === 'x') {
+        await this.sections.savePending(chatId, null);
+        return void (await answer(english ? 'Cancelled' : 'لغو شد'));
+      }
+      if (data === 'E:s') {
+        await answer('');
+        return this.startShadow(link.userId, chatId, language);
+      }
+      if (data === 'p:t') {
+        await answer('');
+        return this.today(link.userId, chatId, language);
+      }
+      let toast = '';
+      await this.run(ctx, async () => {
+        const result = await this.sections.callback(data, ctx);
+        toast = result?.toast ?? '';
+        return result?.outs ?? [];
+      });
+      return void (await answer(toast));
+    }
+
+    const taskId = /^d:(.{1,60})$/.exec(data)?.[1];
     if (!taskId || !link) return void (await answer(''));
     if (!(await this.member(from))) {
       await answer('');

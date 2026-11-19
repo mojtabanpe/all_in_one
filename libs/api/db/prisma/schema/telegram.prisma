@@ -9,6 +9,8 @@ model TelegramLink {
   lastSummaryDay String? @db.VarChar(10)
   /// The running shadowing practice in Telegram: title, sentences, current index and per-sentence scores.
   shadow Json?
+  /// What the bot waits for in the next message (a meal, an expense, a weight, a writing answer…) and when it asked.
+  pending Json?
   createdAt DateTime @default(now())
   @@map("telegram_links")
 }
