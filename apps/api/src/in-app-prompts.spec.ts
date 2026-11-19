@@ -6,7 +6,15 @@ import type { TelegramService } from './telegram/telegram.service';
 
 const now = new Date('2026-11-19T08:00:00Z');
 
-function setup(over: { used?: string[]; recent?: boolean; age?: number } = {}) {
+function setup(
+  over: {
+    used?: string[];
+    recent?: boolean;
+    age?: number;
+    goal?: string | null;
+    completed?: boolean;
+  } = {},
+) {
   const db = {
     inAppNotification: {
       findFirst: vi.fn().mockResolvedValue(over.recent ? { id: 'x' } : null),
@@ -24,6 +32,8 @@ function setup(over: { used?: string[]; recent?: boolean; age?: number } = {}) {
         phone: null,
         phoneVerifiedAt: null,
         enabledApplets: ['planner', 'english', 'health'],
+        onboardingGoal: over.goal ?? 'planner',
+        onboardingCompletedAt: over.completed === false ? null : now,
       }),
     },
     pushSubscription: { findFirst: vi.fn().mockResolvedValue(null) },
@@ -79,13 +89,43 @@ describe('in-app prompts (hard steps done in a bottom sheet)', () => {
     expect(db.inAppNotification.upsert).not.toHaveBeenCalled();
   });
 
-  it('asks nothing before the account has really used the app', async () => {
+  it('asks nothing before the first action', async () => {
+    const { db, prompts } = setup({ age: 0.5 });
+    await prompts.offer('u', now, active(0));
+    expect(db.inAppNotification.upsert).not.toHaveBeenCalled();
+  });
+
+  it('on day one, after the first step, offers only a way back: Telegram, and reminders for English', async () => {
     const young = setup({ age: 0.5 });
-    await young.prompts.offer('u', now, active(9));
-    const idle = setup();
-    await idle.prompts.offer('u', now, active(1));
-    expect(young.db.inAppNotification.upsert).not.toHaveBeenCalled();
-    expect(idle.db.inAppNotification.upsert).not.toHaveBeenCalled();
+    await young.prompts.offer('u', now, active(1));
+    const oneDay = setup();
+    await oneDay.prompts.offer('u', now, active(1));
+    expect(young.created().map((c) => c.key)).toEqual(['prompt:telegram']);
+    expect(oneDay.created().map((c) => c.key)).toEqual(['prompt:telegram']);
+    const linked = setup({ age: 0.5 });
+    linked.db.telegramLink.findUnique.mockResolvedValue({ userId: 'u' });
+    await linked.prompts.offer('u', now, active(1));
+    expect(linked.db.inAppNotification.upsert).not.toHaveBeenCalled();
+    const english = setup({ age: 0.5, goal: 'english' });
+    await english.prompts.offer('u', now, active(1));
+    expect(english.created()).toEqual([
+      expect.objectContaining({
+        key: 'prompt:push',
+        content: expect.objectContaining({
+          widget: { kind: 'push', data: { review: '20:00' } },
+        }),
+      }),
+    ]);
+  });
+
+  it('on day one waits until the first step is done (a copied deck is not a review)', async () => {
+    const { db, prompts } = setup({
+      age: 0.5,
+      goal: 'english',
+      completed: false,
+    });
+    await prompts.offer('u', now, active(1));
+    expect(db.inAppNotification.upsert).not.toHaveBeenCalled();
   });
 
   it('suggests a daily repeat for a one-off task added on several days, with its title', async () => {

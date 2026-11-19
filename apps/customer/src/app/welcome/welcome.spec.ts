@@ -171,10 +171,41 @@ describe('welcome page', () => {
   it('offers notifications after the first action and continues either way', async () => {
     const enabled = signal(false);
     const enable = vi.fn(async () => enabled.set(true));
-    const { fixture, http, navigate, settle, click, success, track } = setup({
+    const { http, navigate, settle, click, success, track } = setup({
       supported: true,
       enabled,
       enable,
+    });
+    http.expectOne('/api/onboarding').flush({ ...fresh, goal: 'planner' });
+    await settle();
+    await click('ده دقیقه پیاده‌روی');
+    http.expectOne('/api/planner/tasks').flush({});
+    await settle();
+    expect(navigate).not.toHaveBeenCalled();
+
+    await click('روشن کردن اعلان‌ها');
+    expect(enable).toHaveBeenCalledTimes(1);
+    const progress = http.expectOne('/api/push/progress-settings');
+    expect(progress.request.body).toEqual({
+      firstWeek: true,
+      weekly: true,
+      dailyTasks: true,
+    });
+    progress.flush({});
+    http.expectNone('/api/push/review-settings');
+    await settle();
+    expect(success).toHaveBeenCalledWith('اعلان‌ها روشن شد.');
+    expect(navigate).toHaveBeenCalledWith('/planner');
+    expect(track.mock.calls).toEqual([
+      ['welcome_viewed'],
+      ['notify_prompt_viewed'],
+      ['notify_enabled'],
+    ]);
+  });
+
+  it('takes the English goal straight to the cards, without a reminders page', async () => {
+    const { http, navigate, settle, click, track } = setup({
+      supported: true,
     });
     http.expectOne('/api/onboarding').flush({ ...fresh, goal: 'english' });
     await settle();
@@ -193,29 +224,8 @@ describe('welcome page', () => {
       .expectOne('/api/english/starter-decks/daily-life-a1')
       .flush({ id: 'd1' });
     await settle();
-    expect(navigate).not.toHaveBeenCalled();
-    expect(fixture.nativeElement.textContent).toContain('قدم اول انجام شد.');
-
-    await click('روشن کردن اعلان‌ها');
-    expect(enable).toHaveBeenCalledTimes(1);
-    const progress = http.expectOne('/api/push/progress-settings');
-    expect(progress.request.body).toEqual({
-      firstWeek: true,
-      weekly: true,
-      dailyTasks: false,
-    });
-    progress.flush({});
-    const reminder = http.expectOne('/api/push/review-settings');
-    expect(reminder.request.body).toEqual({ enabled: true, time: '20:00' });
-    reminder.flush({});
-    await settle();
-    expect(success).toHaveBeenCalledWith('اعلان‌ها روشن شد.');
     expect(navigate).toHaveBeenCalledWith('/english/deck/d1/study');
-    expect(track.mock.calls).toEqual([
-      ['welcome_viewed'],
-      ['notify_prompt_viewed'],
-      ['notify_enabled'],
-    ]);
+    expect(track.mock.calls).toEqual([['welcome_viewed']]);
   });
 
   it('records a declined or failed notification offer', async () => {

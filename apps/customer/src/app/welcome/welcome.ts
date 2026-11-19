@@ -629,8 +629,11 @@ export class Welcome {
           {},
         ),
       );
-      // No toast: the review opens on this deck, and a toast would cover its "Show answer" button.
-      this.done(`${GOAL_APP_PATHS.english}/deck/${deck.id}/study`);
+      // Straight to the cards: the first step is a review, and a reminders page in between lost 5 of 6 English
+      // starters (2026-11-19; it often fails in the store apps). Reminders are offered in a sheet after the first
+      // review (in-app-prompts.ts). No toast: it would cover the "Show answer" button.
+      this.target.set(`${GOAL_APP_PATHS.english}/deck/${deck.id}/study`);
+      await this.finish();
     });
   }
 
@@ -682,25 +685,15 @@ export class Welcome {
     }
     void this.growth.track('notify_enabled');
     // Saying yes here is the request for reminders: the first-week nudges and weekly report for everyone,
-    // plus the reminder that fits the chosen goal. Each can be turned off in the account.
-    const goal = this.goal();
-    await Promise.all([
-      firstValueFrom(
-        this.http.put(`${this.api}/push/progress-settings`, {
-          firstWeek: true,
-          weekly: true,
-          dailyTasks: goal === 'planner',
-        }),
-      ).catch(() => undefined),
-      goal === 'english'
-        ? firstValueFrom(
-            this.http.put(`${this.api}/push/review-settings`, {
-              enabled: true,
-              time: '20:00',
-            }),
-          ).catch(() => undefined)
-        : undefined,
-    ]);
+    // plus the morning tasks digest for the planner goal. Each can be turned off in the account. (The English goal
+    // gets its review reminder from the in-app reminders sheet after the first review.)
+    await firstValueFrom(
+      this.http.put(`${this.api}/push/progress-settings`, {
+        firstWeek: true,
+        weekly: true,
+        dailyTasks: this.goal() === 'planner',
+      }),
+    ).catch(() => undefined);
     this.notifications.success('اعلان‌ها روشن شد.');
     await this.finish();
   }

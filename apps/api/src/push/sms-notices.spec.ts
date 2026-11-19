@@ -4,6 +4,14 @@ import type { TasksService } from '@all-in-one/applets/planner/api';
 import type { BillingService } from '../billing/billing.service';
 import { SmsNotices } from './sms-notices';
 
+// FIRST_STEP has no Faraz pattern ID yet; the tests switch it on and off.
+const templates = vi.hoisted(() => ({ firstStep: false }));
+vi.mock('@all-in-one/api/auth', async (original) => ({
+  ...(await original<object>()),
+  smsTemplateReady: (template: string) =>
+    template !== 'FIRST_STEP' || templates.firstStep,
+}));
+
 describe('informational account SMS', () => {
   // 11:00 Tehran on 2026-11-17.
   const now = new Date('2026-11-17T07:30:00Z');
@@ -92,6 +100,30 @@ describe('informational account SMS', () => {
     const signupDay = setup({ createdAt: daysAgo(0.1) });
     await signupDay.sweep.tick(now);
     expect(signupDay.send).not.toHaveBeenCalled();
+  });
+
+  it('reminds an account that still did nothing on day two, only once its pattern ID exists', async () => {
+    templates.firstStep = false;
+    const waiting = setup({
+      createdAt: daysAgo(2),
+      notices: [{ kind: 'ACCOUNT_READY', createdAt: daysAgo(1) }],
+    });
+    await waiting.sweep.tick(now);
+    expect(waiting.send).not.toHaveBeenCalled();
+
+    templates.firstStep = true;
+    const { send, sweep } = setup({
+      createdAt: daysAgo(2),
+      notices: [{ kind: 'ACCOUNT_READY', createdAt: daysAgo(1) }],
+    });
+    await sweep.tick(now);
+    await sweep.tick(new Date(now.getTime() + 86_400_000));
+    expect(sent(send)).toEqual([['FIRST_STEP', {}]]);
+
+    const active = setup({ createdAt: daysAgo(2), established: true });
+    await active.sweep.tick(now);
+    expect(active.send).not.toHaveBeenCalled();
+    templates.firstStep = false;
   });
 
   it('sends the day-three summary only with something really planned', async () => {

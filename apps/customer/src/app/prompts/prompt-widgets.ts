@@ -54,7 +54,7 @@ export function tehranDay(now = new Date(), offsetDays = 0): string {
           type="button"
           class="min-h-11"
           [disabled]="push.busy()"
-          (click)="push.enable()"
+          (click)="enable()"
         >
           {{ 'روشن‌کردن یادآوری‌ها' | aioTranslate }}
         </button>
@@ -68,8 +68,23 @@ export function tehranDay(now = new Date(), offsetDays = 0): string {
   `,
 })
 export class PushPrompt {
+  /** A Tehran time (`20:00`): also turn on the daily card review reminder (the English first step). */
+  readonly review = input('');
   protected readonly push = inject(PushSettings);
   private readonly sheet = inject(AioInAppNotifications);
+  private readonly http = inject(HttpClient);
+  private readonly api = inject(API_BASE_URL);
+  protected async enable(): Promise<void> {
+    await this.push.enable();
+    const time = this.review();
+    if (this.push.enabled() && time)
+      await firstValueFrom(
+        this.http.put(`${this.api}/push/review-settings`, {
+          enabled: true,
+          time,
+        }),
+      ).catch(() => undefined);
+  }
   /** The status line is shown only after a try, so a failure says why and the button stays for a retry. */
   protected readonly tried = computed(
     () => this.push.busy() || this.push.message() !== this.initial,

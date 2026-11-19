@@ -21,7 +21,10 @@ export function promptWidget(
 ): { component: Type<unknown>; inputs?: Record<string, unknown> } {
   switch (kind) {
     case 'push':
-      return { component: PushPrompt };
+      return {
+        component: PushPrompt,
+        inputs: { review: data['review'] ?? '' },
+      };
     case 'telegram':
       return { component: TelegramSettings, inputs: { chrome: false } };
     case 'phone':

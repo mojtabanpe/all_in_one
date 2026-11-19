@@ -4,7 +4,11 @@ import {
   type OnModuleDestroy,
   type OnModuleInit,
 } from '@nestjs/common';
-import { SmsService, type SmsTemplate } from '@all-in-one/api/auth';
+import {
+  SmsService,
+  smsTemplateReady,
+  type SmsTemplate,
+} from '@all-in-one/api/auth';
 import { PrismaService } from '@all-in-one/api/db';
 import { TasksService } from '@all-in-one/applets/planner/api';
 import {
@@ -20,7 +24,7 @@ const WINDOW_DAYS = 10;
 
 type Notice = Extract<
   SmsTemplate,
-  'ACCOUNT_READY' | 'DAILY_SUMMARY' | 'TRIAL_ENDING'
+  'ACCOUNT_READY' | 'FIRST_STEP' | 'DAILY_SUMMARY' | 'TRIAL_ENDING'
 >;
 
 /**
@@ -96,6 +100,19 @@ export class SmsNotices implements OnModuleInit, OnModuleDestroy {
           ) {
             await this.deliver(id, 'ACCOUNT_READY', () =>
               this.sms.send('ACCOUNT_READY', phone, {}),
+            );
+            continue;
+          }
+          // Day two and still nothing of its own: only 4 of 41 new accounts came back on a later day (2026-11-19),
+          // and most have only a phone, so SMS is the one way to reach them.
+          if (
+            smsTemplateReady('FIRST_STEP') &&
+            !sent.has('FIRST_STEP') &&
+            addDays(signup, 2) === today &&
+            !(await this.established(id))
+          ) {
+            await this.deliver(id, 'FIRST_STEP', () =>
+              this.sms.send('FIRST_STEP', phone, {}),
             );
             continue;
           }

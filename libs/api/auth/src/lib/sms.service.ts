@@ -35,7 +35,17 @@ export const SMS_TEMPLATES = {
   ACCOUNT_READY: { code: 'MThe3g4xrU', params: [] },
   DAILY_SUMMARY: { code: 'Y4Qm4Qf3pv', params: ['count'] },
   TRIAL_ENDING: { code: 'HAFXaRVsmQ', params: ['days'] },
+  /**
+   * Day two for an account that still has nothing of its own (2026-11-19). Empty until Faraz approves the pattern
+   * and the owner supplies its ID (directive 83: never invent one); nothing is sent while it is empty.
+   */
+  FIRST_STEP: { code: '', params: [] },
 } as const;
+
+/** A template whose Faraz pattern ID is known; one without an ID is never sent. */
+export function smsTemplateReady(template: SmsTemplate): boolean {
+  return SMS_TEMPLATES[template].code !== '';
+}
 export type SmsTemplate = keyof typeof SMS_TEMPLATES;
 type Params<T extends SmsTemplate> = Record<
   (typeof SMS_TEMPLATES)[T]['params'][number],
@@ -95,7 +105,7 @@ export class SmsService {
     to: string,
     params: Params<T>,
   ): Promise<void> {
-    if (!this.enabled)
+    if (!this.enabled || !smsTemplateReady(template))
       throw new ServiceUnavailableException('ارسال پیامک فعلاً فعال نیست.');
     let ok = false;
     let reason = 'unreachable';

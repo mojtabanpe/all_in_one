@@ -14,7 +14,7 @@ import { TelegramService } from './telegram/telegram.service';
 export const PROMPT_COOLDOWN_MS = 3 * 86_400_000;
 /** A prompt that was not answered disappears after a week. */
 export const PROMPT_TTL_MS = 7 * 86_400_000;
-/** Only an account that has used the app on this many separate days is asked anything (166: never before the first action). */
+/** Active days before every prompt is open; on day one only the Telegram link is offered, after the first action. */
 export const PROMPT_ACTIVE_DAYS = 2;
 /** Due cards needed before the quick-review prompt is worth a sheet. */
 export const REVIEW_PROMPT_DUE = 5;
@@ -85,10 +85,22 @@ export class InAppPrompts {
         phone: true,
         phoneVerifiedAt: true,
         enabledApplets: true,
+        onboardingGoal: true,
+        onboardingCompletedAt: true,
       },
     });
-    if (!user || now.getTime() - user.createdAt.getTime() < 86_400_000) return;
-    if ((await activeDays()) < PROMPT_ACTIVE_DAYS) return;
+    if (!user) return;
+    const days = await activeDays();
+    // Nothing before the first action (166).
+    if (days < 1) return;
+    // Day one: only 4 of 41 new accounts came back on a later day (2026-11-19), so a step that needs two active days
+    // reaches almost nobody. Once the first step of /welcome is done, offer a way back: the Telegram bot, and for the
+    // English goal also reminders (its /welcome goes straight to the cards, so reminders were not offered there yet).
+    // Everything else waits for day two.
+    const dayOne =
+      now.getTime() - user.createdAt.getTime() < 86_400_000 ||
+      days < PROMPT_ACTIVE_DAYS;
+    if (dayOne && !user.onboardingCompletedAt) return;
     const used = new Set(
       (
         await this.db.inAppNotification.findMany({
@@ -100,55 +112,64 @@ export class InAppPrompts {
     const applets = new Set(
       resolveEnabledApplets(user.enabledApplets, user.role),
     );
-    const candidates: (() => Promise<Prompt | null>)[] = [
-      () => this.push(userId),
-      () => this.telegramLink(userId),
-      async () =>
-        user.email &&
-        user.emailVerifiedAt &&
-        !user.phoneVerifiedAt &&
-        this.sms.enabled
-          ? prompt(
-              'phone',
-              'prompt:phone',
-              {
-                fa: 'شماره‌ات را تأیید کن، یک هفته هدیه بگیر',
-                en: 'Confirm your number for a free week',
-              },
-              {
-                fa: 'با کد پیامکی تأیید کن؛ یک هفته هوش مصنوعی خودکار اضافه می‌شود و رمز را با پیامک هم می‌توانی بازیابی کنی.',
-                en: 'Confirm it with an SMS code: one week of AI is added automatically, and you can reset your password by SMS.',
-              },
-            )
-          : null,
-      async () =>
-        user.phoneVerifiedAt && !user.email
-          ? prompt(
-              'email',
-              'prompt:email',
-              {
-                fa: 'ایمیلت را اضافه کن، یک هفته هدیه بگیر',
-                en: 'Add your email for a free week',
-              },
-              {
-                fa: 'لینک تأیید را باز کن؛ یک هفته هوش مصنوعی خودکار اضافه می‌شود.',
-                en: 'Open the confirmation link: one week of AI is added automatically.',
-              },
-            )
-          : null,
-      () =>
-        applets.has('planner')
-          ? this.repeatTask(userId, now)
-          : Promise.resolve(null),
-      () =>
-        applets.has('health') ? this.weightGoal(userId) : Promise.resolve(null),
-      () =>
-        applets.has('english')
-          ? this.review(userId, now, used)
-          : Promise.resolve(null),
-      () => this.rewards(userId, now),
-      () => this.aiConnection(userId, now),
-    ];
+    const candidates: (() => Promise<Prompt | null>)[] = dayOne
+      ? [
+          ...(user.onboardingGoal === 'english'
+            ? [() => this.push(userId, { review: '20:00' })]
+            : []),
+          () => this.telegramLink(userId),
+        ]
+      : [
+          () => this.push(userId),
+          () => this.telegramLink(userId),
+          async () =>
+            user.email &&
+            user.emailVerifiedAt &&
+            !user.phoneVerifiedAt &&
+            this.sms.enabled
+              ? prompt(
+                  'phone',
+                  'prompt:phone',
+                  {
+                    fa: 'شماره‌ات را تأیید کن، یک هفته هدیه بگیر',
+                    en: 'Confirm your number for a free week',
+                  },
+                  {
+                    fa: 'با کد پیامکی تأیید کن؛ یک هفته هوش مصنوعی خودکار اضافه می‌شود و رمز را با پیامک هم می‌توانی بازیابی کنی.',
+                    en: 'Confirm it with an SMS code: one week of AI is added automatically, and you can reset your password by SMS.',
+                  },
+                )
+              : null,
+          async () =>
+            user.phoneVerifiedAt && !user.email
+              ? prompt(
+                  'email',
+                  'prompt:email',
+                  {
+                    fa: 'ایمیلت را اضافه کن، یک هفته هدیه بگیر',
+                    en: 'Add your email for a free week',
+                  },
+                  {
+                    fa: 'لینک تأیید را باز کن؛ یک هفته هوش مصنوعی خودکار اضافه می‌شود.',
+                    en: 'Open the confirmation link: one week of AI is added automatically.',
+                  },
+                )
+              : null,
+          () =>
+            applets.has('planner')
+              ? this.repeatTask(userId, now)
+              : Promise.resolve(null),
+          () =>
+            applets.has('health')
+              ? this.weightGoal(userId)
+              : Promise.resolve(null),
+          () =>
+            applets.has('english')
+              ? this.review(userId, now, used)
+              : Promise.resolve(null),
+          () => this.rewards(userId, now),
+          () => this.aiConnection(userId, now),
+        ];
     for (const candidate of candidates) {
       const next = await candidate();
       if (!next || used.has(next.key)) continue;
@@ -168,7 +189,11 @@ export class InAppPrompts {
   }
 
   /** No device gets reminders yet. Phones that cannot (an iPhone browser tab) skip it in the app. */
-  private async push(userId: string): Promise<Prompt | null> {
+  private async push(
+    userId: string,
+    /** `review`: also turn on the daily card review reminder at this Tehran time once push works. */
+    data?: { review: string },
+  ): Promise<Prompt | null> {
     if (
       await this.db.pushSubscription.findFirst({
         where: { userId },
@@ -176,15 +201,26 @@ export class InAppPrompts {
       })
     )
       return null;
-    return prompt(
-      'push',
-      'prompt:push',
-      { fa: 'یادآوری‌ها را روشن کن', en: 'Turn on reminders' },
-      {
-        fa: 'سر وقتِ کارها و عادت‌هایت روی همین دستگاه خبرت کنیم.',
-        en: 'Get your tasks and habits on this device right on time.',
-      },
-    );
+    return data
+      ? prompt(
+          'push',
+          'prompt:push',
+          { fa: 'هر شب یادت بیندازیم؟', en: 'Remind you every evening?' },
+          {
+            fa: 'ساعت ۲۰ وقتی کارت برای مرور داری، روی همین دستگاه خبرت می‌کنیم.',
+            en: 'At 20:00, when cards are due, we let you know on this device.',
+          },
+          data,
+        )
+      : prompt(
+          'push',
+          'prompt:push',
+          { fa: 'یادآوری‌ها را روشن کن', en: 'Turn on reminders' },
+          {
+            fa: 'سر وقتِ کارها و عادت‌هایت روی همین دستگاه خبرت کنیم.',
+            en: 'Get your tasks and habits on this device right on time.',
+          },
+        );
   }
 
   private async telegramLink(userId: string): Promise<Prompt | null> {

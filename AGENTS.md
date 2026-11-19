@@ -893,7 +893,7 @@ Rules:
      the step: turning on reminders, linking Telegram, confirming a phone or adding an email (the week of 121), a daily
      repeat for a task added on several days, a weight goal, five quick card reviews, the Telegram/Instagram weeks (108)
      and the ChatGPT/Claude connection. The server decides (`InAppPrompts`, `apps/api/src/in-app-prompts.ts`): only after
-     the account has used the app on 2 separate days (166), one prompt at a time and never while another notice is open,
+     the account has used the app on 2 separate days (166; day one: see 178), one prompt at a time and never while another notice is open,
      3 days apart, each kind once (a review again only after a new idle spell). A new hard step gets a widget there
      rather than a link to a settings page. The widgets load lazily (`apps/customer/src/app/prompts`).
 
@@ -902,3 +902,11 @@ Rules:
      authorizes that one 20-second video (`poshtetgarm-telegram-fa.mp4`) with those captions on @poshtetgarm Instagram
      and the @poshtetgarm Telegram channel only; it supersedes 173's «not approved» note for this video and is not
      standing authorization for future posts. Evidence lives in the growth roadmap.
+
+178. **Bring new accounts back on day two (2026-11-19).** Production numbers (14 days, read-only): 58 signups, 23 did
+     something, and only 4 of 41 accounts older than a day came back on a later day; 5 of 6 English starters copied a
+     deck and never reviewed. The owner chose all three fixes («هر سه را بساز»): on day one, once the `/welcome` first
+     step is done, the in-app prompts (176) offer only a way back (the Telegram link; for the English goal first
+     reminders with the 20:00 review reminder), the rest still waits for day two; the English `/welcome` step goes
+     straight to the cards, with no reminders page before the first review; and an informational `FIRST_STEP` SMS on
+     day two for an account with nothing of its own, sent only once the owner supplies its Faraz pattern ID (83, 150).
