@@ -97,10 +97,10 @@ services:
       retries: 10
     security_opt: [no-new-privileges:true]
 
-  # Error monitoring (directive 184). One process (web + background tasks) on Postgres, no Redis. It listens on
-  # loopback only: the api sends events to 127.0.0.1:4340, and the dashboard is reached through an SSH tunnel
-  # (`ssh -L 4340:127.0.0.1:4340 flashcard`, then http://localhost:4340). Not started unless GLITCHTIP_SECRET_KEY is
-  # set in compose.env (deploy/release.sh). Capped so it can never starve the api.
+  # Error monitoring (directives 184 and 185). One process (web + background tasks) on Postgres, no Redis. It listens
+  # on loopback 127.0.0.1:4340 (the api sends events there directly), and host nginx serves the dashboard on
+  # https://monitor.poshtetgarm.ir with registration off. Not started unless GLITCHTIP_SECRET_KEY is set in compose.env
+  # (deploy/release.sh). Capped so it can never starve the api.
   glitchtip:
     image: glitchtip/glitchtip:6.1.1
     network_mode: host
@@ -112,8 +112,8 @@ services:
       VALKEY_URL: ''
       # One process: web, background tasks and the database migration (the image's default is web only).
       SERVER_ROLE: all_in_one
-      GLITCHTIP_DOMAIN: http://localhost:4340
-      ALLOWED_HOSTS: localhost,127.0.0.1
+      GLITCHTIP_DOMAIN: https://monitor.poshtetgarm.ir
+      ALLOWED_HOSTS: monitor.poshtetgarm.ir,localhost,127.0.0.1
       GRANIAN_HOST: 127.0.0.1
       GRANIAN_PORT: 4340
       # Sign-up stays off; set GLITCHTIP_REGISTRATION=true in compose.env only to create the first account.
