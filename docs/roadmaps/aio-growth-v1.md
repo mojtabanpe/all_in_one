@@ -739,5 +739,7 @@ Claim checked against the code: the assistant has `batch_create_tasks` / `create
   همه‌شون رو توی یه جمله بنویس؛ Poshtetgarm با تاریخ، ساعت و یادآور ثبتشون می‌کنه. / برنامه‌ریز، فلش‌کارت و بخش سلامت
   رایگان‌اند؛ دستیار هوش مصنوعی برای حساب تازه یک هفته رایگان است. / پشتت گرم رو در کافه‌بازار یا مایکت جست‌وجو کن.
   #پشتت_گرم #برنامه_ریزی #مدیریت_زمان #هوش_مصنوعی #یادآور»
+- `DONE` Telegram (owner: «تو کانال تلگرام هم بذارش»): `sendVideo` to `@poshtetgarm` through the channel bot,
+  2026-11-20 15:42:25 Tehran, message 9, the same file with the Instagram caption minus hashtags.
 - `VERIFY` views/reach against episode 1 at equal age, and Bazaar/Myket signups and first planner tasks in the 3 days
   after vs before.

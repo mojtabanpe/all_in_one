@@ -978,5 +978,6 @@ flashcard`; `deploy/release.sh` starts it only when `GLITCHTIP_SECRET_KEY` is in
 
 187. **Publish the «با یه جمله ۲» Reel (2026-11-20).** The owner approved the edited planner draft («خوبه»), the revised
      caption, and said «پابلیش کن». This authorizes that one 23.2-second Reel with that caption on @poshtetgarm
-     Instagram only, hosted in the Drive folder `ywa` as 164; it is not standing authorization for future posts.
+     Instagram, hosted in the Drive folder `ywa` as 164; the owner then asked «تو کانال تلگرام هم بذارش», so it also goes to
+     the @poshtetgarm Telegram channel; it is not standing authorization for future posts.
      Evidence lives in the growth roadmap.
