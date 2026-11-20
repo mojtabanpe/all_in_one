@@ -648,6 +648,8 @@ export class BillingAccountPanel {
     TELEGRAM_JOIN: 'عضویت در تلگرام',
     INSTAGRAM_FOLLOW: 'دنبال‌کردن در اینستاگرام',
     SECOND_CONTACT: 'تأیید راه دوم ارتباط (خودکار)',
+    REFERRAL_INVITER: 'دعوت دوست (خودکار)',
+    REFERRAL_INVITED: 'ثبت‌نام با دعوت (خودکار)',
   } as const;
   protected readonly rewardModel = signal<{
     campaign: BillingRewardCampaign;

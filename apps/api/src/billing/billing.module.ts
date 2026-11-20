@@ -5,6 +5,7 @@ import { PrismaModule } from '@all-in-one/api/db';
 import { BillingController, PaymentsController } from './billing.controller';
 import { BillingReconciler } from './billing-reconciler';
 import { BillingService } from './billing.service';
+import { ReferralController, ReferralService } from './referral';
 import { SecondContactWeek } from './second-contact';
 import { StoreGateway } from './store.gateway';
 import { ZibalGateway } from './zibal.gateway';
@@ -12,11 +13,12 @@ import { ZibalGateway } from './zibal.gateway';
 @Global()
 @Module({
   imports: [AuthModule, PrismaModule],
-  controllers: [BillingController, PaymentsController],
+  controllers: [BillingController, PaymentsController, ReferralController],
   providers: [
     BillingService,
     BillingReconciler,
     SecondContactWeek,
+    ReferralService,
     ZibalGateway,
     StoreGateway,
     { provide: AI_ACCESS, useExisting: BillingService },

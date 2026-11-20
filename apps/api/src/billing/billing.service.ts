@@ -16,6 +16,7 @@ import {
   billingStoreSku,
   canBuyPlan,
   iranMobile,
+  REFERRAL_MAX_WEEKS,
 } from '@all-in-one/shared/schemas';
 import type {
   BillingAccessState,
@@ -572,7 +573,9 @@ export class BillingService {
     await this.prisma.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT 1 FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
       const granted = await tx.billingReward.findUnique({
-        where: { userId_campaign: { userId, campaign: input.campaign } },
+        where: {
+          userId_campaign_key: { userId, campaign: input.campaign, key: '' },
+        },
         select: { id: true },
       });
       if (granted) return;
@@ -657,6 +660,34 @@ export class BillingService {
   }
 
   /**
+   * The two invitation weeks (directive 183): one for the invited account, once, and one for the inviter per
+   * invited friend, up to `REFERRAL_MAX_WEEKS`. Each under its own account lock; safe to repeat.
+   */
+  async grantReferral(
+    inviteeId: string,
+    inviterId: string,
+    now = new Date(),
+  ): Promise<{ invitee: boolean; inviter: boolean }> {
+    const invitee = await this.prisma.$transaction((tx) =>
+      this.queueWeek(tx, inviteeId, 'REFERRAL_INVITED', {
+        adminId: null,
+        reason: 'Joined through an invitation (directive 183)',
+        now,
+      }),
+    );
+    const inviter = await this.prisma.$transaction((tx) =>
+      this.queueWeek(tx, inviterId, 'REFERRAL_INVITER', {
+        adminId: null,
+        reason: 'An invited friend started (directive 183)',
+        now,
+        key: inviteeId,
+        limit: REFERRAL_MAX_WEEKS,
+      }),
+    );
+    return { invitee: invitee === 'granted', inviter: inviter === 'granted' };
+  }
+
+  /**
    * Adds one week after the trial, paid time and earlier weeks, under the account lock that payments use. Only
    * customers whose account is confirmed earn weeks; each campaign once per account.
    */
@@ -669,8 +700,12 @@ export class BillingService {
       reason: string;
       now: Date;
       needsBothContacts?: boolean;
+      /** Tells repeatable weeks apart (the invited friend for REFERRAL_INVITER); empty otherwise. */
+      key?: string;
+      /** At most this many weeks of the campaign (REFERRAL_INVITER). */
+      limit?: number;
     },
-  ): Promise<'granted' | 'exists' | 'unconfirmed'> {
+  ): Promise<'granted' | 'exists' | 'unconfirmed' | 'limit'> {
     await tx.$executeRaw`SELECT 1 FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
     const user = await tx.user.findUniqueOrThrow({
       where: { id: userId },
@@ -686,9 +721,21 @@ export class BillingService {
       return 'unconfirmed';
     const rewards = await tx.billingReward.findMany({
       where: { userId },
-      select: { campaign: true, expiresAt: true },
+      select: { campaign: true, key: true, expiresAt: true },
     });
-    if (rewards.some((reward) => reward.campaign === campaign)) return 'exists';
+    const key = options.key ?? '';
+    if (
+      rewards.some(
+        (reward) => reward.campaign === campaign && reward.key === key,
+      )
+    )
+      return 'exists';
+    if (
+      options.limit !== undefined &&
+      rewards.filter((reward) => reward.campaign === campaign).length >=
+        options.limit
+    )
+      return 'limit';
     const paid = await tx.billingSubscription.findUnique({
       where: { userId },
       select: { paidUntil: true },
@@ -704,6 +751,7 @@ export class BillingService {
         userId,
         adminId: options.adminId,
         campaign,
+        key,
         reason: options.reason,
         startsAt: new Date(start),
         expiresAt: new Date(start + WEEK_MS),

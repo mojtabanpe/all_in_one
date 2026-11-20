@@ -118,6 +118,10 @@ enum BillingRewardCampaign {
   INSTAGRAM_FOLLOW
   /// Automatic: the account confirmed its second contact, a phone for email accounts or an email for phone-only ones (directive 121).
   SECOND_CONTACT
+  /// Automatic (directive 183): a friend this account invited did a first real action; one row per friend (`key`).
+  REFERRAL_INVITER
+  /// Automatic (directive 183): this account joined through an invitation and did a first real action.
+  REFERRAL_INVITED
 }
 
 /// A verified non-payment reward. Each account can earn each campaign once.
@@ -132,9 +136,11 @@ model BillingReward {
   reason    String @db.VarChar(200)
   startsAt  DateTime
   expiresAt DateTime
+  /// Tells repeatable weeks apart: the invited friend's id for REFERRAL_INVITER, empty for every other campaign.
+  key       String @default("") @db.VarChar(40)
   createdAt DateTime @default(now())
 
-  @@unique([userId, campaign])
+  @@unique([userId, campaign, key])
   @@map("billing_rewards")
 }
 
@@ -150,4 +156,20 @@ model BillingRewardRequest {
   @@unique([userId, campaign])
   @@index([createdAt])
   @@map("billing_reward_requests")
+}
+
+/// One invitation (directive 183): the invited account, who invited it and when both weeks were granted.
+/// An account is invited at most once; an inviter earns at most `REFERRAL_MAX_WEEKS` weeks.
+model Referral {
+  inviteeId  String    @id @db.Uuid
+  invitee    User      @relation("ReferralInvitee", fields: [inviteeId], references: [id], onDelete: Cascade)
+  inviterId  String    @db.Uuid
+  inviter    User      @relation("ReferralInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+  /// Set once the invited account did a first real action and the weeks were queued.
+  rewardedAt DateTime?
+
+  @@index([inviterId])
+  @@index([rewardedAt, createdAt])
+  @@map("referrals")
 }

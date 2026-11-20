@@ -1,3 +1,4 @@
+import { ReferralCard } from './referral';
 import { firstValueFrom } from 'rxjs';
 import { DOCUMENT } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -81,6 +82,7 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
     AioSkeletonRows,
     AioTranslate,
     RouterLink,
+    ReferralCard,
   ],
   providers: [
     provideIcons({
@@ -242,6 +244,8 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
           </div>
         </section>
       }
+
+      <customer-referral-card />
 
       @if (offers.hasValue() && offers.value().length) {
         <section aioCard aria-labelledby="offers-heading">
@@ -592,6 +596,8 @@ export class Billing {
     TELEGRAM_JOIN: 'عضویت در تلگرام',
     INSTAGRAM_FOLLOW: 'دنبال‌کردن در اینستاگرام',
     SECOND_CONTACT: 'تأیید راه دوم ارتباط',
+    REFERRAL_INVITER: 'دعوت دوست',
+    REFERRAL_INVITED: 'ثبت‌نام با دعوت',
   } as const;
 
   protected async requestReward(

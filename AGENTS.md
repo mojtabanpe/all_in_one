@@ -942,3 +942,15 @@ Rules:
      catalog the api seeds): the steps, common mistakes, alternatives and one signup handoff to health, with HowTo JSON-LD;
      no intro text or slogans (166). The current video comes from the public `GET /api/health/exercise-videos`. A new
      catalog exercise needs its sitemap line (`exercise-catalog.spec.ts` checks it).
+183. **Invite a friend, both get a week (2026-11-20).** The owner chose it over a daily streak and an Android widget
+     («دعوت دوست رو بساز»). Every account has an eight-character code (`users.inviteCode`, made on first use, no
+     look-alike characters; Persian digits, spaces and dashes are accepted when typed). The invite card on the home and
+     billing pages shares a link to the public home page with `?ref=<code>`; the public site carries `ref` into its
+     signup links and the customer app keeps it until the account signs in, then sends it (`ReferralCapture`). Because
+     store installs lose the link, the shared text also carries the code, and a new account can type a friend's code
+     on the card within `REFERRAL_ENTER_DAYS` (7) of signup. Once the invited account is confirmed and has a first real
+     action (a task, a card, a review, a meal or a workout) within `REFERRAL_REWARD_DAYS` (30), both get one week of
+     AI (`REFERRAL_INVITED` once, `REFERRAL_INVITER` per friend with `billing_rewards.key` = the friend's id, at most
+     `REFERRAL_MAX_WEEKS` = 10), queued like the other earned weeks (108, 121). An account is invited once; its own
+     code and mutual invitations are refused; attaching is throttled. `ReferralService` settles at once or in a
+     10-minute sweep. This replaces the earlier analytics-only invite link on the home page.

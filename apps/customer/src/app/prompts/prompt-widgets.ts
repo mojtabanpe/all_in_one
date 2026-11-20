@@ -570,6 +570,8 @@ export class RewardsPrompt {
     TELEGRAM_JOIN: 'عضویت در تلگرام',
     INSTAGRAM_FOLLOW: 'دنبال‌کردن در اینستاگرام',
     SECOND_CONTACT: 'تأیید راه دوم ارتباط',
+    REFERRAL_INVITER: 'دعوت دوست',
+    REFERRAL_INVITED: 'ثبت‌نام با دعوت',
   } as const;
 
   constructor() {

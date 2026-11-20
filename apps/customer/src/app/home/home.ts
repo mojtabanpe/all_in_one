@@ -1,7 +1,8 @@
+import { ReferralCard } from '../billing/referral';
 import { firstValueFrom } from 'rxjs';
 import { DOCUMENT } from '@angular/common';
 import { HttpClient, httpResource } from '@angular/common/http';
-import { Component, computed, inject, resource, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import type { EnglishStats } from '@all-in-one/applets/english-learning/contracts';
 import type {
@@ -10,7 +11,6 @@ import type {
 } from '@all-in-one/applets/health/contracts';
 import type { PlannerTask } from '@all-in-one/applets/planner/contracts';
 import {
-  GROWTH_REFERRAL_SOURCE,
   resolveEnabledApplets,
   toIsoDate,
   type AppApplet,
@@ -49,6 +49,7 @@ import {
 @Component({
   selector: 'customer-home',
   imports: [
+    ReferralCard,
     AioButton,
     AioCardDirectives,
     AioIcon,
@@ -412,39 +413,7 @@ import {
         </div>
       }
 
-      <section aioCard aria-labelledby="invite-heading">
-        <div aioCardHeader>
-          <h2 id="invite-heading" aioCardTitle>
-            {{ 'دعوت از دوستان' | aioTranslate }}
-          </h2>
-        </div>
-        <div aioCardContent class="flex flex-col gap-3 sm:flex-row">
-          <input
-            aioInput
-            type="url"
-            class="min-h-11 w-full min-w-0"
-            dir="ltr"
-            readonly
-            [attr.aria-label]="'لینک دعوت' | aioTranslate"
-            [value]="invite.hasValue() ? invite.value() : ''"
-          />
-          <button
-            aioBtn
-            type="button"
-            variant="outline"
-            class="min-h-11 shrink-0"
-            [disabled]="!invite.hasValue()"
-            (click)="copyInvite()"
-          >
-            {{ 'کپی لینک دعوت' | aioTranslate }}
-          </button>
-          @if (invite.error()) {
-            <p class="text-sm text-destructive" role="alert">
-              {{ 'لینک دعوت آماده نشد.' | aioTranslate }}
-            </p>
-          }
-        </div>
-      </section>
+      <customer-referral-card />
     </div>
   `,
 })
@@ -457,43 +426,6 @@ export class Home {
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
   private readonly notifications = inject(AioNotifications);
-  protected readonly invite = resource({
-    params: () => this.auth.user()?.id,
-    loader: async ({ params: accountId }) => {
-      const browser = this.document.defaultView;
-      if (!browser?.crypto.subtle) throw new Error('Web Crypto is unavailable');
-      // A stable campaign tag for sharing without exposing the account ID.
-      const digest = await browser.crypto.subtle.digest(
-        'SHA-256',
-        new TextEncoder().encode('poshtetgarm:invite:v1:' + accountId),
-      );
-      const inviteCode = Array.from(
-        new Uint8Array(digest).slice(0, 16),
-        (byte) => byte.toString(16).padStart(2, '0'),
-      ).join('');
-      const link = new URL('/', browser.location.origin);
-      link.search = new URLSearchParams({
-        utm_source: GROWTH_REFERRAL_SOURCE,
-        utm_medium: 'invite',
-        utm_campaign: 'personal-invite',
-        utm_content: inviteCode,
-      }).toString();
-      return link.href;
-    },
-  });
-
-  protected async copyInvite(): Promise<void> {
-    if (!this.invite.hasValue()) return;
-    try {
-      const clipboard = this.document.defaultView?.navigator.clipboard;
-      if (!clipboard) throw new Error('Clipboard is unavailable');
-      await clipboard.writeText(this.invite.value());
-      this.notifications.success('لینک دعوت کپی شد.');
-    } catch {
-      this.notifications.info('لینک را انتخاب کن و دستی کپی کن.');
-    }
-  }
-
   protected readonly onboarding = httpResource<OnboardingState>(
     () => `${this.api}/onboarding`,
   );

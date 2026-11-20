@@ -243,12 +243,63 @@ export const SOCIAL_REWARD_CAMPAIGNS = [
   'TELEGRAM_JOIN',
   'INSTAGRAM_FOLLOW',
 ] as const;
-/** Every week campaign; SECOND_CONTACT is granted automatically (directive 121). */
+/** Every week campaign; SECOND_CONTACT and the two referral weeks are granted automatically (121, 183). */
 export const BILLING_REWARD_CAMPAIGNS = [
   ...SOCIAL_REWARD_CAMPAIGNS,
   'SECOND_CONTACT',
+  'REFERRAL_INVITER',
+  'REFERRAL_INVITED',
 ] as const;
 export type BillingRewardCampaign = (typeof BILLING_REWARD_CAMPAIGNS)[number];
+
+/** Invite a friend (directive 183): both get a week once the friend does a first real action. */
+export const REFERRAL_MAX_WEEKS = 10;
+/** A new account can enter a friend's code by hand (store installs lose the link) for this many days. */
+export const REFERRAL_ENTER_DAYS = 7;
+/** The friend's first real action counts only within this many days of joining. */
+export const REFERRAL_REWARD_DAYS = 30;
+/** Eight characters without look-alikes (0/O, 1/I/L). */
+export const REFERRAL_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+export const REFERRAL_CODE_LENGTH = 8;
+/** Query parameter of the invitation link. */
+export const REFERRAL_PARAM = 'ref';
+
+/** Upper-cases and drops spaces and dashes; null unless it looks like a code. */
+export function normalizeReferralCode(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  // Persian and Arabic-Indic digits, as a phone keyboard may type them.
+  const code = value
+    .replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
+    .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[\s-]/g, '')
+    .toUpperCase();
+  return code.length === REFERRAL_CODE_LENGTH &&
+    [...code].every((char) => REFERRAL_CODE_ALPHABET.includes(char))
+    ? code
+    : null;
+}
+
+export const referralAttachSchema = z.strictObject({
+  code: z.string().check(
+    z.maxLength(20),
+    z.refine((value) => normalizeReferralCode(value) !== null, 'Invalid code'),
+  ),
+});
+export type ReferralAttachInput = z.infer<typeof referralAttachSchema>;
+
+export interface ReferralStatus {
+  code: string;
+  /** Friends who joined with this account's code. */
+  invited: number;
+  /** Of them, friends who did a first real action (each earned this account a week). */
+  rewarded: number;
+  /** Weeks this account can still earn by inviting. */
+  weeksLeft: number;
+  /** This account joined through an invitation. */
+  invitedBy: boolean;
+  /** The account is new enough to enter a friend's code and has not entered one. */
+  canEnter: boolean;
+}
 
 export const billingRewardSchema = z.strictObject({
   email: accountKey,

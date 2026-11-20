@@ -46,6 +46,10 @@ model User {
   focusPushTimers FocusPushTimer[]
   pushSubscriptions PushSubscription[]
   localReminderDevices LocalReminderDevice[]
+  /// Personal invitation code (directive 183), made the first time the account opens its invite card.
+  inviteCode String? @unique @db.VarChar(12)
+  referral Referral? @relation("ReferralInvitee")
+  referralsMade Referral[] @relation("ReferralInviter")
   reviewReminder ReviewReminderSetting?
   progressNotification ProgressNotificationSetting?
   smsNotices SmsNotice[]

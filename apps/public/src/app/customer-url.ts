@@ -17,6 +17,8 @@ import {
   GOAL_APP_PATHS,
   SAMPLE_CARDS_PATH,
   LANDING_GOAL_COOKIE,
+  normalizeReferralCode,
+  REFERRAL_PARAM,
   type OnboardingGoal,
 } from '@all-in-one/shared/schemas';
 
@@ -42,7 +44,14 @@ export function injectCustomerLinks() {
     ),
     { initialValue: router.url.split(/[?#]/)[0] },
   );
-  const campaign = computed(() => extractGrowthCampaign(params()));
+  /** An invitation link's code (directive 183) goes on with the campaign into signup. */
+  const campaign = computed(() => {
+    const ref = normalizeReferralCode(params().get(REFERRAL_PARAM));
+    return {
+      ...extractGrowthCampaign(params()),
+      ...(ref ? { [REFERRAL_PARAM]: ref } : {}),
+    };
+  });
   const goal = computed(
     () => landingGoalForPath(path()) ?? resolveLandingGoal(params()),
   );
