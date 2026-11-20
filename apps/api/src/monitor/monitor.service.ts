@@ -158,6 +158,7 @@ export class MonitorService {
   readonly environment: string;
   readonly release?: string;
   private readonly telegram: TelegramApi;
+  private readonly alertChatIds: string[];
   /** Fingerprints already announced, with the time: a problem is announced once a day, not per event. */
   private readonly announced = new Map<string, number>();
   private announcedWindow: number[] = [];
@@ -166,7 +167,12 @@ export class MonitorService {
     config: ConfigService,
     private readonly prisma?: PrismaService,
   ) {
-    this.telegram = new TelegramApi(config);
+    // Dedicated dev/ops bot (poshtetgarm_develop_bot, directive 186); never the customer bot (TELEGRAM_BOT_TOKEN).
+    this.telegram = new TelegramApi(config, 'MONITOR_TELEGRAM_BOT_TOKEN');
+    this.alertChatIds = (config.get<string>('MONITOR_TELEGRAM_CHAT_ID') ?? '')
+      .split(',')
+      .map((id) => id.trim())
+      .filter(Boolean);
     this.environment = config.get<string>('NODE_ENV') ?? 'development';
     this.release = config.get<string>('APP_RELEASE') || undefined;
     const dsn = config.get<string>('GLITCHTIP_DSN');
@@ -185,10 +191,11 @@ export class MonitorService {
     return !!this.target;
   }
 
-  /** Tells the admins' linked Telegram chats about a problem not seen in the last day. Never throws. */
+  /** Tells the dev/ops bot chats about a problem not seen in the last day. Never throws. */
   private async announce(event: MonitorEvent): Promise<void> {
     try {
-      if (!this.prisma || !this.telegram.enabled) return;
+      if (!this.telegram.enabled) return;
+      if (!this.alertChatIds.length && !this.prisma) return;
       const key = (event.fingerprint ?? [event.exception.values[0].value]).join(
         '|',
       );
@@ -203,14 +210,19 @@ export class MonitorService {
       this.announcedWindow.push(now);
       if (this.announced.size > 500)
         this.announced.delete(this.announced.keys().next().value!);
-      const links = await this.prisma.telegramLink.findMany({
-        where: { user: { role: 'ADMIN' } },
-        select: { chatId: true },
-      });
+      const chatIds: Array<bigint | string> = this.alertChatIds.length
+        ? this.alertChatIds
+        : (
+            await this.prisma!.telegramLink.findMany({
+              where: { user: { role: 'ADMIN' } },
+              select: { chatId: true },
+            })
+          ).map((l) => l.chatId);
+      if (!chatIds.length) return;
       const text = alertText(event);
       await Promise.all(
-        links.map((l) =>
-          this.telegram.sendMessage(l.chatId, text).catch(() => undefined),
+        chatIds.map((chatId) =>
+          this.telegram.sendMessage(chatId, text).catch(() => undefined),
         ),
       );
     } catch (e) {

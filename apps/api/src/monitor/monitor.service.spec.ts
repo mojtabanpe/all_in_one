@@ -112,27 +112,60 @@ describe('Telegram alerts', () => {
   const event = (message: string) =>
     clientErrorEvent({ ...base, kind: 'error', message }, 'production');
 
-  function setup() {
+  function setup(env: Record<string, string> = {}) {
     const findMany = vi.fn().mockResolvedValue([{ chatId: 7n }]);
     const fetchSpy = vi
       .spyOn(globalThis, 'fetch')
       .mockResolvedValue(new Response('{"ok":true,"result":{}}'));
     const m = new MonitorService(
-      config({ TELEGRAM_BOT_TOKEN: 't', NODE_ENV: 'production' }),
+      config({
+        MONITOR_TELEGRAM_BOT_TOKEN: 'dev-token',
+        NODE_ENV: 'production',
+        ...env,
+      }),
       { telegramLink: { findMany } } as never,
     );
     return { m, findMany, fetchSpy };
   }
 
-  it('tells admins once per problem and has no personal data', async () => {
+  it('tells admins once per problem through the monitor bot and has no personal data', async () => {
     const { m, findMany, fetchSpy } = setup();
     m.capture(event('TypeError: a'));
     m.capture(event('TypeError: a'));
     await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
     expect(findMany).toHaveBeenCalledTimes(1);
+    expect(fetchSpy.mock.calls[0][0]).toContain('/botdev-token/sendMessage');
     const body = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string);
     expect(body.chat_id).toBe('7');
     expect(body.text).toContain('TypeError: a');
+    fetchSpy.mockRestore();
+  });
+
+  it('does not fall back to the customer bot token when MONITOR_TELEGRAM_BOT_TOKEN is unset', async () => {
+    const findMany = vi.fn().mockResolvedValue([{ chatId: 7n }]);
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response('{"ok":true,"result":{}}'));
+    const m = new MonitorService(
+      config({ TELEGRAM_BOT_TOKEN: 'customer-token', NODE_ENV: 'production' }),
+      { telegramLink: { findMany } } as never,
+    );
+    m.capture(event('TypeError: a'));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(findMany).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  it('sends to MONITOR_TELEGRAM_CHAT_ID directly when configured', async () => {
+    const { m, findMany, fetchSpy } = setup({
+      MONITOR_TELEGRAM_CHAT_ID: '12345',
+    });
+    m.capture(event('TypeError: a'));
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+    expect(findMany).not.toHaveBeenCalled();
+    const body = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string);
+    expect(body.chat_id).toBe('12345');
     fetchSpy.mockRestore();
   });
 

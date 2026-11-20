@@ -15,8 +15,8 @@ export class TelegramApi {
   private readonly base: string;
   private readonly relayKey?: string;
 
-  constructor(config: ConfigService) {
-    this.token = config.get<string>('TELEGRAM_BOT_TOKEN') || undefined;
+  constructor(config: ConfigService, tokenKey = 'TELEGRAM_BOT_TOKEN') {
+    this.token = config.get<string>(tokenKey) || undefined;
     this.base = (
       config.get<string>('TELEGRAM_API_URL') || 'https://api.telegram.org'
     ).replace(/\/$/, '');
