@@ -741,5 +741,10 @@ Claim checked against the code: the assistant has `batch_create_tasks` / `create
   #پشتت_گرم #برنامه_ریزی #مدیریت_زمان #هوش_مصنوعی #یادآور»
 - `DONE` Telegram (owner: «تو کانال تلگرام هم بذارش»): `sendVideo` to `@poshtetgarm` through the channel bot,
   2026-11-20 15:42:25 Tehran, message 9, the same file with the Instagram caption minus hashtags.
-- `VERIFY` views/reach against episode 1 at equal age, and Bazaar/Myket signups and first planner tasks in the 3 days
-  after vs before.
+- 2026-11-20: the published file was silent until the end card: the edit dropped the shots' own sound and put nothing
+  under the app part (episode 1 has sound throughout). The owner deleted the Reel from Instagram and the Telegram
+  post. Rebuilt as `poshtetgarm-ba-ye-jomle-2-reel-sound.mp4` (local): the shots' ambient sound, a planner music bed
+  from `audio.mjs` (quiet under the shots, louder under the app part) and the end card's sound; levels close to
+  episode 1. `TODO` owner review, then republication only on the owner's word.
+- `VERIFY` (after republication) views/reach against episode 1 at equal age, and Bazaar/Myket signups and first planner
+  tasks in the 3 days after vs before.
