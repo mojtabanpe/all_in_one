@@ -933,5 +933,5 @@ Rules:
      Search Console (through Windsor, last 28 days) had only 2 impressions for the whole site, and the words «پشتت گرم»
      appeared nowhere on it. The owner approved adding them («آره، بند ۱ رو انجام بده»). The visible brand stays
      `Poshtetgarm` (63); the Persian name «پشتت گرم» is added only where search engines and people searching need it: the
-     home and about page title and description («Poshtetgarm (پشتت گرم)»), `alternateName` (`پشتت گرم`, `پشتتگرم`) in
+     home and about page title and description («Poshtetgarm (پشتت گرم)»), `alternateName` (`پشتت گرم`, `پشتت‌گرم` as Myket spells it, `پشتتگرم`) in
      the site's structured data (`apps/public/src/app/seo.ts`), and one line under the brand in the public footer.

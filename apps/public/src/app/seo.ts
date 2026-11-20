@@ -5,7 +5,7 @@ import type { ResolveFn } from '@angular/router';
 const STRUCTURED_DATA_ID = 'aio-structured-data';
 const ORIGIN = 'https://poshtetgarm.ir';
 /** The Persian name people search for; the visible brand stays `Poshtetgarm` (directive 181). */
-const PERSIAN_NAMES = ['پشتت گرم', 'پشتتگرم'];
+const PERSIAN_NAMES = ['پشتت گرم', 'پشتت‌گرم', 'پشتتگرم'];
 
 /** The site and its publisher, for the home page. */
 export const SITE_STRUCTURED_DATA = {
