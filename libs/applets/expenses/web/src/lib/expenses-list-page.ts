@@ -385,10 +385,10 @@ interface BatchExpenseDraft {
           <div class="grid grid-cols-1 gap-2.5">
             @for (item of expenses(); track item.id) {
               <div
-                class="group relative flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm backdrop-blur-sm transition-all hover:border-primary/30 hover:bg-card/80 sm:flex-nowrap"
+                class="group relative flex flex-col gap-2.5 rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm backdrop-blur-sm transition-all hover:border-primary/30 hover:bg-card/80 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
               >
                 <!-- Category Icon & Details -->
-                <div class="flex min-w-0 items-center gap-3.5">
+                <div class="flex min-w-0 flex-1 items-center gap-3.5">
                   <span
                     class="flex size-11 shrink-0 items-center justify-center rounded-xl border text-base transition-transform group-hover:scale-105"
                     [ngClass]="getCategoryBadgeClass(item.categoryColor)"
@@ -399,15 +399,15 @@ interface BatchExpenseDraft {
                     />
                   </span>
 
-                  <div class="flex min-w-0 flex-col gap-0.5">
-                    <div class="flex items-center gap-2">
+                  <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <div class="flex min-w-0 items-center gap-2">
                       <h3 class="truncate text-sm font-medium text-foreground">
                         {{ item.title }}
                       </h3>
                       <!-- AI badge if classified by AI -->
                       @if (item.decidedBy && item.decidedBy !== 'user') {
                         <span
-                          class="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
+                          class="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
                           [title]="decisionLabel(item.decidedBy)"
                         >
                           <aio-icon name="lucideSparkles" size="xs" />
@@ -417,15 +417,15 @@ interface BatchExpenseDraft {
                     </div>
 
                     <div
-                      class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground"
+                      class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-muted-foreground"
                     >
                       <span class="font-medium text-foreground/80">
                         {{ item.categoryName || ('سایر' | aioTranslate) }}
                       </span>
-                      <span>•</span>
+                      <span aria-hidden="true">،</span>
                       <span>{{ formatDate(item.date) }}</span>
                       @if (item.note) {
-                        <span>•</span>
+                        <span aria-hidden="true">،</span>
                         <span class="max-w-[180px] truncate sm:max-w-xs">
                           {{ item.note }}
                         </span>
@@ -435,12 +435,14 @@ interface BatchExpenseDraft {
                 </div>
 
                 <!-- Amount & Actions -->
-                <div class="flex shrink-0 items-center gap-3">
-                  <div class="text-left font-mono sm:text-right">
+                <div
+                  class="flex items-center justify-between gap-3 border-t border-border/40 pt-2.5 sm:shrink-0 sm:justify-end sm:border-t-0 sm:pt-0"
+                >
+                  <div class="tabular-nums">
                     <span class="text-base font-bold text-foreground">
                       {{ locale.number(item.amount) }}
                     </span>
-                    <span class="mr-1 text-xs text-muted-foreground">
+                    <span class="ms-1 text-xs text-muted-foreground">
                       {{ 'تومان' | aioTranslate }}
                     </span>
                   </div>
@@ -450,7 +452,7 @@ interface BatchExpenseDraft {
                       aioBtn
                       variant="ghost"
                       size="icon"
-                      class="size-8 text-muted-foreground hover:text-foreground"
+                      class="size-11 text-muted-foreground hover:text-foreground sm:size-9"
                       (click)="openEdit(item)"
                       [attr.aria-label]="'ویرایش' | aioTranslate"
                     >
@@ -460,7 +462,7 @@ interface BatchExpenseDraft {
                       aioBtn
                       variant="ghost"
                       size="icon"
-                      class="size-8 text-muted-foreground hover:text-destructive"
+                      class="size-11 text-muted-foreground hover:text-destructive sm:size-9"
                       (click)="deleteExpense(item)"
                       [attr.aria-label]="'حذف' | aioTranslate"
                     >
