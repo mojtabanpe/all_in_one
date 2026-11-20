@@ -6,7 +6,15 @@ import type {
 } from '@all-in-one/shared/schemas';
 import { API_BASE_URL, GrowthAnalytics } from '@all-in-one/web/shared';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import {
+  NavigationCancel,
+  NavigationEnd,
+  NavigationError,
+  Router,
+  RouterLink,
+  RouterOutlet,
+} from '@angular/router';
+import { filter, firstValueFrom } from 'rxjs';
 import { SwPush } from '@angular/service-worker';
 import {
   AioButton,
@@ -31,6 +39,23 @@ export function pushRoute(url: unknown): string | null {
     return null;
   return url.slice('/app'.length);
 }
+
+/**
+ * The route to open for a tapped reminder. A reminder link gets a fresh `tap` value, so a second tap on the
+ * same reminder (same `remind`, e.g. the 7:00 and 9:00 reminders of one habit) is a new URL: the router would
+ * ignore a navigation to the URL it is already on, and the sheet would stay closed.
+ */
+export function pushTapRoute(url: unknown, now = Date.now()): string | null {
+  const route = pushRoute(url);
+  if (!route || !/[?&]remind=/.test(route)) return route;
+  const [path, query = ''] = route.split('?');
+  const params = new URLSearchParams(query);
+  params.set('tap', String(now));
+  return `${path}?${params}`;
+}
+
+/** Both the ngsw message and push-sw.js's entry can report one tap; open it once. */
+export const PUSH_TAP_DEDUPE_MS = 5_000;
 
 /** A tap is acted on only shortly after it happened, never on a later visit. */
 export const PUSH_CLICK_MAX_AGE_MS = 120_000;
@@ -151,29 +176,53 @@ export class App {
   constructor() {
     inject(GrowthAnalytics).startClientTracking();
     inject(ReferralCapture).start();
-    const router = inject(Router);
     // The service worker only focuses the open window (navigating first loses the
     // click's focus permission), so the running app routes to the notification here.
     inject(SwPush, { optional: true })
       ?.notificationClicks.pipe(takeUntilDestroyed())
       .subscribe(({ notification }) => {
         void takePendingPushClick();
-        const route = pushRoute(
+        void this.openPushTap(
           (notification.data as { url?: unknown } | undefined)?.url,
         );
-        if (route) void router.navigateByUrl(route);
       });
-    this.watchPendingPushClicks(router);
+    this.watchPendingPushClicks();
+  }
+
+  private readonly router = inject(Router);
+  private lastTap = { url: '', at: 0 };
+
+  /** Routes to a tapped notification, once per tap, after the start-up navigation. */
+  private async openPushTap(url: unknown) {
+    if (typeof url !== 'string' || !pushRoute(url)) return;
+    const now = Date.now();
+    if (url === this.lastTap.url && now - this.lastTap.at < PUSH_TAP_DEDUPE_MS)
+      return;
+    this.lastTap = { url, at: now };
+    // A cold start (iOS often restarts a backgrounded PWA) is still running its first navigation, which
+    // would replace this one; wait for it.
+    if (!this.router.navigated)
+      await firstValueFrom(
+        this.router.events.pipe(
+          filter(
+            (e) =>
+              e instanceof NavigationEnd ||
+              e instanceof NavigationCancel ||
+              e instanceof NavigationError,
+          ),
+        ),
+      );
+    const route = pushTapRoute(url, now);
+    if (route) void this.router.navigateByUrl(route);
   }
 
   /** iPhone PWAs can miss ngsw's click message; push-sw.js also keeps the tap in a cache. */
-  private watchPendingPushClicks(router: Router) {
+  private watchPendingPushClicks() {
     if (typeof document === 'undefined' || !('serviceWorker' in navigator))
       return;
-    const open = async () => {
-      const route = pushRoute(await takePendingPushClick());
-      if (route) void router.navigateByUrl(route);
-    };
+    // Taking the entry also tells push-sw.js the app has the tap, so it does not reload the window.
+    const open = async () =>
+      void this.openPushTap(await takePendingPushClick());
     const visible = () => {
       if (document.visibilityState === 'visible') void open();
     };
