@@ -24,6 +24,14 @@ export class PushSettings {
   private readonly locale = inject(AioLocale);
   private readonly native = inject(NativePush);
   private readonly sw = inject(SwPush, { optional: true });
+  /**
+   * Web Push needs the service worker and PushManager. Android WebViews (the store/direct APKs)
+   * register the worker but have no PushManager, and SwPush.subscription then throws
+   * «reading 'getSubscription'» (GlitchTip POSHTETGARM-1).
+   */
+  private readonly webPush =
+    !!this.sw?.isEnabled &&
+    'PushManager' in (inject(DOCUMENT).defaultView ?? {});
   private readonly http = inject(HttpClient);
   private readonly api = inject(API_BASE_URL);
   private readonly userId = signal<string | null>(null);
@@ -94,7 +102,7 @@ export class PushSettings {
     }
   }
   get supported() {
-    return this.native.available() || !!this.sw?.isEnabled;
+    return this.native.available() || this.webPush;
   }
   constructor() {
     effect(() => {
@@ -123,9 +131,10 @@ export class PushSettings {
     effect(() => {
       if (this.native.available()) this.enabled.set(this.native.enabled());
     });
-    this.sw?.subscription.pipe(takeUntilDestroyed()).subscribe((sub) => {
-      this.browserSubscription.set(sub);
-    });
+    if (this.webPush)
+      this.sw?.subscription.pipe(takeUntilDestroyed()).subscribe((sub) => {
+        this.browserSubscription.set(sub);
+      });
     const win = inject(DOCUMENT).defaultView;
     const reconnect = () => this.retry.update((value) => value + 1);
     win?.addEventListener('online', reconnect);
@@ -171,7 +180,7 @@ export class PushSettings {
     return promise;
   }
   private subscription() {
-    if (!this.sw?.isEnabled)
+    if (!this.sw || !this.webPush)
       throw new Error(
         'اعلان در این مرورگر در دسترس نیست. نسخهٔ نصب‌شدهٔ برنامه را باز کن.',
       );
@@ -192,7 +201,7 @@ export class PushSettings {
         ? Notification.requestPermission()
         : Promise.resolve('denied');
     await this.run(async () => {
-      if (!this.sw?.isEnabled)
+      if (!this.sw || !this.webPush)
         throw new Error('اعلان در این مرورگر در دسترس نیست.');
       if ((await permission) !== 'granted')
         throw new Error('اجازهٔ دریافت اعلان داده نشد.');
@@ -226,7 +235,7 @@ export class PushSettings {
       await this.native.disconnect();
       return;
     }
-    if (!this.sw?.isEnabled) return;
+    if (!this.sw || !this.webPush) return;
     const sub = await this.subscription();
     if (sub) {
       // Remove server registration before unsubscribing, so a network failure is visible.

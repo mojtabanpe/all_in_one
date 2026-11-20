@@ -14,6 +14,7 @@ import { PUSH_ACTION_TIMEOUT_MS, PushSettings } from './push-settings';
 describe('PWA push registration', () => {
   afterEach(() => vi.unstubAllGlobals());
   function setup() {
+    vi.stubGlobal('PushManager', class {});
     const sub = {
       endpoint: 'https://push.example.test/sub',
       toJSON: () => ({
@@ -149,6 +150,38 @@ describe('PWA push registration', () => {
     });
     expect(service.enabled()).toBe(true);
     http.verify();
+  });
+
+  it('leaves SwPush alone in an Android WebView without PushManager', () => {
+    // jsdom has no PushManager, like the store/direct APK WebViews (GlitchTip POSHTETGARM-1).
+    const read = vi.fn(() => {
+      throw new TypeError(
+        "Cannot read properties of undefined (reading 'getSubscription')",
+      );
+    });
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: SwPush,
+          useValue: {
+            isEnabled: true,
+            get subscription() {
+              return read();
+            },
+          },
+        },
+        {
+          provide: NativePush,
+          useValue: { available: signal(false), enabled: signal(false) },
+        },
+        { provide: AioLocale, useValue: { language: signal('fa') } },
+      ],
+    });
+    const service = TestBed.inject(PushSettings);
+    expect(service.supported).toBe(false);
+    expect(read).not.toHaveBeenCalled();
   });
 
   it('gives the controls back when the native push service never answers', async () => {
