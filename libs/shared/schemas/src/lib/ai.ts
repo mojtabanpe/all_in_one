@@ -143,16 +143,29 @@ export type AiDailyLimits = Record<AiKind, number>;
 export type AiQuotas = Record<AiQuotaTier, AiDailyLimits>;
 
 /**
- * Used until an admin sets quotas in /admin/ai (owner, 2026-11-08). An assistant message is about 40k tokens (the
- * tools are sent with every step, mostly as prompt-cache hits), so 200k is about 5 messages and 600k about 15.
+ * Chat input tokens served from the provider's prompt cache count this much toward the daily chat quota: they cost
+ * about 1/50 of a fresh token (DEFAULT_AI_PRICES), and most of each assistant step is the repeated system prompt and
+ * tools (owner, 2026-11-20: a trial's whole day went in one message).
+ */
+export const AI_QUOTA_CACHED_WEIGHT = 0.1;
+
+/** Tokens counted toward the chat quota: cache hits at AI_QUOTA_CACHED_WEIGHT. */
+export function chatQuotaUnits(units: number, cachedUnits: number): number {
+  const cached = Math.min(Math.max(0, cachedUnits), Math.max(0, units));
+  return Math.round(units - cached * (1 - AI_QUOTA_CACHED_WEIGHT));
+}
+
+/**
+ * Used until an admin sets quotas in /admin/ai (owner, 2026-11-08; raised 2026-11-20: «سقف رو هم بالاتر ببر»).
+ * Chat is counted with chatQuotaUnits, and the assistant sends only the tools of the sections a message needs.
  * Speech is the expensive part (Deepgram Aura-2, about 8,000 Toman per 1,000 characters), hence the low tts limits;
  * cached audio does not count.
  */
 export const DEFAULT_AI_QUOTAS: AiQuotas = {
-  trial: { chat: 200_000, tts: 3_000, stt: 30 },
-  earned: { chat: 200_000, tts: 3_000, stt: 30 },
+  trial: { chat: 400_000, tts: 3_000, stt: 30 },
+  earned: { chat: 400_000, tts: 3_000, stt: 30 },
   // 3,000 speech characters a day for every tier (directives 157, 158): 15,000 could cost one account ≈3.7M Toman a month.
-  paid: { chat: 600_000, tts: 3_000, stt: 60 },
+  paid: { chat: 1_000_000, tts: 3_000, stt: 60 },
 };
 
 const limit = z.int().check(z.minimum(0), z.maximum(100_000_000));

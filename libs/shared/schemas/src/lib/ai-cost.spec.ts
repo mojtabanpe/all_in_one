@@ -1,4 +1,4 @@
-import { aiCostUsd, DEFAULT_AI_PRICES } from './ai';
+import { aiCostUsd, chatQuotaUnits, DEFAULT_AI_PRICES } from './ai';
 
 describe('aiCostUsd', () => {
   const prices = {
@@ -57,5 +57,13 @@ describe('aiCostUsd', () => {
     ).toBeCloseTo(0.39);
     expect(aiCostUsd(DEFAULT_AI_PRICES, 'tts', 1_000)).toBeCloseTo(0.03);
     expect(aiCostUsd(DEFAULT_AI_PRICES, 'stt', 100)).toBeCloseTo(0.43);
+  });
+});
+
+describe('chatQuotaUnits', () => {
+  it('counts prompt-cache hits at a tenth', () => {
+    expect(chatQuotaUnits(45_000, 40_000)).toBe(9_000);
+    expect(chatQuotaUnits(1_000, 0)).toBe(1_000);
+    expect(chatQuotaUnits(1_000, 5_000)).toBe(100);
   });
 });
