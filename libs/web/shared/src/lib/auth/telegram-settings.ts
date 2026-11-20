@@ -1,7 +1,15 @@
 import { DOCUMENT } from '@angular/common';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, DestroyRef, inject, input, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  effect,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import type { TelegramStatus } from '@all-in-one/shared/schemas';
 import {
@@ -105,8 +113,17 @@ export class TelegramSettings {
   );
   protected readonly busy = signal(false);
   protected readonly url = signal<string | null>(null);
+  /** Fires when the account becomes linked while this is shown (e.g. after «Start» in Telegram). */
+  readonly linked = output<void>();
 
   constructor() {
+    let wasLinked: boolean | undefined;
+    effect(() => {
+      const linked = this.state.hasValue() && this.state.value().linked;
+      if (!this.state.hasValue()) return;
+      if (wasLinked === false && linked) this.linked.emit();
+      wasLinked = linked;
+    });
     // Coming back from Telegram after «Start»: show the new state (listener removed with the component, 167).
     const document = inject(DOCUMENT);
     const onVisible = () => {

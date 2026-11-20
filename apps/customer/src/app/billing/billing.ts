@@ -1,4 +1,5 @@
 import { ReferralCard } from './referral';
+import { SocialReward } from './social-reward';
 import { firstValueFrom } from 'rxjs';
 import { DOCUMENT } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -20,16 +21,11 @@ import type {
   BillingPlan,
   BillingReturnStatus,
   BillingAccessState,
-  BillingRewardCampaign,
   BillingRewardOffer,
   AiKind,
   AiUsageView,
 } from '@all-in-one/shared/schemas';
-import {
-  billingRewardRequestSchema,
-  billingStoreSku,
-  canBuyPlan,
-} from '@all-in-one/shared/schemas';
+import { billingStoreSku, canBuyPlan } from '@all-in-one/shared/schemas';
 import {
   AioAlertDirectives,
   AioAsyncButton,
@@ -39,8 +35,6 @@ import {
   AioDatePipe,
   AioEmptyState,
   AioIcon,
-  AioFormField,
-  AioInput,
   AioLocale,
   AioNotifications,
   AioProgressDirectives,
@@ -76,13 +70,12 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
     AioDatePipe,
     AioEmptyState,
     AioIcon,
-    AioFormField,
-    AioInput,
     AioProgressDirectives,
     AioSkeletonRows,
     AioTranslate,
     RouterLink,
     ReferralCard,
+    SocialReward,
   ],
   providers: [
     provideIcons({
@@ -259,94 +252,41 @@ const GATEWAY = 'https://gateway.zibal.ir/start/';
               <article
                 class="border-border flex min-w-0 flex-col gap-3 rounded-xl border p-3"
               >
-                <h3 class="font-semibold">
-                  {{
-                    (offer.campaign === 'SECOND_CONTACT'
-                      ? offer.confirm === 'email'
+                @if (offer.campaign === 'SECOND_CONTACT') {
+                  <h3 class="font-semibold">
+                    {{
+                      (offer.confirm === 'email'
                         ? 'تأیید ایمیل'
                         : 'تأیید شمارهٔ موبایل'
-                      : rewardLabels[offer.campaign]
-                    ) | aioTranslate
-                  }}
-                </h3>
-                @switch (offer.status) {
-                  @case ('earned') {
+                      ) | aioTranslate
+                    }}
+                  </h3>
+                  @if (offer.status === 'earned') {
                     <p>{{ 'هدیه ثبت شد.' | aioTranslate }}</p>
-                  }
-                  @case ('pending') {
-                    <p role="status">
-                      {{ 'درخواست در انتظار بررسی است.' | aioTranslate }}
+                  } @else {
+                    <!-- Automatic week (directive 121): nothing to request, only to confirm. -->
+                    <p class="text-muted-foreground text-sm">
+                      {{
+                        (offer.confirm === 'email'
+                          ? 'ایمیلت را در حساب کاربری اضافه و تأیید کن؛ یک هفته خودکار اضافه می‌شود.'
+                          : 'شمارهٔ موبایلت را در حساب کاربری با کد پیامکی تأیید کن؛ یک هفته خودکار اضافه می‌شود.'
+                        ) | aioTranslate
+                      }}
                     </p>
+                    <a
+                      aioBtn
+                      variant="outline"
+                      class="min-h-11 self-start"
+                      routerLink="/account"
+                    >
+                      {{ 'رفتن به حساب کاربری' | aioTranslate }}
+                    </a>
                   }
-                  @case ('available') {
-                    @if (offer.campaign === 'SECOND_CONTACT') {
-                      <!-- Automatic week (directive 121): nothing to request, only to confirm. -->
-                      <p class="text-muted-foreground text-sm">
-                        {{
-                          (offer.confirm === 'email'
-                            ? 'ایمیلت را در حساب کاربری اضافه و تأیید کن؛ یک هفته خودکار اضافه می‌شود.'
-                            : 'شمارهٔ موبایلت را در حساب کاربری با کد پیامکی تأیید کن؛ یک هفته خودکار اضافه می‌شود.'
-                          ) | aioTranslate
-                        }}
-                      </p>
-                      <a
-                        aioBtn
-                        variant="outline"
-                        class="min-h-11 self-start"
-                        routerLink="/account"
-                      >
-                        {{ 'رفتن به حساب کاربری' | aioTranslate }}
-                      </a>
-                    } @else {
-                      <a
-                        aioBtn
-                        variant="outline"
-                        class="min-h-11 self-start"
-                        [href]="offer.url"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {{ 'باز کردن صفحهٔ رسمی' | aioTranslate }}
-                      </a>
-                      <form
-                        class="flex flex-col gap-3"
-                        (submit)="
-                          $event.preventDefault();
-                          requestReward(offer.campaign, handle.value)
-                        "
-                      >
-                        <aio-form-field
-                          label="نام کاربری شبکهٔ اجتماعی"
-                          [controlId]="'offer-' + offer.campaign"
-                        >
-                          <input
-                            aioInput
-                            #handle
-                            [id]="'offer-' + offer.campaign"
-                            type="text"
-                            dir="ltr"
-                            autocomplete="off"
-                            maxlength="31"
-                            required
-                          />
-                        </aio-form-field>
-                        <p class="text-muted-foreground text-xs">
-                          {{
-                            'بعد از عضویت، نام کاربری را برای بررسی بفرست.'
-                              | aioTranslate
-                          }}
-                        </p>
-                        <button
-                          aioAsyncButton
-                          type="submit"
-                          label="درخواست هدیه"
-                          class="min-h-11 self-start"
-                          [busy]="requesting() === offer.campaign"
-                          [disabled]="requesting() !== null"
-                        ></button>
-                      </form>
-                    }
-                  }
+                } @else {
+                  <customer-social-reward
+                    [offer]="offer"
+                    (changed)="offersChanged($event)"
+                  />
                 }
               </article>
             }
@@ -591,39 +531,12 @@ export class Billing {
   protected readonly offers = httpResource<BillingRewardOffer[]>(
     () => `${this.api}/billing/reward-offers`,
   );
-  protected readonly requesting = signal<BillingRewardCampaign | null>(null);
-  protected readonly rewardLabels = {
-    TELEGRAM_JOIN: 'عضویت در تلگرام',
-    INSTAGRAM_FOLLOW: 'دنبال‌کردن در اینستاگرام',
-    SECOND_CONTACT: 'تأیید راه دوم ارتباط',
-    REFERRAL_INVITER: 'دعوت دوست',
-    REFERRAL_INVITED: 'ثبت‌نام با دعوت',
-  } as const;
-
-  protected async requestReward(
-    campaign: BillingRewardCampaign,
-    handle: string,
-  ) {
-    if (this.requesting()) return;
-    const input = billingRewardRequestSchema.safeParse({ campaign, handle });
-    if (!input.success) {
-      this.notifications.error('نام کاربری معتبر وارد کن.');
-      return;
-    }
-    this.requesting.set(campaign);
-    try {
-      this.offers.set(
-        await firstValueFrom(
-          this.http.post<BillingRewardOffer[]>(
-            `${this.api}/billing/reward-requests`,
-            input.data,
-          ),
-        ),
-      );
-    } catch (error) {
-      this.notifications.error(apiErrorMessage(error));
-    } finally {
-      this.requesting.set(null);
+  /** A social card sent a request (new offers) or got its week / linked the bot (reload). */
+  protected offersChanged(offers: BillingRewardOffer[] | void) {
+    if (offers) this.offers.set(offers);
+    else {
+      this.offers.reload();
+      this.access.reload();
     }
   }
 

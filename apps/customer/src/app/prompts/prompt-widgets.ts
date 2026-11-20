@@ -1,11 +1,8 @@
+import { SocialReward } from '../billing/social-reward';
 import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import {
-  billingRewardRequestSchema,
-  type BillingRewardCampaign,
-  type BillingRewardOffer,
-} from '@all-in-one/shared/schemas';
+import { type BillingRewardOffer } from '@all-in-one/shared/schemas';
 import {
   AioAsyncButton,
   AioButton,
@@ -490,66 +487,18 @@ export class ReviewCardsPrompt {
   }
 }
 
-/** The Telegram and Instagram weeks (directive 108): open the official page, then send the username for a check. */
+/** The Telegram and Instagram weeks (directives 108, 189): the same cards as the subscription page. */
 @Component({
   selector: 'customer-rewards-prompt',
-  imports: [AioAsyncButton, AioButton, AioFormField, AioInput, AioTranslate],
+  imports: [SocialReward],
   template: `
     <div class="flex flex-col gap-5">
       @for (offer of social(); track offer.campaign) {
-        <section class="flex flex-col gap-3">
-          <h3 class="font-semibold">
-            {{ labels[offer.campaign] | aioTranslate }}
-          </h3>
-          @if (offer.status === 'pending') {
-            <p role="status">
-              {{ 'درخواست در انتظار بررسی است.' | aioTranslate }}
-            </p>
-          } @else if (offer.status === 'earned') {
-            <p>{{ 'هدیه ثبت شد.' | aioTranslate }}</p>
-          } @else {
-            <a
-              aioBtn
-              variant="outline"
-              class="min-h-11 self-start"
-              [href]="offer.url"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {{ 'باز کردن صفحهٔ رسمی' | aioTranslate }}
-            </a>
-            <form
-              class="flex flex-col gap-3"
-              (submit)="
-                $event.preventDefault(); request(offer.campaign, handle.value)
-              "
-            >
-              <aio-form-field
-                label="نام کاربری شبکهٔ اجتماعی"
-                [controlId]="'prompt-offer-' + offer.campaign"
-              >
-                <input
-                  aioInput
-                  #handle
-                  [id]="'prompt-offer-' + offer.campaign"
-                  type="text"
-                  dir="ltr"
-                  autocomplete="off"
-                  maxlength="31"
-                  required
-                />
-              </aio-form-field>
-              <button
-                aioAsyncButton
-                type="submit"
-                label="عضو شدم، هدیه را بده"
-                class="min-h-11 self-start"
-                [busy]="requesting() === offer.campaign"
-                [disabled]="requesting() !== null"
-              ></button>
-            </form>
-          }
-        </section>
+        <customer-social-reward
+          [offer]="offer"
+          idPrefix="prompt-offer-"
+          (changed)="changed($event)"
+        />
       }
     </div>
   `,
@@ -565,16 +514,12 @@ export class RewardsPrompt {
         o.campaign === 'TELEGRAM_JOIN' || o.campaign === 'INSTAGRAM_FOLLOW',
     ),
   );
-  protected readonly requesting = signal<BillingRewardCampaign | null>(null);
-  protected readonly labels = {
-    TELEGRAM_JOIN: 'عضویت در تلگرام',
-    INSTAGRAM_FOLLOW: 'دنبال‌کردن در اینستاگرام',
-    SECOND_CONTACT: 'تأیید راه دوم ارتباط',
-    REFERRAL_INVITER: 'دعوت دوست',
-    REFERRAL_INVITED: 'ثبت‌نام با دعوت',
-  } as const;
 
   constructor() {
+    this.load();
+  }
+
+  private load() {
     firstValueFrom(
       this.http.get<BillingRewardOffer[]>(`${this.api}/billing/reward-offers`),
     ).then(
@@ -583,27 +528,8 @@ export class RewardsPrompt {
     );
   }
 
-  protected async request(campaign: BillingRewardCampaign, handle: string) {
-    if (this.requesting()) return;
-    const input = billingRewardRequestSchema.safeParse({ campaign, handle });
-    if (!input.success) {
-      this.notifications.error('نام کاربری معتبر وارد کن.');
-      return;
-    }
-    this.requesting.set(campaign);
-    try {
-      this.offers.set(
-        await firstValueFrom(
-          this.http.post<BillingRewardOffer[]>(
-            `${this.api}/billing/reward-requests`,
-            input.data,
-          ),
-        ),
-      );
-    } catch (error) {
-      this.notifications.error(apiErrorMessage(error));
-    } finally {
-      this.requesting.set(null);
-    }
+  protected changed(offers: BillingRewardOffer[] | void) {
+    if (offers) this.offers.set(offers);
+    else this.load();
   }
 }

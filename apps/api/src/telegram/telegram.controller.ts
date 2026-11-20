@@ -3,6 +3,7 @@ import { Throttle } from '@nestjs/throttler';
 import { type AuthUser, CurrentUser } from '@all-in-one/api/auth';
 import {
   type TelegramLinkRequest,
+  type TelegramRewardCheck,
   type TelegramStatus,
   telegramLinkRequestSchema,
 } from '@all-in-one/shared/schemas';
@@ -26,6 +27,16 @@ export class TelegramController {
     @Body({ schema: telegramLinkRequestSchema }) input: TelegramLinkRequest,
   ): Promise<{ url: string }> {
     return this.telegram.createLink(user.id, input.language ?? 'fa');
+  }
+
+  /** The Telegram week, checked by the bot instead of support (directive 189). */
+  @Post('reward')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 6, ttl: 60000 } })
+  async reward(
+    @CurrentUser() user: AuthUser,
+  ): Promise<{ result: TelegramRewardCheck }> {
+    return { result: await this.telegram.claimChannelWeek(user.id) };
   }
 
   @Delete('link')

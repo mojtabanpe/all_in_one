@@ -4,8 +4,10 @@ import {
   Logger,
   OnModuleDestroy,
   OnModuleInit,
+  Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { BillingService } from '../billing/billing.service';
 import { ConfigService } from '@nestjs/config';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import express, { type Express } from 'express';
@@ -17,6 +19,7 @@ import {
   DAILY_TASKS_DEFAULT_TIME,
   DEFAULT_CUSTOMER_APPLETS,
   type AppApplet,
+  type TelegramRewardCheck,
   type TelegramStatus,
 } from '@all-in-one/shared/schemas';
 import { AiGateway, MAX_RECORDING_BYTES } from '@all-in-one/api/ai';
@@ -301,6 +304,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   private readonly api: TelegramApi;
   private timer?: ReturnType<typeof setInterval>;
   private running = false;
+  private stopRewardListener?: () => void;
 
   constructor(
     private readonly db: PrismaService,
@@ -312,6 +316,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     private readonly speech: SpeechService,
     private readonly scores: PracticeScoresService,
     private readonly sections: TelegramSectionsService,
+    @Optional() private readonly billing?: BillingService,
   ) {
     this.api = new TelegramApi(config);
   }
@@ -338,7 +343,14 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
    * out; it is logged so the setup can be fixed.
    */
   async member(telegramUserId: bigint | number): Promise<boolean> {
-    if (!this.channel) return true;
+    return (await this.membership(telegramUserId)) !== 'not_member';
+  }
+
+  /** The channel check without the fallback: `unknown` when it cannot be read (never grants a reward). */
+  async membership(
+    telegramUserId: bigint | number,
+  ): Promise<'member' | 'not_member' | 'unknown'> {
+    if (!this.channel) return 'unknown';
     try {
       const result = await this.api.call<{
         status: string;
@@ -347,16 +359,45 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
         chat_id: this.channel,
         user_id: Number(telegramUserId),
       });
-      return (
-        ['creator', 'administrator', 'member'].includes(result.status) ||
+      return ['creator', 'administrator', 'member'].includes(result.status) ||
         (result.status === 'restricted' && result.is_member === true)
-      );
+        ? 'member'
+        : 'not_member';
     } catch (error) {
       this.logger.warn(
         `Channel membership check unavailable (${error instanceof TelegramError ? error.code : 'network'}); allowing`,
       );
-      return true;
+      return 'unknown';
     }
+  }
+
+  /**
+   * The Telegram week checked by the bot (directive 189): a linked account that is in the channel gets the week at
+   * once, without sending a username and waiting for support. Unknown membership never grants.
+   */
+  async claimChannelWeek(
+    userId: string,
+    now = new Date(),
+  ): Promise<TelegramRewardCheck> {
+    if (!this.billing || !this.enabled) return 'unavailable';
+    const link = await this.db.telegramLink.findUnique({
+      where: { userId },
+      select: { chatId: true },
+    });
+    if (!link) return 'not_linked';
+    const membership = await this.membership(link.chatId);
+    if (membership === 'not_member') return 'not_member';
+    if (membership === 'unknown') return 'unavailable';
+    const result = await this.billing.grantSocialWeek(
+      userId,
+      'TELEGRAM_JOIN',
+      now,
+    );
+    return result === 'granted'
+      ? 'granted'
+      : result === 'exists'
+        ? 'earned'
+        : 'unavailable';
   }
 
   private joinPrompt(chatId: bigint, language: Lang, code?: string) {
@@ -401,6 +442,10 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit() {
     if (!this.enabled) return;
+    // A granted social week (by support or by the check above) is also said in the bot.
+    this.stopRewardListener = this.billing?.onRewardGranted(
+      (userId, campaign) => this.rewardMessage(userId, campaign),
+    );
     this.timer = setInterval(() => void this.tick(), 60_000);
     this.timer.unref();
     void this.registerMenu();
@@ -431,6 +476,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
 
   onModuleDestroy() {
     if (this.timer) clearInterval(this.timer);
+    this.stopRewardListener?.();
   }
 
   async status(userId: string): Promise<TelegramStatus> {
@@ -702,10 +748,34 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       this.db.telegramLinkCode.deleteMany({ where: { userId: row.userId } }),
     ]);
     const language: Lang = row.language === 'en' ? 'en' : 'fa';
-    return this.reply(
+    await this.reply(
       chatId,
       `${language === 'en' ? 'Linked.' : 'وصل شد.'}\n\n${HELP_TEXT[language]}`,
       await this.keyboard(row.userId, language),
+    );
+    // Linking needs the channel (170), so the Telegram week usually follows at once (its message comes from the grant).
+    await this.claimChannelWeek(row.userId).catch(() => undefined);
+  }
+
+  private async rewardMessage(userId: string, campaign: string) {
+    const link = await this.db.telegramLink.findUnique({
+      where: { userId },
+      select: { chatId: true, language: true },
+    });
+    if (!link) return;
+    const where =
+      link.language === 'en'
+        ? campaign === 'TELEGRAM_JOIN'
+          ? 'Telegram'
+          : 'Instagram'
+        : campaign === 'TELEGRAM_JOIN'
+          ? 'تلگرام'
+          : 'اینستاگرام';
+    await this.reply(
+      link.chatId,
+      link.language === 'en'
+        ? `🎁 Your ${where} membership was confirmed: one week of AI was added to your Poshtetgarm plan.`
+        : `🎁 عضویتت در ${where} تأیید شد و یک هفته هوش مصنوعی به اشتراک Poshtetgarm اضافه شد.`,
     );
   }
 
