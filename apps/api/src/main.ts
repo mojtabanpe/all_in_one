@@ -14,6 +14,7 @@ import { Logger, StandardSchemaValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { RECORDING_TYPES } from '@all-in-one/applets/english-learning/api';
+import { APP_VERSION, APP_VERSION_HEADER } from '@all-in-one/shared/schemas';
 import { config as zodConfig, locales } from 'zod/mini';
 import { AppModule } from './app/app.module';
 import { McpService } from './mcp/mcp.service';
@@ -24,12 +25,15 @@ zodConfig(locales.fa());
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.use((request: Request, _response: Response, next: NextFunction) =>
-    requestLanguage.run(
+  const appVersion = process.env['APP_VERSION']?.trim() || APP_VERSION;
+  app.use((request: Request, response: Response, next: NextFunction) => {
+    response.setHeader(APP_VERSION_HEADER, appVersion);
+    response.setHeader('Access-Control-Expose-Headers', APP_VERSION_HEADER);
+    return requestLanguage.run(
       request.headers['accept-language']?.startsWith('en') ? 'en' : 'fa',
       next,
-    ),
-  );
+    );
+  });
   // Behind nginx on the same host: client IPs (rate limits) come from X-Forwarded-For.
   app.set('trust proxy', 'loopback');
   // English practice uploads a raw recording (audio/webm, …) for transcription.

@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { SwUpdate } from '@angular/service-worker';
-import { GrowthAnalytics } from '@all-in-one/web/shared';
+import { AppVersionState, GrowthAnalytics } from '@all-in-one/web/shared';
 import {
   AioTranslate,
   AioAlertDirectives,
@@ -39,10 +39,14 @@ export class Pwa {
   private readonly updates = inject(SwUpdate);
   private readonly document = inject(DOCUMENT);
   private readonly growth = inject(GrowthAnalytics);
+  private readonly versionState = inject(AppVersionState);
   private installEvent: InstallPromptEvent | null = null;
+  private readonly swUpdateReady = signal(false);
 
-  /** A new version is downloaded and used after a reload. */
-  readonly updateReady = signal(false);
+  /** A new version is ready from the service worker or announced by the API header. */
+  readonly updateReady = computed(
+    () => this.swUpdateReady() || this.versionState.updateAvailable(),
+  );
   /** The cached version is broken (files evicted); only a reload helps. */
   readonly broken = signal(false);
   readonly canInstall = signal(false);
@@ -101,7 +105,7 @@ export class Pwa {
     });
     if (!this.updates.isEnabled) return;
     const ready = this.updates.versionUpdates.subscribe((event) => {
-      if (event.type === 'VERSION_READY') this.updateReady.set(true);
+      if (event.type === 'VERSION_READY') this.swUpdateReady.set(true);
     });
     const broken = this.updates.unrecoverable.subscribe(() =>
       this.broken.set(true),
@@ -139,13 +143,15 @@ export class Pwa {
   }
 
   async reload() {
-    if (this.updateReady() && this.updates.isEnabled)
+    if (!this.versionState.tryClaimReload()) return;
+    if (this.swUpdateReady() && this.updates.isEnabled)
       await this.updates.activateUpdate().catch(() => undefined);
     this.document.location.reload();
   }
 
   dismissUpdate() {
-    this.updateReady.set(false);
+    this.swUpdateReady.set(false);
+    this.versionState.dismiss();
   }
 }
 

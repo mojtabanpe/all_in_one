@@ -1,2 +1,2 @@
-/** Base version for local builds; production stamps the patch in the Deploy workflow. */
-export const APP_VERSION = '0.1.0';
+/** Re-exported from shared schemas so web and api always share the same stamped version. */
+export { APP_VERSION } from '@all-in-one/shared/schemas';

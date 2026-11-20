@@ -37,6 +37,7 @@ import {
   API_BASE_URL,
   Assistant,
   AuthStore,
+  detectGrowthClient,
   PushSettings,
 } from '@all-in-one/web/shared';
 import {
@@ -340,9 +341,19 @@ export class Layout {
   private readonly inApp = inject(AioInAppNotifications);
   private readonly browserReady = signal(false);
   private readonly http = inject(HttpClient);
-  private readonly notices = httpResource<InAppNotification[]>(() =>
-    this.browserReady() ? `${this.api}/in-app-notifications` : undefined,
-  );
+  private readonly notices = httpResource<InAppNotification[]>(() => {
+    if (!this.browserReady()) return undefined;
+    const directApk =
+      typeof window !== 'undefined' &&
+      detectGrowthClient({
+        userAgent: navigator.userAgent,
+        nativeBridge: 'PoshtetgarmNativePush' in window,
+        standalone: false,
+      }) === 'direct_apk';
+    return directApk
+      ? `${this.api}/in-app-notifications?client=direct_apk`
+      : `${this.api}/in-app-notifications`;
+  });
 
   private readonly push = inject(PushSettings);
   /** Push works in the Android/macOS app, a desktop browser and an installed iPhone PWA, not in an iPhone tab. */
@@ -382,7 +393,12 @@ export class Layout {
                   void this.router.navigateByUrl(action.url);
                 // Inside the Android shell a new window may never open; a plain navigation is handed to the
                 // store app or the browser by the shell (it never loads outside links in the WebView).
-                else if (/PoshtetgarmStore\//.test(navigator.userAgent))
+                else if (
+                  /PoshtetgarmStore\/|PoshtetgarmApp\//.test(
+                    navigator.userAgent,
+                  ) ||
+                  'PoshtetgarmNativePush' in window
+                )
                   window.location.assign(action.url);
                 else window.open(action.url, '_blank', 'noopener,noreferrer');
               },

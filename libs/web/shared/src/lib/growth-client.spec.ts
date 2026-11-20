@@ -6,6 +6,25 @@ describe('Observed app distribution', () => {
   it.each([
     [android + ' PoshtetgarmStore/bazaar', true, false, 'bazaar'],
     [android + ' PoshtetgarmStore/myket', true, false, 'myket'],
+    [
+      android + ' PoshtetgarmApp/1.0.7 PoshtetgarmStore/bazaar',
+      true,
+      false,
+      'bazaar',
+    ],
+    [
+      android + ' PoshtetgarmApp/1.0.7 PoshtetgarmStore/myket',
+      false,
+      false,
+      'myket',
+    ],
+    [android + ' PoshtetgarmApp/1.0.7', false, false, 'direct_apk'],
+    [
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 PoshtetgarmApp/1.0.7',
+      false,
+      false,
+      'macos',
+    ],
     // Store labels work before either injected bridge becomes ready.
     [android + ' PoshtetgarmStore/myket', false, false, 'myket'],
     [android, true, false, 'direct_apk'],

@@ -19,6 +19,7 @@ import {
 } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import {
+  appVersionInterceptor,
   authInterceptor,
   localScheduleInterceptor,
   provideErrorMonitor,
@@ -47,6 +48,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withFetch(),
       withInterceptors([
+        appVersionInterceptor,
         restartRetryInterceptor,
         authInterceptor,
         aiPaywallInterceptor,

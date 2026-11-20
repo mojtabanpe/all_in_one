@@ -1,7 +1,11 @@
 import { DOCUMENT } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { SwUpdate } from '@angular/service-worker';
-import { GrowthAnalytics } from '@all-in-one/web/shared';
+import {
+  APP_VERSION_TOKEN,
+  AppVersionState,
+  GrowthAnalytics,
+} from '@all-in-one/web/shared';
 import { Pwa } from './pwa';
 
 describe('PWA installation', () => {
@@ -11,19 +15,36 @@ describe('PWA installation', () => {
     maxTouchPoints = 0,
   ) {
     const media = Object.assign(new EventTarget(), { matches: standalone });
+    const store = new Map<string, string>();
+    const reload = vi.fn();
     const win = Object.assign(new EventTarget(), {
       navigator: { userAgent, maxTouchPoints, onLine: true },
       matchMedia: () => media,
+      sessionStorage: {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => store.set(key, value),
+      },
     });
     const track = vi.fn().mockResolvedValue(undefined);
     TestBed.configureTestingModule({
       providers: [
-        { provide: DOCUMENT, useValue: { defaultView: win } },
+        { provide: APP_VERSION_TOKEN, useValue: '0.1.5' },
+        {
+          provide: DOCUMENT,
+          useValue: { defaultView: win, location: { reload } },
+        },
         { provide: SwUpdate, useValue: { isEnabled: false } },
         { provide: GrowthAnalytics, useValue: { track } },
       ],
     });
-    return { pwa: TestBed.inject(Pwa), win, media, track };
+    return {
+      pwa: TestBed.inject(Pwa),
+      versionState: TestBed.inject(AppVersionState),
+      win,
+      media,
+      track,
+      reload,
+    };
   }
 
   afterEach(() => TestBed.resetTestingModule());
@@ -100,5 +121,21 @@ describe('PWA installation', () => {
     await pwa.install();
     expect(pwa.installGuideOpen()).toBe(true);
     expect(track).not.toHaveBeenCalled();
+  });
+
+  it('surfaces newer API versions without a service worker and rate-limits reloads', async () => {
+    const { pwa, versionState, reload } = setup();
+    expect(pwa.updateReady()).toBe(false);
+    versionState.observe('0.1.5');
+    expect(pwa.updateReady()).toBe(false);
+    versionState.observe('0.1.6');
+    expect(pwa.updateReady()).toBe(true);
+    pwa.dismissUpdate();
+    expect(pwa.updateReady()).toBe(false);
+    versionState.observe('0.1.7');
+    expect(pwa.updateReady()).toBe(true);
+    await pwa.reload();
+    await pwa.reload();
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,6 +1,6 @@
 export * from './lib/api-status/api-status';
 export * from './lib/api/api-base-url';
-export * from './lib/api/restart-retry.interceptor';
+export * from './lib/api/app-version.interceptor';
 export * from './lib/api/restart-retry.interceptor';
 export * from './lib/auth/auth.guards';
 export * from './lib/auth/auth.store';
@@ -14,4 +14,5 @@ export { TelegramSettings } from './lib/auth/telegram-settings';
 export { PhoneSettings } from './lib/auth/phone-settings';
 export * from './lib/assistant/assistant';
 export * from './lib/growth-analytics';
+export * from './lib/growth-client';
 export * from './lib/error-monitor';

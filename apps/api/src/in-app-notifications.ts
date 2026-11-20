@@ -9,12 +9,16 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CurrentUser, Roles, type AuthUser } from '@all-in-one/api/auth';
 import { PrismaService } from '@all-in-one/api/db';
 import {
   createInAppNotificationSchema,
   inAppContentSchema,
+  isNewerVersion,
+  parseSemver,
   type CreateInAppNotification,
   type InAppContent,
   type InAppNotification,
@@ -30,6 +34,31 @@ export function storeFromUserAgent(
   return match ? (match[1].toLowerCase() as 'bazaar' | 'myket') : null;
 }
 
+/** Native shell 1.0.7+ announces its version in every flavor's user agent. */
+export function shellVersionFromUserAgent(
+  userAgent: string | undefined,
+): string | null {
+  const match = /\bPoshtetgarmApp\/(\d+\.\d+\.\d+)\b/i.exec(userAgent ?? '');
+  return match ? match[1] : null;
+}
+
+export type AndroidShellClient = 'bazaar' | 'myket' | 'direct_apk';
+
+export function androidShellClient(
+  userAgent: string | undefined,
+  clientHint?: string,
+): AndroidShellClient | null {
+  const store = storeFromUserAgent(userAgent);
+  if (store) return store;
+  if (
+    /Android/i.test(userAgent ?? '') &&
+    (shellVersionFromUserAgent(userAgent) || clientHint === 'direct_apk')
+  ) {
+    return 'direct_apk';
+  }
+  return null;
+}
+
 const STORE_PAGES = {
   bazaar: {
     url: 'https://cafebazaar.ir/app/ir.poshtetgarm.poshtetgarm_hybrid',
@@ -42,6 +71,8 @@ const STORE_PAGES = {
     en: 'Myket',
   },
 } as const;
+const DIRECT_APK_RELEASES_URL =
+  'https://github.com/mojtabanpe/all_in_one/releases/latest';
 /** Ask only an account that has used the app on this many separate Tehran days. */
 export const RATE_PROMPT_ACTIVE_DAYS = 3;
 
@@ -51,13 +82,16 @@ export class InAppNotificationsService {
     private readonly db: PrismaService,
     private readonly billing: BillingService,
     @Optional() private readonly prompts?: InAppPrompts,
+    @Optional() private readonly config?: ConfigService,
   ) {}
 
   async pending(
     userId: string,
     now = new Date(),
     userAgent?: string,
+    clientHint?: string,
   ): Promise<InAppNotification[]> {
+    await this.offerAndroidShellUpdate(userId, now, userAgent, clientHint);
     await this.offerStoreRating(userId, now, storeFromUserAgent(userAgent));
     const access = await this.billing.access(userId, now);
     const end = access.trialUntil ? Date.parse(access.trialUntil) : 0;
@@ -152,6 +186,84 @@ export class InAppNotificationsService {
       id: row.id,
       ...inAppContentSchema.parse(row.content),
     }));
+  }
+
+  /**
+   * Notice for older Android shells, gated by `ANDROID_SHELL_LATEST_VERSION` so it only fires after a new APK is
+   * actually published. Shells 1.0.7+ carry `PoshtetgarmApp/<ver>` for an exact SemVer check; older shells have no
+   * version in the user agent, so lacking a `local_reminder_devices` row is used as an honest heuristic (guess) that
+   * the shell predates local reminders (1.0.6, directives 175/180). Shown at most once per account per published
+   * version; dismissing or tapping the button ends it.
+   */
+  private async offerAndroidShellUpdate(
+    userId: string,
+    now: Date,
+    userAgent: string | undefined,
+    clientHint?: string,
+  ): Promise<void> {
+    const latest = (
+      this.config?.get<string>('ANDROID_SHELL_LATEST_VERSION') ??
+      process.env['ANDROID_SHELL_LATEST_VERSION']
+    )?.trim();
+    if (!latest || !parseSemver(latest)) return;
+    const client = androidShellClient(userAgent, clientHint);
+    if (!client) return;
+    const key = `android-shell-update:${latest}`;
+    if (
+      await this.db.inAppNotification.findUnique({
+        where: { userId_key: { userId, key } },
+        select: { id: true },
+      })
+    )
+      return;
+    const shellVersion = shellVersionFromUserAgent(userAgent);
+    if (shellVersion) {
+      if (!isNewerVersion(latest, shellVersion)) return;
+    } else {
+      // Heuristic (guess) for shells before 1.0.7: no local-reminder schedule recorded means likely < 1.0.6.
+      const hasLocalReminders = await this.db.localReminderDevice.findFirst({
+        where: { userId },
+        select: { userId: true },
+      });
+      if (hasLocalReminders) return;
+    }
+    const action =
+      client === 'direct_apk'
+        ? {
+            label: { fa: 'دریافت نسخهٔ تازه', en: 'Download latest version' },
+            url: DIRECT_APK_RELEASES_URL,
+            primary: true,
+          }
+        : {
+            label: {
+              fa: `به‌روزرسانی در ${STORE_PAGES[client].fa}`,
+              en: `Update on ${STORE_PAGES[client].en}`,
+            },
+            url: STORE_PAGES[client].url,
+            primary: true,
+          };
+    const content: InAppContent = {
+      title: {
+        fa: 'نسخهٔ تازهٔ برنامه آماده است',
+        en: 'A newer app version is available',
+      },
+      message: {
+        fa: 'نسخهٔ تازهٔ برنامه اعلان‌ها را بهتر می‌کند.',
+        en: 'The newer version of the app improves notifications.',
+      },
+      actions: [action],
+    };
+    await this.db.inAppNotification.upsert({
+      where: { userId_key: { userId, key } },
+      create: {
+        userId,
+        key,
+        source: 'shell-update',
+        content,
+        expiresAt: new Date(now.getTime() + 30 * 86_400_000),
+      },
+      update: {},
+    });
   }
 
   /**
@@ -261,8 +373,9 @@ export class InAppNotificationsController {
   pending(
     @CurrentUser() user: AuthUser,
     @Headers('user-agent') userAgent?: string,
+    @Query('client') client?: string,
   ) {
-    return this.service.pending(user.id, new Date(), userAgent);
+    return this.service.pending(user.id, new Date(), userAgent, client);
   }
 
   @Post(':id/dismiss')

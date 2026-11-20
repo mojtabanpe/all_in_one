@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:poshtetgarm_hybrid/main.dart';
@@ -120,6 +122,20 @@ void main() {
       'Mozilla/5.0 (Linux; Android 14) PoshtetgarmStore/bazaar',
     );
     expect(storeUserAgent(null, 'myket'), 'PoshtetgarmStore/myket');
+    expect(
+      shellUserAgent('Mozilla/5.0 (Linux; Android 14)'),
+      'Mozilla/5.0 (Linux; Android 14) PoshtetgarmApp/$shellVersion',
+    );
+    expect(
+      shellUserAgent('Mozilla/5.0 (Linux; Android 14)', store: 'bazaar'),
+      'Mozilla/5.0 (Linux; Android 14) PoshtetgarmApp/$shellVersion PoshtetgarmStore/bazaar',
+    );
+    expect(
+      shellUserAgent(null, store: 'myket', version: '1.0.7'),
+      'PoshtetgarmApp/1.0.7 PoshtetgarmStore/myket',
+    );
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    expect(pubspec, contains('version: $shellVersion+'));
     expect(
       blockedInStore(Uri.parse('https://gateway.zibal.ir/start/1')),
       isTrue,

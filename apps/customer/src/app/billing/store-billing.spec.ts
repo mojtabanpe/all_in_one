@@ -46,7 +46,18 @@ describe('StoreBilling', () => {
     expect(storeFromUserAgent(`${agent} PoshtetgarmStore/bazaar`)).toBe(
       'bazaar',
     );
+    expect(
+      storeFromUserAgent(
+        `${agent} PoshtetgarmApp/1.0.7 PoshtetgarmStore/bazaar`,
+      ),
+    ).toBe('bazaar');
     expect(storeFromUserAgent(`${agent} PoshtetgarmStore/myket`)).toBe('myket');
+    expect(
+      storeFromUserAgent(
+        `${agent} PoshtetgarmApp/1.0.7 PoshtetgarmStore/myket`,
+      ),
+    ).toBe('myket');
+    expect(storeFromUserAgent(`${agent} PoshtetgarmApp/1.0.7`)).toBeNull();
     expect(storeFromUserAgent(agent)).toBeNull();
     expect(storeFromUserAgent(`${agent} PoshtetgarmStore/zibal`)).toBeNull();
     expect(setup(agent).billing.store).toBeNull();

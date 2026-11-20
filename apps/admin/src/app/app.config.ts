@@ -14,6 +14,7 @@ import {
   withComponentInputBinding,
 } from '@angular/router';
 import {
+  appVersionInterceptor,
   authInterceptor,
   provideErrorMonitor,
   restartRetryInterceptor,
@@ -30,7 +31,11 @@ export const appConfig: ApplicationConfig = {
     provideRouter(appRoutes, withComponentInputBinding()),
     provideHttpClient(
       withFetch(),
-      withInterceptors([restartRetryInterceptor, authInterceptor]),
+      withInterceptors([
+        appVersionInterceptor,
+        restartRetryInterceptor,
+        authInterceptor,
+      ]),
     ),
   ],
 };

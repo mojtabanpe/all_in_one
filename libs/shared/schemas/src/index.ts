@@ -13,3 +13,7 @@ export * from './lib/in-app-notifications';
 export * from './lib/landing-goal';
 export * from './lib/telegram';
 export * from './lib/monitor';
+export * from './lib/release-version';
+export * from './lib/app-version';
+export * from './lib/release-version';
+export * from './lib/app-version';

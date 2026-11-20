@@ -9,7 +9,7 @@ export function detectGrowthClient(environment: {
   const { userAgent, nativeBridge, standalone } = environment;
   const store = /\bPoshtetgarmStore\/(bazaar|myket)\b/.exec(userAgent)?.[1];
   if (store === 'bazaar' || store === 'myket') return store;
-  if (nativeBridge) {
+  if (nativeBridge || /\bPoshtetgarmApp\/\d+\.\d+\.\d+\b/.test(userAgent)) {
     if (/Android/i.test(userAgent)) return 'direct_apk';
     if (/Macintosh|Mac OS X/i.test(userAgent)) return 'macos';
     return 'unknown_app';

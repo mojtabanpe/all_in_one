@@ -16,7 +16,7 @@ if (!Number.isSafeInteger(patch))
   throw new Error('Release patch exceeds the safe integer range.');
 const releaseVersion = `${match[1]}.${match[2]}.${patch}`;
 await writeFile(
-  new URL('libs/web/shared/src/lib/release-version.ts', root),
+  new URL('libs/shared/schemas/src/lib/release-version.ts', root),
   `/** Stamped by the Deploy workflow before building production assets. */\nexport const APP_VERSION = '${releaseVersion}';\n`,
 );
 console.log(`Application version: ${releaseVersion}`);

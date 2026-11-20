@@ -7,6 +7,9 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import 'native_push.dart' show trustedPushOrigin;
 
+/// Native shell version appended to every flavor's WebView user agent; keep in sync with `pubspec.yaml`.
+const shellVersion = '1.0.7';
+
 /// The store this APK was built for (`flutter build apk --flavor bazaar|myket`); null in the direct build.
 final String? buildStore = storeOf(appFlavor);
 
@@ -16,6 +19,16 @@ String? storeOf(String? flavor) =>
 /// Appended to the WebView user agent so the web app knows, from its first request, to sell through the store.
 String storeUserAgent(String? base, String store) =>
     '${(base ?? '').trim()} PoshtetgarmStore/$store'.trim();
+
+/// Appends the shell version for every flavor and the store marker for store builds.
+String shellUserAgent(
+  String? base, {
+  String? store,
+  String version = shellVersion,
+}) {
+  final withApp = '${(base ?? '').trim()} PoshtetgarmApp/$version'.trim();
+  return store == null ? withApp : storeUserAgent(withApp, store);
+}
 
 /// Payment pages the store builds never open: both stores forbid other payment routes in their builds.
 bool blockedInStore(Uri uri) =>

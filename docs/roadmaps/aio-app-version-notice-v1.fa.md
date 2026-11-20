@@ -1,6 +1,6 @@
 # اطلاع‌رسانی نسخهٔ قدیمی (آماده برای واگذاری به agent دیگر)
 
-وضعیت: **TODO، هنوز شروع نشده.** نوشته‌شده در ۲۰۲۶-۱۱-۲۰. کار روی `master` محلی انجام و commit می‌شود؛ طبق بند ۱۲۴ تا مالک نگوید push نمی‌شود. پیش از شروع `AGENTS.md` (بخش‌های «Project conventions» و «User directives»، به‌ویژه بندهای ۱۱۱، ۱۳۱، ۱۵۵، ۱۶۷، ۱۷۵ و ۱۸۰) و این فایل را بخوان. بعد از کار، وضعیت و شواهد همین فایل و ردیف ایندکس `docs/roadmaps/README.md` را در همان commit به‌روز کن (بند ۱۰۷).
+وضعیت: **DONE (محلی، هنوز push/deploy نشده).** نوشته‌شده در ۲۰۲۶-۱۱-۲۰؛ پیاده‌سازی و آزمون محلی در ۲۰۲۶-۱۱-۲۰ انجام شد. کار روی `master` محلی انجام و commit می‌شود؛ طبق بند ۱۲۴ تا مالک نگوید push نمی‌شود. پیش از شروع `AGENTS.md` (بخش‌های «Project conventions» و «User directives»، به‌ویژه بندهای ۱۱۱، ۱۳۱، ۱۵۵، ۱۶۷، ۱۷۵ و ۱۸۰) و این فایل را بخوان. بعد از کار، وضعیت و شواهد همین فایل و ردیف ایندکس `docs/roadmaps/README.md` را در همان commit به‌روز کن (بند ۱۰۷).
 
 ## مشکل
 
@@ -55,4 +55,21 @@
 
 ## وضعیت و شواهد
 
-(بعد از انجام کار اینجا بنویس: commit، آزمون‌ها، و آنچه تأیید نشد.)
+- **تاریخ:** ۲۰۲۶-۱۱-۲۰ (روی `master` محلی، بدون push یا deploy طبق بند ۱۲۴).
+- **بخش ۱ (وب بدون وابستگی به Service Worker):**
+  - روش انتخاب‌شده برای نسخهٔ api: اسکریپت `tools/scripts/write-app-version.mjs` نسخهٔ مهرشده با `RELEASE_PATCH` را در `libs/shared/schemas/src/lib/release-version.ts` (`APP_VERSION`) می‌نویسد تا `api` و اپ‌های وب هر دو دقیقاً همان نسخه را در ساخت ایمیج دریافت کنند (`libs/web/shared/src/lib/release-version.ts` از همان‌جا re-export می‌کند). در `apps/api/src/main.ts` هدر `X-Aio-Version` (با امکان override از `process.env.APP_VERSION`) و `Access-Control-Expose-Headers: X-Aio-Version` روی همهٔ پاسخ‌ها ست می‌شود و از `deploy/nginx.app.conf` / `deploy/nginx.conf` عبور می‌کند.
+  - مقایسهٔ SemVer (`libs/shared/schemas/src/lib/app-version.ts`) و `appVersionInterceptor` + `AppVersionState` (`libs/web/shared/src/lib/api/app-version.interceptor.ts`) با محدودیت حداکثر یک بار `reload` در دقیقه (`sessionStorage`) اضافه و در `customer` (`Pwa.updateReady`) و `admin` (`apps/admin/src/app/app.ts`) متصل شدند.
+- **بخش ۲ (پوستهٔ native اندروید):**
+  - نسخهٔ پوسته در `native/poshtetgarm/pubspec.yaml` به `1.0.7+8` ارتقا یافت و `shellUserAgent` در `native/poshtetgarm/lib/store_billing.dart` / `main.dart` عبارت `PoshtetgarmApp/1.0.7` را به User-Agent همهٔ flavorها اضافه کرد بدون شکستن `PoshtetgarmStore/<store>` و `detectGrowthClient`.
+  - در `apps/api/src/in-app-notifications.ts` متد `offerAndroidShellUpdate` اضافه شد: فقط وقتی `ANDROID_SHELL_LATEST_VERSION` (SemVer معتبر) روی سرور تنظیم شده باشد فعال می‌شود؛ برای `1.0.7+` مقایسهٔ دقیق SemVer با `PoshtetgarmApp/<ver>` و برای پوسته‌های قدیمی‌تر به‌صورت **حدس (تقریبی)** نبود رکورد در `local_reminder_devices` ملاک است. یک بار برای هر حساب و نسخهٔ منتشرشده ساخته می‌شود، با دکمهٔ کافه‌بازار / مایکت / GitHub Releases. در `apps/customer/src/app/layout.ts` برای `direct_apk` هینت `?client=direct_apk` ارسال و باز کردن لینک خارجی در همهٔ پوسته‌های اندروید با `window.location.assign` انجام می‌شود.
+- **آزمون‌ها و شواهد تأییدشده:**
+  - `pnpm nx format:check` سبز.
+  - `CI=true pnpm nx run-many -t lint test build typecheck` روی ۲۴ پروژه بدون خطا سبز (از جمله `app-version.spec.ts`، `app-version.interceptor.spec.ts`، `pwa.spec.ts`، `growth-client.spec.ts`، `store-billing.spec.ts` و `in-app-notifications.spec.ts`).
+  - `flutter test` در `native/poshtetgarm`: همهٔ ۷ تست (از جمله `shellUserAgent` و همخوانی `shellVersion` با `pubspec.yaml`) سبز.
+  - `node tools/scripts/check-agent-docs.mjs` سبز.
+  - مرورگر محلی (`http://localhost:4400` در حالت dev با Service Worker خاموش + API ساختگی با `X-Aio-Version: 0.1.99`): نوار «نسخه تازه آماده است» با دکمه‌های «بارگذاری دوباره» و «بعداً» مشاهده شد.
+  - مرورگر محلی موبایل (Chrome DevTools emulation، `390x844`، User-Agent ساختگی `PoshtetgarmStore/bazaar`): شیت درون‌برنامه‌ای «نسخهٔ تازهٔ برنامه آماده است» / «نسخهٔ تازهٔ برنامه اعلان‌ها را بهتر می‌کند.» با دکمهٔ «به‌روزرسانی در کافه‌بازار» مشاهده شد.
+- **تأیید نشده / باقی‌مانده برای بعد از push:**
+  - آزمون یکپارچهٔ PostgreSQL (`IN_APP_DB_INTEGRATION=1`، تست اضافه شد ولی دیتابیس محلی خاموش بود).
+  - `flutter analyze` محلی (SDK محلی `analysis_server_aot.dart.snapshot` نداشت؛ روی CI اجرا می‌شود).
+  - ساخت APK از گردش‌کار `Android APK` روی GitHub، انتشار نسخهٔ `1.0.7` در بازار/مایکت/GitHub Releases و تنظیم `ANDROID_SHELL_LATEST_VERSION=1.0.7` در محیط سرور پس از انتشار واقعی.

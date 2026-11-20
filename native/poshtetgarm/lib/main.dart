@@ -117,10 +117,10 @@ class _PoshtetgarmWindowState extends State<PoshtetgarmWindow>
           'StoreBillingChannel',
           onMessageReceived: (message) => unawaited(_store.handle(message)),
         );
-        await controller.setUserAgent(
-          storeUserAgent(await controller.getUserAgent(), store),
-        );
       }
+      await controller.setUserAgent(
+        shellUserAgent(await controller.getUserAgent(), store: store),
+      );
       await controller.setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (_) {

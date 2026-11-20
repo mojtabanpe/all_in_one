@@ -141,6 +141,34 @@ describe.skipIf(process.env['IN_APP_DB_INTEGRATION'] !== '1')(
       });
       expect(await service.pending(first.id)).toEqual([]);
     });
+
+    it('creates the old Android shell update notice once per account and skips accounts with local reminder devices', async () => {
+      const oldUser = await db.user.create({ data: {} });
+      const updatedUser = await db.user.create({ data: {} });
+      users.push(oldUser.id, updatedUser.id);
+      await db.localReminderDevice.create({
+        data: { userId: updatedUser.id, client: 'bazaar', reminders: 2 },
+      });
+      const service = new InAppNotificationsService(
+        db,
+        billing as unknown as BillingService,
+        undefined,
+        new ConfigService({ ANDROID_SHELL_LATEST_VERSION: '1.0.7' }),
+      );
+      const bazaar =
+        'Mozilla/5.0 (Linux; Android 14; wv) PoshtetgarmStore/bazaar';
+
+      expect(await service.pending(updatedUser.id, new Date(), bazaar)).toEqual(
+        [],
+      );
+      const firstRun = await service.pending(oldUser.id, new Date(), bazaar);
+      expect(firstRun).toHaveLength(1);
+      expect(firstRun[0].actions[0]?.url).toBe(
+        'https://cafebazaar.ir/app/ir.poshtetgarm.poshtetgarm_hybrid',
+      );
+      await service.dismiss(oldUser.id, firstRun[0].id);
+      expect(await service.pending(oldUser.id, new Date(), bazaar)).toEqual([]);
+    });
   },
 );
 
@@ -218,5 +246,133 @@ describe('store rating notice', () => {
     const { service, ratingCalls } = rating(opts);
     await service.pending('owner', now, agent);
     expect(ratingCalls()).toHaveLength(0);
+  });
+});
+
+describe('old Android shell update notice', () => {
+  const now = new Date('2026-11-20T10:00:00Z');
+  const android = 'Mozilla/5.0 (Linux; Android 14; Pixel 7; wv)';
+  const bazaar = `${android} PoshtetgarmStore/bazaar`;
+  const myket = `${android} PoshtetgarmStore/myket`;
+
+  function setupShell(opts: {
+    latest?: string;
+    existing?: boolean;
+    hasLocalReminders?: boolean;
+  }) {
+    const db = {
+      inAppNotification: {
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+        upsert: vi.fn().mockResolvedValue({ id: 'id' }),
+        findMany: vi.fn().mockResolvedValue([]),
+        findUnique: vi.fn(({ where }) =>
+          where.userId_key.key.startsWith('android-shell-update:')
+            ? Promise.resolve(opts.existing ? { id: 'old' } : null)
+            : Promise.resolve({ id: 'skip-rating' }),
+        ),
+      },
+      localReminderDevice: {
+        findFirst: vi
+          .fn()
+          .mockResolvedValue(
+            opts.hasLocalReminders ? { userId: 'owner' } : null,
+          ),
+      },
+    };
+    const billing = {
+      access: vi.fn().mockResolvedValue({ tier: 'free', trialUntil: null }),
+      rewardOffers: vi.fn().mockResolvedValue([]),
+    };
+    const config = new ConfigService(
+      opts.latest ? { ANDROID_SHELL_LATEST_VERSION: opts.latest } : {},
+    );
+    const service = new InAppNotificationsService(
+      db as unknown as PrismaService,
+      billing as unknown as BillingService,
+      undefined,
+      config,
+    );
+    const updateCalls = () =>
+      db.inAppNotification.upsert.mock.calls.filter(
+        ([call]) => call.create.source === 'shell-update',
+      );
+    return { db, service, updateCalls };
+  }
+
+  it('offers the Bazaar update once to an old Bazaar shell with no local reminder device', async () => {
+    const { service, updateCalls } = setupShell({ latest: '1.0.7' });
+    await service.pending('owner', now, bazaar);
+    const [[call]] = updateCalls();
+    expect(call.where).toEqual({
+      userId_key: { userId: 'owner', key: 'android-shell-update:1.0.7' },
+    });
+    expect(call.update).toEqual({});
+    expect(call.create.content.actions[0].url).toBe(
+      'https://cafebazaar.ir/app/ir.poshtetgarm.poshtetgarm_hybrid',
+    );
+  });
+
+  it('uses the Myket page for Myket and GitHub Releases for direct APK', async () => {
+    const myketRun = setupShell({ latest: '1.0.7' });
+    await myketRun.service.pending('owner', now, myket);
+    expect(myketRun.updateCalls()[0][0].create.content.actions[0].url).toBe(
+      'https://myket.ir/app/ir.poshtetgarm.poshtetgarm_hybrid',
+    );
+
+    const directRun = setupShell({ latest: '1.0.7' });
+    await directRun.service.pending('owner', now, android, 'direct_apk');
+    expect(directRun.updateCalls()[0][0].create.content.actions[0].url).toBe(
+      'https://github.com/mojtabanpe/all_in_one/releases/latest',
+    );
+  });
+
+  it('uses exact SemVer when PoshtetgarmApp/<ver> is present in the user agent', async () => {
+    const newer = setupShell({ latest: '1.0.8', hasLocalReminders: true });
+    await newer.service.pending(
+      'owner',
+      now,
+      `${android} PoshtetgarmApp/1.0.7 PoshtetgarmStore/bazaar`,
+    );
+    expect(newer.updateCalls()).toHaveLength(1);
+
+    const current = setupShell({ latest: '1.0.7', hasLocalReminders: false });
+    await current.service.pending(
+      'owner',
+      now,
+      `${android} PoshtetgarmApp/1.0.7 PoshtetgarmStore/bazaar`,
+    );
+    expect(current.updateCalls()).toHaveLength(0);
+  });
+
+  it.each([
+    ['when no new shell version is published', {}, bazaar, undefined],
+    [
+      'when the account already has a local reminder device',
+      { latest: '1.0.7', hasLocalReminders: true },
+      bazaar,
+      undefined,
+    ],
+    [
+      'when the notice was already created once for this account',
+      { latest: '1.0.7', existing: true },
+      bazaar,
+      undefined,
+    ],
+    [
+      'in a regular web browser',
+      { latest: '1.0.7' },
+      'Mozilla/5.0 (Linux; Android 14) Chrome/130.0.0.0',
+      undefined,
+    ],
+    [
+      'when direct_apk hint is sent from non-Android user agent',
+      { latest: '1.0.7' },
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+      'direct_apk',
+    ],
+  ])('does not create the notice %s', async (_label, opts, agent, hint) => {
+    const { service, updateCalls } = setupShell(opts);
+    await service.pending('owner', now, agent, hint);
+    expect(updateCalls()).toHaveLength(0);
   });
 });
