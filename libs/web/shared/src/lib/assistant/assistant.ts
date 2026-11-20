@@ -17,7 +17,6 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { Router } from '@angular/router';
 import { formatReply } from './reply-format';
 import type {
   AiStatus,
@@ -45,6 +44,7 @@ import {
 } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../api/api-base-url';
+import { PageRefresh } from '../page-refresh/page-refresh';
 import { aiUpgradeReason, apiErrorMessage } from '../auth/auth.guards';
 
 interface Message {
@@ -364,7 +364,7 @@ export class Assistant implements OnDestroy {
   private readonly notifications = inject(AioNotifications);
 
   private readonly http = inject(HttpClient);
-  private readonly router = inject(Router);
+  private readonly pageRefresh = inject(PageRefresh);
   private readonly api = inject(API_BASE_URL);
   protected readonly store = inject(AssistantStore);
 
@@ -492,10 +492,7 @@ export class Assistant implements OnDestroy {
     this.stopRecording();
     if (!this.changed) return;
     this.changed = false;
-    const url = this.router.url;
-    void this.router
-      .navigateByUrl('/', { skipLocationChange: true })
-      .then(() => this.router.navigateByUrl(url));
+    this.pageRefresh.refresh();
   }
 
   protected async startRecording() {

@@ -39,6 +39,7 @@ import {
   Assistant,
   AuthStore,
   detectGrowthClient,
+  PageRefresh,
   PushSettings,
 } from '@all-in-one/web/shared';
 import {
@@ -212,7 +213,8 @@ const TRIAL_NOTICE_DAYS = 3;
           [class.lx-stage]="assistantContext() === 'home'"
           [class.lx-brand]="assistantContext() === 'home'"
         >
-          @for (key of [pageKey()]; track key) {
+          <!-- Recreated by pull-to-refresh and after the assistant changed data (PageRefresh). -->
+          @for (key of [pageRefresh.version()]; track key) {
             <router-outlet />
           }
         </div>
@@ -226,10 +228,10 @@ export class Layout {
   private readonly auth = inject(AuthStore);
   private readonly router = inject(Router);
   protected readonly pwa = inject(Pwa);
-  /** Bumped by pull-to-refresh: recreates the routed page so its resources load again. */
-  protected readonly pageKey = signal(0);
+  /** Pull-to-refresh and the assistant recreate the routed page so its resources load again. */
+  protected readonly pageRefresh = inject(PageRefresh);
   protected reloadPage(): void {
-    this.pageKey.update((key) => key + 1);
+    this.pageRefresh.refresh();
   }
   protected readonly pendingRoute = toSignal(
     this.router.events.pipe(
