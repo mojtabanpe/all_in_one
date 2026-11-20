@@ -33,6 +33,10 @@ export const REVIEWED_MESSAGES: readonly (readonly [string, string])[] = [
     'Create English flashcards, save texts and manage your tasks, habits, focus and health from ChatGPT or Claude.',
   ],
   [
+    'در نسخه وب ChatGPT (chatgpt.com) یک «اتصال» (MCP سفارشی) با این نشانی بساز و احراز هویت را OAuth بگذار (بعد از ساخت در وب، روی دسکتاپ و موبایل هم کار می‌کند):',
+    'In ChatGPT on the web (chatgpt.com), create a custom MCP connector with this address and set authentication to OAuth (once added on the web, it also works in the desktop and mobile apps):',
+  ],
+  [
     'در Claude (وب، دسکتاپ یا موبایل) به Settings ← Connectors برو، «Add custom connector» را بزن و این نشانی را بگذار؛ Client ID و Secret را خالی بگذار:',
     'In Claude (web, desktop or mobile), go to Settings → Connectors, choose "Add custom connector" and enter this address; leave Client ID and Secret empty:',
   ],

@@ -100,7 +100,7 @@ interface KeysResponse {
           <ol class="text-muted-foreground list-decimal space-y-1 ps-5">
             <li>
               {{
-                'در ChatGPT یک «اتصال» (MCP سفارشی) با این نشانی بساز و احراز هویت را OAuth بگذار:'
+                'در نسخه وب ChatGPT (chatgpt.com) یک «اتصال» (MCP سفارشی) با این نشانی بساز و احراز هویت را OAuth بگذار (بعد از ساخت در وب، روی دسکتاپ و موبایل هم کار می‌کند):'
                   | aioTranslate
               }}
             </li>
