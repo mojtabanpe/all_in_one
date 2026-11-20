@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '@all-in-one/api/db';
+import { TelegramApi } from '../telegram/telegram-api';
 import { createHash, randomUUID } from 'node:crypto';
 import type { ClientError } from '@all-in-one/shared/schemas';
 
@@ -155,8 +157,16 @@ export class MonitorService {
   private readonly target?: { url: string; key: string };
   readonly environment: string;
   readonly release?: string;
+  private readonly telegram: TelegramApi;
+  /** Fingerprints already announced, with the time: a problem is announced once a day, not per event. */
+  private readonly announced = new Map<string, number>();
+  private announcedWindow: number[] = [];
 
-  constructor(config: ConfigService) {
+  constructor(
+    config: ConfigService,
+    private readonly prisma?: PrismaService,
+  ) {
+    this.telegram = new TelegramApi(config);
     this.environment = config.get<string>('NODE_ENV') ?? 'development';
     this.release = config.get<string>('APP_RELEASE') || undefined;
     const dsn = config.get<string>('GLITCHTIP_DSN');
@@ -175,7 +185,41 @@ export class MonitorService {
     return !!this.target;
   }
 
+  /** Tells the admins' linked Telegram chats about a problem not seen in the last day. Never throws. */
+  private async announce(event: MonitorEvent): Promise<void> {
+    try {
+      if (!this.prisma || !this.telegram.enabled) return;
+      const key = (event.fingerprint ?? [event.exception.values[0].value]).join(
+        '|',
+      );
+      const now = Date.now();
+      const last = this.announced.get(key);
+      if (last !== undefined && now - last < ALERT_REPEAT_MS) return;
+      this.announcedWindow = this.announcedWindow.filter(
+        (t) => now - t < 3_600_000,
+      );
+      if (this.announcedWindow.length >= ALERT_MAX_PER_HOUR) return;
+      this.announced.set(key, now);
+      this.announcedWindow.push(now);
+      if (this.announced.size > 500)
+        this.announced.delete(this.announced.keys().next().value!);
+      const links = await this.prisma.telegramLink.findMany({
+        where: { user: { role: 'ADMIN' } },
+        select: { chatId: true },
+      });
+      const text = alertText(event);
+      await Promise.all(
+        links.map((l) =>
+          this.telegram.sendMessage(l.chatId, text).catch(() => undefined),
+        ),
+      );
+    } catch (e) {
+      this.logger.warn(`Alert not sent: ${(e as Error).message}`);
+    }
+  }
+
   capture(event: MonitorEvent): void {
+    void this.announce(event);
     if (!this.target) return;
     const { url, key } = this.target;
     fetch(url, {
@@ -195,4 +239,27 @@ export class MonitorService {
         this.logger.warn(`GlitchTip unreachable: ${(e as Error).message}`),
       );
   }
+}
+
+export const ALERT_REPEAT_MS = 24 * 3_600_000;
+/** Whatever happens, at most this many alerts an hour (a flood of new errors must not flood the owner). */
+export const ALERT_MAX_PER_HOUR = 5;
+
+/** The text sent to Telegram: what failed and where, nothing that identifies a person. */
+export function alertText(event: MonitorEvent): string {
+  const e = event.exception.values[0];
+  const where = event.request?.url ?? '';
+  return [
+    `⚠️ خطای تازه در ${event.tags['app'] ?? 'app'}`,
+    `${e.type}: ${e.value}`.slice(0, 300),
+    [
+      where,
+      event.release ? `نسخه ${event.release}` : '',
+      event.tags['client'] ?? '',
+    ]
+      .filter(Boolean)
+      .join(' · '),
+  ]
+    .filter(Boolean)
+    .join('\n');
 }

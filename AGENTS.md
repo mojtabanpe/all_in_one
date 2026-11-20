@@ -966,6 +966,8 @@ flashcard`; `deploy/release.sh` starts it only when `GLITCHTIP_SECRET_KEY` is in
      admin apps use `provideErrorMonitor(app)` (`libs/web/shared`): an `ErrorHandler` that queues reports in
      localStorage while offline, drops repeats, marks failed chunks (`kind: 'chunk'`) and shows a «تلاش دوباره»
      toast for them. Reports carry only the message, stack, route path (no query), app version, client kind and
-     online state, plus the user id on the server side: never task, health or account content (78). Not covered:
-     native Android crashes, silent logic failures, the public site's browser errors, and a dead server (GlitchTip is
-     on it): a monitor from outside is a separate step. Setup: `deploy/README.fa.md` «پایش خطا».
+     online state, plus the user id on the server side: never task, health or account content (78). The public
+     site reports too (`provideErrorMonitor('public')`). The first time a problem is seen in a day (at most 5 an
+     hour) the api tells every ADMIN account with a linked Telegram chat (`MonitorService.announce`; it works even
+     before GlitchTip is set up). Not covered: native Android crashes, silent logic failures, and a dead server
+     (GlitchTip is on it): a monitor from outside is a separate step. Setup: `deploy/README.fa.md` «پایش خطا».

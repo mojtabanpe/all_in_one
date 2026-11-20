@@ -1,4 +1,5 @@
 import { provideAioLocale } from '@all-in-one/ui';
+import { provideErrorMonitor } from '@all-in-one/web/shared';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import {
   ApplicationConfig,
@@ -17,6 +18,7 @@ export const appConfig: ApplicationConfig = {
     provideAioLocale(),
     provideClientHydration(withEventReplay()),
     provideBrowserGlobalErrorListeners(),
+    provideErrorMonitor('public'),
     provideRouter(
       appRoutes,
       withInMemoryScrolling({ anchorScrolling: 'enabled' }),

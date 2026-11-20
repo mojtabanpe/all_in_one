@@ -2,6 +2,8 @@ import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, vi } from 'vitest';
 import type { ClientError } from '@all-in-one/shared/schemas';
 import {
+  ALERT_MAX_PER_HOUR,
+  alertText,
   MonitorService,
   clientErrorEvent,
   normalisePath,
@@ -101,5 +103,51 @@ describe('MonitorService', () => {
     ).toContain('sentry_key=abc');
     await Promise.resolve();
     fetchSpy.mockRestore();
+  });
+});
+
+describe('Telegram alerts', () => {
+  const config = (v: Record<string, string>) =>
+    ({ get: (k: string) => v[k] }) as unknown as ConfigService;
+  const event = (message: string) =>
+    clientErrorEvent({ ...base, kind: 'error', message }, 'production');
+
+  function setup() {
+    const findMany = vi.fn().mockResolvedValue([{ chatId: 7n }]);
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response('{"ok":true,"result":{}}'));
+    const m = new MonitorService(
+      config({ TELEGRAM_BOT_TOKEN: 't', NODE_ENV: 'production' }),
+      { telegramLink: { findMany } } as never,
+    );
+    return { m, findMany, fetchSpy };
+  }
+
+  it('tells admins once per problem and has no personal data', async () => {
+    const { m, findMany, fetchSpy } = setup();
+    m.capture(event('TypeError: a'));
+    m.capture(event('TypeError: a'));
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+    expect(findMany).toHaveBeenCalledTimes(1);
+    const body = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string);
+    expect(body.chat_id).toBe('7');
+    expect(body.text).toContain('TypeError: a');
+    fetchSpy.mockRestore();
+  });
+
+  it('caps a flood of new errors', async () => {
+    const { m, fetchSpy } = setup();
+    for (let i = 0; i < ALERT_MAX_PER_HOUR + 3; i++) m.capture(event(`E${i}`));
+    await vi.waitFor(() =>
+      expect(fetchSpy).toHaveBeenCalledTimes(ALERT_MAX_PER_HOUR),
+    );
+    await new Promise((r) => setTimeout(r, 20));
+    expect(fetchSpy).toHaveBeenCalledTimes(ALERT_MAX_PER_HOUR);
+    fetchSpy.mockRestore();
+  });
+
+  it('formats the alert', () => {
+    expect(alertText(event('TypeError: a'))).toContain('customer');
   });
 });
