@@ -679,3 +679,79 @@ Owner picked idea 6 of six proposed Reel ideas (story-led, like the dinner ad, t
   Poshtetgarm آماده است: @poshtetgarm_bot / کارهات رو با یک پیام ثبت کن، هر صبح ساعت ۱۰ کارهای امروز رو بگیر و شادوینگ
   رو با پیام صوتی تمرین کن. / وصل کردن حساب: اپ ← حساب کاربری ← تلگرام»
 - `VERIFY` reach and watch time, and how many accounts link Telegram in the 3 days after vs before.
+
+## Reel «با یه جمله ۲» (planner) — script draft (2026-11-20)
+
+Why: Windsor read for `@poshtetgarm` only (2026-11-20). «با یه جمله» (Df4sRCFjOBI) is the only Reel past Instagram's
+first test audience: 1,266 views, 1,166 reach, 7.5 s average watch, 38% skipped, 9 saves, 7 shares. Every other Reel
+stayed at 130–177 views; the expenses and Telegram motion graphics reached 119–125 with 50–57% skipped. So: repeat the
+story-led format (a person, a pain everyone knows, a real app recording) as a series, same character. Confound: it was
+the only evening post (17:42); publish this one around 18:00 too. Status: `TODO` owner approval of the script; nothing
+generated, spent or published.
+
+Claim checked against the code: the assistant has `batch_create_tasks` / `create_task` (date, time, `reminders` such as
+`TRIGGER:-PT15M`, `repeat_rule` for a recurring series), none hidden with `assistant: false`
+(`apps/api/src/tools/planner-tools.ts`).
+
+- Format: vertical 9:16, about 22 s, Persian on-screen text and speech, official logo end card. Character `sara` from
+  the first episode (`marketing/promo-videos/briefs/ba-ye-jomle.json`) so it reads as a series. Two 8 s shots with the
+  ywa_ai settings (162), then the real screen recording.
+- 0–3 s (shot 1): Sara at her desk at night, screen edge and fridge door covered with sticky notes, phone in hand,
+  tired. On screen: «کلی کار تو سرم بود…»
+- 3–7 s (shot 2, grey and comic flashback): her phone buzzes with «قسط امروز سررسید شد!» and she freezes; a sticky note
+  falls off. On screen: «قبلاً: یادداشت، یادآور، یادم رفت»
+- 7–15 s (real recording): she opens the assistant and types or says one sentence: «فردا ساعت ۱۰ جلسه دارم، ربع ساعت
+  قبلش یادم بنداز. پنج‌شنبه قسط وام. هر شب ساعت ۱۰ ده دقیقه زبان.» The assistant answers with the three tasks it
+  created. On screen: «یه جمله گفتم.»
+- 15–18 s (real recording): the Today/Tomorrow list with the three tasks, the reminder and the repeat icon visible. On
+  screen: «همه‌ش با تاریخ و یادآور ثبت شد.»
+- 18–22 s: end card «با یه جمله. Poshtetgarm» and «در کافه‌بازار و مایکت» (same end card as episode 1).
+- Caption: «لازم نیست کارهات رو یکی‌یکی وارد کنی. فقط بگو چی داری؛ Poshtetgarm با تاریخ، ساعت و یادآور ثبتشون می‌کنه.
+  برنامه‌ریز، فلش‌کارت و بخش سلامت رایگان‌اند؛ دستیار هوش مصنوعی برای حساب تازه یک هفته رایگان است. پشتت گرم رو در
+  کافه‌بازار یا مایکت جست‌وجو کن. #پشتت_گرم #برنامه_ریزی #مدیریت_زمان #هوش_مصنوعی»
+- Recording: the owner records the real assistant reply on a phone, never mocked. Before recording, check that the reply
+  renders without raw `**` (visible in episode 1) and that the dates in the list match the sentence; re-record if the
+  assistant merges or misdates a task.
+- Measurement: no tagged link inside a Reel. Compare views/reach with episode 1 at equal age, and Bazaar/Myket signups
+  and first planner tasks in the 3 days after publishing vs the 3 days before (`growth_client_days`,
+  `signup_completed`).
+- 2026-11-20: owner approved the script («تأیید، بساز») and the temporary use of the ywa-ai pipeline (folders removed
+  afterwards). Two 8 s shots on Flow u0 with Sara's episode-1 reference (48 credits; earlier attempts stopped before
+  generating: Flow signed out, then a change-log dialog; Veo API model 404; Higgsfield «job failed»). Local, gitignored:
+  `marketing/promo-videos/out/ba-ye-jomle-2/shots/shot_01.mp4` (desk, sticky notes, phone to her mouth) and `shot_02.mp4`
+  (grey kitchen, phone buzzes, forehead slap, a note falls). Same face as episode 1. Imperfection: the sticky notes in
+  shot 1 carry illegible Persian-like scribbles (acceptable under 126 at phone size). `TODO` owner's screen recording,
+  then edit with the shared end card.
+- 2026-11-20: owner's screen recording (typed sentence with a 10-minute reminder; reply rendered cleanly: meeting
+  Saturday 30 Aban 10:00 with the reminder, loan Thursday 5 Azar, English nightly 22:00) edited into a draft:
+  `marketing/promo-videos/out/ba-ye-jomle-2/poshtetgarm-ba-ye-jomle-2-reel.mp4` (local, 23.2 s, 1080×1920). Shot 1
+  3.5–6.5 s, shot 2 2.5–6.5 s in greyscale, typing at 10×, the wait at 2×, the reply held 6 s, shared end card with its
+  sound. Captions «کلی کار تو سرم بود…», «قبلاً: یادداشت، یادآور، یادم رفت», «حالا فقط یه جمله نوشتم», «همه‌ش با تاریخ
+  و یادآور ثبت شد.». The recording has no task-list view, so the reply carries the dates. `TODO` owner review, then
+  publication only on the owner's word.
+- `DONE` Owner approved the draft and caption, then said «پابلیش کن» (187). Published 2026-11-20 15:40:39 Tehran via
+  Windsor `create_video_post` to `poshtetgarm` (`17841425571593489`), `share_to_feed=true`, `thumb_offset=1500`:
+  [Reel](https://www.instagram.com/reel/Df9n6eIHOIo/), media `18100205603411196`. Separate read-back matched ID,
+  permalink, exact caption and `REELS`. File SHA-256
+  `3e8d7a706b186665bc3bbff85d36b9b3c5c318e65dfbc9a820d0aa5b6699f5c0`, 6,206,602 bytes, hosted in Drive folder `ywa`
+  (`Poshtetgarm_Ba_Ye_Jomle_2_Reel.mp4`); anonymous download returned 206 `video/mp4` with the same hash. Published at
+  15:40, not ~18:00 as planned, so its timing differs from episode 1. Caption: «لازم نیست کارهات رو یکی‌یکی وارد کنی.
+  همه‌شون رو توی یه جمله بنویس؛ Poshtetgarm با تاریخ، ساعت و یادآور ثبتشون می‌کنه. / برنامه‌ریز، فلش‌کارت و بخش سلامت
+  رایگان‌اند؛ دستیار هوش مصنوعی برای حساب تازه یک هفته رایگان است. / پشتت گرم رو در کافه‌بازار یا مایکت جست‌وجو کن.
+  #پشتت_گرم #برنامه_ریزی #مدیریت_زمان #هوش_مصنوعی #یادآور»
+- `DONE` Telegram (owner: «تو کانال تلگرام هم بذارش»): `sendVideo` to `@poshtetgarm` through the channel bot,
+  2026-11-20 15:42:25 Tehran, message 9, the same file with the Instagram caption minus hashtags.
+- 2026-11-20: the published file was silent until the end card: the edit dropped the shots' own sound and put nothing
+  under the app part (episode 1 has sound throughout). The owner deleted the Reel from Instagram and the Telegram
+  post. Rebuilt as `poshtetgarm-ba-ye-jomle-2-reel-sound.mp4` (local): the shots' ambient sound, a planner music bed
+  from `audio.mjs` (quiet under the shots, louder under the app part) and the end card's sound; levels close to
+  episode 1. Owner: «بله، منتشر کن».
+- `DONE` Republished with sound. Drive file `Poshtetgarm_Ba_Ye_Jomle_2_Reel.mp4` replaced in place (same id); anonymous
+  download returned 206 `video/mp4` with SHA-256 `95af06dc0be7844fff23bdd7291352a9b2479c5093f94ad09728046d98621fef`
+  (6,649,667 bytes). Instagram: Windsor `create_video_post`, same caption, `share_to_feed=true`, `thumb_offset=1600`
+  (Windsor refused an identical repeat of the deleted post's request), 2026-11-20 15:49:09 Tehran:
+  [Reel](https://www.instagram.com/reel/Df9o3EjE3wO/), media `18133999339877267`; read-back matched ID, permalink, exact
+  caption and `REELS`. Telegram: `sendVideo` to `@poshtetgarm`, message 10, 15:49:38 Tehran. The silent posts (media
+  `18100205603411196`, message 9) were deleted by the owner.
+- `VERIFY` (after republication) views/reach against episode 1 at equal age, and Bazaar/Myket signups and first planner
+  tasks in the 3 days after vs before.

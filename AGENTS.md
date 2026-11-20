@@ -976,14 +976,9 @@ flashcard`; `deploy/release.sh` starts it only when `GLITCHTIP_SECRET_KEY` is in
 
 186. **Error alerts go to the dev Telegram bot only (2026-11-20).** The owner asked that error alerts go to `poshtetgarm_develop_bot` rather than the customer bot `poshtetgarm_bot` (updating 184's Telegram alert bot). `MonitorService` uses `MONITOR_TELEGRAM_BOT_TOKEN` (never falling back to `TELEGRAM_BOT_TOKEN`), targeting `MONITOR_TELEGRAM_CHAT_ID` (comma-separated, optional) or `ADMIN` users' `telegramLink.chatId`.
 
-187. **Assistant tokens: section tools, cheap cache hits, higher chat limits (2026-11-20).** A friend of the owner used
-     up a trial's whole day with one assistant message: each model call was ~45k tokens because all ~145 tools went
-     with every step. The owner chose both fixes («جفتش») and «سقف رو هم بالاتر ببر». The assistant sends only the tools
-     of the current screen's section, of the sections the message mentions (`SECTION_WORDS`) and of those the previous
-     reply used (all of them on home when nothing matches); the assistant-only `load_tools` adds other sections when
-     the model needs them. Prompt-cache hits count `AI_QUOTA_CACHED_WEIGHT` (0.1) toward the chat quota
-     (`chatQuotaUnits`; cost reports still use real prices). Default daily chat limits: trial and earned 400k, paid
-     1M. Limits saved in `/admin/ai` still override them. When a trial or earned-week account reaches the daily limit
-     (owner: «اگه کاربر آزمایشی سقف رو زد میتونیم بهش باتم شیت خرید بدیم»), the 429 `AI_QUOTA_REACHED` carries
-     `upgrade: true` and the customer app opens the shared plan sheet (`AiPaywall`, reason `quota`) with a line that a
-     plan has a higher limit; paid accounts only see the message.
+187. **Publish the «با یه جمله ۲» Reel (2026-11-20).** The owner approved the edited planner draft («خوبه»), the revised
+     caption, and said «پابلیش کن». This authorizes that one 23.2-second Reel with that caption on @poshtetgarm
+     Instagram, hosted in the Drive folder `ywa` as 164; the owner then asked «تو کانال تلگرام هم بذارش», so it also goes to
+     the @poshtetgarm Telegram channel. That file was silent until the end card; the owner deleted both posts and, after
+     the rebuild with sound, said «بله، منتشر کن», which covers republishing the version with sound in both places; it is not standing authorization for future posts.
+     Evidence lives in the growth roadmap.
