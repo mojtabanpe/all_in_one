@@ -679,3 +679,39 @@ Owner picked idea 6 of six proposed Reel ideas (story-led, like the dinner ad, t
   Poshtetgarm آماده است: @poshtetgarm_bot / کارهات رو با یک پیام ثبت کن، هر صبح ساعت ۱۰ کارهای امروز رو بگیر و شادوینگ
   رو با پیام صوتی تمرین کن. / وصل کردن حساب: اپ ← حساب کاربری ← تلگرام»
 - `VERIFY` reach and watch time, and how many accounts link Telegram in the 3 days after vs before.
+
+## Reel «با یه جمله ۲» (planner) — script draft (2026-11-20)
+
+Why: Windsor read for `@poshtetgarm` only (2026-11-20). «با یه جمله» (Df4sRCFjOBI) is the only Reel past Instagram's
+first test audience: 1,266 views, 1,166 reach, 7.5 s average watch, 38% skipped, 9 saves, 7 shares. Every other Reel
+stayed at 130–177 views; the expenses and Telegram motion graphics reached 119–125 with 50–57% skipped. So: repeat the
+story-led format (a person, a pain everyone knows, a real app recording) as a series, same character. Confound: it was
+the only evening post (17:42); publish this one around 18:00 too. Status: `TODO` owner approval of the script; nothing
+generated, spent or published.
+
+Claim checked against the code: the assistant has `batch_create_tasks` / `create_task` (date, time, `reminders` such as
+`TRIGGER:-PT15M`, `repeat_rule` for a recurring series), none hidden with `assistant: false`
+(`apps/api/src/tools/planner-tools.ts`).
+
+- Format: vertical 9:16, about 22 s, Persian on-screen text and speech, official logo end card. Character `sara` from
+  the first episode (`marketing/promo-videos/briefs/ba-ye-jomle.json`) so it reads as a series. Two 8 s shots with the
+  ywa_ai settings (162), then the real screen recording.
+- 0–3 s (shot 1): Sara at her desk at night, screen edge and fridge door covered with sticky notes, phone in hand,
+  tired. On screen: «کلی کار تو سرم بود…»
+- 3–7 s (shot 2, grey and comic flashback): her phone buzzes with «قسط امروز سررسید شد!» and she freezes; a sticky note
+  falls off. On screen: «قبلاً: یادداشت، یادآور، یادم رفت»
+- 7–15 s (real recording): she opens the assistant and types or says one sentence: «فردا ساعت ۱۰ جلسه دارم، ربع ساعت
+  قبلش یادم بنداز. پنج‌شنبه قسط وام. هر شب ساعت ۱۰ ده دقیقه زبان.» The assistant answers with the three tasks it
+  created. On screen: «یه جمله گفتم.»
+- 15–18 s (real recording): the Today/Tomorrow list with the three tasks, the reminder and the repeat icon visible. On
+  screen: «همه‌ش با تاریخ و یادآور ثبت شد.»
+- 18–22 s: end card «با یه جمله. Poshtetgarm» and «در کافه‌بازار و مایکت» (same end card as episode 1).
+- Caption: «لازم نیست کارهات رو یکی‌یکی وارد کنی. فقط بگو چی داری؛ Poshtetgarm با تاریخ، ساعت و یادآور ثبتشون می‌کنه.
+  برنامه‌ریز، فلش‌کارت و بخش سلامت رایگان‌اند؛ دستیار هوش مصنوعی برای حساب تازه یک هفته رایگان است. پشتت گرم رو در
+  کافه‌بازار یا مایکت جست‌وجو کن. #پشتت_گرم #برنامه_ریزی #مدیریت_زمان #هوش_مصنوعی»
+- Recording: the owner records the real assistant reply on a phone, never mocked. Before recording, check that the reply
+  renders without raw `**` (visible in episode 1) and that the dates in the list match the sentence; re-record if the
+  assistant merges or misdates a task.
+- Measurement: no tagged link inside a Reel. Compare views/reach with episode 1 at equal age, and Bazaar/Myket signups
+  and first planner tasks in the 3 days after publishing vs the 3 days before (`growth_client_days`,
+  `signup_completed`).
