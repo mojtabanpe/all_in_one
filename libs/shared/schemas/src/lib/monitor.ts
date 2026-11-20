@@ -6,7 +6,8 @@ import { GROWTH_CLIENTS } from './growth';
  * needed to find the bug (message, stack, route path, version, client, connectivity).
  */
 export const clientErrorSchema = z.strictObject({
-  app: z.enum(['customer', 'admin', 'public']),
+  /** `native`: the Flutter WebView shell itself (Android/macOS), not the web app inside it. */
+  app: z.enum(['customer', 'admin', 'public', 'native']),
   kind: z.enum(['error', 'chunk', 'promise']),
   message: z.string().check(z.maxLength(500)),
   stack: z.optional(z.string().check(z.maxLength(6000))),

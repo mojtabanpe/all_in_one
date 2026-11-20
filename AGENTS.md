@@ -1011,3 +1011,12 @@ contain`). Works on the web, the PWA and the current Android shell without a new
      (owner: «اگه کاربر آزمایشی سقف رو زد میتونیم بهش باتم شیت خرید بدیم»), the 429 `AI_QUOTA_REACHED` carries
      `upgrade: true` and the customer app opens the shared plan sheet (`AiPaywall`, reason `quota`) with a line that a
      plan has a higher limit; paid accounts only see the message.
+
+192. **Outside uptime monitor and native shell error reporting (2026-11-21).** Closes the two monitoring gaps noted in 184. (a) **Outside uptime monitor** (`deploy/uptime-monitor`, Cloudflare Worker `poshtetgarm-uptime-monitor`,
+     `*/5 * * * *`, KV `STATE`, no public HTTP route): probes `/api/health`, `/` and `/app/` from outside Iran (one
+     retry per check), alerts the dev Telegram bot (186, secrets `BOT_TOKEN` and `CHAT_ID`) after 2 consecutive failed
+     rounds, reminds hourly while down, and sends a recovery message with duration. (b) **Native shell errors**:
+     `clientErrorSchema` accepts `app: 'native'`, `MonitorService` parses Dart stack frames (`platform: 'dart'`), and
+     the Flutter shell (`native/poshtetgarm/lib/error_report.dart`, wired in `main.dart`) forwards `FlutterError`,
+     `PlatformDispatcher` and main-frame `WebResourceError` failures (with offline queue/retry, deduplication, and
+     query-string stripping) to `POST /api/monitor/errors`. Takes effect in the next native shell build.

@@ -8,14 +8,34 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 import 'app_settings.dart';
+import 'error_report.dart';
 import 'native_push.dart';
 import 'install_referrer.dart';
 import 'store_billing.dart';
 
+/// Errors of the shell itself go to GlitchTip through the api (directive 192).
+final errorReport = ErrorReport();
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  final previous = FlutterError.onError;
+  FlutterError.onError = (details) {
+    errorReport.report(details.exception, details.stack);
+    previous?.call(details);
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    errorReport.report(error, stack);
+    return false;
+  };
   runApp(const PoshtetgarmApp());
 }
+
+/// Connection failures say nothing about our code when the phone is offline; report them as offline.
+bool offlineError(WebResourceErrorType? type) => const {
+  WebResourceErrorType.hostLookup,
+  WebResourceErrorType.connect,
+  WebResourceErrorType.timeout,
+}.contains(type);
 
 class PoshtetgarmApp extends StatelessWidget {
   const PoshtetgarmApp({super.key});
@@ -84,7 +104,10 @@ class _PoshtetgarmWindowState extends State<PoshtetgarmWindow>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) unawaited(_push.refresh());
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_push.refresh());
+      unawaited(errorReport.flush());
+    }
   }
 
   Future<void> _initialize() async {
@@ -144,6 +167,18 @@ class _PoshtetgarmWindowState extends State<PoshtetgarmWindow>
           },
           onUrlChange: (_) => unawaited(_history()),
           onWebResourceError: (error) {
+            if (error.isForMainFrame == true) {
+              errorReport.report(
+                PageLoadError(
+                  error.errorType?.name ?? 'unknown',
+                  error.errorCode,
+                  error.description,
+                ),
+                null,
+                path: error.url ?? '/app/',
+                online: !offlineError(error.errorType),
+              );
+            }
             if (mounted && error.isForMainFrame == true) {
               setState(() {
                 _error = 'Could not load Poshtetgarm. Check your connection or the app address, then try again.';
@@ -175,7 +210,8 @@ class _PoshtetgarmWindowState extends State<PoshtetgarmWindow>
         _error = null;
       });
       await _load(await installStartUrl(url));
-    } catch (error) {
+    } catch (error, stack) {
+      errorReport.report(error, stack);
       if (mounted) {
         setState(() {
           _error = 'Could not start the WebView. $error';
@@ -220,7 +256,8 @@ class _PoshtetgarmWindowState extends State<PoshtetgarmWindow>
     });
     try {
       await _controller!.loadRequest(url);
-    } catch (_) {
+    } catch (error, stack) {
+      errorReport.report(error, stack, path: url.path);
       if (mounted) {
         setState(() {
           _error = 'Could not load Poshtetgarm. Check the app address and try again.';

@@ -37,6 +37,35 @@ describe('monitor events', () => {
     ]);
   });
 
+  it('parses Dart stacks from the native shell', () => {
+    const frames = parseStack(
+      [
+        '#0      _State._initialize (package:poshtetgarm_hybrid/main.dart:120:7)',
+        '#1      <asynchronous suspension>',
+        '#2      main (package:poshtetgarm_hybrid/main.dart:17)',
+      ].join('\n'),
+    );
+    expect(frames).toEqual([
+      {
+        function: 'main',
+        filename: 'package:poshtetgarm_hybrid/main.dart',
+        lineno: 17,
+      },
+      {
+        function: '_State._initialize',
+        filename: 'package:poshtetgarm_hybrid/main.dart',
+        lineno: 120,
+        colno: 7,
+      },
+    ]);
+    const event = clientErrorEvent(
+      { ...base, app: 'native', kind: 'error', path: '/app/' },
+      'production',
+    );
+    expect(event.platform).toBe('dart');
+    expect(event.tags.app).toBe('native');
+  });
+
   it('drops query strings and ids from the path', () => {
     expect(normalisePath('/api/tasks/123?token=secret')).toBe('/api/tasks/:n');
     expect(normalisePath('/x/3f2c1a9e-1b2c-4d5e-8f90-a1b2c3d4e5f6/y')).toBe(

@@ -1,0 +1,15 @@
+name = "poshtetgarm-uptime-monitor"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+workers_dev = false
+
+# Every 5 minutes, from Cloudflare's network (outside Iran).
+[triggers]
+crons = ["*/5 * * * *"]
+
+[[kv_namespaces]]
+binding = "STATE"
+id = "748fdb0539db4e6cb11a4b962ac35e3b"
+
+[vars]
+SITE = "https://poshtetgarm.ir"

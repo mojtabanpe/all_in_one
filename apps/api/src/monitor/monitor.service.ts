@@ -9,7 +9,7 @@ import type { ClientError } from '@all-in-one/shared/schemas';
 export interface MonitorEvent {
   event_id: string;
   timestamp: number;
-  platform: 'node' | 'javascript';
+  platform: 'node' | 'javascript' | 'dart';
   level: 'error' | 'warning';
   environment: string;
   release?: string;
@@ -35,18 +35,20 @@ interface StackFrame {
 }
 
 const FRAME = /^\s*at (?:(.+?) \()?(.+?):(\d+):(\d+)\)?\s*$/;
+/** Dart: "#0      Foo.bar (package:app/main.dart:12:5)" (column optional). */
+const DART_FRAME = /^#\d+\s+(.+?) \((.+?):(\d+)(?::(\d+))?\)\s*$/;
 
-/** Parses V8-style "at fn (file:line:col)" lines; other engines fall back to no frames. */
+/** Parses V8-style "at fn (file:line:col)" and Dart "#n fn (file:line:col)" lines; others give no frames. */
 export function parseStack(stack: string | undefined): StackFrame[] {
   const frames: StackFrame[] = [];
   for (const line of (stack ?? '').split('\n')) {
-    const m = FRAME.exec(line);
+    const m = FRAME.exec(line) ?? DART_FRAME.exec(line);
     if (!m) continue;
     frames.push({
       function: m[1],
       filename: m[2],
       lineno: Number(m[3]),
-      colno: Number(m[4]),
+      ...(m[4] ? { colno: Number(m[4]) } : {}),
     });
   }
   // Sentry wants the oldest frame first.
@@ -75,7 +77,7 @@ export function clientErrorEvent(
   return {
     event_id: randomUUID().replaceAll('-', ''),
     timestamp: Date.now() / 1000,
-    platform: 'javascript',
+    platform: input.app === 'native' ? 'dart' : 'javascript',
     level: 'error',
     environment,
     release: input.version,

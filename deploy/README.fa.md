@@ -87,6 +87,7 @@ docker compose -f deploy/compose.yml exec postgres psql -U aio all_in_one -c "UP
 2. از لپ‌تاپ: `ssh -L 4340:127.0.0.1:4340 flashcard` و باز کردن `http://localhost:4340`. حساب و سازمان بسازید، سپس یک پروژه (مثلاً `poshtetgarm`) و `DSN` آن را بردارید.
 3. `GLITCHTIP_REGISTRATION` را از `compose.env` پاک کنید. در `/opt/all-in-one/shared/.env` این را بگذارید و انتشار را دوباره اجرا کنید: `GLITCHTIP_DSN=http://<کلید>@127.0.0.1:4340/<شناسه‌ی پروژه>` (نشانی همان `127.0.0.1:4340` بماند، نه آدرس تونل).
 4. بدون `GLITCHTIP_DSN` خطاها فقط در لاگ api می‌مانند و چیزی ارسال نمی‌شود.
+5. **پایشگر بیرونی دسترس‌پذیری** ([`deploy/uptime-monitor/`](uptime-monitor/README.fa.md)، دستور ۱۹۲): Worker کلودفلر `poshtetgarm-uptime-monitor` هر ۵ دقیقه `/api/health`، `/` و `/app/` را از بیرون ایران بررسی می‌کند و پس از ۲ دور قطعی پیاپی به ربات توسعه‌دهنده خبر می‌دهد. پوستهٔ بومی اندروید/مک نیز خطاهای Dart و بارگذاری صفحه را با `app: 'native'` به `POST /api/monitor/errors` می‌فرستد.
 
 ## ۵. بکاپ
 
