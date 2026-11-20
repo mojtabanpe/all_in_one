@@ -192,7 +192,7 @@ campaign content in `docs/roadmaps/*pilot*`.
 
 | X10 | Distinguish Bazaar, Myket and direct/global APK usage alongside PWA and browser, without an APK update | DONE (released in `96a6425` on 2026-11-16; real-device VERIFY) |
 | X11 | Publish three public guides and save the same five sample flashcards after sign-in | DONE (release `3ba1d05`; live guides and sitemap verified; real-account handoff and indexing remain VERIFY) |
-| C9 | Public exercise pages: one prerendered page per catalog exercise with steps, mistakes, alternatives and its video (directive 182) | DONE local (not released); indexing VERIFY |
+| C9 | Public exercise pages: one prerendered page per catalog exercise with steps, mistakes, alternatives and its video (directive 182) | DONE, released in `2aac98f` (2026-11-20); indexing VERIFY |
 
 ### Owner lane: decisions, accounts, devices and networks
 
@@ -293,7 +293,7 @@ Track landing-to-signup, signup-to-first-action, D1/D7/D30 retention, PWA instal
   - `VERIFY` Deployed routing/assets, Search Console discovery/indexing and actual traffic/conversion. Local implementation and prerender verification do not establish search ranking or production availability.
 
 - [x] `DONE` X11 (2026-11-19): published `/weekly-plan-for-work`, `/everyday-english-flashcards` and `/recurring-task-or-habit`. The five sample cards are public and can be saved to a personal deck after sign-in.
-- [ ] `DONE` local, not released: C9 (Claude, 2026-11-20, owner «بله، بساز»). `/exercises` (grouped by muscle) and
+- [x] `DONE`, released in `2aac98f` on 2026-11-20 (Deploy 44727099225 after restoring the server `.env` owner; api healthy, `/exercises` 200, `X-Aio-Version` 0.1.336): C9 (Claude, 2026-11-20, owner «بله، بساز»). `/exercises` (grouped by muscle) and
       `/exercises/<slug>` for all 62 catalog exercises, prerendered (76 routes in `public:build`), each with a searchable
       title («آموزش <نام> با ویدیو»), description, canonical, HowTo + BreadcrumbList JSON-LD, Persian steps, common
       mistakes, links to alternative exercises and one «شروع رایگان» handoff to health. The catalog moved from the health
