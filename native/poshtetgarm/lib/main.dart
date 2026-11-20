@@ -271,7 +271,11 @@ class _PoshtetgarmWindowState extends State<PoshtetgarmWindow>
       if (!didPop) unawaited(_controller?.goBack());
     },
     child: Scaffold(
-      body: SafeArea(
+      // The keyboard inset is applied once it settles (KeyboardInset), not on
+      // every frame of the keyboard animation: resizing the WebView each frame
+      // made the page reflow and jump while the keyboard opened.
+      resizeToAvoidBottomInset: false,
+      body: KeyboardInset(
         child: _error != null
             ? Center(
                 child: Padding(
@@ -310,6 +314,59 @@ class _PoshtetgarmWindowState extends State<PoshtetgarmWindow>
       ),
     ),
   );
+}
+
+/// Keeps [child] inside the safe area and above the on-screen keyboard. The
+/// keyboard height is applied in one step after its animation settles, so the
+/// WebView is resized once (and then scrolls the focused field into view)
+/// instead of on every animation frame. Closing gives the space back at once.
+class KeyboardInset extends StatefulWidget {
+  const KeyboardInset({super.key, required this.child});
+  final Widget child;
+  static const settle = Duration(milliseconds: 120);
+  @override
+  State<KeyboardInset> createState() => _KeyboardInsetState();
+}
+
+class _KeyboardInsetState extends State<KeyboardInset> {
+  double _applied = 0;
+  double _target = 0;
+  Timer? _timer;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final inset = MediaQuery.viewInsetsOf(context).bottom;
+    if (inset == _target) return;
+    _target = inset;
+    _timer?.cancel();
+    if (inset < _applied) {
+      // Closing: give the space back in one step (build runs after this), so
+      // the closing animation does not resize the WebView frame by frame.
+      _applied = 0;
+    }
+    if (inset == 0) return;
+    _timer = Timer(KeyboardInset.settle, () {
+      if (mounted) setState(() => _applied = _target);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final safeBottom = MediaQuery.viewPaddingOf(context).bottom;
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: _applied > safeBottom ? _applied : safeBottom,
+      ),
+      child: SafeArea(bottom: false, child: widget.child),
+    );
+  }
 }
 
 class AddressDialog extends StatefulWidget {

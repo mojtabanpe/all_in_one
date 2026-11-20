@@ -130,7 +130,7 @@ export class AssistantStore {
       <button
         aioBtn
         size="icon"
-        class="fixed end-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 size-14 rounded-full shadow-lg transition-[translate,opacity] duration-200 ease-out motion-reduce:transition-none md:end-6 md:bottom-6"
+        class="aio-floating-assistant fixed end-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 size-14 rounded-full shadow-lg transition-[translate,opacity] duration-200 ease-out motion-reduce:transition-none md:end-6 md:bottom-6"
         [class.translate-y-[calc(100%+6rem)]]="tucked()"
         [class.opacity-0]="tucked()"
         [class.pointer-events-none]="tucked()"

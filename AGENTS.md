@@ -231,6 +231,9 @@ origin master` and read the index and the roadmap; after work, update its status
 
 - **AppletHeader** (2026-11-02): shared title, subtitle and route navigation for all three applets, composed from Spartan button wrappers and icons in `libs/shared/packages/ui`.
 
+- **PullRefresh** (2026-11-20): `aio-pull-refresh` in `libs/shared/packages/ui`, pull-to-refresh for the customer
+  pages (directive 188), built from the `aio-icon` and `aio-spinner` wrappers in a glass circle; spartan has none.
+
 - **BottomNav** (2026-10-29): floating bottom navigation for phone sizes, in `libs/shared/packages`,
   assembled from spartan pieces (`hlmBtn`, ng-icons) inside a glass container.
 
@@ -982,3 +985,13 @@ flashcard`; `deploy/release.sh` starts it only when `GLITCHTIP_SECRET_KEY` is in
      the @poshtetgarm Telegram channel. That file was silent until the end card; the owner deleted both posts and, after
      the rebuild with sound, said «بله، منتشر کن», which covers republishing the version with sound in both places; it is not standing authorization for future posts.
      Evidence lives in the growth roadmap.
+
+188. **Pull-to-refresh on the customer pages (2026-11-20).** An Android user logged a meal with the assistant and the
+     calories still showed zero until they switched tabs, and asked for pull-to-refresh («پول تو رفرش بزار»), and the
+     owner approved the custom component («Yes, build it»). In the customer layout `aio-pull-refresh` wraps the routed
+     page: pulling down at the top of home, planner, health, English, expenses or the account page recreates the
+     page's router outlet (`pageKey`), so its data loads again while the shell, header and assistant stay; the app is
+     never reloaded. It never starts while the page or an inner list is scrolled, a sheet or dialog is open, the
+     keyboard is up (`AioKeyboard`, `html[data-keyboard=open]`) or a flashcard review owns the screen, and a sideways
+     swipe cancels it. While it is mounted Chrome's own whole-page pull-reload is off (`overscroll-behavior-y:
+contain`). Works on the web, the PWA and the current Android shell without a new build.
