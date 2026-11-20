@@ -4,6 +4,8 @@ import type { ResolveFn } from '@angular/router';
 
 const STRUCTURED_DATA_ID = 'aio-structured-data';
 const ORIGIN = 'https://poshtetgarm.ir';
+/** The Persian name people search for; the visible brand stays `Poshtetgarm` (directive 181). */
+const PERSIAN_NAMES = ['پشتت گرم', 'پشتتگرم'];
 
 /** The site and its publisher, for the home page. */
 export const SITE_STRUCTURED_DATA = {
@@ -12,6 +14,7 @@ export const SITE_STRUCTURED_DATA = {
       '@type': 'Organization',
       '@id': `${ORIGIN}/#organization`,
       name: 'Poshtetgarm',
+      alternateName: PERSIAN_NAMES,
       url: `${ORIGIN}/`,
       logo: `${ORIGIN}/brand-logo.png`,
     },
@@ -19,6 +22,7 @@ export const SITE_STRUCTURED_DATA = {
       '@type': 'WebSite',
       '@id': `${ORIGIN}/#website`,
       name: 'Poshtetgarm',
+      alternateName: PERSIAN_NAMES,
       url: `${ORIGIN}/`,
       inLanguage: 'fa',
       publisher: { '@id': `${ORIGIN}/#organization` },

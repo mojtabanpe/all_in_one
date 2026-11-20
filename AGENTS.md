@@ -321,7 +321,7 @@ origin master` and read the index and the roadmap; after work, update its status
 
 62. **Shared applet header (2026-11-02):** Use one reusable component in `libs/shared/packages` for the title, subtitle and top route navigation of planner, English and health. Supply text, links and icons through inputs; keep typography, icon placement and spacing consistent, while preserving each applet’s accent and English-only LTR behavior. The owner explicitly approved this composed component.
 
-63. **Brand spelling and logo (2026-11-02):** Use exactly `Poshtetgarm` everywhere the app name appears, including headers, PWA/native notifications, email, install metadata and MCP pages. Use the official hand-and-sun logo in both the top header and sidebar. This replaces all earlier Persian brand spellings.
+63. **Brand spelling and logo (2026-11-02):** Use exactly `Poshtetgarm` everywhere the app name appears, including headers, PWA/native notifications, email, install metadata and MCP pages. Use the official hand-and-sun logo in both the top header and sidebar. This replaces all earlier Persian brand spellings. **The Persian name «پشتت گرم» is added for search: see 181.**
 
 64. **Assistant multiline composer (2026-11-02):** The assistant composer must wrap long text inside its bounds and support multiple lines. Enter inserts a newline; sending uses the explicit send button. Keep the composer and chat messages within the viewport on phones.
 
@@ -928,3 +928,10 @@ Rules:
      schedule fetch is recorded in `local_reminder_devices` (build and times only, no device identifier); a device seen
      within 14 days counts as a reminder device, so the «turn on reminders» sheet and the informational SMS of 150
      skip it. The admin dashboard shows these devices by build.
+
+181. **The Persian name for search (2026-11-20).** The owner searched Google for «پشتت گرم» and the site did not show;
+     Search Console (through Windsor, last 28 days) had only 2 impressions for the whole site, and the words «پشتت گرم»
+     appeared nowhere on it. The owner approved adding them («آره، بند ۱ رو انجام بده»). The visible brand stays
+     `Poshtetgarm` (63); the Persian name «پشتت گرم» is added only where search engines and people searching need it: the
+     home and about page title and description («Poshtetgarm (پشتت گرم)»), `alternateName` (`پشتت گرم`, `پشتتگرم`) in
+     the site's structured data (`apps/public/src/app/seo.ts`), and one line under the brand in the public footer.

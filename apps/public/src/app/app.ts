@@ -50,7 +50,12 @@ import {
               height="40"
               class="rounded-xl"
             />
-            <bdi dir="ltr" class="text-base font-semibold">Poshtetgarm</bdi>
+            <div class="flex flex-col">
+              <bdi dir="ltr" class="text-base font-semibold">Poshtetgarm</bdi>
+              <span lang="fa" dir="rtl" class="text-sm text-muted-foreground"
+                >پشتت گرم</span
+              >
+            </div>
           </div>
           <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
             <a
