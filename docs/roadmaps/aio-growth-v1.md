@@ -722,3 +722,10 @@ Claim checked against the code: the assistant has `batch_create_tasks` / `create
   (grey kitchen, phone buzzes, forehead slap, a note falls). Same face as episode 1. Imperfection: the sticky notes in
   shot 1 carry illegible Persian-like scribbles (acceptable under 126 at phone size). `TODO` owner's screen recording,
   then edit with the shared end card.
+- 2026-11-20: owner's screen recording (typed sentence with a 10-minute reminder; reply rendered cleanly: meeting
+  Saturday 30 Aban 10:00 with the reminder, loan Thursday 5 Azar, English nightly 22:00) edited into a draft:
+  `marketing/promo-videos/out/ba-ye-jomle-2/poshtetgarm-ba-ye-jomle-2-reel.mp4` (local, 23.2 s, 1080×1920). Shot 1
+  3.5–6.5 s, shot 2 2.5–6.5 s in greyscale, typing at 10×, the wait at 2×, the reply held 6 s, shared end card with its
+  sound. Captions «کلی کار تو سرم بود…», «قبلاً: یادداشت، یادآور، یادم رفت», «حالا فقط یه جمله نوشتم», «همه‌ش با تاریخ
+  و یادآور ثبت شد.». The recording has no task-list view, so the reply carries the dates. `TODO` owner review, then
+  publication only on the owner's word.
