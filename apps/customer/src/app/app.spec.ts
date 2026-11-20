@@ -84,6 +84,24 @@ describe('App', () => {
     paywall.open.set(false);
     fail('/api/ai/status', 402);
     expect(track).toHaveBeenCalledTimes(2);
+    expect(paywall.reason()).toBe('plan');
+
+    // A used-up daily limit opens it only when a plan would raise it (trial, earned weeks).
+    paywall.open.set(false);
+    const quota = (upgrade: boolean) => {
+      client.post('/api/assistant', {}).subscribe({ error: () => undefined });
+      http
+        .expectOne('/api/assistant')
+        .flush(
+          { code: 'AI_QUOTA_REACHED', kind: 'chat', upgrade },
+          { status: 429, statusText: 'Too Many Requests' },
+        );
+    };
+    quota(false);
+    expect(paywall.open()).toBe(false);
+    quota(true);
+    expect(paywall.open()).toBe(true);
+    expect(paywall.reason()).toBe('quota');
     http.verify();
   });
 

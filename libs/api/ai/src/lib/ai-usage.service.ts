@@ -11,6 +11,7 @@ import {
   type AiUsageOverview,
   type AiUsageView,
   type BillingAccessState,
+  chatQuotaUnits,
 } from '@all-in-one/shared/schemas';
 import { AiSettingsService } from './ai-settings.service';
 
@@ -69,15 +70,20 @@ export class AiUsageService {
           kind,
         },
       },
-      select: { units: true },
+      select: { units: true, cachedUnits: true },
     });
-    const used = row?.units ?? 0;
+    const used =
+      kind === 'chat'
+        ? chatQuotaUnits(row?.units ?? 0, row?.cachedUnits ?? 0)
+        : (row?.units ?? 0);
     if (used >= limit || (extra > 0 && used + extra > limit))
       throw new HttpException(
         {
           code: 'AI_QUOTA_REACHED',
           kind,
           message: AI_QUOTA_MESSAGE[kind],
+          // Trial and earned weeks can buy a plan with higher limits: the app opens the plan sheet.
+          upgrade: tier === 'trial' || tier === 'earned',
         },
         429,
       );

@@ -19,7 +19,11 @@ import type {
   AssistantReply,
   AssistantRequest,
 } from '@all-in-one/shared/schemas';
-import { ToolCollector } from '../tools/tool-collector';
+import {
+  TOOL_GROUPS,
+  ToolCollector,
+  type ToolGroup,
+} from '../tools/tool-collector';
 import { ToolsService } from '../tools/tools.service';
 
 const MAX_STEPS = 12;
@@ -39,6 +43,25 @@ const FOCUS: Record<AssistantContext, string> = {
   expenses:
     'The user is in expenses management (categories, expense logging, budgets, financial reports).',
 };
+
+/**
+ * Words that bring in a section's tools beside the current screen's. Sending every tool with every step cost
+ * ~45k tokens a call (2026-11-20), so a trial's day went in one long message. A miss is cheap: the model can
+ * call LOAD_TOOLS for the other sections.
+ */
+const SECTION_WORDS: Record<ToolGroup, RegExp> = {
+  planner:
+    /تسک|کار|برنامه|یادآور|عادت|لیست|فهرست|تقویم|تمرکز|پومودورو|روزشمار|سررسید|عقب|task|todo|to-do|remind|habit|list|calendar|focus|pomodoro|countdown|overdue|schedule/i,
+  health:
+    /غذا|خوردم|خوردن|صبحانه|صبحونه|ناهار|نهار|شام|وعده|کالری|وزن|ورزش|تمرین|باشگاه|رژیم|ناشتا|فستینگ|پروتئین|دویدن|پیاده|meal|\bate\b|eat|breakfast|lunch|dinner|snack|calorie|weight|workout|exercise|gym|diet|fast|protein|run|walk/i,
+  english:
+    /زبان|انگلیسی|کارت|لغت|واژه|دسته|فلش|متن|خواندن|شادوینگ|مرور|english|card|deck|word|vocab|reading|passage|shadow|review|practice/i,
+  expenses:
+    /خرج|هزینه|تومن|تومان|پول|خرید|بودجه|مخارج|ریال|قسط|اجاره|expense|spent|spend|budget|toman|cost|paid|bought|purchase/i,
+};
+
+/** The assistant-only tool that adds other sections' tools (never on the ChatGPT connection). */
+const LOAD_TOOLS = 'load_tools';
 
 const RELATIVE: Record<number, string> = {
   [-2]: 'پریروز',
@@ -161,6 +184,54 @@ export class AssistantService {
     });
   }
 
+  /** The current screen's section, the sections the message mentions and those the last reply used. */
+  private sections(
+    request: AssistantRequest,
+    collector: ToolCollector,
+  ): Set<ToolGroup> {
+    const groups = new Set<ToolGroup>();
+    const context = request.context ?? 'home';
+    if (context !== 'home') groups.add(context);
+    const last = request.messages.at(-1);
+    if (last?.role === 'user')
+      for (const group of TOOL_GROUPS)
+        if (SECTION_WORDS[group].test(last.content)) groups.add(group);
+    const previous = request.messages
+      .slice(0, -1)
+      .findLast((m) => m.role === 'assistant');
+    for (const line of previous?.log?.split('\n') ?? []) {
+      const group = collector.group(line.split(' ', 1)[0]);
+      if (group) groups.add(group);
+    }
+    return groups.size ? groups : new Set(TOOL_GROUPS);
+  }
+
+  /** Current definitions plus LOAD_TOOLS while some sections are left out. */
+  private definitions(collector: ToolCollector, groups: Set<ToolGroup>) {
+    const missing = TOOL_GROUPS.filter((g) => !groups.has(g));
+    const definitions = collector.definitions(groups);
+    if (missing.length)
+      definitions.push({
+        type: 'function',
+        function: {
+          name: LOAD_TOOLS,
+          description: `Only these sections' tools are loaded now: ${[...groups].join(', ')}. Call this first when the request needs another section (${missing.join(', ')}); its tools are available from the next step.`,
+          parameters: {
+            type: 'object',
+            properties: {
+              sections: {
+                type: 'array',
+                items: { type: 'string', enum: missing },
+                minItems: 1,
+              },
+            },
+            required: ['sections'],
+          },
+        },
+      });
+    return definitions;
+  }
+
   async chat(
     userId: string,
     request: AssistantRequest,
@@ -173,7 +244,8 @@ export class AssistantService {
       );
     const collector = new ToolCollector(userId);
     this.tools.register(collector);
-    const definitions = collector.definitions();
+    const groups = this.sections(request, collector);
+    let definitions = this.definitions(collector, groups);
     const messages: ChatMessage[] = [
       {
         role: 'system',
@@ -235,6 +307,19 @@ export class AssistantService {
       for (const call of reply.toolCalls) {
         const name = call.function.name;
         const args = call.function.arguments ?? '';
+        if (name === LOAD_TOOLS) {
+          const added = loadArgs(args).filter((g) => !groups.has(g));
+          for (const g of added) groups.add(g);
+          definitions = this.definitions(collector, groups);
+          messages.push({
+            role: 'tool',
+            tool_call_id: call.id,
+            content: added.length
+              ? `Loaded: ${added.join(', ')}.`
+              : 'Nothing new to load.',
+          });
+          continue;
+        }
         const result = await collector.call(name, args);
         const kind = collector.kind(name) ?? 'read';
         actions.push({ tool: name, ok: result.ok, kind });
@@ -299,4 +384,16 @@ export function brief(text: string): string {
   });
   const more = items.length > 15 ? ` (+${items.length - 15} more)` : '';
   return `${shown.filter(Boolean).join('; ') || text.slice(0, 200)}${more}`;
+}
+
+/** The sections a LOAD_TOOLS call asks for (unknown names are ignored). */
+function loadArgs(raw: string): ToolGroup[] {
+  try {
+    const parsed = JSON.parse(raw || '{}') as { sections?: unknown };
+    return Array.isArray(parsed.sections)
+      ? TOOL_GROUPS.filter((g) => (parsed.sections as unknown[]).includes(g))
+      : [];
+  } catch {
+    return [];
+  }
 }

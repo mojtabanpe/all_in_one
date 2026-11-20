@@ -7,6 +7,7 @@ import {
 import type { PrismaService } from '@all-in-one/api/db';
 import type { EnglishAiService } from '@all-in-one/applets/english-learning/api';
 import type { AssistantRequest } from '@all-in-one/shared/schemas';
+import type { ToolSink } from '../tools/tool-kit';
 import type { ToolsService } from '../tools/tools.service';
 import { AssistantService } from './assistant.service';
 
@@ -101,4 +102,91 @@ describe('assistant scope refusal recovery', () => {
       expect(result).toEqual({ reply: refusal, actions: [], changed: false });
     },
   );
+});
+
+describe('assistant tool sections', () => {
+  function withTools() {
+    const ctx = setup();
+    ctx.register.mockImplementation((sink: ToolSink) => {
+      for (const [name, scope] of [
+        ['create_task', 'planner:write'],
+        ['log_meal', 'health:write'],
+        ['create_card', 'cards:write'],
+        ['create_expense', 'expenses:write'],
+      ] as const)
+        sink.tool(
+          name,
+          { description: name, scope, kind: 'create', input: {} },
+          async () => ({ ok: true }),
+        );
+    });
+    return ctx;
+  }
+  const sent = (chat: ReturnType<typeof vi.fn>, call = 0) =>
+    (
+      chat.mock.calls[call][2] as { tools: { function: { name: string } }[] }
+    ).tools.map((t) => t.function.name);
+
+  it('sends the screen section and the sections the message mentions', async () => {
+    const { service, chat } = withTools();
+    await service.chat('owner', {
+      context: 'planner',
+      messages: [{ role: 'user', content: 'ناهار کباب خوردم' }],
+    });
+    expect(sent(chat)).toEqual(['create_task', 'log_meal', 'load_tools']);
+  });
+
+  it('sends every section on home when nothing matches', async () => {
+    const { service, chat } = withTools();
+    await service.chat('owner', {
+      messages: [{ role: 'user', content: 'سلام' }],
+    });
+    expect(sent(chat)).toEqual([
+      'create_task',
+      'log_meal',
+      'create_card',
+      'create_expense',
+    ]);
+  });
+
+  it('keeps the sections the previous reply used', async () => {
+    const { service, chat } = withTools();
+    await service.chat('owner', {
+      context: 'planner',
+      messages: [
+        {
+          role: 'assistant',
+          content: 'ثبت شد',
+          log: 'create_expense {"amount":5} → ok',
+        },
+        { role: 'user', content: 'همونو پاک کن' },
+      ],
+    });
+    expect(sent(chat)).toEqual(['create_task', 'create_expense', 'load_tools']);
+  });
+
+  it('loads another section when the model asks for it', async () => {
+    const { service, chat } = withTools();
+    chat
+      .mockResolvedValueOnce({
+        content: null,
+        toolCalls: [
+          {
+            id: 'c1',
+            type: 'function',
+            function: {
+              name: 'load_tools',
+              arguments: '{"sections":["english"]}',
+            },
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ content: 'Done.', toolCalls: [] });
+    const result = await service.chat('owner', {
+      context: 'planner',
+      messages: [{ role: 'user', content: 'یه چیزی اضافه کن' }],
+    });
+    expect(sent(chat, 1)).toEqual(['create_task', 'create_card', 'load_tools']);
+    expect(result.actions).toEqual([]);
+  });
 });

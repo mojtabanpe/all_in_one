@@ -45,7 +45,7 @@ import {
 } from '@ng-icons/lucide';
 import { firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../api/api-base-url';
-import { apiErrorMessage } from '../auth/auth.guards';
+import { aiUpgradeReason, apiErrorMessage } from '../auth/auth.guards';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -471,7 +471,7 @@ export class Assistant implements OnDestroy {
         },
       ]);
     } catch (error) {
-      if (error instanceof HttpErrorResponse && error.status === 402) {
+      if (aiUpgradeReason(error)) {
         conversation.update((list) => list.slice(0, -1));
         this.draft.set(content);
         this.open.set(false);
@@ -557,7 +557,7 @@ export class Assistant implements OnDestroy {
       await this.send(text);
     } catch (error) {
       this.busy.set(false);
-      if (error instanceof HttpErrorResponse && error.status === 402) {
+      if (aiUpgradeReason(error)) {
         this.open.set(false);
         return;
       }

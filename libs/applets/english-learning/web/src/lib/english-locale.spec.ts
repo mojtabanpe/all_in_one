@@ -23,5 +23,13 @@ describe('English applet locale', () => {
     expect(
       englishErrorMessage(new HttpErrorResponse({ status: 429 })),
     ).toContain('Too many requests');
+    expect(
+      englishErrorMessage(
+        new HttpErrorResponse({
+          status: 429,
+          error: { code: 'AI_QUOTA_REACHED', kind: 'chat', message: 'سهمیه' },
+        }),
+      ),
+    ).toBe("Today's AI chat limit is used up. It resets tomorrow.");
   });
 });

@@ -602,7 +602,7 @@ origin master` and read the index and the roadmap; after work, update its status
      Plans in Toman: monthly 249,000; three months 649,000; yearly 1,990,000; no automatic renewal; planner, flashcards
      and health stay free forever, AI is the paid part (with trial and earned weeks, directive 108). Plans are entered
      in `/admin/billing` (directive: plans are admin-managed, nothing seeded). Daily AI limits (`DEFAULT_AI_QUOTAS`):
-     trial and earned 200k chat tokens, 5,000 speech characters, 30 recordings; paid 600k, 15,000, 60 (speech limits superseded by 157 and 158). Speech audio is
+     trial and earned 200k chat tokens, 5,000 speech characters, 30 recordings; paid 600k, 15,000, 60 (speech limits superseded by 157 and 158, chat limits by 187). Speech audio is
      cached for all accounts (`speechCacheKey` without the user), so a text is paid for once; access is still checked
      before the cache. Watch the cost per paid user in `/admin/ai` and revisit prices or limits if it passes about
      100,000 Toman a month.
@@ -975,3 +975,15 @@ flashcard`; `deploy/release.sh` starts it only when `GLITCHTIP_SECRET_KEY` is in
 185. **GlitchTip dashboard on `https://monitor.poshtetgarm.ir` (2026-11-20).** The owner asked for a subdomain for the GlitchTip dashboard («ساب دامین میخوام») instead of SSH-tunnel-only access (updating 184's access note). `monitor.poshtetgarm.ir` points to the server (DNS-only A record in Cloudflare, Let's Encrypt TLS, host nginx with `X-Robots-Tag: noindex, nofollow` proxying to `127.0.0.1:4340`). `deploy/compose.yml` sets `GLITCHTIP_DOMAIN: https://monitor.poshtetgarm.ir` and `ALLOWED_HOSTS: monitor.poshtetgarm.ir,localhost,127.0.0.1`, while public registration/org creation stay disabled and the API still sends events over loopback `127.0.0.1:4340`.
 
 186. **Error alerts go to the dev Telegram bot only (2026-11-20).** The owner asked that error alerts go to `poshtetgarm_develop_bot` rather than the customer bot `poshtetgarm_bot` (updating 184's Telegram alert bot). `MonitorService` uses `MONITOR_TELEGRAM_BOT_TOKEN` (never falling back to `TELEGRAM_BOT_TOKEN`), targeting `MONITOR_TELEGRAM_CHAT_ID` (comma-separated, optional) or `ADMIN` users' `telegramLink.chatId`.
+
+187. **Assistant tokens: section tools, cheap cache hits, higher chat limits (2026-11-20).** A friend of the owner used
+     up a trial's whole day with one assistant message: each model call was ~45k tokens because all ~145 tools went
+     with every step. The owner chose both fixes («جفتش») and «سقف رو هم بالاتر ببر». The assistant sends only the tools
+     of the current screen's section, of the sections the message mentions (`SECTION_WORDS`) and of those the previous
+     reply used (all of them on home when nothing matches); the assistant-only `load_tools` adds other sections when
+     the model needs them. Prompt-cache hits count `AI_QUOTA_CACHED_WEIGHT` (0.1) toward the chat quota
+     (`chatQuotaUnits`; cost reports still use real prices). Default daily chat limits: trial and earned 400k, paid
+     1M. Limits saved in `/admin/ai` still override them. When a trial or earned-week account reaches the daily limit
+     (owner: «اگه کاربر آزمایشی سقف رو زد میتونیم بهش باتم شیت خرید بدیم»), the 429 `AI_QUOTA_REACHED` carries
+     `upgrade: true` and the customer app opens the shared plan sheet (`AiPaywall`, reason `quota`) with a line that a
+     plan has a higher limit; paid accounts only see the message.

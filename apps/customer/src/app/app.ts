@@ -107,27 +107,36 @@ export async function takePendingPushClick(
       [title]="'دسترسی به هوش مصنوعی' | aioTranslate"
     >
       <ng-template aioDialogBody>
-        @if (trialEnded(); as ended) {
-          <p class="mb-2 font-medium">
+        @if (paywall.reason() === 'quota') {
+          <p>
             {{
-              'دورهٔ آزمایشی هفت‌روزه‌ات در {0} تمام شد.'
-                | aioTranslate: [locale.date(ended, { dateStyle: 'long' })]
-            }}
-          </p>
-        }
-        <p>
-          {{
-            'با فعال کردن یک پلن، می‌توانی از امکانات هوش مصنوعی Poshtetgarm استفاده کنی.'
-              | aioTranslate
-          }}
-        </p>
-        @if (canEarn()) {
-          <p class="text-muted-foreground mt-2">
-            {{
-              'با عضویت در تلگرام یا اینستاگرام Poshtetgarm، برای هر کدام یک هفته هوش مصنوعی هدیه بگیر.'
+              'سهمیهٔ امروزِ هوش مصنوعی‌ات تمام شد. با یک پلن، سقف روزانه بیشتر است و همین حالا ادامه می‌دهی؛ وگرنه فردا دوباره باز می‌شود.'
                 | aioTranslate
             }}
           </p>
+        } @else {
+          @if (trialEnded(); as ended) {
+            <p class="mb-2 font-medium">
+              {{
+                'دورهٔ آزمایشی هفت‌روزه‌ات در {0} تمام شد.'
+                  | aioTranslate: [locale.date(ended, { dateStyle: 'long' })]
+              }}
+            </p>
+          }
+          <p>
+            {{
+              'با فعال کردن یک پلن، می‌توانی از امکانات هوش مصنوعی Poshtetgarm استفاده کنی.'
+                | aioTranslate
+            }}
+          </p>
+          @if (canEarn()) {
+            <p class="text-muted-foreground mt-2">
+              {{
+                'با عضویت در تلگرام یا اینستاگرام Poshtetgarm، برای هر کدام یک هفته هوش مصنوعی هدیه بگیر.'
+                  | aioTranslate
+              }}
+            </p>
+          }
         }
       </ng-template>
       <ng-template aioDialogActions>

@@ -1,4 +1,5 @@
 import type { ToolDefinition } from '@all-in-one/api/ai';
+import type { McpScope } from '@all-in-one/shared/schemas';
 import * as z from 'zod';
 import {
   type ToolArgs,
@@ -8,9 +9,27 @@ import {
   toolError,
 } from './tool-kit';
 
+/** App sections; the assistant sends only the tools of the sections a message needs. */
+export const TOOL_GROUPS = [
+  'planner',
+  'english',
+  'health',
+  'expenses',
+] as const;
+export type ToolGroup = (typeof TOOL_GROUPS)[number];
+
+export function toolGroup(scope: McpScope): ToolGroup {
+  const area = scope.split(':')[0];
+  if (area === 'cards' || area === 'readings') return 'english';
+  if (area === 'health' || area === 'exercise') return 'health';
+  if (area === 'expenses') return 'expenses';
+  return 'planner';
+}
+
 interface Entry {
   name: string;
   kind: ToolKind;
+  group: ToolGroup;
   schema: z.ZodType;
   description: string;
   run: (args: unknown) => Promise<unknown>;
@@ -35,6 +54,7 @@ export class ToolCollector implements ToolSink {
     this.entries.set(name, {
       name,
       kind: spec.kind,
+      group: toolGroup(spec.scope),
       schema,
       description: spec.description,
       run: run as (args: unknown) => Promise<unknown>,
@@ -49,17 +69,24 @@ export class ToolCollector implements ToolSink {
     return this.entries.get(name)?.kind;
   }
 
-  definitions(): ToolDefinition[] {
-    return [...this.entries.values()].map((e) => {
-      const { $schema: _, ...parameters } = z.toJSONSchema(e.schema, {
-        io: 'input',
-        unrepresentable: 'any',
-      }) as Record<string, unknown>;
-      return {
-        type: 'function',
-        function: { name: e.name, description: e.description, parameters },
-      };
-    });
+  group(name: string): ToolGroup | undefined {
+    return this.entries.get(name)?.group;
+  }
+
+  /** OpenAI function definitions, of the given sections only when `groups` is passed. */
+  definitions(groups?: ReadonlySet<ToolGroup>): ToolDefinition[] {
+    return [...this.entries.values()]
+      .filter((e) => !groups || groups.has(e.group))
+      .map((e) => {
+        const { $schema: _, ...parameters } = z.toJSONSchema(e.schema, {
+          io: 'input',
+          unrepresentable: 'any',
+        }) as Record<string, unknown>;
+        return {
+          type: 'function',
+          function: { name: e.name, description: e.description, parameters },
+        };
+      });
   }
 
   /** Runs a tool call from the model; the result (or error) is JSON text for the model. */
