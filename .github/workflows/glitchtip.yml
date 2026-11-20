@@ -41,8 +41,10 @@ jobs:
     needs: mirror
     runs-on: [self-hosted, aio]
     permissions:
+      contents: read
       packages: read
     steps:
+      - uses: actions/checkout@v5
       - env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IMAGE: ${{ needs.mirror.outputs.image }}
@@ -57,6 +59,9 @@ jobs:
           docker tag "$ref" "$IMAGE"
           docker image rm "$ref" >/dev/null
           SHARED=/opt/all-in-one/shared
+          # The service definition comes from this commit, not from whichever release copied it last.
+          install -d /opt/all-in-one/src/deploy
+          cp deploy/compose.yml /opt/all-in-one/src/deploy/compose.yml
           compose() { docker compose -f /opt/all-in-one/src/deploy/compose.yml --env-file "$SHARED/compose.env" "$@"; }
           grep -q '^GLITCHTIP_SECRET_KEY=.' "$SHARED/compose.env" || { echo "GLITCHTIP_SECRET_KEY is not set in compose.env" >&2; exit 1; }
           compose exec -T postgres sh -c "psql -U aio -d all_in_one -tAc \"SELECT 1 FROM pg_database WHERE datname='glitchtip'\" | grep -q 1 || psql -U aio -d all_in_one -c 'CREATE DATABASE glitchtip'"

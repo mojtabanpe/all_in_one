@@ -110,6 +110,8 @@ services:
       SECRET_KEY: ${GLITCHTIP_SECRET_KEY:-unset}
       DATABASE_URL: postgresql://aio:${POSTGRES_PASSWORD}@127.0.0.1:15433/glitchtip
       VALKEY_URL: ''
+      # One process: web, background tasks and the database migration (the image's default is web only).
+      SERVER_ROLE: all_in_one
       GLITCHTIP_DOMAIN: http://localhost:4340
       ALLOWED_HOSTS: localhost,127.0.0.1
       GRANIAN_HOST: 127.0.0.1
