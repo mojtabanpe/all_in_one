@@ -715,3 +715,10 @@ Claim checked against the code: the assistant has `batch_create_tasks` / `create
 - Measurement: no tagged link inside a Reel. Compare views/reach with episode 1 at equal age, and Bazaar/Myket signups
   and first planner tasks in the 3 days after publishing vs the 3 days before (`growth_client_days`,
   `signup_completed`).
+- 2026-11-20: owner approved the script («تأیید، بساز») and the temporary use of the ywa-ai pipeline (folders removed
+  afterwards). Two 8 s shots on Flow u0 with Sara's episode-1 reference (48 credits; earlier attempts stopped before
+  generating: Flow signed out, then a change-log dialog; Veo API model 404; Higgsfield «job failed»). Local, gitignored:
+  `marketing/promo-videos/out/ba-ye-jomle-2/shots/shot_01.mp4` (desk, sticky notes, phone to her mouth) and `shot_02.mp4`
+  (grey kitchen, phone buzzes, forehead slap, a note falls). Same face as episode 1. Imperfection: the sticky notes in
+  shot 1 carry illegible Persian-like scribbles (acceptable under 126 at phone size). `TODO` owner's screen recording,
+  then edit with the shared end card.
