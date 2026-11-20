@@ -524,4 +524,41 @@ export const BILLING_MESSAGES: readonly (readonly [string, string])[] = [
   ['از روز', 'From'],
   ['مدل گفتگو', 'Chat model'],
   ['ورودی / کش‌شده / خروجی', 'Input / cached / output'],
+  ['عضویت در کانال تلگرام', 'Join the Telegram channel'],
+  ['باز کردن کانال در تلگرام', 'Open the channel in Telegram'],
+  ['باز کردن صفحه در اینستاگرام', 'Open the page on Instagram'],
+  ['نام کاربری تلگرام', 'Telegram username'],
+  ['نام کاربری اینستاگرام', 'Instagram username'],
+  ['فرستادن برای بررسی', 'Send for review'],
+  ['هفتهٔ هدیه به اشتراکت اضافه شد.', 'The free week was added to your plan.'],
+  [
+    'نام کاربری {0} فرستاده شد. عضویتت را بررسی می‌کنیم و بعد از تأیید، هفتهٔ هدیه خودکار اضافه می‌شود و در برنامه خبرت می‌کنیم.',
+    'We got the username {0}. We will check your membership; once confirmed, the free week is added automatically and we will let you know in the app.',
+  ],
+  [
+    'بعد از عضویت در کانال، دکمهٔ زیر را بزن؛ ربات عضویتت را بررسی می‌کند و هفتهٔ هدیه همان لحظه اضافه می‌شود.',
+    'After joining the channel, tap the button below. The bot checks your membership and adds the free week right away.',
+  ],
+  ['عضو شدم، بررسی کن', 'I joined, check it'],
+  [
+    'ربات Poshtetgarm را وصل کن تا عضویتت در کانال خودکار بررسی شود و هفتهٔ هدیه همان لحظه اضافه شود.',
+    'Connect the Poshtetgarm bot so your channel membership is checked automatically and the free week is added right away.',
+  ],
+  ['یا نام کاربری تلگرامت را بفرست:', 'Or send your Telegram username:'],
+  [
+    'بعد از عضویت، نام کاربری‌ات را بفرست. عضویت را بررسی می‌کنیم و بعد از تأیید، هفتهٔ هدیه خودکار اضافه می‌شود و در برنامه خبرت می‌کنیم.',
+    'After following, send your username. We will check it; once confirmed, the free week is added automatically and we will let you know in the app.',
+  ],
+  [
+    'یک هفته هوش مصنوعی به اشتراکت اضافه شد.',
+    'One week of AI was added to your plan.',
+  ],
+  [
+    'هنوز عضو کانال نیستی. اول در کانال عضو شو و دوباره بزن.',
+    'You are not in the channel yet. Join it first, then tap again.',
+  ],
+  [
+    'الان نمی‌توانیم عضویت را خودکار بررسی کنیم؛ نام کاربری‌ات را بفرست.',
+    'We cannot check membership automatically right now. Send your username instead.',
+  ],
 ];

@@ -323,7 +323,17 @@ export interface BillingRewardOffer {
   status: 'available' | 'pending' | 'earned';
   /** SECOND_CONTACT: what the account still has to confirm. */
   confirm?: 'phone' | 'email';
+  /** The official account's handle, shown next to the link (e.g. `poshtetgarm`). */
+  account?: string;
+  /** Pending social request: the username the customer sent. */
+  handle?: string;
+  /** TELEGRAM_JOIN: the account is linked to the bot, so membership is checked automatically. */
+  telegramLinked?: boolean;
 }
+
+/** Result of the automatic Telegram channel check for the TELEGRAM_JOIN week. */
+export type TelegramRewardCheck =
+  'granted' | 'earned' | 'not_member' | 'not_linked' | 'unavailable';
 
 export interface BillingPendingReward {
   id: string;

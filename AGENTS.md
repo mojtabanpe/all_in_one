@@ -995,3 +995,19 @@ flashcard`; `deploy/release.sh` starts it only when `GLITCHTIP_SECRET_KEY` is in
      keyboard is up (`AioKeyboard`, `html[data-keyboard=open]`) or a flashcard review owns the screen, and a sideways
      swipe cancels it. While it is mounted Chrome's own whole-page pull-reload is off (`overscroll-behavior-y:
 contain`). Works on the web, the PWA and the current Android shell without a new build.
+
+189. **Clear Telegram and Instagram weeks (2026-11-20).** An Android user's friend could not find the official accounts, did not know what happened after sending a username, saw the link disappear once the request was pending, and got no message after joining Telegram. The owner chose all four fixes («هر ۴ تا»). Both the subscription page and the in-app sheet use `customer-social-reward` (`apps/customer/src/app/billing/social-reward.ts`). The official address (`@poshtetgarm`) and its link stay visible in every state. Each state says what happens next, and the pending card shows the username that was sent. A granted week (by support or by the bot) creates the in-app notice `reward:<campaign>` and a message from `@poshtetgarm_bot` to a linked account (`BillingService.onRewardGranted`). For an account linked to the bot, the Telegram week is checked automatically with the channel check of 170 (`TelegramService.claimChannelWeek`, `POST /api/telegram/reward`, and also right after linking). It is granted only on a definite membership: an unreadable channel falls back to the username request. Instagram stays a manual check. This refines 108.
+
+190. **Settings in tabs (2026-11-20).** The owner: «رابط کاربری ستینگ رو هم بهبود بده خیلی اسکرول داره». The account page (`web-account-page`) is split into Spartan tabs: «حساب» (name, phone, email, password, language), «اشتراک» (subscription and enabled sections; customer app only), «اعلان‌ها» (push and weekly report) and «اتصال‌ها» (Telegram bot, ChatGPT/Claude). A link to a section (`/account#weekly-progress`, `#telegram`, `#enabled-applets`) opens that section's tab (`accountTab`).
+
+191. **Assistant tokens: section tools, cheap cache hits, higher chat limits (2026-11-20).** A friend of the owner used
+     up a trial's whole day with one assistant message: each model call was ~45k tokens because all ~145 tools went
+     with every step. The owner chose both fixes («جفتش») and «سقف رو هم بالاتر ببر». The assistant sends only the tools
+     of the current screen's section, of the sections the message mentions (`SECTION_WORDS`) and of those the previous
+     reply used (all of them on home when nothing matches); the assistant-only `load_tools` adds other sections when
+     the model needs them. Prompt-cache hits count `AI_QUOTA_CACHED_WEIGHT` (0.1) toward the chat quota
+     (`chatQuotaUnits`; cost reports still use real prices). Default daily chat limits: trial and earned 400k, paid
+     1M. Limits saved in `/admin/ai` still override them. When a trial or earned-week account reaches the daily limit
+     (owner: «اگه کاربر آزمایشی سقف رو زد میتونیم بهش باتم شیت خرید بدیم»), the 429 `AI_QUOTA_REACHED` carries
+     `upgrade: true` and the customer app opens the shared plan sheet (`AiPaywall`, reason `quota`) with a line that a
+     plan has a higher limit; paid accounts only see the message.

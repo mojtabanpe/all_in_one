@@ -454,7 +454,9 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
           {
             campaign: 'TELEGRAM_JOIN',
             url: 'https://t.me/poshtetgarm',
+            account: 'poshtetgarm',
             status: 'available',
+            telegramLinked: false,
           },
         ]);
         await Promise.all([
@@ -471,6 +473,11 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
             (request) => request.email === customer.email,
           )?.handle,
         ).toBe('fixture_user');
+        // The pending card shows the username that was sent (directive 189).
+        expect((await social(offers))[0]).toMatchObject({
+          status: 'pending',
+          handle: 'fixture_user',
+        });
         await offers.grantReward(
           admin.id,
           {
@@ -486,6 +493,15 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
           }),
         ).toBe(0);
         expect((await social(offers))[0]?.status).toBe('earned');
+        // The customer is told in the app that the week was added (directive 189).
+        expect(
+          await prisma.inAppNotification.findUnique({
+            where: {
+              userId_key: { userId: customer.id, key: 'reward:TELEGRAM_JOIN' },
+            },
+            select: { source: true },
+          }),
+        ).toEqual({ source: 'reward' });
       } finally {
         await prisma.user.delete({ where: { id: customer.id } });
         await prisma.user.delete({ where: { id: admin.id } });

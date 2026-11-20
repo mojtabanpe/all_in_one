@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
   ForbiddenException,
   Optional,
@@ -54,11 +55,13 @@ const SOCIAL_OFFERS = [
   {
     campaign: 'TELEGRAM_JOIN',
     url: 'https://t.me/poshtetgarm',
+    account: 'poshtetgarm',
     flag: 'BILLING_TELEGRAM_OFFER_ENABLED',
   },
   {
     campaign: 'INSTAGRAM_FOLLOW',
     url: 'https://www.instagram.com/poshtetgarm/',
+    account: 'poshtetgarm',
     flag: 'BILLING_INSTAGRAM_OFFER_ENABLED',
   },
 ] as const;
@@ -126,6 +129,7 @@ export function addMonths(from: Date, months: number): Date {
  */
 @Injectable()
 export class BillingService {
+  private readonly logger = new Logger(BillingService.name);
   constructor(
     private readonly prisma: PrismaService,
     private readonly gateway: ZibalGateway,
@@ -517,29 +521,46 @@ export class BillingService {
     // Every confirmed customer can earn each week once, from signup on (directive 108); the week is
     // queued after the trial, paid time and earlier rewards.
     if (!(await this.access(userId, now)).trialUntil) return [];
-    const [grants, requests, user] = await Promise.all([
+    const [grants, requests, user, telegram] = await Promise.all([
       this.prisma.billingReward.findMany({
         where: { userId },
         select: { campaign: true },
       }),
       this.prisma.billingRewardRequest.findMany({
         where: { userId },
-        select: { campaign: true },
+        select: { campaign: true, handle: true },
       }),
       this.prisma.user.findUniqueOrThrow({
         where: { id: userId },
         select: { emailVerifiedAt: true, phoneVerifiedAt: true },
       }),
+      this.prisma.telegramLink.findUnique({
+        where: { userId },
+        select: { userId: true },
+      }),
     ]);
-    const social: BillingRewardOffer[] = offers.map(({ campaign, url }) => ({
-      campaign,
-      url,
-      status: grants.some((item) => item.campaign === campaign)
-        ? 'earned'
-        : requests.some((item) => item.campaign === campaign)
-          ? 'pending'
-          : 'available',
-    }));
+    const social: BillingRewardOffer[] = offers.map(
+      ({ campaign, url, account }) => {
+        const request = requests.find((item) => item.campaign === campaign);
+        const status = grants.some((item) => item.campaign === campaign)
+          ? 'earned'
+          : request
+            ? 'pending'
+            : 'available';
+        return {
+          campaign,
+          url,
+          account,
+          status,
+          ...(status === 'pending' && request
+            ? { handle: request.handle }
+            : {}),
+          ...(campaign === 'TELEGRAM_JOIN'
+            ? { telegramLinked: !!telegram }
+            : {}),
+        };
+      },
+    );
     // The second-contact week (directive 121): offered while one contact is missing, shown once earned. An
     // account that confirmed both before this week existed is not offered it.
     const contact: BillingRewardOffer[] = grants.some(
@@ -640,7 +661,103 @@ export class BillingService {
         where: { userId: found.id, campaign: input.campaign },
       });
     });
+    await this.rewardGranted(found.id, input.campaign, now);
     return this.account(input.email, now);
+  }
+
+  /**
+   * A social week granted without an admin: the Telegram channel membership the bot has just confirmed (directive
+   * 189). Only while the offer is on; once per account like the admin grant.
+   */
+  async grantSocialWeek(
+    userId: string,
+    campaign: 'TELEGRAM_JOIN',
+    now = new Date(),
+  ): Promise<'granted' | 'exists' | 'unconfirmed' | 'off'> {
+    const offer = SOCIAL_OFFERS.find((item) => item.campaign === campaign);
+    if (!offer || this.config.get(offer.flag) !== 'true') return 'off';
+    const granted = await this.prisma.$transaction(async (tx) => {
+      const result = await this.queueWeek(tx, userId, campaign, {
+        adminId: null,
+        reason: 'Telegram channel membership checked by the bot',
+        now,
+      });
+      if (result === 'granted')
+        await tx.billingRewardRequest.deleteMany({
+          where: { userId, campaign },
+        });
+      return result;
+    });
+    if (granted === 'limit') return 'exists';
+    if (granted === 'granted') await this.rewardGranted(userId, campaign, now);
+    return granted;
+  }
+
+  /** Called with each granted social week, e.g. by the Telegram bot to message a linked account. */
+  onRewardGranted(
+    listener: (userId: string, campaign: BillingRewardCampaign) => unknown,
+  ): () => void {
+    this.grantListeners.push(listener);
+    return () => {
+      this.grantListeners = this.grantListeners.filter((l) => l !== listener);
+    };
+  }
+  private grantListeners: ((
+    userId: string,
+    campaign: BillingRewardCampaign,
+  ) => unknown)[] = [];
+
+  /**
+   * Tells the customer their social week was added (directive 189): before, a granted request only changed the card
+   * on the subscription page and nobody noticed. An in-app notice, plus whatever listeners add (the bot).
+   */
+  private async rewardGranted(
+    userId: string,
+    campaign: BillingRewardCampaign,
+    now: Date,
+  ): Promise<void> {
+    const where = campaign === 'TELEGRAM_JOIN' ? 'تلگرام' : 'اینستاگرام';
+    const whereEn = campaign === 'TELEGRAM_JOIN' ? 'Telegram' : 'Instagram';
+    const content = {
+      title: {
+        fa: 'یک هفته هوش مصنوعی هدیه گرفتی',
+        en: 'You earned a week of AI',
+      },
+      message: {
+        fa: `عضویتت در ${where} تأیید شد و یک هفته به اشتراکت اضافه شد.`,
+        en: `Your ${whereEn} membership was confirmed and a week was added to your plan.`,
+      },
+      actions: [
+        {
+          label: { fa: 'دیدن اشتراک', en: 'View plan' },
+          url: '/billing',
+          primary: true,
+        },
+      ],
+    };
+    try {
+      const key = `reward:${campaign}`;
+      await this.prisma.inAppNotification.upsert({
+        where: { userId_key: { userId, key } },
+        create: {
+          userId,
+          key,
+          source: 'reward',
+          content,
+          expiresAt: new Date(now.getTime() + 14 * 86_400_000),
+        },
+        update: {},
+      });
+    } catch (error) {
+      this.logger.warn(`Reward notice failed: ${String(error)}`);
+    }
+    for (const listener of this.grantListeners) {
+      try {
+        await listener(userId, campaign);
+      } catch (error) {
+        this.logger.warn(`Reward listener failed: ${String(error)}`);
+      }
+    }
   }
 
   /**

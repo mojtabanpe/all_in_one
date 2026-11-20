@@ -861,4 +861,43 @@ describe('Telegram bot', () => {
       expect(parseExpenseLines('۵۰۰۰')).toBeNull();
     });
   });
+
+  describe('Telegram week checked by the bot (directive 189)', () => {
+    const withBilling = (membership: string | Error) => {
+      const ctx = setup(membership);
+      const billing = {
+        grantSocialWeek: vi.fn(async () => 'granted' as const),
+      };
+      (ctx.service as unknown as { billing: unknown }).billing = billing;
+      ctx.db.telegramLink.findUnique.mockResolvedValue({ chatId: 42n });
+      return { ...ctx, billing };
+    };
+
+    it('grants the week to a linked channel member', async () => {
+      const { service, billing } = withBilling('member');
+      expect(await service.claimChannelWeek('u1')).toBe('granted');
+      expect(billing.grantSocialWeek).toHaveBeenCalledWith(
+        'u1',
+        'TELEGRAM_JOIN',
+        expect.any(Date),
+      );
+    });
+
+    it('never grants when the member is gone or the channel cannot be read', async () => {
+      const left = withBilling('left');
+      expect(await left.service.claimChannelWeek('u1')).toBe('not_member');
+      const unreadable = withBilling(new Error('not admin'));
+      expect(await unreadable.service.claimChannelWeek('u1')).toBe(
+        'unavailable',
+      );
+      expect(left.billing.grantSocialWeek).not.toHaveBeenCalled();
+      expect(unreadable.billing.grantSocialWeek).not.toHaveBeenCalled();
+    });
+
+    it('asks an unlinked account to link first', async () => {
+      const { service, db } = withBilling('member');
+      db.telegramLink.findUnique.mockResolvedValue(null);
+      expect(await service.claimChannelWeek('u1')).toBe('not_linked');
+    });
+  });
 });
