@@ -13,7 +13,12 @@ import { provideServiceWorker } from '@angular/service-worker';
 import { ONBOARDING_COMPLETED_HEADER } from '@all-in-one/shared/schemas';
 import { AioNotifications } from '@all-in-one/ui';
 import { API_BASE_URL, GrowthAnalytics } from '@all-in-one/web/shared';
-import { App, PUSH_CLICK_MAX_AGE_MS, takePendingPushClick } from './app';
+import {
+  App,
+  PUSH_CLICK_MAX_AGE_MS,
+  pushTapRoute,
+  takePendingPushClick,
+} from './app';
 import { AiPaywall, aiPaywallInterceptor } from './billing/ai-paywall';
 import { onboardingFeedbackInterceptor } from './onboarding-feedback';
 
@@ -140,5 +145,24 @@ describe('takePendingPushClick', () => {
     const store = fakeCaches({ url: '/app/planner', at: 0 });
     expect(await takePendingPushClick(PUSH_CLICK_MAX_AGE_MS + 1)).toBeNull();
     expect(store.size).toBe(0);
+  });
+});
+
+describe('pushTapRoute', () => {
+  it('makes each reminder tap a new url, so the same reminder reopens its sheet', () => {
+    const url = `/app/planner/habits?remind=${encodeURIComponent('habit:h1:2026-11-20')}`;
+    const first = pushTapRoute(url, 1);
+    const second = pushTapRoute(url, 2);
+    expect(first).toBe('/planner/habits?remind=habit%3Ah1%3A2026-11-20&tap=1');
+    expect(second).not.toBe(first);
+    expect(new URLSearchParams(second!.split('?')[1]).get('remind')).toBe(
+      'habit:h1:2026-11-20',
+    );
+  });
+
+  it('leaves other app links alone and refuses foreign ones', () => {
+    expect(pushTapRoute('/app/english', 1)).toBe('/english');
+    expect(pushTapRoute('https://evil.example/app/x', 1)).toBeNull();
+    expect(pushTapRoute('//evil.example/app/x', 1)).toBeNull();
   });
 });

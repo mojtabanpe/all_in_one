@@ -202,7 +202,7 @@ export class ReminderSheet {
     this.open.set(false);
     void this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { remind: null },
+      queryParams: { remind: null, tap: null },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
