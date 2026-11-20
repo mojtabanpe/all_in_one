@@ -196,9 +196,10 @@ export class AssistantService {
     if (last?.role === 'user')
       for (const group of TOOL_GROUPS)
         if (SECTION_WORDS[group].test(last.content)) groups.add(group);
-    const previous = request.messages
-      .slice(0, -1)
-      .findLast((m) => m.role === 'assistant');
+    // The api's build target has no Array.prototype.findLast (es2022).
+    const previous = [...request.messages.slice(0, -1)]
+      .reverse()
+      .find((m) => m.role === 'assistant');
     for (const line of previous?.log?.split('\n') ?? []) {
       const group = collector.group(line.split(' ', 1)[0]);
       if (group) groups.add(group);
