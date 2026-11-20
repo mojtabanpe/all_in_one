@@ -82,6 +82,7 @@ docker compose -f deploy/compose.yml exec postgres psql -U aio all_in_one -c "UP
 
 خطاهای api و مرورگر (اپ مشتری و مدیر) در GlitchTip جمع می‌شوند ([AGENTS.md](../AGENTS.md) بند ۱۸۴). تنها روی خود سرور و loopback بالا می‌آید.
 
+0. Docker Hub از سرور 403 می‌دهد؛ ایمیج GlitchTip را گردش‌کار دستی `GlitchTip` (`.github/workflows/glitchtip.yml`) روی GitHub می‌کشد، به GHCR می‌برد، روی سرور می‌گیرد و سرویس را بالا می‌آورد. بعد از هر تغییر نسخه در `deploy/compose.yml` همان را دوباره اجرا کنید.
 1. در `/opt/all-in-one/shared/compose.env` یک `GLITCHTIP_SECRET_KEY=$(openssl rand -hex 32)` و موقتاً `GLITCHTIP_REGISTRATION=true` بگذارید و انتشار بعدی را اجرا کنید (دیتابیس `glitchtip` خودکار ساخته می‌شود).
 2. از لپ‌تاپ: `ssh -L 4340:127.0.0.1:4340 flashcard` و باز کردن `http://localhost:4340`. حساب و سازمان بسازید، سپس یک پروژه (مثلاً `poshtetgarm`) و `DSN` آن را بردارید.
 3. `GLITCHTIP_REGISTRATION` را از `compose.env` پاک کنید. در `/opt/all-in-one/shared/.env` این را بگذارید و انتشار را دوباره اجرا کنید: `GLITCHTIP_DSN=http://<کلید>@127.0.0.1:4340/<شناسه‌ی پروژه>` (نشانی همان `127.0.0.1:4340` بماند، نه آدرس تونل).

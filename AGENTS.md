@@ -970,4 +970,4 @@ flashcard`; `deploy/release.sh` starts it only when `GLITCHTIP_SECRET_KEY` is in
      site reports too (`provideErrorMonitor('public')`). The first time a problem is seen in a day (at most 5 an
      hour) the api tells every ADMIN account with a linked Telegram chat (`MonitorService.announce`; it works even
      before GlitchTip is set up). Not covered: native Android crashes, silent logic failures, and a dead server
-     (GlitchTip is on it): a monitor from outside is a separate step. Setup: `deploy/README.fa.md` «پایش خطا».
+     (GlitchTip is on it): a monitor from outside is a separate step. The server cannot pull from Docker Hub (403), so the manual `GlitchTip` workflow copies the image to GHCR and starts it on the runner. Setup: `deploy/README.fa.md` «پایش خطا».

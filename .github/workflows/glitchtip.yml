@@ -1,0 +1,69 @@
+name: GlitchTip
+
+# Docker Hub answers 403 from the production server, so GlitchTip's image (the one named in deploy/compose.yml) is copied
+# to GHCR on GitHub, pulled by the server's runner like our own images, and the service is (re)started there.
+# Run it by hand after changing the GlitchTip version in deploy/compose.yml (directive 184).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  MIRROR: ghcr.io/${{ github.repository_owner }}/all-in-one-glitchtip
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: image
+        run: |
+          image=$(sed -n 's/^ *image: \(glitchtip\/glitchtip:[0-9.]*\)$/\1/p' deploy/compose.yml)
+          [ -n "$image" ] || { echo "No glitchtip image in deploy/compose.yml" >&2; exit 1; }
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+      - run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          tag=${{ steps.image.outputs.image }}
+          docker pull "$tag"
+          docker tag "$tag" "$MIRROR:${tag##*:}"
+          docker push "$MIRROR:${tag##*:}"
+
+  start:
+    needs: mirror
+    runs-on: [self-hosted, aio]
+    permissions:
+      packages: read
+    steps:
+      - env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE: ${{ needs.mirror.outputs.image }}
+        run: |
+          set -eu
+          export DOCKER_CONFIG="$RUNNER_TEMP/ghcr-auth"
+          mkdir -p "$DOCKER_CONFIG"
+          trap 'rm -rf "$DOCKER_CONFIG"' EXIT
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin >/dev/null
+          ref="$MIRROR:${IMAGE##*:}"
+          docker pull "$ref"
+          docker tag "$ref" "$IMAGE"
+          docker image rm "$ref" >/dev/null
+          SHARED=/opt/all-in-one/shared
+          compose() { docker compose -f /opt/all-in-one/src/deploy/compose.yml --env-file "$SHARED/compose.env" "$@"; }
+          grep -q '^GLITCHTIP_SECRET_KEY=.' "$SHARED/compose.env" || { echo "GLITCHTIP_SECRET_KEY is not set in compose.env" >&2; exit 1; }
+          compose exec -T postgres sh -c "psql -U aio -d all_in_one -tAc \"SELECT 1 FROM pg_database WHERE datname='glitchtip'\" | grep -q 1 || psql -U aio -d all_in_one -c 'CREATE DATABASE glitchtip'"
+          compose up -d --no-deps glitchtip
+          for i in $(seq 1 30); do
+            curl -fsS -o /dev/null http://127.0.0.1:4340/_health/ && { echo "GlitchTip is up"; exit 0; }
+            sleep 2
+          done
+          compose logs --tail 60 glitchtip
+          exit 1
