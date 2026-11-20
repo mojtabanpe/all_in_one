@@ -24,6 +24,10 @@ export const envSchema = z.object({
   TELEGRAM_RELAY_KEY: z.string().optional(),
   /** Channel a user must join to use the bot (directive 170); empty turns it off. */
   TELEGRAM_REQUIRED_CHANNEL: z.string().optional(),
+  /** GlitchTip on this server's loopback (directive 184): http://<key>@127.0.0.1:4340/<project id>; empty = log only. */
+  GLITCHTIP_DSN: z.string().optional(),
+  /** Release id (git sha) stamped on error events. */
+  APP_RELEASE: z.string().optional(),
   // First-party acquisition analytics, enabled without an end-user control.
   GROWTH_ANALYTICS_ENABLED: z.enum(['true', 'false']).default('true'),
   DATABASE_URL: z.url(),

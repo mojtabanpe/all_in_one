@@ -14,3 +14,4 @@ export { TelegramSettings } from './lib/auth/telegram-settings';
 export { PhoneSettings } from './lib/auth/phone-settings';
 export * from './lib/assistant/assistant';
 export * from './lib/growth-analytics';
+export * from './lib/error-monitor';

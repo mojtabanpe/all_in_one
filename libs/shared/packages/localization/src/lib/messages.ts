@@ -4297,6 +4297,10 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['ورود', 'Sign in'],
   ['حساب کاربری', 'Account'],
   ['تلاش دوباره', 'Try again'],
+  [
+    'بخشی از برنامه بارگیری نشد. اتصال را بررسی کن.',
+    'Part of the app did not load. Check your connection.',
+  ],
   ['پروتئین', 'Protein'],
   ['ذخیره', 'Save'],
   ['نام', 'Name'],

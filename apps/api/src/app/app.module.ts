@@ -19,6 +19,7 @@ import { envSchema } from '../config/env';
 import { AdminController } from '../admin/admin.controller';
 import { HealthController } from '../health/health.controller';
 import { TelegramModule } from '../telegram/telegram.module';
+import { MonitorModule } from '../monitor/monitor.module';
 import { AssistantModule } from '../assistant/assistant.module';
 import { McpModule } from '../mcp/mcp.module';
 import { AppController } from './app.controller';
@@ -50,6 +51,8 @@ import { BillingModule } from '../billing/billing.module';
     AssistantModule,
     // Telegram bot (directive 168)
     TelegramModule,
+    // Error monitoring (directive 184)
+    MonitorModule,
   ],
   controllers: [
     InAppNotificationsController,

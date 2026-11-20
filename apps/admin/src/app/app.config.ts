@@ -15,6 +15,7 @@ import {
 } from '@angular/router';
 import {
   authInterceptor,
+  provideErrorMonitor,
   restartRetryInterceptor,
 } from '@all-in-one/web/shared';
 import { appRoutes } from './app.routes';
@@ -25,6 +26,7 @@ export const appConfig: ApplicationConfig = {
     // Route titles follow the app language (they are written in Persian).
     { provide: TitleStrategy, useExisting: AioTitleStrategy },
     provideBrowserGlobalErrorListeners(),
+    provideErrorMonitor('admin'),
     provideRouter(appRoutes, withComponentInputBinding()),
     provideHttpClient(
       withFetch(),

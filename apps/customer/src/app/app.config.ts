@@ -21,6 +21,7 @@ import { provideServiceWorker } from '@angular/service-worker';
 import {
   authInterceptor,
   localScheduleInterceptor,
+  provideErrorMonitor,
   restartRetryInterceptor,
 } from '@all-in-one/web/shared';
 import { aiPaywallInterceptor } from './billing/ai-paywall';
@@ -33,6 +34,7 @@ export const appConfig: ApplicationConfig = {
     // Route titles follow the app language (they are written in Persian).
     { provide: TitleStrategy, useExisting: AioTitleStrategy },
     provideBrowserGlobalErrorListeners(),
+    provideErrorMonitor('customer'),
     provideRouter(
       appRoutes,
       withComponentInputBinding(),

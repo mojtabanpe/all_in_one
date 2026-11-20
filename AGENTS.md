@@ -954,3 +954,18 @@ Rules:
      `REFERRAL_MAX_WEEKS` = 10), queued like the other earned weeks (108, 121). An account is invited once; its own
      code and mutual invitations are refused; attaching is throttled. `ReferralService` settles at once or in a
      10-minute sweep. This replaces the earlier analytics-only invite link on the home page.
+
+184. **Error monitoring with GlitchTip (2026-11-20).** The owner asked how the app's errors are noticed («اگه روی یه دکمه
+     کلیک کرد و چانک لود نشد…») and chose self-hosted GlitchTip («با GlitchTip»). GlitchTip runs on the server
+     (`deploy/compose.yml` service `glitchtip`, one process on its own database in the shared Postgres, no Redis, 400 MB
+     cap, 90-day retention), listens only on `127.0.0.1:4340` and is reached through `ssh -L 4340:127.0.0.1:4340
+flashcard`; `deploy/release.sh` starts it only when `GLITCHTIP_SECRET_KEY` is in `compose.env` and never lets it
+     fail a release. The api (`apps/api/src/monitor`) reports 5xx and unexpected errors through a global filter and
+     takes browser errors at `POST /api/monitor/errors` (public, throttled, Zod `clientErrorBatchSchema`); both go to
+     GlitchTip's store endpoint using `GLITCHTIP_DSN` (empty = log only; the api needs no Sentry SDK). The customer and
+     admin apps use `provideErrorMonitor(app)` (`libs/web/shared`): an `ErrorHandler` that queues reports in
+     localStorage while offline, drops repeats, marks failed chunks (`kind: 'chunk'`) and shows a «تلاش دوباره»
+     toast for them. Reports carry only the message, stack, route path (no query), app version, client kind and
+     online state, plus the user id on the server side: never task, health or account content (78). Not covered:
+     native Android crashes, silent logic failures, the public site's browser errors, and a dead server (GlitchTip is
+     on it): a monitor from outside is a separate step. Setup: `deploy/README.fa.md` «پایش خطا».

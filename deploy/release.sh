@@ -65,6 +65,14 @@ discard_idle() {
 
 echo "Starting release $NEW in colour $IDLE (live: colour $LIVE, release ${PREVIOUS:-none})"
 compose up -d postgres redis
+# Error monitoring (directive 184) is optional and must never stop a release: it starts only when
+# GLITCHTIP_SECRET_KEY is set in compose.env, in its own database on the same Postgres.
+if grep -q '^GLITCHTIP_SECRET_KEY=.' "$SHARED/compose.env"; then
+  {
+    compose exec -T postgres sh -c "psql -U aio -d all_in_one -tAc \"SELECT 1 FROM pg_database WHERE datname='glitchtip'\" | grep -q 1 || psql -U aio -d all_in_one -c 'CREATE DATABASE glitchtip'" &&
+      compose up -d --no-deps glitchtip
+  } || echo "Warning: GlitchTip did not start; the release continues without it" >&2
+fi
 compose up -d --no-deps --force-recreate "api-$IDLE" "public-$IDLE"
 if ! wait_for "http://127.0.0.1:$(port "$IDLE" api)/api/health" "http://127.0.0.1:$(port "$IDLE" public)/"; then
   echo "Release $NEW did not become healthy; the live release keeps running" >&2

@@ -24,6 +24,8 @@ services:
       MCP_PUBLIC_URL: https://poshtetgarm-mcp.memnpe.workers.dev
       DATABASE_URL: postgresql://aio:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@127.0.0.1:15433/all_in_one
       REDIS_URL: redis://127.0.0.1:16380
+      # Stamped on error events (GlitchTip, directive 184); GLITCHTIP_DSN itself is in the shared .env.
+      APP_RELEASE: ${RELEASE_A:-none}
       # Supplied by the production GitHub Environment secret at release time.
       # Never stored in images, the checkout, or copied from a developer machine.
       FCM_SERVICE_ACCOUNT_JSON: ${FCM_SERVICE_ACCOUNT_JSON:-}
@@ -46,6 +48,7 @@ services:
     environment:
       <<: *api-env
       API_PORT: 4331
+      APP_RELEASE: ${RELEASE_B:-none}
 
   public-a: &public
     image: all-in-one-public:${RELEASE_A:-none}
@@ -93,6 +96,35 @@ services:
       timeout: 3s
       retries: 10
     security_opt: [no-new-privileges:true]
+
+  # Error monitoring (directive 184). One process (web + background tasks) on Postgres, no Redis. It listens on
+  # loopback only: the api sends events to 127.0.0.1:4340, and the dashboard is reached through an SSH tunnel
+  # (`ssh -L 4340:127.0.0.1:4340 flashcard`, then http://localhost:4340). Not started unless GLITCHTIP_SECRET_KEY is
+  # set in compose.env (deploy/release.sh). Capped so it can never starve the api.
+  glitchtip:
+    image: glitchtip/glitchtip:6.1.1
+    network_mode: host
+    restart: unless-stopped
+    mem_limit: 400m
+    environment:
+      SECRET_KEY: ${GLITCHTIP_SECRET_KEY:-unset}
+      DATABASE_URL: postgresql://aio:${POSTGRES_PASSWORD}@127.0.0.1:15433/glitchtip
+      VALKEY_URL: ''
+      GLITCHTIP_DOMAIN: http://localhost:4340
+      ALLOWED_HOSTS: localhost,127.0.0.1
+      GRANIAN_HOST: 127.0.0.1
+      GRANIAN_PORT: 4340
+      # Sign-up stays off; set GLITCHTIP_REGISTRATION=true in compose.env only to create the first account.
+      ENABLE_USER_REGISTRATION: ${GLITCHTIP_REGISTRATION:-false}
+      ENABLE_ORGANIZATION_CREATION: ${GLITCHTIP_REGISTRATION:-false}
+      GLITCHTIP_RETENTION_DAYS: 90
+      EMAIL_URL: consolemail://
+      DEFAULT_FROM_EMAIL: monitor@poshtetgarm.ir
+    depends_on:
+      postgres:
+        condition: service_healthy
+    security_opt: [no-new-privileges:true]
+    stop_grace_period: 20s
 
   redis:
     image: redis:7.4-alpine

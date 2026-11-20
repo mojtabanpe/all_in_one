@@ -520,3 +520,13 @@ poshtetgarm.ir/app/billing
   پروژه سبز (api ۲۶۶ آزمون).
 - `TODO` بعد از انتشار (فقط با گفتهٔ مالک): ردیف‌های `referrals` و هفته‌های `REFERRAL_*` در پروداکشن، و ثبت‌نام‌های
   `utm_source=referral` در داشبورد.
+
+## پایش خطا با GlitchTip (بند ۱۸۴، ۲۰۲۶-۱۱-۲۰)
+
+وضعیت: **کد آماده و محلی تست‌شده، منتشر نشده.** `format:check` و ۷۲ task (lint، test، build، typecheck) پاس شدند. GlitchTip ۶.۱.۱ محلی با Postgres موقت و بدون Redis بالا آمد (حدود ۲۰۰ مگابایت)، و دو رویداد از `MonitorService` (خطای چانک مرورگر و خطای ۵xx سرور) در آن به‌صورت issue ثبت شدند.
+
+- api: `apps/api/src/monitor` (فیلتر سراسری ۵xx، `POST /api/monitor/errors` عمومی با throttle، سرویس ارسال به `GLITCHTIP_DSN`).
+- وب: `provideErrorMonitor` در اپ مشتری و مدیر، با صف offline، حذف تکرار و پیام «تلاش دوباره» برای چانک.
+- سرور: سرویس `glitchtip` در `deploy/compose.yml` (loopback، سقف ۴۰۰ مگابایت)، فقط با `GLITCHTIP_SECRET_KEY` و بدون اثر روی release.
+
+باقی‌مانده: راه‌اندازی روی سرور (مراحل «پایش خطا» در `deploy/README.fa.md`)، خطای سایت عمومی، هشدار تلگرام برای issue تازه، پایشگر بیرونی برای زمانی که خود سرور مرده است، و خطای native اندروید. بعد از انتشار باید یک خطای واقعی در GlitchTip دیده شود.
