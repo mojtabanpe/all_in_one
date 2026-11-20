@@ -79,6 +79,13 @@ import {
               aioBtn
               variant="link"
               class="min-h-11 px-2"
+              routerLink="/exercises"
+              >{{ 'حرکات ورزشی' | aioTranslate }}</a
+            >
+            <a
+              aioBtn
+              variant="link"
+              class="min-h-11 px-2"
               target="_blank"
               rel="noopener"
               href="https://t.me/poshtetgarm"

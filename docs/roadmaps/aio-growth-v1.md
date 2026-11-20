@@ -192,6 +192,7 @@ campaign content in `docs/roadmaps/*pilot*`.
 
 | X10 | Distinguish Bazaar, Myket and direct/global APK usage alongside PWA and browser, without an APK update | DONE (released in `96a6425` on 2026-11-16; real-device VERIFY) |
 | X11 | Publish three public guides and save the same five sample flashcards after sign-in | DONE (release `3ba1d05`; live guides and sitemap verified; real-account handoff and indexing remain VERIFY) |
+| C9 | Public exercise pages: one prerendered page per catalog exercise with steps, mistakes, alternatives and its video (directive 182) | DONE local (not released); indexing VERIFY |
 
 ### Owner lane: decisions, accounts, devices and networks
 
@@ -292,6 +293,15 @@ Track landing-to-signup, signup-to-first-action, D1/D7/D30 retention, PWA instal
   - `VERIFY` Deployed routing/assets, Search Console discovery/indexing and actual traffic/conversion. Local implementation and prerender verification do not establish search ranking or production availability.
 
 - [x] `DONE` X11 (2026-11-19): published `/weekly-plan-for-work`, `/everyday-english-flashcards` and `/recurring-task-or-habit`. The five sample cards are public and can be saved to a personal deck after sign-in.
+- [ ] `DONE` local, not released: C9 (Claude, 2026-11-20, owner «بله، بساز»). `/exercises` (grouped by muscle) and
+      `/exercises/<slug>` for all 62 catalog exercises, prerendered (76 routes in `public:build`), each with a searchable
+      title («آموزش <نام> با ویدیو»), description, canonical, HowTo + BreadcrumbList JSON-LD, Persian steps, common
+      mistakes, links to alternative exercises and one «شروع رایگان» handoff to health. The catalog moved from the health
+      api to `libs/applets/health/contracts` (`EXERCISE_CATALOG`) and loads lazily, outside the main bundle. Videos stay in
+      the database: the page reads them in the browser from the new public `GET /api/health/exercise-videos` (uploaded
+      clips play inline, other links open). Sitemap lists all 63 new URLs; `exercise-catalog.spec.ts` fails if one is
+      missing. Footer links `/exercises`. Checked in the browser at 375px (no overflow). `VERIFY` after release: live
+      pages, video playback from the database, Search Console indexing and clicks.
   - [PR #4](https://github.com/mojtabanpe/all_in_one/pull/4) merged as `993c464`. [CI](https://github.com/mojtabanpe/all_in_one/actions/runs/44572631936) failed at `customer:lint` because the sample route used a static import from the lazy English applet. [Deploy](https://github.com/mojtabanpe/all_in_one/actions/runs/44573245882) was skipped. As checked on 2026-11-19, the production guide routes still redirect to the home page and the live sitemap omits them.
   - The sample component now lives in the lazy English applet. Nx lint, test, build and typecheck passed for `customer`, `public`, `english-learning-web` and `english-learning-api`. Local Chrome verified all three prerendered pages without JavaScript, including canonical URLs, descriptions, sitemap entries and the five public cards. With mocked APIs the customer app redirected a signed-out visit to login, while a signed-in visit saved and opened the deck with all five cards.
   - `DONE` Production release `3ba1d05` ([CI](https://github.com/mojtabanpe/all_in_one/actions/runs/44581289526), [Deploy](https://github.com/mojtabanpe/all_in_one/actions/runs/44582054114)): all three guides returned HTTP 200 with one H1, descriptions, query-free canonical URLs and live sitemap entries. The public flashcard guide showed all five cards and the save link without JavaScript or sign-in. An unknown URL returned HTTP 404. HTTP on the apex redirected to HTTPS with HTTP 301 and preserved the path and query.

@@ -1,4 +1,4 @@
-import type { Exercise } from '@all-in-one/applets/health/contracts';
+import type { Exercise } from './coaching';
 import { TRX_ADDITIONAL_EXERCISES, TRX_GUIDES } from './trx-catalog';
 
 /** Persian catalog with self-hosted illustrations; no external API dependency. */
@@ -634,7 +634,8 @@ const BASE_EXERCISES: Exercise[] = [
   },
 ];
 
-export const EXERCISES: Exercise[] = [
+/** The seeded exercise catalog (seed.ts); the public site renders one page per entry. */
+export const EXERCISE_CATALOG: Exercise[] = [
   ...BASE_EXERCISES,
   ...TRX_ADDITIONAL_EXERCISES,
 ].map((exercise) => ({ ...exercise, guide: TRX_GUIDES[exercise.slug] }));

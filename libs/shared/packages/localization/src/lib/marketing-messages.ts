@@ -738,4 +738,16 @@ export const MARKETING_MESSAGES: readonly (readonly [string, string])[] = [
     'غذایت را بنویس تا کالری و درشت\u200cمغذی\u200cها حساب شود. وزن، هدف و برنامهٔ ورزش هم همین\u200cجاست.',
     'Write what you ate to get its calories and macros. Weight, goal and workouts are here too.',
   ],
+  // Public exercise pages (directive 182).
+  ['حرکات ورزشی', 'Exercises'],
+  ['مسیر', 'Breadcrumb'],
+  ['آموزش {0}', 'How to do: {0}'],
+  ['دیدن ویدیوی حرکت', 'Watch the video'],
+  ['روش انجام', 'How to do it'],
+  ['اشتباه‌های رایج', 'Common mistakes'],
+  [
+    'این حرکت را در برنامه تمرینت بگذار',
+    'Add this exercise to your workout plan',
+  ],
+  ['آموزش حرکات ورزشی با ویدیو', 'Exercise guides with videos'],
 ];

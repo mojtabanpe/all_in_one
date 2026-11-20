@@ -8,17 +8,15 @@ import {
 
 // Read catalog copy without importing API modules into the shared browser library.
 // This also catches newly seeded text that has no reviewed English translation.
+// The exercise catalog lives in the health contracts (it feeds the public exercise pages too); programs stay in the api.
 const catalogFiles = [
-  'exercise-catalog.ts',
-  'trx-catalog.ts',
-  'seed-fitness.ts',
+  'contracts/src/lib/exercise-catalog.ts',
+  'contracts/src/lib/trx-catalog.ts',
+  'api/src/lib/seed-fitness.ts',
 ];
 const catalogCopy = catalogFiles.flatMap((file) => {
   const source = readFileSync(
-    new URL(
-      `../../../../../applets/health/api/src/lib/${file}`,
-      import.meta.url,
-    ),
+    new URL(`../../../../../applets/health/${file}`, import.meta.url),
     'utf8',
   );
   return [...source.matchAll(/'([^'\n]*[\u0600-\u06ff][^'\n]*)'/g)].map(

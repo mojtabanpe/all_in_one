@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@all-in-one/api/db';
 import { ACTIVITY_TYPES, WORKOUT_PROGRAMS } from './seed-fitness';
-import { EXERCISES } from './exercise-catalog';
+import { EXERCISE_CATALOG as EXERCISES } from '@all-in-one/applets/health/contracts';
 import { DIETS, RECIPES } from './seed-nutrition';
 
 /** Idempotent: upserts activities, programs, diets and recipes. */

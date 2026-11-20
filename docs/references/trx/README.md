@@ -5,7 +5,7 @@ The five original PDFs in this directory were supplied on 2026-10-31 as referenc
 The customer app displays **only the exercise photos**, extracted from pages 4–9. It does not display complete English PDF pages. Instructions, common mistakes, alternatives and reference volume are presented in Persian. Reference sets, repetitions, seconds and rests describe the PDF routine; they are not a personalized prescription. Per-side entries are explicitly marked.
 
 - Source-page mapping: `images.json` (array order corresponds to pages 4–9).
-- Exercise content and reference volume: `libs/applets/health/api/src/lib/trx-catalog.ts`.
+- Exercise content and reference volume: `libs/applets/health/contracts/src/lib/trx-catalog.ts`.
 - Generated photos: `apps/customer/public/assets/trx/<exercise-slug>.webp`.
 - Regenerate with `python3 tools/scripts/extract-trx-images.py` (requires PyMuPDF and Pillow). The script removes text, renders only the area occupied by exercise photos while preserving their original colors and placement, and outputs 1400×700 WebP images without headings, English instructions, or repetition labels.
 

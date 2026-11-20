@@ -7,6 +7,7 @@ import { PrismaService } from '@all-in-one/api/db';
 import {
   buildRoutine,
   trainingProgress,
+  TRX_GUIDES,
   type Exercise,
   type ExerciseFilter,
   type GenerateRoutineInput,
@@ -16,7 +17,6 @@ import {
   type WorkoutRoutine,
 } from '@all-in-one/applets/health/contracts';
 import { HealthService } from './health.service';
-import { TRX_GUIDES } from './trx-catalog';
 
 const GUIDANCE = {
   warmup: [
@@ -71,6 +71,16 @@ export class TrainingService {
     });
     if (!row) throw new NotFoundException('حرکت پیدا نشد');
     return { ...row, guide: TRX_GUIDES[row.slug] } as Exercise;
+  }
+  /** Slug → video url, only for exercises that have one. */
+  async videos(): Promise<Record<string, string>> {
+    const rows = await this.prisma.healthExercise.findMany({
+      where: { videoUrl: { not: null } },
+      select: { slug: true, videoUrl: true },
+    });
+    return Object.fromEntries(
+      rows.flatMap((row) => (row.videoUrl ? [[row.slug, row.videoUrl]] : [])),
+    );
   }
   async video(slug: string, videoUrl: string | null): Promise<Exercise> {
     await this.exercise(slug);

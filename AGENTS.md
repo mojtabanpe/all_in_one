@@ -935,3 +935,10 @@ Rules:
      `Poshtetgarm` (63); the Persian name «پشتت گرم» is added only where search engines and people searching need it: the
      home and about page title and description («Poshtetgarm (پشتت گرم)»), `alternateName` (`پشتت گرم`, `پشتت‌گرم` as Myket spells it, `پشتتگرم`) in
      the site's structured data (`apps/public/src/app/seo.ts`), and one line under the brand in the public footer.
+
+182. **Public exercise pages for search (2026-11-20).** The owner approved («بله، بساز») a public page for every catalog
+     exercise as the first SEO content, after the technical SEO was found sound but the site had only ~13 pages. The
+     public site prerenders `/exercises` and `/exercises/<slug>` from `EXERCISE_CATALOG` (health contracts, the same
+     catalog the api seeds): the steps, common mistakes, alternatives and one signup handoff to health, with HowTo JSON-LD;
+     no intro text or slogans (166). The current video comes from the public `GET /api/health/exercise-videos`. A new
+     catalog exercise needs its sitemap line (`exercise-catalog.spec.ts` checks it).

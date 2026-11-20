@@ -309,6 +309,13 @@ export class HealthController {
     return this.health.programs();
   }
 
+  /** Each exercise's current video, for the public exercise pages (the clips themselves are already public). */
+  @Public()
+  @Get('exercise-videos')
+  exerciseVideos(): Promise<Record<string, string>> {
+    return this.training.videos();
+  }
+
   @Get('workouts')
   workouts(
     @CurrentUser() user: AuthUser,

@@ -1,7 +1,4 @@
-import type {
-  Exercise,
-  ExerciseGuide,
-} from '@all-in-one/applets/health/contracts';
+import type { Exercise, ExerciseGuide } from './coaching';
 
 /** Adapted from the five TRX guides supplied by the owner; see docs/references/trx/README.md. */
 export const TRX_GUIDES: Record<string, ExerciseGuide> = {

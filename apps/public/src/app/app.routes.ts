@@ -1,5 +1,7 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { Router } from '@angular/router';
+import { RedirectCommand, Router, type ResolveFn } from '@angular/router';
+import { Meta, Title } from '@angular/platform-browser';
+import type { Exercise } from '@all-in-one/applets/health/contracts';
 import {
   LANDING_GOAL_COOKIE,
   LANDING_PATHS,
@@ -9,7 +11,40 @@ import { inject, PLATFORM_ID } from '@angular/core';
 import { AioLocale } from '@all-in-one/ui';
 import { GOAL_LANDINGS } from './pages/goal-landing-data';
 import type { Route } from '@angular/router';
-import { faqStructuredData, pageSeo, SITE_STRUCTURED_DATA } from './seo';
+import {
+  applySeo,
+  faqStructuredData,
+  pageSeo,
+  SITE_STRUCTURED_DATA,
+} from './seo';
+
+/** The exercise of `exercises/:slug` with its title and SEO tags; an unknown slug gets the 404 page. */
+const exerciseResolver: ResolveFn<Exercise | RedirectCommand> = async (
+  route,
+) => {
+  const document = inject(DOCUMENT);
+  const meta = inject(Meta);
+  const title = inject(Title);
+  const locale = inject(AioLocale);
+  const router = inject(Router);
+  const data = await import('./pages/exercise-data');
+  const slug = route.paramMap.get('slug') ?? '';
+  const exercise = data.EXERCISE_PAGES.find((e) => e.slug === slug);
+  if (!exercise)
+    return new RedirectCommand(router.parseUrl('/not-found'), {
+      skipLocationChange: true,
+    });
+  title.setTitle(locale.text(data.exerciseTitle(exercise)));
+  applySeo(
+    document,
+    meta,
+    `/${data.exercisePath(slug)}`,
+    data.exerciseDescription(exercise),
+    data.exerciseTitle(exercise),
+    data.exerciseStructuredData(exercise),
+  );
+  return exercise;
+};
 
 export const appRoutes: Route[] = [
   {
@@ -145,6 +180,26 @@ export const appRoutes: Route[] = [
     },
     loadComponent: () =>
       import('./pages/recurring-task-or-habit').then((m) => m.TaskOrHabit),
+  },
+  {
+    path: 'exercises',
+    title: () => inject(AioLocale).text('آموزش حرکات ورزشی با ویدیو'),
+    resolve: {
+      seo: pageSeo(
+        '/exercises',
+        'آموزش حرکات ورزشی با ویدیو | Poshtetgarm',
+        'روش درست حرکات ورزشی در خانه، با TRX، دمبل و دستگاه؛ با ویدیو، اشتباه‌های رایج و حرکت‌های جایگزین.',
+      ),
+    },
+    loadComponent: () =>
+      import('./pages/exercises').then((m) => m.ExercisesPage),
+  },
+  {
+    // One prerendered page per catalog exercise (app.routes.server.ts lists the slugs). The catalog is loaded
+    // lazily so its text stays out of the main bundle.
+    path: 'exercises/:slug',
+    resolve: { exercise: exerciseResolver },
+    loadComponent: () => import('./pages/exercise').then((m) => m.ExercisePage),
   },
   {
     path: '**',

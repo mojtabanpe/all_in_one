@@ -2,10 +2,10 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import type { PrismaService } from '@all-in-one/api/db';
 import type { HealthService } from './health.service';
 import { TrainingService } from './training.service';
-import { EXERCISES } from './exercise-catalog';
-import { TRX_GUIDES } from './trx-catalog';
 import {
   buildRoutine,
+  EXERCISE_CATALOG as EXERCISES,
+  TRX_GUIDES,
   type GenerateRoutineInput,
 } from '@all-in-one/applets/health/contracts';
 
