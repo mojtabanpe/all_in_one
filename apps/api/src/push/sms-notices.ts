@@ -17,6 +17,7 @@ import {
   zonedInstant,
 } from '@all-in-one/applets/planner/contracts';
 import { BillingService } from '../billing/billing.service';
+import { LOCAL_DEVICE_ACTIVE_DAYS } from './push.service';
 
 const DAY = 86_400_000;
 /** Older accounts are past every notice; this bounds the scan. */
@@ -68,6 +69,14 @@ export class SmsNotices implements OnModuleInit, OnModuleDestroy {
           phoneVerifiedAt: { not: null },
           createdAt: { gte: new Date(now.getTime() - WINDOW_DAYS * DAY) },
           pushSubscriptions: { none: {} },
+          // An Android app with reminders on is reachable without SMS (directive 180).
+          localReminderDevices: {
+            none: {
+              lastAt: {
+                gte: new Date(now.getTime() - LOCAL_DEVICE_ACTIVE_DAYS * DAY),
+              },
+            },
+          },
           OR: [
             { progressNotification: null },
             { progressNotification: { sms: true } },

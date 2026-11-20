@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Module,
   Param,
   Post,
@@ -29,7 +30,8 @@ import {
   LOCAL_SCHEDULE_LIMIT,
   type LocalScheduleQuery,
 } from '@all-in-one/shared/schemas';
-import { PushService } from './push.service';
+import { PushService, type LocalReminderClient } from './push.service';
+import { storeFromUserAgent } from '../in-app-notifications';
 import { SmsNotices } from './sms-notices';
 import { TrialEndingPush } from './trial-ending';
 
@@ -61,19 +63,37 @@ class PushController {
     return this.push.updateProgressSettings(user.id, input);
   }
   /** Upcoming timed reminders for the Android app to schedule on the device (Google push is blocked in Iran). */
+  /** The app asks only while its reminders are on, so each call also records the device (directive 180). */
   @Get('local-schedule')
   async localSchedule(
     @CurrentUser() user: AuthUser,
     @Query({ schema: localScheduleQuerySchema }) query: LocalScheduleQuery,
+    @Headers('user-agent') userAgent?: string,
   ) {
     const language = query.language ?? 'fa';
+    // Defaults first, so the first schedule already holds the default reminders.
+    await this.push.ensureDefaultReminders(user.id);
     const [items, trial] = await Promise.all([
       this.push.localSchedule(user.id, language),
       this.trialEnding.localReminder(user.id, language).catch(() => null),
     ]);
-    return (trial ? [...items, trial] : items)
+    const schedule = (trial ? [...items, trial] : items)
       .sort((a, b) => a.at - b.at)
       .slice(0, LOCAL_SCHEDULE_LIMIT);
+    await this.push.recordLocalDevice(
+      user.id,
+      localClient(userAgent),
+      schedule.length,
+    );
+    return schedule;
+  }
+  /** Reminders turned off in the Android app. */
+  @Delete('local-device')
+  removeLocalDevice(
+    @CurrentUser() user: AuthUser,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    return this.push.removeLocalDevice(user.id, localClient(userAgent));
   }
   @Get('weekly-progress')
   weeklyProgress(@CurrentUser() user: AuthUser) {
@@ -122,6 +142,10 @@ class PushController {
   ) {
     return this.push.test(user.id, input.endpoint);
   }
+}
+/** Store builds name themselves in the user agent (directive 120); any other caller is the direct APK. */
+function localClient(userAgent: string | undefined): LocalReminderClient {
+  return storeFromUserAgent(userAgent) ?? 'direct_apk';
 }
 @Module({
   imports: [AuthModule, PrismaModule, PlannerApiModule],

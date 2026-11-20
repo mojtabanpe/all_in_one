@@ -13,6 +13,7 @@ function setup(
     age?: number;
     goal?: string | null;
     completed?: boolean;
+    localDevice?: boolean;
   } = {},
 ) {
   const db = {
@@ -37,6 +38,11 @@ function setup(
       }),
     },
     pushSubscription: { findFirst: vi.fn().mockResolvedValue(null) },
+    localReminderDevice: {
+      findFirst: vi
+        .fn()
+        .mockResolvedValue(over.localDevice ? { userId: 'u' } : null),
+    },
     telegramLink: { findUnique: vi.fn().mockResolvedValue(null) },
     plannerTask: { findFirst: vi.fn().mockResolvedValue(null) },
     healthProfile: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -78,6 +84,12 @@ describe('in-app prompts (hard steps done in a bottom sheet)', () => {
 
   it('never asks again after a prompt of that kind, and moves to the next step', async () => {
     const { prompts, created } = setup({ used: ['prompt:push'] });
+    await prompts.offer('u', now, active(3));
+    expect(created().map((c) => c.key)).toEqual(['prompt:telegram']);
+  });
+
+  it('does not offer reminders to an Android app that already has them on', async () => {
+    const { prompts, created } = setup({ localDevice: true });
     await prompts.offer('u', now, active(3));
     expect(created().map((c) => c.key)).toEqual(['prompt:telegram']);
   });

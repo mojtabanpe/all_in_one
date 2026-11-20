@@ -40,6 +40,10 @@ export function reminderOffset(value: string): number | null {
   const minutes = reminderMinutesBefore(value);
   return minutes === null ? null : -minutes * 60000;
 }
+/** A device that fetched its schedule within this many days still has reminders on (directive 180). */
+export const LOCAL_DEVICE_ACTIVE_DAYS = 14;
+export type LocalReminderClient = 'bazaar' | 'myket' | 'direct_apk';
+
 const PROGRESS_FIELDS = {
   firstWeek: true,
   weekly: true,
@@ -214,7 +218,7 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
     });
     return settings
       ? { enabled: settings.enabled, time: settings.time }
-      : { enabled: false, time: '20:00' };
+      : { enabled: true, time: '20:00' };
   }
   async updateReviewSettings(
     userId: string,
@@ -236,13 +240,66 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
         where: { userId },
         select: PROGRESS_FIELDS,
       })) ?? {
-        firstWeek: false,
-        weekly: false,
-        dailyTasks: false,
+        firstWeek: true,
+        weekly: true,
+        dailyTasks: true,
         dailyTasksTime: DAILY_TASKS_DEFAULT_TIME,
         sms: true,
       }
     );
+  }
+
+  /**
+   * Reminders are on by default (directive 180): the first device of an account stores the defaults (column
+   * defaults: all on), so the senders, which read stored rows, include it. A choice the account already saved is
+   * never changed.
+   */
+  async ensureDefaultReminders(userId: string) {
+    await Promise.all([
+      this.db.reviewReminderSetting.createMany({
+        data: [{ userId }],
+        skipDuplicates: true,
+      }),
+      this.db.progressNotificationSetting.createMany({
+        data: [{ userId }],
+        skipDuplicates: true,
+      }),
+    ]);
+  }
+
+  /** The Android app fetched its schedule: it has reminders on (the server never sees local notifications). */
+  async recordLocalDevice(
+    userId: string,
+    client: LocalReminderClient,
+    reminders: number,
+    now = new Date(),
+  ) {
+    await this.db.localReminderDevice.upsert({
+      where: { userId_client: { userId, client } },
+      create: { userId, client, reminders, firstAt: now, lastAt: now },
+      update: { reminders, lastAt: now },
+    });
+  }
+  async removeLocalDevice(userId: string, client: LocalReminderClient) {
+    await this.db.localReminderDevice.deleteMany({ where: { userId, client } });
+    return { ok: true };
+  }
+  /** A web/native push subscription or an Android app that scheduled reminders recently. */
+  async hasReminderDevice(userId: string, now = new Date()) {
+    const since = new Date(
+      now.getTime() - LOCAL_DEVICE_ACTIVE_DAYS * 86_400_000,
+    );
+    const [push, local] = await Promise.all([
+      this.db.pushSubscription.findFirst({
+        where: { userId },
+        select: { id: true },
+      }),
+      this.db.localReminderDevice.findFirst({
+        where: { userId, lastAt: { gte: since } },
+        select: { userId: true },
+      }),
+    ]);
+    return !!(push || local);
   }
 
   /** Fields an older client does not send keep their stored value. */
@@ -609,6 +666,7 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
       create: data,
       update: data,
     });
+    await this.ensureDefaultReminders(userId);
     return { ok: true };
   }
   async subscribeNative(userId: string, input: NativePushInput) {
@@ -642,6 +700,7 @@ export class PushService implements OnModuleInit, OnModuleDestroy {
       create: data,
       update: data,
     });
+    await this.ensureDefaultReminders(userId);
     return { ok: true, endpoint };
   }
   async remove(userId: string, endpoint: string) {

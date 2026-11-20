@@ -80,6 +80,9 @@ describe('informational account SMS', () => {
       phone: { not: null },
       phoneVerifiedAt: { not: null },
       pushSubscriptions: { none: {} },
+      localReminderDevices: {
+        none: { lastAt: { gte: new Date(now.getTime() - 14 * 86_400_000) } },
+      },
       OR: [
         { progressNotification: null },
         { progressNotification: { sms: true } },

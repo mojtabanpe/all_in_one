@@ -61,3 +61,62 @@ describe('localScheduleInterceptor', () => {
     expect(changed).not.toHaveBeenCalled();
   });
 });
+
+describe('NativePush local reminders on by default (directive 180)', () => {
+  let backend: HttpTestingController;
+  let calls: string[];
+  let enabled: boolean;
+  beforeEach(() => {
+    localStorage.clear();
+    calls = [];
+    enabled = false;
+    window.PoshtetgarmNative = {
+      request: vi.fn(async (method: string) => {
+        calls.push(method);
+        if (method === 'enable') enabled = true;
+        if (method === 'disable') enabled = false;
+        return { enabled, platform: 'ANDROID' as const, local: true };
+      }),
+    };
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: AioLocale, useValue: { language: () => 'fa' } },
+      ],
+    });
+    backend = TestBed.inject(HttpTestingController);
+  });
+  afterEach(() => {
+    delete window.PoshtetgarmNative;
+    localStorage.clear();
+  });
+  const flushSchedule = async () => {
+    await new Promise((resolve) => setTimeout(resolve));
+    for (const req of backend.match((r) =>
+      r.url.endsWith('/push/local-schedule'),
+    ))
+      req.flush([]);
+    await new Promise((resolve) => setTimeout(resolve));
+  };
+
+  it('turns the reminders on by itself once, then leaves the choice to the account page', async () => {
+    const push = TestBed.inject(NativePush);
+    push.setUser('u1');
+    await Promise.all([push.sync(), flushSchedule()]);
+    expect(calls.filter((m) => m === 'enable')).toHaveLength(1);
+    expect(push.enabled()).toBe(true);
+
+    const off = push.disconnect();
+    await new Promise((resolve) => setTimeout(resolve));
+    backend.expectOne((r) => r.url.endsWith('/push/local-device')).flush({});
+    await off;
+    expect(push.enabled()).toBe(false);
+
+    push.setUser(null);
+    push.setUser('u1');
+    await Promise.all([push.sync(), flushSchedule()]);
+    expect(calls.filter((m) => m === 'enable')).toHaveLength(1);
+    expect(push.enabled()).toBe(false);
+  });
+});

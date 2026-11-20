@@ -23,6 +23,12 @@ describe('Native push', () => {
         upsert: vi.fn().mockResolvedValue({}),
         deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
+      reviewReminderSetting: {
+        createMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      progressNotificationSetting: {
+        createMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
     };
     const service = new PushService(
       db as unknown as PrismaService,
@@ -410,7 +416,7 @@ describe('language review reminders', () => {
     const send = vi.spyOn(service, 'send').mockResolvedValue(true);
     return { service, send, db, tasks };
   }
-  it('validates 24-hour times and defaults to off without writing settings', async () => {
+  it('validates 24-hour times and defaults to on without writing settings', async () => {
     const { service, db } = fixture();
     expect(
       reviewReminderSchema.safeParse({ enabled: true, time: '24:00' }).success,
@@ -419,7 +425,7 @@ describe('language review reminders', () => {
       reviewReminderSchema.safeParse({ enabled: true, time: '09:30' }).success,
     ).toBe(true);
     expect(await service.reviewSettings('u1')).toEqual({
-      enabled: false,
+      enabled: true,
       time: '20:00',
     });
     expect(db.reviewReminderSetting.upsert).not.toHaveBeenCalled();
@@ -794,12 +800,12 @@ describe('daily tasks digest', () => {
     expect(digests(send)).toHaveLength(2);
   });
 
-  it('defaults to off and keeps fields an older client does not send', async () => {
+  it('defaults to on and keeps fields an older client does not send', async () => {
     const { db, service } = setup([]);
     expect(await service.progressSettings('u1')).toEqual({
-      firstWeek: false,
-      weekly: false,
-      dailyTasks: false,
+      firstWeek: true,
+      weekly: true,
+      dailyTasks: true,
       dailyTasksTime: '10:00',
       sms: true,
     });
@@ -929,5 +935,91 @@ describe('Local schedule for the Android app', () => {
     expect(items.every((i) => i.url.startsWith('/app/'))).toBe(true);
     expect(items.length).toBeLessThanOrEqual(60);
     expect([...items].sort((a, b) => a.at - b.at)).toEqual(items);
+  });
+});
+
+describe('Reminders on by default (directive 180)', () => {
+  function setup() {
+    const db = {
+      reviewReminderSetting: {
+        findUnique: vi.fn().mockResolvedValue(null),
+        createMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      progressNotificationSetting: {
+        findUnique: vi.fn().mockResolvedValue(null),
+        createMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      pushSubscription: { findFirst: vi.fn().mockResolvedValue(null) },
+      localReminderDevice: {
+        upsert: vi.fn().mockResolvedValue({}),
+        deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+        findFirst: vi.fn().mockResolvedValue(null),
+      },
+    };
+    const service = new PushService(
+      db as unknown as PrismaService,
+      new ConfigService({}),
+      {} as TasksService,
+    );
+    return { db, service };
+  }
+  it('shows every reminder as on for an account that saved no choice', async () => {
+    const { service } = setup();
+    expect(await service.reviewSettings('u1')).toEqual({
+      enabled: true,
+      time: '20:00',
+    });
+    expect(await service.progressSettings('u1')).toMatchObject({
+      firstWeek: true,
+      weekly: true,
+      dailyTasks: true,
+      dailyTasksTime: '10:00',
+    });
+  });
+  it('stores the defaults once and never overwrites a saved choice', async () => {
+    const { db, service } = setup();
+    await service.ensureDefaultReminders('u1');
+    expect(db.reviewReminderSetting.createMany).toHaveBeenCalledWith({
+      data: [{ userId: 'u1' }],
+      skipDuplicates: true,
+    });
+    expect(db.progressNotificationSetting.createMany).toHaveBeenCalledWith({
+      data: [{ userId: 'u1' }],
+      skipDuplicates: true,
+    });
+  });
+  it('records the Android build that scheduled reminders, without a device identifier', async () => {
+    const { db, service } = setup();
+    const now = new Date('2026-11-20T08:00:00Z');
+    await service.recordLocalDevice('u1', 'bazaar', 12, now);
+    expect(db.localReminderDevice.upsert).toHaveBeenCalledWith({
+      where: { userId_client: { userId: 'u1', client: 'bazaar' } },
+      create: {
+        userId: 'u1',
+        client: 'bazaar',
+        reminders: 12,
+        firstAt: now,
+        lastAt: now,
+      },
+      update: { reminders: 12, lastAt: now },
+    });
+    await service.removeLocalDevice('u1', 'bazaar');
+    expect(db.localReminderDevice.deleteMany).toHaveBeenCalledWith({
+      where: { userId: 'u1', client: 'bazaar' },
+    });
+  });
+  it('counts a recent Android schedule as a reminder device', async () => {
+    const { db, service } = setup();
+    const now = new Date('2026-11-20T08:00:00Z');
+    expect(await service.hasReminderDevice('u1', now)).toBe(false);
+    db.localReminderDevice.findFirst.mockResolvedValue({ userId: 'u1' });
+    expect(await service.hasReminderDevice('u1', now)).toBe(true);
+    expect(db.localReminderDevice.findFirst).toHaveBeenCalledWith({
+      where: {
+        userId: 'u1',
+        lastAt: { gte: new Date(now.getTime() - 14 * 86_400_000) },
+      },
+      select: { userId: true },
+    });
   });
 });

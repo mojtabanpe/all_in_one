@@ -917,3 +917,14 @@ Rules:
      source. `GEMINI.md` only imports it, just as `CLAUDE.md` does. Keep the verified result, remaining work, and next
      authorized step in the relevant roadmap and its index. Use that record when resuming in another agent. Follow
      directive 124 for pushing.
+
+180. **Reminders are on by default (2026-11-20).** The owner asked «نمیشه اعلان دیفالت روشن باشه و اگه کسی خواست بره
+     خاموش کنه» and then chose «همه روشن». The Android app (shell 1.0.6+, local reminders of 175) turns its reminders on
+     by itself once per device after sign-in (Android 13+ shows the system permission dialog once); after that only the
+     account page turns them off or on, and turning them off is never undone automatically. The morning digest (10:00),
+     the 20:00 card review (only with cards due), the Saturday report and the first-week nudges default to on
+     (column defaults; the first reminder device of an account stores them, a saved choice is never changed).
+     Browsers, the PWA and iPhone still need the user's tap: browsers forbid permission without one. Each Android
+     schedule fetch is recorded in `local_reminder_devices` (build and times only, no device identifier); a device seen
+     within 14 days counts as a reminder device, so the «turn on reminders» sheet and the informational SMS of 150
+     skip it. The admin dashboard shows these devices by build.

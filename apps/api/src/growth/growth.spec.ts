@@ -163,7 +163,8 @@ describe('Growth data boundaries', () => {
       ])
       .mockResolvedValueOnce([{ day: 1, eligible: 2n, returned: 1n }])
       .mockResolvedValueOnce([])
-      .mockResolvedValueOnce([{ value: 'direct_apk', accounts: 3n }]);
+      .mockResolvedValueOnce([{ value: 'direct_apk', accounts: 3n }])
+      .mockResolvedValueOnce([{ client: 'bazaar', accounts: 4n, active: 2n }]);
     const summary = await new GrowthService({
       $queryRaw: query,
     } as never).summary();
@@ -226,6 +227,7 @@ describe('Growth data boundaries', () => {
         notifyDeclinedVisitors: 0,
       },
       signupClients: [{ client: 'direct_apk', accounts: 3 }],
+      reminderDevices: [{ client: 'bazaar', accounts: 4, activeAccounts: 2 }],
       channels: [],
     });
   });

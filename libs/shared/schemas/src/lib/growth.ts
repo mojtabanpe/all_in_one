@@ -162,6 +162,15 @@ export interface GrowthSummary {
   };
   /** New customer accounts in the window by the app or browser they signed up in; `null` = not recorded. */
   signupClients: { client: string | null; accounts: number }[];
+  /**
+   * Customer accounts whose Android app has reminders on, by build (`bazaar`, `myket`, `direct_apk`);
+   * `activeAccounts` fetched their schedule in the last 7 days.
+   */
+  reminderDevices: {
+    client: string;
+    accounts: number;
+    activeAccounts: number;
+  }[];
   channels: GrowthChannel[];
 }
 

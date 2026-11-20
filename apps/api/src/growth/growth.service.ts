@@ -577,6 +577,16 @@ export class GrowthService {
         AND "createdAt" < (((${until}::date + 1)::timestamp AT TIME ZONE 'Asia/Tehran') AT TIME ZONE 'UTC')
       GROUP BY 1 ORDER BY 2 DESC
     `;
+    // Android apps with reminders on, by build: each schedule fetch is recorded (directive 180).
+    const deviceRows = await this.prisma.$queryRaw<
+      { client: string; accounts: bigint; active: bigint }[]
+    >`
+      SELECT d.client, COUNT(*) AS accounts,
+        COUNT(*) FILTER (WHERE d."lastAt" >= now() - INTERVAL '7 days') AS active
+      FROM local_reminder_devices d JOIN users u ON u.id = d."userId"
+      WHERE u.role = 'CUSTOMER'
+      GROUP BY 1 ORDER BY 2 DESC
+    `;
     const bucketCount = (bucket: string) =>
       Number(onboarding.find((row) => row.bucket === bucket)?.accounts ?? 0);
     return {
@@ -635,6 +645,11 @@ export class GrowthService {
       signupClients: clientRows.map((row) => ({
         client: row.value,
         accounts: Number(row.accounts),
+      })),
+      reminderDevices: deviceRows.map((row) => ({
+        client: row.client,
+        accounts: Number(row.accounts),
+        activeAccounts: Number(row.active),
       })),
       channels: channelRows.map((row) => ({
         source: row.source,

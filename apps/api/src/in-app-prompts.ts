@@ -9,6 +9,7 @@ import {
 } from '@all-in-one/shared/schemas';
 import { BillingService } from './billing/billing.service';
 import { TelegramService } from './telegram/telegram.service';
+import { LOCAL_DEVICE_ACTIVE_DAYS } from './push/push.service';
 
 /** Wait this long after any prompt before offering the next one. */
 export const PROMPT_COOLDOWN_MS = 3 * 86_400_000;
@@ -194,11 +195,17 @@ export class InAppPrompts {
     /** `review`: also turn on the daily card review reminder at this Tehran time once push works. */
     data?: { review: string },
   ): Promise<Prompt | null> {
+    const since = new Date(Date.now() - LOCAL_DEVICE_ACTIVE_DAYS * 86_400_000);
     if (
-      await this.db.pushSubscription.findFirst({
+      (await this.db.pushSubscription.findFirst({
         where: { userId },
         select: { id: true },
-      })
+      })) ||
+      // The Android app turns its reminders on by itself (directive 180).
+      (await this.db.localReminderDevice.findFirst({
+        where: { userId, lastAt: { gte: since } },
+        select: { userId: true },
+      }))
     )
       return null;
     return data

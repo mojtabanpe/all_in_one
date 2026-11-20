@@ -30,7 +30,8 @@ model PushDelivery {
 model ReviewReminderSetting {
   userId String @id @db.Uuid
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  enabled Boolean @default(false)
+  /// On by default (directive 180): sent only when the account has cards due.
+  enabled Boolean @default(true)
   time String @default("20:00") @db.VarChar(5)
   @@map("review_reminder_settings")
 }
@@ -38,10 +39,11 @@ model ReviewReminderSetting {
 model ProgressNotificationSetting {
   userId String @id @db.Uuid
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  firstWeek Boolean @default(false)
-  weekly Boolean @default(false)
+  /// All on by default (directive 180); the account page turns each off.
+  firstWeek Boolean @default(true)
+  weekly Boolean @default(true)
   /// Morning digest of today's open tasks, at a Tehran wall-clock time.
-  dailyTasks Boolean @default(false)
+  dailyTasks Boolean @default(true)
   dailyTasksTime String @default("10:00")
   /// Informational account SMS (directive 150) for accounts without a push device.
   sms Boolean @default(true)
@@ -70,4 +72,22 @@ model FocusPushTimer {
   @@index([dueAt])
   @@index([userId])
   @@map("focus_push_timers")
+}
+
+/// An Android app (shell 1.0.6+) that schedules reminders on the device (directive 175). The server never sees those
+/// notifications, so each schedule fetch is recorded here: one row per account and app build. Only the build and
+/// times are kept, never a device identifier.
+model LocalReminderDevice {
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// `bazaar`, `myket` or `direct_apk`.
+  client String @db.VarChar(16)
+  firstAt DateTime @default(now())
+  lastAt DateTime @default(now())
+  /// Reminders in the last schedule sent to the device.
+  reminders Int @default(0)
+
+  @@id([userId, client])
+  @@index([lastAt])
+  @@map("local_reminder_devices")
 }

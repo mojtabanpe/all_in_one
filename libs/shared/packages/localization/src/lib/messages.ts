@@ -5072,6 +5072,13 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['حساب‌ها', 'Accounts'],
   ['هنوز حسابی نیست.', 'No accounts yet.'],
   ['ثبت نشده', 'Not recorded'],
+  ['یادآور روشن در اپ اندروید', 'Reminders on in the Android app'],
+  [
+    'حساب‌هایی که اپ اندرویدشان یادآورها را روی گوشی زمان‌بندی کرده است. «۷ روز اخیر» یعنی اپ در این مدت برنامهٔ یادآورها را گرفته است.',
+    'Accounts whose Android app scheduled reminders on the phone. “Last 7 days” means the app fetched its reminder schedule in that time.',
+  ],
+  ['هنوز دستگاهی ثبت نشده.', 'No devices recorded yet.'],
+  ['نسخهٔ اپ', 'App build'],
   ['سلام{0}', 'Hi{0}'],
   ['کارهای امروز', "Today's tasks"],
   ['کار تازه برای امروز', 'New task for today'],

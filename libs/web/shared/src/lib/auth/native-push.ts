@@ -25,6 +25,11 @@ declare global {
 }
 /** Changes made in a burst (several requests) resync the device schedule once. */
 const LOCAL_RESYNC_DELAY_MS = 1500;
+/**
+ * Android reminders are on by default (directive 180): the app asks for them once by itself; after that, only the
+ * account page turns them on or off. Kept per device.
+ */
+const AUTO_ENABLE_KEY = 'aio-native-reminders-asked';
 /** Requests that can add, move or remove a reminder: planner, notification settings, English, the assistant. */
 const SCHEDULE_PATHS = /\/api\/(planner|push|english|assistant)\//;
 
@@ -95,6 +100,16 @@ export class NativePush {
     this.userId.set(userId);
     if (!userId) this.enabled.set(false);
   }
+  /** True only the first time on this device; storage that cannot be read never asks. */
+  private firstAsk(): boolean {
+    try {
+      if (localStorage.getItem(AUTO_ENABLE_KEY)) return false;
+      localStorage.setItem(AUTO_ENABLE_KEY, '1');
+      return true;
+    } catch {
+      return false;
+    }
+  }
   private request(method: string, data?: unknown) {
     if (!window.PoshtetgarmNative)
       throw new Error('اتصال به اپ در دسترس نیست.');
@@ -145,8 +160,13 @@ export class NativePush {
   private async syncDevice() {
     const userId = this.userId();
     try {
-      const state = await this.request('status');
+      let state = await this.request('status');
       if (this.paused || userId !== this.userId()) return;
+      if (state.local && !state.enabled && this.firstAsk()) {
+        // Android 13+ shows the system permission dialog once; older versions grant it silently.
+        state = await this.request('enable').catch(() => state);
+        if (this.paused || userId !== this.userId()) return;
+      }
       this.enabled.set(false);
       await this.register(state);
     } catch {
@@ -189,6 +209,9 @@ export class NativePush {
       await this.request('disable');
       this.local = false;
       this.enabled.set(false);
+      await firstValueFrom(
+        this.http.delete(`${this.api}/push/local-device`),
+      ).catch(() => undefined);
       return;
     }
     const endpoint =

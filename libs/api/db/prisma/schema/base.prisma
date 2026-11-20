@@ -45,6 +45,7 @@ model User {
   inAppNotifications InAppNotification[]
   focusPushTimers FocusPushTimer[]
   pushSubscriptions PushSubscription[]
+  localReminderDevices LocalReminderDevice[]
   reviewReminder ReviewReminderSetting?
   progressNotification ProgressNotificationSetting?
   smsNotices SmsNotice[]

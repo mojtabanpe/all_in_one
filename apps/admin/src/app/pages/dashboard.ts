@@ -351,6 +351,48 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
             </table>
           </div>
           <h3 class="mt-4 font-semibold">
+            {{ 'یادآور روشن در اپ اندروید' | aioTranslate }}
+          </h3>
+          <p class="text-sm leading-7 text-muted-foreground">
+            {{
+              'حساب‌هایی که اپ اندرویدشان یادآورها را روی گوشی زمان‌بندی کرده است. «۷ روز اخیر» یعنی اپ در این مدت برنامهٔ یادآورها را گرفته است.'
+                | aioTranslate
+            }}
+          </p>
+          <div
+            aioTableContainer
+            class="max-w-full overflow-x-auto"
+            tabindex="0"
+            [attr.aria-label]="'یادآور روشن در اپ اندروید' | aioTranslate"
+          >
+            <table aioTable>
+              <thead aioTHead>
+                <tr aioTr>
+                  <th aioTh scope="col">{{ 'نسخهٔ اپ' | aioTranslate }}</th>
+                  <th aioTh scope="col">{{ 'حساب‌ها' | aioTranslate }}</th>
+                  <th aioTh scope="col">{{ '۷ روز اخیر' | aioTranslate }}</th>
+                </tr>
+              </thead>
+              <tbody aioTBody>
+                @for (row of growth.value().reminderDevices; track row.client) {
+                  <tr aioTr>
+                    <th aioTh scope="row">
+                      {{ signupClientLabel(row.client) | aioTranslate }}
+                    </th>
+                    <td aioTd>{{ fa(row.accounts) }}</td>
+                    <td aioTd>{{ fa(row.activeAccounts) }}</td>
+                  </tr>
+                } @empty {
+                  <tr aioTr>
+                    <td aioTd colspan="3">
+                      {{ 'هنوز دستگاهی ثبت نشده.' | aioTranslate }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <h3 class="mt-4 font-semibold">
             {{ 'کانال‌های جذب' | aioTranslate }}
           </h3>
           <p class="text-sm leading-7 text-muted-foreground">
