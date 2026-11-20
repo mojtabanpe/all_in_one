@@ -147,4 +147,38 @@ void main() {
       isFalse,
     );
   });
+
+  testWidgets('keyboard inset is applied once it settles, removed at once', (
+    tester,
+  ) async {
+    Widget at(double inset) => MediaQuery(
+      data: MediaQueryData(viewInsets: EdgeInsets.only(bottom: inset)),
+      child: const KeyboardInset(child: SizedBox.expand()),
+    );
+    double bottom() => tester
+        .widget<Padding>(
+          find
+              .descendant(
+                of: find.byType(KeyboardInset),
+                matching: find.byType(Padding),
+              )
+              .first,
+        )
+        .padding
+        .resolve(TextDirection.ltr)
+        .bottom;
+
+    await tester.pumpWidget(at(0));
+    for (final inset in [80.0, 160.0, 240.0, 300.0]) {
+      await tester.pumpWidget(at(inset));
+      expect(bottom(), 0, reason: 'no resize while the keyboard animates');
+    }
+    await tester.pump(KeyboardInset.settle);
+    expect(bottom(), 300);
+    await tester.pumpWidget(at(200));
+    expect(bottom(), 0, reason: 'closing gives the space back in one step');
+    await tester.pumpWidget(at(0));
+    await tester.pump(KeyboardInset.settle);
+    expect(bottom(), 0);
+  });
 }

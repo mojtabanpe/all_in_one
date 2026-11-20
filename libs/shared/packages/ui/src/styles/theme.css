@@ -1240,3 +1240,16 @@ textarea::placeholder {
   color: var(--placeholder);
   opacity: 1;
 }
+
+/* Unlayered so it wins over the utility classes (`flex`, `fixed`) on these elements. */
+/* While the on-screen keyboard is up (AioKeyboard), the floating nav, its
+   scrim and the assistant button would sit right above the keyboard, over
+   the field being typed in: they step aside until the keyboard closes. */
+html[data-keyboard='open'] .aio-bottom-navigation,
+html[data-keyboard='open'] .aio-bottom-scrim,
+html[data-keyboard='open'] .aio-floating-assistant {
+  display: none;
+}
+html[data-keyboard='open'] :is(input, textarea, [contenteditable]) {
+  scroll-margin-block: 1rem;
+}

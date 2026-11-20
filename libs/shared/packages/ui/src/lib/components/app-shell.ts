@@ -6,6 +6,7 @@ import { HlmSidebarImports, HlmSidebarService } from '@spartan-ng/helm/sidebar';
 import { AioBottomNav, type AioNavItem } from './bottom-nav';
 import { AioConfirmHost } from './dialog';
 import { AioIcon } from './icon';
+import { AioKeyboard } from './keyboard';
 
 /**
  * App layout: spartan sidebar (start side, floating, fully closable: the header
@@ -153,6 +154,9 @@ import { AioIcon } from './icon';
   `,
 })
 export class AioAppShell {
+  constructor() {
+    inject(AioKeyboard).start();
+  }
   private readonly sidebar = inject(HlmSidebarService);
   /** Desktop sidebar closed: the header shows the name and the open button. */
   protected readonly collapsed = computed(

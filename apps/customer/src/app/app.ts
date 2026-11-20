@@ -14,6 +14,7 @@ import {
   AioDialogActions,
   AioDialogBody,
   AioToaster,
+  AioKeyboard,
   AioLocale,
   AioTranslate,
 } from '@all-in-one/ui';
@@ -151,6 +152,7 @@ export class App {
   constructor() {
     inject(GrowthAnalytics).startClientTracking();
     inject(ReferralCapture).start();
+    inject(AioKeyboard).start();
     const router = inject(Router);
     // The service worker only focuses the open window (navigating first loses the
     // click's focus permission), so the running app routes to the notification here.
