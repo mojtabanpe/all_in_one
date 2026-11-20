@@ -745,6 +745,13 @@ Claim checked against the code: the assistant has `batch_create_tasks` / `create
   under the app part (episode 1 has sound throughout). The owner deleted the Reel from Instagram and the Telegram
   post. Rebuilt as `poshtetgarm-ba-ye-jomle-2-reel-sound.mp4` (local): the shots' ambient sound, a planner music bed
   from `audio.mjs` (quiet under the shots, louder under the app part) and the end card's sound; levels close to
-  episode 1. `TODO` owner review, then republication only on the owner's word.
+  episode 1. Owner: «بله، منتشر کن».
+- `DONE` Republished with sound. Drive file `Poshtetgarm_Ba_Ye_Jomle_2_Reel.mp4` replaced in place (same id); anonymous
+  download returned 206 `video/mp4` with SHA-256 `95af06dc0be7844fff23bdd7291352a9b2479c5093f94ad09728046d98621fef`
+  (6,649,667 bytes). Instagram: Windsor `create_video_post`, same caption, `share_to_feed=true`, `thumb_offset=1600`
+  (Windsor refused an identical repeat of the deleted post's request), 2026-11-20 15:49:09 Tehran:
+  [Reel](https://www.instagram.com/reel/Df9o3EjE3wO/), media `18133999339877267`; read-back matched ID, permalink, exact
+  caption and `REELS`. Telegram: `sendVideo` to `@poshtetgarm`, message 10, 15:49:38 Tehran. The silent posts (media
+  `18100205603411196`, message 9) were deleted by the owner.
 - `VERIFY` (after republication) views/reach against episode 1 at equal age, and Bazaar/Myket signups and first planner
   tasks in the 3 days after vs before.
