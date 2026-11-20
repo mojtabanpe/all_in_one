@@ -121,9 +121,16 @@ export class AioPullRefresh {
       if (root.dataset['keyboard'] === 'open') return false;
       if (document.querySelector(OPEN_OVERLAY)) return false;
       const target = event.target instanceof Element ? event.target : null;
-      if (!target || isTextEntry(target.closest('input, textarea, [contenteditable]')))
+      if (
+        !target ||
+        isTextEntry(target.closest('input, textarea, [contenteditable]'))
+      )
         return false;
-      for (let el: Element | null = target; el && el !== root; el = el.parentElement) {
+      for (
+        let el: Element | null = target;
+        el && el !== root;
+        el = el.parentElement
+      ) {
         if (el.scrollTop > 0 && el.scrollHeight > el.clientHeight) return false;
       }
       return true;
@@ -157,7 +164,9 @@ export class AioPullRefresh {
           this.dragging.set(true);
         }
         if (event.cancelable) event.preventDefault();
-        this.pull.set(Math.min(PULL_REFRESH_MAX_PX, Math.max(0, dy * RESISTANCE)));
+        this.pull.set(
+          Math.min(PULL_REFRESH_MAX_PX, Math.max(0, dy * RESISTANCE)),
+        );
       },
       { passive: false, signal: listen },
     );

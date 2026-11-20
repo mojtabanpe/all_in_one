@@ -24,14 +24,21 @@ function touch(type: string, target: Element, y: number, x = 100) {
 function pull(target: Element, distance: number, x = 0) {
   touch('touchstart', target, 100);
   for (let step = 1; step <= 5; step++) {
-    touch('touchmove', target, 100 + (distance * step) / 5, 100 + (x * step) / 5);
+    touch(
+      'touchmove',
+      target,
+      100 + (distance * step) / 5,
+      100 + (x * step) / 5,
+    );
   }
   touch('touchend', target, 100 + distance);
 }
 
 describe('AioPullRefresh', () => {
   afterEach(() => {
-    document.querySelectorAll('[data-test-overlay]').forEach((el) => el.remove());
+    document
+      .querySelectorAll('[data-test-overlay]')
+      .forEach((el) => el.remove());
     Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 });
   });
 
@@ -59,7 +66,10 @@ describe('AioPullRefresh', () => {
 
   it('does nothing while the page is scrolled', () => {
     const { host, page } = setup();
-    Object.defineProperty(window, 'scrollY', { configurable: true, value: 120 });
+    Object.defineProperty(window, 'scrollY', {
+      configurable: true,
+      value: 120,
+    });
     pull(page, 200);
     expect(host.count).toBe(0);
   });

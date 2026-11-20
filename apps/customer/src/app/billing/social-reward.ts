@@ -1,5 +1,12 @@
 import { HttpClient, httpResource } from '@angular/common/http';
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import {
   billingRewardRequestSchema,
@@ -86,7 +93,9 @@ import {
           >
             {{ openLabel() | aioTranslate }}
           </a>
-          @if (o.campaign === 'TELEGRAM_JOIN' && o.telegramLinked && !manual()) {
+          @if (
+            o.campaign === 'TELEGRAM_JOIN' && o.telegramLinked && !manual()
+          ) {
             <p class="text-muted-foreground text-sm">
               {{
                 'بعد از عضویت در کانال، دکمهٔ زیر را بزن؛ ربات عضویتت را بررسی می‌کند و هفتهٔ هدیه همان لحظه اضافه می‌شود.'

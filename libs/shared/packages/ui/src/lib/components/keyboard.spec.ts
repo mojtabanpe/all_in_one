@@ -10,9 +10,9 @@ describe('isTextEntry', () => {
     expect(isTextEntry(document.createElement('textarea'))).toBe(true);
     expect(isTextEntry(input('checkbox'))).toBe(false);
     expect(isTextEntry(input('submit'))).toBe(false);
-    expect(
-      isTextEntry(Object.assign(input('text'), { readOnly: true })),
-    ).toBe(false);
+    expect(isTextEntry(Object.assign(input('text'), { readOnly: true }))).toBe(
+      false,
+    );
     expect(isTextEntry(document.createElement('button'))).toBe(false);
     expect(isTextEntry(null)).toBe(false);
   });
@@ -42,7 +42,10 @@ describe('AioKeyboard', () => {
     vi.advanceTimersByTime(200);
     expect(keyboard.open()).toBe(true);
     expect(document.documentElement.dataset['keyboard']).toBe('open');
-    expect(reveal).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' });
+    expect(reveal).toHaveBeenCalledWith({
+      block: 'nearest',
+      inline: 'nearest',
+    });
 
     field.blur();
     height = 800;
