@@ -38,6 +38,7 @@ import {
   Assistant,
   AuthStore,
   detectGrowthClient,
+  PageRefresh,
   PushSettings,
 } from '@all-in-one/web/shared';
 import {
@@ -204,7 +205,10 @@ const TRIAL_NOTICE_DAYS = 3;
         [class.lx-stage]="assistantContext() === 'home'"
         [class.lx-brand]="assistantContext() === 'home'"
       >
-        <router-outlet />
+        <!-- Recreated when the assistant changed data, so the page loads it again. -->
+        @for (key of [pageRefresh.version()]; track key) {
+          <router-outlet />
+        }
       </div>
     </aio-app-shell>
   `,
@@ -215,6 +219,7 @@ export class Layout {
   private readonly auth = inject(AuthStore);
   private readonly router = inject(Router);
   protected readonly pwa = inject(Pwa);
+  protected readonly pageRefresh = inject(PageRefresh);
   protected readonly pendingRoute = toSignal(
     this.router.events.pipe(
       filter(
