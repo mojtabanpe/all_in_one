@@ -92,6 +92,22 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 };
 
 /** Persian message for a failed api call. */
+/**
+ * The AI refused for a reason a plan fixes: no access (402), or a trial/earned day's quota used up
+ * (429 `AI_QUOTA_REACHED` with `upgrade`). The customer app opens its plan sheet for these.
+ */
+export function aiUpgradeReason(error: unknown): 'plan' | 'quota' | null {
+  if (!(error instanceof HttpErrorResponse)) return null;
+  if (error.status === 402) return 'plan';
+  if (
+    error.status === 429 &&
+    error.error?.code === 'AI_QUOTA_REACHED' &&
+    error.error.upgrade === true
+  )
+    return 'quota';
+  return null;
+}
+
 export function apiErrorMessage(
   error: unknown,
   fallback = 'خطایی رخ داد. دوباره تلاش کنید.',

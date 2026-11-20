@@ -4663,6 +4663,10 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['چقدر انجام دادی؟', 'How much did you do?'],
   ['از {0}', 'of {0}'],
   ['کامل انجام شد', 'Fully done'],
+  [
+    'سهمیهٔ امروزِ هوش مصنوعی‌ات تمام شد. با یک پلن، سقف روزانه بیشتر است و همین حالا ادامه می‌دهی؛ وگرنه فردا دوباره باز می‌شود.',
+    "Today's AI limit is used up. A plan has a higher daily limit so you can carry on now; otherwise it opens again tomorrow.",
+  ],
   ['انجام شد:', 'Done:'],
   ['ویرایش عادت', 'Edit the habit'],
   ['ساعت یادآوری', 'reminder clock'],

@@ -82,6 +82,8 @@ export class AiUsageService {
           code: 'AI_QUOTA_REACHED',
           kind,
           message: AI_QUOTA_MESSAGE[kind],
+          // Trial and earned weeks can buy a plan with higher limits: the app opens the plan sheet.
+          upgrade: tier === 'trial' || tier === 'earned',
         },
         429,
       );

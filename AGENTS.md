@@ -983,4 +983,7 @@ flashcard`; `deploy/release.sh` starts it only when `GLITCHTIP_SECRET_KEY` is in
      reply used (all of them on home when nothing matches); the assistant-only `load_tools` adds other sections when
      the model needs them. Prompt-cache hits count `AI_QUOTA_CACHED_WEIGHT` (0.1) toward the chat quota
      (`chatQuotaUnits`; cost reports still use real prices). Default daily chat limits: trial and earned 400k, paid
-     1M. Limits saved in `/admin/ai` still override them.
+     1M. Limits saved in `/admin/ai` still override them. When a trial or earned-week account reaches the daily limit
+     (owner: «اگه کاربر آزمایشی سقف رو زد میتونیم بهش باتم شیت خرید بدیم»), the 429 `AI_QUOTA_REACHED` carries
+     `upgrade: true` and the customer app opens the shared plan sheet (`AiPaywall`, reason `quota`) with a line that a
+     plan has a higher limit; paid accounts only see the message.

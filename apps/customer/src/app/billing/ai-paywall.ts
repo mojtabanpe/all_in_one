@@ -1,18 +1,22 @@
-import {
-  HttpErrorResponse,
-  type HttpInterceptorFn,
-} from '@angular/common/http';
+import type { HttpInterceptorFn } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { API_BASE_URL, GrowthAnalytics } from '@all-in-one/web/shared';
+import {
+  aiUpgradeReason,
+  API_BASE_URL,
+  GrowthAnalytics,
+} from '@all-in-one/web/shared';
 import { tap } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class AiPaywall {
   private readonly growth = inject(GrowthAnalytics);
   readonly open = signal(false);
+  /** Why it opened: no AI access, or the trial's daily AI limit used up. */
+  readonly reason = signal<'plan' | 'quota'>('plan');
 
-  show(): void {
+  show(reason: 'plan' | 'quota' = 'plan'): void {
     if (this.open()) return;
+    this.reason.set(reason);
     this.open.set(true);
     void this.growth.track('paywall_viewed');
   }
@@ -25,9 +29,9 @@ export const aiPaywallInterceptor: HttpInterceptorFn = (request, next) => {
   return next(request).pipe(
     tap({
       error: (error: unknown) => {
-        // Audio endpoints request a Blob and also receive their error body as a Blob.
-        if (error instanceof HttpErrorResponse && error.status === 402)
-          paywall.show();
+        // Audio endpoints request a Blob and also receive their error body as a Blob (402 still works).
+        const reason = aiUpgradeReason(error);
+        if (reason) paywall.show(reason);
       },
     }),
   );
