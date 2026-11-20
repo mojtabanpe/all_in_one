@@ -8,6 +8,7 @@ export * from './feedback';
 export * from './icon';
 export * from './media';
 export * from './keyboard';
+export * from './pull-refresh';
 export * from './date-input';
 export * from './form-field';
 export * from './form-errors';

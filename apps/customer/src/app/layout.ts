@@ -31,6 +31,7 @@ import {
   AioSkeletonLines,
   AioInAppNotifications,
   AioInAppNotificationHost,
+  AioPullRefresh,
   type AioInAppNotification,
 } from '@all-in-one/ui';
 import {
@@ -78,6 +79,7 @@ const TRIAL_NOTICE_DAYS = 3;
     AioSkeletonLines,
     AioInAppNotificationHost,
     AioTranslate,
+    AioPullRefresh,
   ],
   providers: [
     AioInAppNotifications,
@@ -197,15 +199,24 @@ const TRIAL_NOTICE_DAYS = 3;
           ></div>
         </div>
       }
-      <!-- The applets paint their own ambient light; the other pages get the brand's. -->
-      <div
-        class="aio-route-content"
-        [class.hidden]="!!pendingRoute()"
-        [class.lx-stage]="assistantContext() === 'home'"
-        [class.lx-brand]="assistantContext() === 'home'"
+      <!-- Pull down at the top to reload the page's data: the outlet is recreated, the shell stays. -->
+      <aio-pull-refresh
+        [disabled]="studySession()"
+        [label]="english() ? 'Refreshing' : 'در حال تازه‌سازی'"
+        (refresh)="reloadPage()"
       >
-        <router-outlet />
-      </div>
+        <!-- The applets paint their own ambient light; the other pages get the brand's. -->
+        <div
+          class="aio-route-content"
+          [class.hidden]="!!pendingRoute()"
+          [class.lx-stage]="assistantContext() === 'home'"
+          [class.lx-brand]="assistantContext() === 'home'"
+        >
+          @for (key of [pageKey()]; track key) {
+            <router-outlet />
+          }
+        </div>
+      </aio-pull-refresh>
     </aio-app-shell>
   `,
 })
@@ -215,6 +226,11 @@ export class Layout {
   private readonly auth = inject(AuthStore);
   private readonly router = inject(Router);
   protected readonly pwa = inject(Pwa);
+  /** Bumped by pull-to-refresh: recreates the routed page so its resources load again. */
+  protected readonly pageKey = signal(0);
+  protected reloadPage(): void {
+    this.pageKey.update((key) => key + 1);
+  }
   protected readonly pendingRoute = toSignal(
     this.router.events.pipe(
       filter(

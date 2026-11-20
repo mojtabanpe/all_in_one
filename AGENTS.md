@@ -231,6 +231,9 @@ origin master` and read the index and the roadmap; after work, update its status
 
 - **AppletHeader** (2026-11-02): shared title, subtitle and route navigation for all three applets, composed from Spartan button wrappers and icons in `libs/shared/packages/ui`.
 
+- **PullRefresh** (2026-11-20): `aio-pull-refresh` in `libs/shared/packages/ui`, pull-to-refresh for the customer
+  pages (directive 188), built from the `aio-icon` and `aio-spinner` wrappers in a glass circle; spartan has none.
+
 - **BottomNav** (2026-10-29): floating bottom navigation for phone sizes, in `libs/shared/packages`,
   assembled from spartan pieces (`hlmBtn`, ng-icons) inside a glass container.
 
@@ -975,3 +978,13 @@ flashcard`; `deploy/release.sh` starts it only when `GLITCHTIP_SECRET_KEY` is in
 185. **GlitchTip dashboard on `https://monitor.poshtetgarm.ir` (2026-11-20).** The owner asked for a subdomain for the GlitchTip dashboard («ساب دامین میخوام») instead of SSH-tunnel-only access (updating 184's access note). `monitor.poshtetgarm.ir` points to the server (DNS-only A record in Cloudflare, Let's Encrypt TLS, host nginx with `X-Robots-Tag: noindex, nofollow` proxying to `127.0.0.1:4340`). `deploy/compose.yml` sets `GLITCHTIP_DOMAIN: https://monitor.poshtetgarm.ir` and `ALLOWED_HOSTS: monitor.poshtetgarm.ir,localhost,127.0.0.1`, while public registration/org creation stay disabled and the API still sends events over loopback `127.0.0.1:4340`.
 
 186. **Error alerts go to the dev Telegram bot only (2026-11-20).** The owner asked that error alerts go to `poshtetgarm_develop_bot` rather than the customer bot `poshtetgarm_bot` (updating 184's Telegram alert bot). `MonitorService` uses `MONITOR_TELEGRAM_BOT_TOKEN` (never falling back to `TELEGRAM_BOT_TOKEN`), targeting `MONITOR_TELEGRAM_CHAT_ID` (comma-separated, optional) or `ADMIN` users' `telegramLink.chatId`.
+
+187. **Pull-to-refresh on the customer pages (2026-11-20).** An Android user logged a meal with the assistant and the
+     calories still showed zero until they switched tabs, and asked for pull-to-refresh («پول تو رفرش بزار»), and the
+     owner approved the custom component («Yes, build it»). In the customer layout `aio-pull-refresh` wraps the routed
+     page: pulling down at the top of home, planner, health, English, expenses or the account page recreates the
+     page's router outlet (`pageKey`), so its data loads again while the shell, header and assistant stay; the app is
+     never reloaded. It never starts while the page or an inner list is scrolled, a sheet or dialog is open, the
+     keyboard is up (`AioKeyboard`, `html[data-keyboard=open]`) or a flashcard review owns the screen, and a sideways
+     swipe cancels it. While it is mounted Chrome's own whole-page pull-reload is off (`overscroll-behavior-y:
+contain`). Works on the web, the PWA and the current Android shell without a new build.
