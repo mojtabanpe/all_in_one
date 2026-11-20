@@ -11,6 +11,12 @@ export const englishDate = (iso: string) =>
     timeZone: 'Asia/Tehran',
   }).format(new Date(iso));
 
+const AI_QUOTA_EN: Record<string, string> = {
+  chat: "Today's AI chat limit is used up. It resets tomorrow.",
+  tts: "Today's text-to-speech limit is used up. It resets tomorrow.",
+  stt: "Today's speech-to-text limit is used up. It resets tomorrow.",
+};
+
 /** Shared infrastructure can return Persian errors; never leak them into English. */
 export function englishErrorMessage(
   error: unknown,
@@ -19,6 +25,12 @@ export function englishErrorMessage(
   if (error instanceof HttpErrorResponse) {
     if (error.status === 0)
       return 'Unable to connect. Check your connection and try again.';
+    // A used-up daily AI quota is not a rate limit: say which service and when it comes back.
+    if (error.status === 429 && error.error?.code === 'AI_QUOTA_REACHED')
+      return (
+        AI_QUOTA_EN[error.error.kind as string] ??
+        "Today's AI limit is used up. It resets tomorrow."
+      );
     if (error.status === 429)
       return 'Too many requests. Please try again shortly.';
     const message = error.error?.message;

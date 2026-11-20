@@ -50,8 +50,8 @@ import {
   lucideFootprints,
   lucideGlassWater,
   lucideLanguages,
-  lucideMinus,
   lucidePencil,
+  lucidePencilLine,
   lucidePill,
   lucidePlus,
   lucideSparkles,
@@ -140,8 +140,8 @@ const emptyDraft = (): Draft => ({
       ...HABIT_ICONS,
       lucideCheck,
       lucideFlame,
-      lucideMinus,
       lucidePencil,
+      lucidePencilLine,
       lucidePlus,
     }),
   ],
@@ -270,11 +270,13 @@ const emptyDraft = (): Draft => ({
                   aioBtn
                   variant="outline"
                   size="icon"
-                  [disabled]="v === 0"
-                  [attr.aria-label]="'یکی کمتر: ' + h.name"
-                  (click)="set(h, v - 1)"
+                  class="size-11"
+                  [attr.aria-label]="
+                    ('ثبت مقدار:' | aioTranslate) + ' ' + h.name
+                  "
+                  (click)="openAmount(h)"
                 >
-                  <aio-icon name="lucideMinus" size="sm" />
+                  <aio-icon name="lucidePencilLine" size="sm" />
                 </button>
               }
               <button
@@ -319,6 +321,70 @@ const emptyDraft = (): Draft => ({
         </div>
       }
     }
+
+    <aio-dialog
+      [(open)]="amountOpen"
+      [title]="'ثبت مقدار' | aioTranslate"
+      [description]="amountHabit()?.name ?? ''"
+      contentClass="applet-planner sm:max-w-sm"
+    >
+      <ng-template aioDialogBody>
+        @if (amountHabit(); as h) {
+          <form
+            id="habit-amount-form"
+            class="flex flex-col gap-4 pb-2"
+            (submit)="$event.preventDefault(); saveAmount(h, amount())"
+          >
+            <aio-form-field
+              [label]="'چقدر انجام دادی؟' | aioTranslate"
+              controlId="habit-amount"
+            >
+              <div class="flex items-center gap-3">
+                <input
+                  aioInput
+                  id="habit-amount"
+                  type="number"
+                  min="0"
+                  max="1000"
+                  inputmode="numeric"
+                  class="min-w-0 flex-1"
+                  [value]="amount()"
+                  (input)="amount.set(toAmount($any($event.target).value))"
+                />
+                <span
+                  class="text-muted-foreground inline-flex shrink-0 items-baseline gap-1 text-sm"
+                >
+                  <span class="whitespace-nowrap">{{
+                    'از {0}' | aioTranslate: [fa(h.goal)]
+                  }}</span>
+                  @if (h.unit) {
+                    <bdi dir="auto">{{ h.unit }}</bdi>
+                  }
+                </span>
+              </div>
+            </aio-form-field>
+            <button
+              aioBtn
+              type="button"
+              variant="outline"
+              class="min-h-11"
+              (click)="saveAmount(h, h.goal)"
+            >
+              <aio-icon name="lucideCheck" size="sm" />
+              {{ 'کامل انجام شد' | aioTranslate }}
+            </button>
+          </form>
+        }
+      </ng-template>
+      <ng-template aioDialogActions>
+        <button aioBtn variant="outline" (click)="amountOpen.set(false)">
+          {{ 'انصراف' | aioTranslate }}
+        </button>
+        <button aioBtn type="submit" form="habit-amount-form">
+          {{ 'ذخیره' | aioTranslate }}
+        </button>
+      </ng-template>
+    </aio-dialog>
 
     <aio-dialog
       [(open)]="editing"
@@ -606,6 +672,10 @@ export class HabitsPage {
   );
 
   protected readonly editing = signal(false);
+  /** Typed amount for habits whose goal is more than one (e.g. 40 minutes). */
+  protected readonly amountOpen = signal(false);
+  protected readonly amountHabit = signal<PlannerHabit | null>(null);
+  protected readonly amount = signal(0);
   protected readonly saving = signal(false);
   protected readonly draft = signal<Draft>(emptyDraft());
 
@@ -676,7 +746,13 @@ export class HabitsPage {
     try {
       const saved = await this.api.checkin(h.id, { date: day, value });
       this.replace(saved);
-      if (value === h.goal && day === this.today && saved.streak > 1)
+      const before = this.value(h);
+      if (
+        before < h.goal &&
+        value >= h.goal &&
+        day === this.today &&
+        saved.streak > 1
+      )
         this.notifications.success(
           `${this.locale.number(saved.streak)} روز پیاپی! 🔥`,
         );
@@ -684,6 +760,27 @@ export class HabitsPage {
       this.replace(h);
       this.notifications.error(apiErrorMessage(error));
     }
+  }
+
+  protected openAmount(h: PlannerHabit) {
+    this.amountHabit.set(h);
+    this.amount.set(this.value(h));
+    this.amountOpen.set(true);
+  }
+
+  /** Accepts Persian/Arabic digits too; keeps the check-in limits (0–1000). */
+  protected toAmount(raw: string) {
+    const latin = raw.replace(/[۰-۹٠-٩]/g, (d) =>
+      String(d.charCodeAt(0) & 0xf),
+    );
+    const n = Math.round(Number(latin));
+    return Number.isFinite(n) ? Math.min(1000, Math.max(0, n)) : 0;
+  }
+
+  protected saveAmount(h: PlannerHabit, value: number) {
+    this.amountOpen.set(false);
+    const current = this.habits().find((x) => x.id === h.id) ?? h;
+    if (value !== this.value(current)) void this.set(current, value);
   }
 
   private replace(h: PlannerHabit) {
