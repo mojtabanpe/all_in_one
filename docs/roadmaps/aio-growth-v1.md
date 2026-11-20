@@ -729,3 +729,15 @@ Claim checked against the code: the assistant has `batch_create_tasks` / `create
   sound. Captions «کلی کار تو سرم بود…», «قبلاً: یادداشت، یادآور، یادم رفت», «حالا فقط یه جمله نوشتم», «همه‌ش با تاریخ
   و یادآور ثبت شد.». The recording has no task-list view, so the reply carries the dates. `TODO` owner review, then
   publication only on the owner's word.
+- `DONE` Owner approved the draft and caption, then said «پابلیش کن» (187). Published 2026-11-20 15:40:39 Tehran via
+  Windsor `create_video_post` to `poshtetgarm` (`17841425571593489`), `share_to_feed=true`, `thumb_offset=1500`:
+  [Reel](https://www.instagram.com/reel/Df9n6eIHOIo/), media `18100205603411196`. Separate read-back matched ID,
+  permalink, exact caption and `REELS`. File SHA-256
+  `3e8d7a706b186665bc3bbff85d36b9b3c5c318e65dfbc9a820d0aa5b6699f5c0`, 6,206,602 bytes, hosted in Drive folder `ywa`
+  (`Poshtetgarm_Ba_Ye_Jomle_2_Reel.mp4`); anonymous download returned 206 `video/mp4` with the same hash. Published at
+  15:40, not ~18:00 as planned, so its timing differs from episode 1. Caption: «لازم نیست کارهات رو یکی‌یکی وارد کنی.
+  همه‌شون رو توی یه جمله بنویس؛ Poshtetgarm با تاریخ، ساعت و یادآور ثبتشون می‌کنه. / برنامه‌ریز، فلش‌کارت و بخش سلامت
+  رایگان‌اند؛ دستیار هوش مصنوعی برای حساب تازه یک هفته رایگان است. / پشتت گرم رو در کافه‌بازار یا مایکت جست‌وجو کن.
+  #پشتت_گرم #برنامه_ریزی #مدیریت_زمان #هوش_مصنوعی #یادآور»
+- `VERIFY` views/reach against episode 1 at equal age, and Bazaar/Myket signups and first planner tasks in the 3 days
+  after vs before.
