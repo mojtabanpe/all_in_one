@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
-import { SwUpdate } from '@angular/service-worker';
+import { SwUpdate, type VersionEvent } from '@angular/service-worker';
+import { Subject } from 'rxjs';
 import {
   APP_VERSION_TOKEN,
   AppVersionState,
@@ -137,5 +138,73 @@ describe('PWA installation', () => {
     await pwa.reload();
     await pwa.reload();
     expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('triggers SW check on newer API version, activates before reload, and never blocks a ready SW reload', async () => {
+    const store = new Map<string, string>();
+    const reload = vi.fn();
+    const versionUpdates = new Subject<VersionEvent>();
+    const unrecoverable = new Subject<unknown>();
+    const checkForUpdate = vi.fn().mockResolvedValue(true);
+    const activateUpdate = vi.fn().mockResolvedValue(true);
+    const win = Object.assign(new EventTarget(), {
+      navigator: { userAgent: 'Chrome/140', maxTouchPoints: 0, onLine: true },
+      matchMedia: () => Object.assign(new EventTarget(), { matches: false }),
+      setInterval: vi.fn().mockReturnValue(1),
+      clearInterval: vi.fn(),
+      sessionStorage: {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => store.set(key, value),
+      },
+    });
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: APP_VERSION_TOKEN, useValue: '0.1.5' },
+        {
+          provide: DOCUMENT,
+          useValue: {
+            defaultView: win,
+            location: { reload },
+            visibilityState: 'visible',
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+          },
+        },
+        {
+          provide: SwUpdate,
+          useValue: {
+            isEnabled: true,
+            versionUpdates,
+            unrecoverable,
+            checkForUpdate,
+            activateUpdate,
+          },
+        },
+        { provide: GrowthAnalytics, useValue: { track: vi.fn() } },
+      ],
+    });
+    const pwa = TestBed.inject(Pwa);
+    const versionState = TestBed.inject(AppVersionState);
+
+    versionState.observe('0.1.6');
+    TestBed.tick();
+    expect(checkForUpdate).toHaveBeenCalledTimes(1);
+
+    // Reloading before VERSION_READY still checks and activates the SW before reloading.
+    await pwa.reload();
+    expect(checkForUpdate).toHaveBeenCalledTimes(2);
+    expect(activateUpdate).toHaveBeenCalledTimes(1);
+    expect(reload).toHaveBeenCalledTimes(1);
+
+    // If VERSION_READY arrives within the cooldown window, reloading is still allowed.
+    versionUpdates.next({
+      type: 'VERSION_READY',
+      currentVersion: { hash: 'old' },
+      latestVersion: { hash: 'new' },
+    });
+    expect(pwa.updateReady()).toBe(true);
+    await pwa.reload();
+    expect(activateUpdate).toHaveBeenCalledTimes(2);
+    expect(reload).toHaveBeenCalledTimes(2);
   });
 });

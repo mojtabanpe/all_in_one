@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   inject,
   Injectable,
   input,
@@ -32,6 +33,7 @@ interface InstallPromptEvent extends Event {
 }
 
 const UPDATE_CHECK_MS = 30 * 60 * 1000;
+const UPDATE_CHECK_TIMEOUT_MS = 4_000;
 
 /** Service-worker updates, the install prompt and connectivity (from Recall). */
 @Injectable({ providedIn: 'root' })
@@ -49,6 +51,7 @@ export class Pwa {
   );
   /** The cached version is broken (files evicted); only a reload helps. */
   readonly broken = signal(false);
+  readonly reloading = signal(false);
   readonly canInstall = signal(false);
   readonly offline = signal(false);
   readonly installed = signal(false);
@@ -117,6 +120,11 @@ export class Pwa {
     const check = () => {
       if (!this.offline()) this.updates.checkForUpdate().catch(() => undefined);
     };
+    effect(() => {
+      if (this.versionState.detectedVersion() && !this.swUpdateReady()) {
+        check();
+      }
+    });
     const timer = win.setInterval(check, UPDATE_CHECK_MS);
     destroy.onDestroy(() => win.clearInterval(timer));
     listen(this.document, 'visibilitychange', () => {
@@ -143,10 +151,35 @@ export class Pwa {
   }
 
   async reload() {
-    if (!this.versionState.tryClaimReload()) return;
-    if (this.swUpdateReady() && this.updates.isEnabled)
-      await this.updates.activateUpdate().catch(() => undefined);
-    this.document.location.reload();
+    if (this.reloading()) return;
+    const force = this.swUpdateReady() || this.broken();
+    if (!force && !this.versionState.tryClaimReload()) return;
+    if (force) this.versionState.recordReload();
+    this.reloading.set(true);
+    try {
+      if (this.updates.isEnabled) {
+        if (!this.swUpdateReady()) {
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          try {
+            await Promise.race([
+              this.updates.checkForUpdate().catch(() => false),
+              new Promise<false>((resolve) => {
+                timer = setTimeout(
+                  () => resolve(false),
+                  UPDATE_CHECK_TIMEOUT_MS,
+                );
+              }),
+            ]);
+          } finally {
+            if (timer !== undefined) clearTimeout(timer);
+          }
+        }
+        await this.updates.activateUpdate().catch(() => false);
+      }
+      this.document.location.reload();
+    } finally {
+      this.reloading.set(false);
+    }
   }
 
   dismissUpdate() {
@@ -253,7 +286,12 @@ export class Pwa {
               }}
             </h2>
             <div aioAlertDescription class="mt-2 flex gap-2">
-              <button aioBtn size="sm" (click)="pwa.reload()">
+              <button
+                aioBtn
+                size="sm"
+                [disabled]="pwa.reloading()"
+                (click)="pwa.reload()"
+              >
                 {{ copy('بارگذاری دوباره', 'Reload') | aioTranslate }}
               </button>
               @if (!pwa.broken()) {

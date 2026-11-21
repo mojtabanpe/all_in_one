@@ -31,13 +31,17 @@ export class AppVersionState {
   private latestVersion: string | null = null;
   private dismissedVersion: string | null = null;
 
+  /** Latest newer version announced by the API, even during post-reload cooldown. */
+  readonly detectedVersion = signal<string | null>(null);
   readonly updateAvailable = signal(false);
 
-  observe(serverVersion: string | null | undefined): void {
+  observe(serverVersion: string | null | undefined, now = Date.now()): void {
     const candidate = serverVersion?.trim();
     if (!candidate || !isNewerVersion(candidate, this.currentVersion)) return;
-    if (this.dismissedVersion === candidate) return;
     this.latestVersion = candidate;
+    this.detectedVersion.set(candidate);
+    if (this.dismissedVersion === candidate) return;
+    if (this.inReloadCooldown(now)) return;
     this.updateAvailable.set(true);
   }
 
@@ -46,25 +50,38 @@ export class AppVersionState {
     this.updateAvailable.set(false);
   }
 
+  /** Whether a version-triggered reload already happened within the cooldown window. */
+  inReloadCooldown(now = Date.now()): boolean {
+    const storage = this.storage();
+    if (!storage) return false;
+    try {
+      const last = Number(storage.getItem(RELOAD_STORAGE_KEY));
+      return (
+        Number.isFinite(last) &&
+        last > 0 &&
+        now - last >= 0 &&
+        now - last < RELOAD_COOLDOWN_MS
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  /** Records a reload timestamp so a stuck cache does not immediately re-prompt. */
+  recordReload(now = Date.now()): void {
+    const storage = this.storage();
+    if (!storage) return;
+    try {
+      storage.setItem(RELOAD_STORAGE_KEY, String(now));
+    } catch {
+      // Storage unavailable (private mode or blocked); ignore.
+    }
+  }
+
   /** Claims the reload slot if no version reload happened in the last minute. */
   tryClaimReload(now = Date.now()): boolean {
-    const storage = this.storage();
-    if (storage) {
-      try {
-        const last = Number(storage.getItem(RELOAD_STORAGE_KEY));
-        if (
-          Number.isFinite(last) &&
-          last > 0 &&
-          now - last >= 0 &&
-          now - last < RELOAD_COOLDOWN_MS
-        ) {
-          return false;
-        }
-        storage.setItem(RELOAD_STORAGE_KEY, String(now));
-      } catch {
-        // Storage unavailable (private mode or blocked); allow the manual reload.
-      }
-    }
+    if (this.inReloadCooldown(now)) return false;
+    this.recordReload(now);
     return true;
   }
 

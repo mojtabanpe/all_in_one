@@ -137,4 +137,15 @@ describe('appVersionInterceptor', () => {
     expect(state.reload(100_000 + RELOAD_COOLDOWN_MS)).toBe(true);
     expect(reload).toHaveBeenCalledTimes(2);
   });
+
+  it('suppresses re-prompting during post-reload cooldown while still recording detectedVersion', () => {
+    const { state } = setup('0.1.5');
+    state.recordReload(100_000);
+    state.observe('0.1.6', 100_000 + 5_000);
+    expect(state.detectedVersion()).toBe('0.1.6');
+    expect(state.updateAvailable()).toBe(false);
+
+    state.observe('0.1.6', 100_000 + RELOAD_COOLDOWN_MS);
+    expect(state.updateAvailable()).toBe(true);
+  });
 });
