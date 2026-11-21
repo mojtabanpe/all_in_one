@@ -3,11 +3,11 @@
 An optional VPN benefit for paid customers selected by an admin. Telegram is the only customer entry
 point. The previous manual VLESS test confirmed the Iran–foreign tunnel.
 
-| Checkpoint                               | Status      | Evidence                                                                                                                                                                              |
-| ---------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Independent runtime and 3x-ui management | DONE        | `apps/vpn` builds independently. A local HTTP smoke test against a mock panel verified auth, quota, renewal and revocation.                                                           |
-| Admin eligibility, billing and Telegram  | DONE        | The admin Users table and API require an active purchase before saving the invitation. Admin and API builds passed. Unit tests cover linking, menu eligibility, renewals and refunds. |
-| Production activation                    | IN_PROGRESS | Independent GitHub Actions workflow and production configuration prepared. Verify the runner health check and application activation.                                                 |
+| Checkpoint                               | Status | Evidence                                                                                                                                                                                                                                                                       |
+| ---------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Independent runtime and 3x-ui management | DONE   | `apps/vpn` builds independently. A local HTTP smoke test against a mock panel verified auth, quota, renewal and revocation.                                                                                                                                                    |
+| Admin eligibility, billing and Telegram  | DONE   | The admin Users table and API require an active purchase before saving the invitation. Admin and API builds passed. Unit tests cover linking, menu eligibility, renewals and refunds.                                                                                          |
+| Production activation                    | DONE   | Release `5abf2a9` on 2026-11-21. Deploy VPN run 44885375541 and app Deploy run 44885622788 succeeded. Verified the loopback listener and an authenticated, read-only request from the live API through VPN to 3x-ui. No customer Telegram account was used to verify delivery. |
 
 ## Service configuration
 
