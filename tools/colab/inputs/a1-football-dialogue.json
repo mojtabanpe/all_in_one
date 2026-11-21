@@ -1,0 +1,107 @@
+{
+  "title": "Do You Like Football?",
+  "level": "A1",
+  "speakers": {
+    "Ben": { "voice": "am_michael", "color": "#2f7d74" },
+    "Sara": { "voice": "af_heart", "color": "#e88329" }
+  },
+  "speed": 0.85,
+  "lines": [
+    {
+      "speaker": "Ben",
+      "text": "Hi, Sara! How are you?",
+      "fa": "سلام سارا! حالت چطوره؟"
+    },
+    {
+      "speaker": "Sara",
+      "text": "Hi, Ben! I'm fine, thanks. And you?",
+      "fa": "سلام بن! خوبم، ممنون. تو چطوری؟"
+    },
+    {
+      "speaker": "Ben",
+      "text": "I'm good. Do you like football?",
+      "fa": "خوبم. فوتبال دوست داری؟"
+    },
+    {
+      "speaker": "Sara",
+      "text": "Yes, I do. I love football!",
+      "fa": "آره. عاشق فوتبالم!"
+    },
+    {
+      "speaker": "Ben",
+      "text": "Me too. What is your favorite team?",
+      "fa": "منم همین‌طور. تیم مورد علاقه‌ات چیه؟"
+    },
+    {
+      "speaker": "Sara",
+      "text": "My favorite team is Barcelona. What about you?",
+      "fa": "تیم مورد علاقه‌ام بارسلوناست. تو چی؟"
+    },
+    {
+      "speaker": "Ben",
+      "text": "I like Real Madrid.",
+      "fa": "من رئال مادرید رو دوست دارم."
+    },
+    {
+      "speaker": "Sara",
+      "text": "Oh no! They are our rivals!",
+      "fa": "وای نه! اونا رقیب ما هستن!"
+    },
+    {
+      "speaker": "Ben",
+      "text": "Ha ha. Do you play football?",
+      "fa": "ها ها. خودت فوتبال بازی می‌کنی؟"
+    },
+    {
+      "speaker": "Sara",
+      "text": "Yes, I play every Friday with my friends.",
+      "fa": "آره، هر جمعه با دوستام بازی می‌کنم."
+    },
+    {
+      "speaker": "Ben",
+      "text": "Where do you play?",
+      "fa": "کجا بازی می‌کنید؟"
+    },
+    {
+      "speaker": "Sara",
+      "text": "We play in the park near my house.",
+      "fa": "توی پارک نزدیک خونه‌مون بازی می‌کنیم."
+    },
+    {
+      "speaker": "Ben",
+      "text": "What position do you play?",
+      "fa": "تو چه پستی بازی می‌کنی؟"
+    },
+    {
+      "speaker": "Sara",
+      "text": "I am a goalkeeper.",
+      "fa": "من دروازه‌بانم."
+    },
+    {
+      "speaker": "Ben",
+      "text": "Cool! I am not very good. I can't run fast.",
+      "fa": "چه باحال! من خیلی خوب نیستم. نمی‌تونم سریع بدوم."
+    },
+    {
+      "speaker": "Sara",
+      "text": "That's okay. Come and play with us on Friday!",
+      "fa": "اشکالی نداره. جمعه بیا با ما بازی کن!"
+    },
+    {
+      "speaker": "Ben",
+      "text": "Really? What time?",
+      "fa": "واقعاً؟ چه ساعتی؟"
+    },
+    {
+      "speaker": "Sara",
+      "text": "At five o'clock. Bring water and good shoes.",
+      "fa": "ساعت پنج. آب و کفش خوب بیار."
+    },
+    {
+      "speaker": "Ben",
+      "text": "Great! See you on Friday.",
+      "fa": "عالیه! جمعه می‌بینمت."
+    },
+    { "speaker": "Sara", "text": "See you, Ben!", "fa": "می‌بینمت، بن!" }
+  ]
+}
