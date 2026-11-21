@@ -1037,3 +1037,9 @@ contain`). Works on the web, the PWA and the current Android shell without a new
 196. **Copy VPN configuration in Telegram (2026-11-21).** The owner wants recipients to copy their
      VPN configuration directly from the bot message. Use Telegram's clipboard button when it fits
      and format the complete link as code so longer configurations remain copyable.
+
+197. **Search and filter on admin users (2026-11-21).** The owner asked «برای کاربران هم سرچ و فیلتر
+     بذار». `GET /api/admin/users` (`adminUsersQuerySchema`) and the admin Users page (`/users`)
+     support searching by name, email or phone (including Persian/Arabic digits and `09…` → `+989…`)
+     and filtering by role (`CUSTOMER`, `ADMIN`) and status (`paid`, `free`, `vpn_friend`,
+     `vpn_eligible`, `telegram`).
