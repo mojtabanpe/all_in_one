@@ -39,6 +39,7 @@ import {
   TelegramApi,
   TelegramError,
   type TelegramButton,
+  type TelegramCodeEntity,
   type TelegramMarkup,
 } from './telegram-api';
 import {
@@ -754,12 +755,31 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       language === 'en'
         ? `Remaining: ${gb(access.remainingBytes)} of ${gb(access.quotaBytes)} GB\nExpires: ${day}, ${time} Tehran time`
         : `${gb(access.remainingBytes)} گیگابایت از ${gb(access.quotaBytes)} گیگابایت باقی مانده\nاعتبار تا ${day}، ساعت ${time} تهران`;
-    const details =
-      access.link ??
-      (language === 'en'
-        ? 'Your VPN quota has been used up.'
-        : 'حجم وی‌پی‌ان تمام شده است.');
-    return this.reply(chatId, `${summary}\n\n${details}`);
+    const link = access.link;
+    if (!link) {
+      const depleted =
+        language === 'en'
+          ? 'Your VPN quota has been used up.'
+          : 'حجم وی‌پی‌ان تمام شده است.';
+      return this.reply(chatId, `${summary}\n\n${depleted}`);
+    }
+
+    const prefix = `${summary}\n\n`;
+    const buttons =
+      link.length <= 256
+        ? [
+            [
+              {
+                text:
+                  language === 'en' ? 'Copy VPN configuration' : 'کپی کانفیگ',
+                copy_text: { text: link },
+              },
+            ],
+          ]
+        : undefined;
+    return this.reply(chatId, prefix + link, buttons, [
+      { type: 'code', offset: prefix.length, length: link.length },
+    ]);
   }
 
   /** Runs a section action and sends what it returns; AI and other errors get the usual replies. */
@@ -1194,9 +1214,14 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async reply(chatId: bigint, text: string, markup?: TelegramMarkup) {
+  private async reply(
+    chatId: bigint,
+    text: string,
+    markup?: TelegramMarkup,
+    entities?: TelegramCodeEntity[],
+  ) {
     try {
-      await this.api.sendMessage(chatId, text, markup);
+      await this.api.sendMessage(chatId, text, markup, entities);
     } catch (error) {
       if (error instanceof TelegramError && error.gone)
         await this.db.telegramLink.deleteMany({ where: { chatId } });

@@ -27,7 +27,12 @@ function setup(
     forChat: ReturnType<typeof vi.fn>;
   },
 ) {
-  const sent: { chat: string; text: string; buttons?: unknown }[] = [];
+  const sent: {
+    chat: string;
+    text: string;
+    buttons?: unknown;
+    entities?: unknown;
+  }[] = [];
   const db = {
     telegramLink: {
       findUnique: vi.fn(),
@@ -184,8 +189,18 @@ function setup(
   );
   api.download = vi.fn(async () => Buffer.from('ogg'));
   api.sendMessage = vi.fn(
-    async (chat: bigint, text: string, buttons?: unknown) => {
-      sent.push({ chat: chat.toString(), text, buttons });
+    async (
+      chat: bigint,
+      text: string,
+      buttons?: unknown,
+      entities?: unknown,
+    ) => {
+      sent.push({
+        chat: chat.toString(),
+        text,
+        buttons,
+        ...(entities ? { entities } : {}),
+      });
     },
   );
   const calls: { method: string; body: Record<string, unknown> }[] = [];
@@ -243,6 +258,28 @@ describe('Telegram bot', () => {
     expect(vpn.forChat).toHaveBeenCalledWith('u1', 42n);
     expect(t.sent.at(-1)?.text).toContain('22 of 50 GB');
     expect(t.sent.at(-1)?.text).toContain('vless://test');
+    expect(t.sent.at(-1)?.buttons).toEqual([
+      [{ text: 'Copy VPN configuration', copy_text: { text: 'vless://test' } }],
+    ]);
+
+    const longLink = 'vless://' + 'a'.repeat(249);
+    vpn.forChat.mockResolvedValueOnce({
+      link: longLink,
+      quotaBytes: 50 * 1024 ** 3,
+      remainingBytes: 22 * 1024 ** 3,
+      expiresAt: Date.parse('2026-12-21T12:00:00Z'),
+    });
+    await t.service.handle(message('My VPN'));
+    const longReply = t.sent.at(-1);
+    expect(longReply?.buttons).toBeUndefined();
+    expect(longReply?.text.endsWith(longLink)).toBe(true);
+    expect(longReply?.entities).toEqual([
+      {
+        type: 'code',
+        offset: longReply?.text.indexOf(longLink),
+        length: longLink.length,
+      },
+    ]);
 
     vpn.eligible.mockResolvedValue(false);
     vpn.forChat.mockResolvedValue(null);

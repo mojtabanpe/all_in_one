@@ -1033,3 +1033,7 @@ contain`). Works on the web, the PWA and the current Android shell without a new
      checkbox can only be enabled for customers with an active purchased subscription. Enforce this
      in the admin API as well as the checkbox. The invitation expires with its paid period. An early
      renewal keeps it and a purchase after a lapse requires a fresh invitation. This refines 194.
+
+196. **Copy VPN configuration in Telegram (2026-11-21).** The owner wants recipients to copy their
+     VPN configuration directly from the bot message. Use Telegram's clipboard button when it fits
+     and format the complete link as code so longer configurations remain copyable.

@@ -1,9 +1,18 @@
 import { ConfigService } from '@nestjs/config';
 
-/** Inline keyboard button: a link or a callback (≤ 64 bytes of data). */
+/** Inline keyboard buttons for links, callbacks and clipboard text. */
 export type TelegramButton =
-  { text: string; url: string } | { text: string; callback_data: string };
+  | { text: string; url: string }
+  | { text: string; callback_data: string }
+  | { text: string; copy_text: { text: string } };
 export type TelegramMarkup = TelegramButton[][] | Record<string, unknown>;
+
+/** Telegram measures message entity ranges in UTF-16 code units. */
+export type TelegramCodeEntity = {
+  type: 'code';
+  offset: number;
+  length: number;
+};
 
 /**
  * Bot API calls (directive 168). The server in Iran cannot reach `api.telegram.org`, so production sets
@@ -112,6 +121,7 @@ export class TelegramApi {
     chatId: bigint | number | string,
     text: string,
     markup?: TelegramMarkup,
+    entities?: TelegramCodeEntity[],
   ) {
     const replyMarkup = Array.isArray(markup)
       ? markup.length
@@ -122,6 +132,7 @@ export class TelegramApi {
       chat_id: chatId.toString(),
       text: text.slice(0, 4000),
       link_preview_options: { is_disabled: true },
+      ...(entities ? { entities } : {}),
       ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
     });
   }
