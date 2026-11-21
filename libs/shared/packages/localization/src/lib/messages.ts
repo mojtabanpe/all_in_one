@@ -3744,6 +3744,8 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['توضیح کوتاه', 'Short description'],
   ['دسترسی خصوصی', 'Private access'],
   ['آشنا', 'Known contact'],
+  ['اشتراک فعال ندارد', 'No active subscription'],
+  ['اشتراک پولی فعال لازم است.', 'An active paid subscription is required.'],
   ['تغییر دسترسی خصوصی ذخیره نشد.', 'Could not save private access.'],
   ['کاربران', 'Users'],
   ['{0} نفر', '{0} people'],

@@ -3,11 +3,11 @@
 An optional VPN benefit for paid customers selected by an admin. Telegram is the only customer entry
 point. The previous manual VLESS test confirmed the Iran–foreign tunnel.
 
-| Checkpoint                               | Status | Evidence                                                                                                                                   |
-| ---------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Independent runtime and 3x-ui management | DONE   | `apps/vpn` builds independently. A local HTTP smoke test against a mock panel verified auth, quota, renewal and revocation.                |
-| Admin eligibility, billing and Telegram  | DONE   | The admin Users table saves the invitation. Admin and API builds passed. Unit tests cover linking, menu eligibility, renewals and refunds. |
-| Production activation                    | TODO   | Release the service separately, configure the private connection and verify one invited account through Telegram.                          |
+| Checkpoint                               | Status | Evidence                                                                                                                                                                              |
+| ---------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Independent runtime and 3x-ui management | DONE   | `apps/vpn` builds independently. A local HTTP smoke test against a mock panel verified auth, quota, renewal and revocation.                                                           |
+| Admin eligibility, billing and Telegram  | DONE   | The admin Users table and API require an active purchase before saving the invitation. Admin and API builds passed. Unit tests cover linking, menu eligibility, renewals and refunds. |
+| Production activation                    | TODO   | Release the service separately, configure the private connection and verify one invited account through Telegram.                                                                     |
 
 ## Service configuration
 
@@ -31,6 +31,6 @@ the loopback listener privately between the servers. The health path is `GET /he
 A continuous subscription adds 50 GiB per settled month. A full refund removes the refunded
 order's quota. The app combines the actual paid expiry with its payment history. An expired
 subscription or a removed invitation is reconciled to disabled access. After a lapse a new
-purchase starts a fresh volume allowance using the existing client's current usage as a
-baseline. Retries resubmit the same absolute quota without resetting counters. The bot obtains
+purchase requires a fresh invitation and starts a fresh volume allowance using the existing
+client's current usage as a baseline. Early renewal preserves the invitation. Retries resubmit the same absolute quota without resetting counters. The bot obtains
 the link when the customer asks for it. Previously delivered VLESS links are bearer credentials.

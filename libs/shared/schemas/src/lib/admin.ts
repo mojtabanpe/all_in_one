@@ -16,7 +16,7 @@ export interface AdminStats {
 
 export interface AdminUserList {
   total: number;
-  users: (User & { vpnFriend: boolean })[];
+  users: (User & { vpnFriend: boolean; vpnCanInvite: boolean })[];
 }
 
 export const adminVpnFriendSchema = z.object({ enabled: z.boolean() });

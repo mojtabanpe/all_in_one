@@ -1028,3 +1028,8 @@ contain`). Works on the web, the PWA and the current Android shell without a new
      paid customer with that flag sees «وی‌پی‌ان من», in the Telegram bot only. A paid month grants
      50 GB, so three months grant 150 GB. Expiration follows paid access and revoking the flag
      disables the assigned VPN client. No customer app or public listing exposes VPN access.
+
+195. **VPN invitations require active paid access (2026-11-21).** The owner asked that the «آشنا»
+     checkbox can only be enabled for customers with an active purchased subscription. Enforce this
+     in the admin API as well as the checkbox. The invitation expires with its paid period. An early
+     renewal keeps it and a purchase after a lapse requires a fresh invitation. This refines 194.

@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Put,
   Query,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { Roles, toUser } from '@all-in-one/api/auth';
 import { PrismaService } from '@all-in-one/api/db';
@@ -18,6 +19,8 @@ import {
   type AdminUserList,
   type AdminVpnFriendInput,
 } from '@all-in-one/shared/schemas';
+
+import { paidVpnEntitlement, vpnBillingSelect } from '../vpn/vpn-entitlement';
 
 const PAGE_SIZE = 50;
 
@@ -80,14 +83,21 @@ export class AdminController {
         orderBy: { createdAt: 'desc' },
         skip: (Math.max(page, 1) - 1) * PAGE_SIZE,
         take: PAGE_SIZE,
+        include: vpnBillingSelect,
       }),
     ]);
+    const now = new Date();
     return {
       total,
-      users: users.map((user) => ({
-        ...toUser(user),
-        vpnFriend: user.vpnFriend,
-      })),
+      users: users.map((user) => {
+        const entitlement =
+          user.role === 'CUSTOMER' ? paidVpnEntitlement(user, now) : null;
+        return {
+          ...toUser(user),
+          vpnCanInvite: !!entitlement,
+          vpnFriend: !!entitlement && user.vpnFriendCycle === entitlement.cycle,
+        };
+      }),
     };
   }
 
@@ -97,11 +107,24 @@ export class AdminController {
     @Body({ schema: adminVpnFriendSchema }) input: AdminVpnFriendInput,
   ) {
     await this.prisma.$transaction(async (tx) => {
-      const updated = await tx.user.updateMany({
+      await tx.$executeRaw`SELECT 1 FROM "users" WHERE "id" = ${id}::uuid FOR UPDATE`;
+      const user = await tx.user.findUnique({
         where: { id, role: 'CUSTOMER' },
-        data: { vpnFriend: input.enabled },
+        select: vpnBillingSelect,
       });
-      if (!updated.count) throw new NotFoundException();
+      if (!user) throw new NotFoundException();
+      const entitlement = input.enabled
+        ? paidVpnEntitlement(user, new Date())
+        : null;
+      if (input.enabled && !entitlement) {
+        throw new UnprocessableEntityException(
+          'An active paid subscription is required.',
+        );
+      }
+      await tx.user.update({
+        where: { id },
+        data: { vpnFriendCycle: entitlement?.cycle ?? null },
+      });
       await tx.user.updateMany({
         where: { id, vpnSyncAt: { not: null } },
         data: { vpnSyncAt: new Date() },

@@ -39,4 +39,59 @@ describe('AdminController', () => {
       where: { userId: { notIn: ['admin-1', 'admin-2'] } },
     });
   });
+  it('requires an active purchase to enable the private VPN flag', async () => {
+    const now = new Date();
+    const tx = {
+      $executeRaw: vi.fn(),
+      user: {
+        findUnique: vi.fn(),
+        update: vi.fn(),
+        updateMany: vi.fn(),
+      },
+    };
+    const controller = new AdminController({
+      $transaction: (action: (transaction: typeof tx) => unknown) => action(tx),
+    } as never);
+    const order = { id: 'order-1', paidAt: now, months: 1, status: 'PAID' };
+    const subscription = { paidUntil: new Date(now.getTime() + 86_400_000) };
+    const account = { billingOrders: [order], billingAdjustments: [] };
+    tx.user.findUnique
+      .mockResolvedValueOnce({
+        ...account,
+        billingSubscription: { paidUntil: new Date(0) },
+      })
+      .mockResolvedValueOnce({
+        ...account,
+        billingSubscription: subscription,
+        billingOrders: [],
+      })
+      .mockResolvedValueOnce({ ...account, billingSubscription: subscription });
+
+    await expect(
+      controller.setVpnFriend('u1', { enabled: true }),
+    ).rejects.toMatchObject({ status: 422 });
+    await expect(
+      controller.setVpnFriend('u1', { enabled: true }),
+    ).rejects.toMatchObject({ status: 422 });
+    expect(tx.user.update).not.toHaveBeenCalled();
+    await expect(
+      controller.setVpnFriend('u1', { enabled: true }),
+    ).resolves.toEqual({ enabled: true });
+    expect(tx.user.update).toHaveBeenLastCalledWith({
+      where: { id: 'u1' },
+      data: { vpnFriendCycle: 'order-1' },
+    });
+
+    tx.user.findUnique.mockResolvedValueOnce({
+      ...account,
+      billingSubscription: null,
+    });
+    await expect(
+      controller.setVpnFriend('u1', { enabled: false }),
+    ).resolves.toEqual({ enabled: false });
+    expect(tx.user.update).toHaveBeenLastCalledWith({
+      where: { id: 'u1' },
+      data: { vpnFriendCycle: null },
+    });
+  });
 });

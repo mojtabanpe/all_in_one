@@ -53,7 +53,7 @@ model User {
   reviewReminder ReviewReminderSetting?
   progressNotification ProgressNotificationSetting?
   smsNotices SmsNotice[]
-  vpnFriend Boolean @default(false)
+  vpnFriendCycle String? @db.Uuid
   vpnSyncAt DateTime?
   telegramLink TelegramLink?
   telegramLinkCodes TelegramLinkCode[]

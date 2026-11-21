@@ -1,3 +1,4 @@
+import type { Prisma } from '@all-in-one/api/db';
 import { addMonths } from '../billing/billing.service';
 
 const BYTES_PER_MONTH = 50 * 1024 ** 3;
@@ -55,4 +56,28 @@ export function vpnEntitlement(
     quotaBytes: months * BYTES_PER_MONTH,
     expiresAt: paidUntil.getTime(),
   };
+}
+
+export const vpnBillingSelect = {
+  billingSubscription: { select: { paidUntil: true } },
+  billingOrders: {
+    where: { status: { in: ['PAID', 'REFUNDED'] }, paidAt: { not: null } },
+    orderBy: [{ paidAt: 'asc' }, { id: 'asc' }],
+    select: { id: true, paidAt: true, months: true, status: true },
+  },
+  billingAdjustments: {
+    orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    select: { createdAt: true, newUntil: true },
+  },
+} satisfies Prisma.UserSelect;
+
+type VpnBilling = Prisma.UserGetPayload<{ select: typeof vpnBillingSelect }>;
+
+export function paidVpnEntitlement(user: VpnBilling, now: Date) {
+  return vpnEntitlement(
+    user.billingSubscription?.paidUntil,
+    user.billingOrders,
+    user.billingAdjustments,
+    now,
+  );
 }

@@ -1,4 +1,8 @@
-import { HttpClient, httpResource } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  httpResource,
+} from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import type {
@@ -82,11 +86,21 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
                     >
                       <aio-checkbox
                         [inputId]="'vpn-friend-' + u.id"
-                        [checked]="friendChanges().get(u.id) ?? u.vpnFriend"
-                        [disabled]="saving().has(u.id)"
+                        [checked]="
+                          u.vpnCanInvite &&
+                          (friendChanges().get(u.id) ?? u.vpnFriend)
+                        "
+                        [disabled]="
+                          !u.vpnCanInvite || friendChanges().has(u.id)
+                        "
                         (checkedChange)="setFriend(u.id, $event)"
                       />
                       {{ 'آشنا' | aioTranslate }}
+                      @if (!u.vpnCanInvite) {
+                        <span class="text-muted-foreground text-xs">
+                          {{ 'اشتراک فعال ندارد' | aioTranslate }}
+                        </span>
+                      }
                     </label>
                   }
                 </td>
@@ -125,7 +139,6 @@ export class Users {
   private readonly http = inject(HttpClient);
   private readonly notices = inject(AioNotifications);
   protected readonly friendChanges = signal(new Map<string, boolean>());
-  protected readonly saving = signal(new Set<string>());
   protected readonly page = signal(1);
   protected readonly list = httpResource<AdminUserList>(
     () => `${this.api}/admin/users?page=${this.page()}`,
@@ -133,27 +146,37 @@ export class Users {
   protected readonly fa = (n: number) => this.locale.number(n);
 
   protected async setFriend(id: string, enabled: boolean) {
-    if (this.saving().has(id)) return;
-    const previous = this.friendChanges().get(id);
-    this.saving.update((saving) => new Set(saving).add(id));
+    if (this.friendChanges().has(id)) return;
     this.friendChanges.update((changes) => new Map(changes).set(id, enabled));
     try {
       const body: AdminVpnFriendInput = { enabled };
       await firstValueFrom(
         this.http.put(`${this.api}/admin/users/${id}/vpn-friend`, body),
       );
-    } catch {
+      if (this.list.hasValue()) {
+        this.list.value.update(
+          (data) =>
+            data && {
+              ...data,
+              users: data.users.map((user) =>
+                user.id === id ? { ...user, vpnFriend: enabled } : user,
+              ),
+            },
+        );
+      }
+    } catch (error) {
+      if (error instanceof HttpErrorResponse && error.status === 422) {
+        this.notices.error('اشتراک پولی فعال لازم است.');
+        this.list.reload();
+      } else {
+        this.notices.error('تغییر دسترسی خصوصی ذخیره نشد.');
+      }
+    } finally {
       this.friendChanges.update((changes) => {
         const updated = new Map(changes);
-        if (previous === undefined) updated.delete(id);
-        else updated.set(id, previous);
+        updated.delete(id);
         return updated;
       });
-      this.notices.error('تغییر دسترسی خصوصی ذخیره نشد.');
-    } finally {
-      this.saving.update(
-        (saving) => new Set([...saving].filter((userId) => userId !== id)),
-      );
     }
   }
 }

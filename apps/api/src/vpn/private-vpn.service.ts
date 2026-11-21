@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, PrismaService } from '@all-in-one/api/db';
-import { vpnEntitlement } from './vpn-entitlement';
+import { paidVpnEntitlement, vpnBillingSelect } from './vpn-entitlement';
 
 interface VpnAccess {
   link: string | null;
@@ -53,7 +53,11 @@ export class PrivateVpnService implements OnModuleInit, OnModuleDestroy {
 
     // Persist the reconciliation schedule even if a remote create times out after applying.
     const queued = await this.db.user.updateMany({
-      where: { id: userId, vpnFriend: true, telegramLink: { chatId } },
+      where: {
+        id: userId,
+        vpnFriendCycle: { not: null },
+        telegramLink: { chatId },
+      },
       data: { vpnSyncAt: new Date() },
     });
     if (!queued.count) return null;
@@ -70,34 +74,15 @@ export class PrivateVpnService implements OnModuleInit, OnModuleDestroy {
       where: {
         id: userId,
         role: 'CUSTOMER',
-        vpnFriend: true,
+        vpnFriendCycle: { not: null },
         telegramLink: chatId === undefined ? { isNot: null } : { chatId },
         billingSubscription: { paidUntil: { gt: now } },
       },
-      select: {
-        billingSubscription: { select: { paidUntil: true } },
-        billingOrders: {
-          where: {
-            status: { in: ['PAID', 'REFUNDED'] },
-            paidAt: { not: null },
-          },
-          orderBy: [{ paidAt: 'asc' }, { id: 'asc' }],
-          select: { id: true, paidAt: true, months: true, status: true },
-        },
-        billingAdjustments: {
-          where: { action: { in: ['EXTEND', 'END', 'REFUND'] } },
-          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-          select: { createdAt: true, newUntil: true },
-        },
-      },
+      select: { vpnFriendCycle: true, ...vpnBillingSelect },
     });
     if (!user) return null;
-    return vpnEntitlement(
-      user.billingSubscription?.paidUntil,
-      user.billingOrders,
-      user.billingAdjustments,
-      now,
-    );
+    const entitlement = paidVpnEntitlement(user, now);
+    return entitlement?.cycle === user.vpnFriendCycle ? entitlement : null;
   }
 
   private sync(userId: string, chatId?: bigint) {
