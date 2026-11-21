@@ -10,7 +10,9 @@ import {
   EnglishTextsController,
   EnglishPresentationInterceptor,
   EnglishPracticeScoresController,
+  EnglishDialoguesController,
 } from './english.controller';
+import { DialogueEventsService } from './dialogue-events.service';
 import { PracticeScoresService } from './practice-scores.service';
 import { SpeechService } from './speech.service';
 import { StarterDecksService } from './starter-decks.service';
@@ -29,6 +31,7 @@ import { TextsService } from './texts.service';
     EnglishTextsController,
     EnglishAiController,
     EnglishPracticeScoresController,
+    EnglishDialoguesController,
   ],
   providers: [
     EnglishPresentationInterceptor,
@@ -37,6 +40,7 @@ import { TextsService } from './texts.service';
     CardsService,
     DecksService,
     PracticeScoresService,
+    DialogueEventsService,
     SpeechService,
     StarterDecksService,
     TextsService,

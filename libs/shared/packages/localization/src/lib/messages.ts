@@ -3769,6 +3769,7 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['مدیران', 'Managers'],
   ['محتوای اپلت‌ها', 'Content of Applets'],
   ['دسته‌های آماده انگلیسی', 'English ready categories'],
+  ['گفتگوهای آماده شدوینگ', 'Ready shadowing dialogues'],
   ['{0} دسته', '{0} category'],
   ['سالگرد', 'anniversary'],
   ['تولد', 'birthday'],
@@ -4220,6 +4221,9 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'Listen to the sentence first. Play it again and repeat just behind the speaker, matching their rhythm and intonation. Use headphones and record yourself to hear the difference.',
   ],
   ['تمرین تازه', 'New exercise'],
+  ['گفتگوهای آماده', 'Ready conversations'],
+  ['{0} جمله', '{0} sentences'],
+  ['تمرین تازه با هوش مصنوعی', 'New exercise with AI'],
   ['در حال آماده‌سازی…', 'Preparing…'],
   [
     'تمرین‌های تازه و صدا با هوش مصنوعی Poshtetgarm ساخته می‌شوند.',

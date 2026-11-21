@@ -81,3 +81,42 @@ describe('SpeechService shared audio cache', () => {
     expect(gateway.speech).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('SpeechService ready dialogue audio', () => {
+  it('serves both voices of a ready dialogue from static files, even without AI access', async () => {
+    const { mkdtempSync, writeFileSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const { dialogueAudioKey } = await import('./speech.service');
+    const dir = mkdtempSync(join(tmpdir(), 'dialogue-tts-'));
+    writeFileSync(join(dir, 'a.mp3'), 'woman');
+    writeFileSync(join(dir, 'b.mp3'), 'man');
+    writeFileSync(
+      join(dir, 'manifest.json'),
+      JSON.stringify({
+        files: {
+          [dialogueAudioKey('primary', 'Hi, Ben!')]: 'a.mp3',
+          [dialogueAudioKey('secondary', 'Hi, Sara!')]: 'b.mp3',
+        },
+      }),
+    );
+    const previous = process.env['DIALOGUE_TTS_DIR'];
+    process.env['DIALOGUE_TTS_DIR'] = dir;
+    try {
+      const { service, gateway } = setup();
+      const woman = await service.speak('free', ' Hi, Ben! ', 'primary');
+      const man = await service.speak('free', 'Hi, Sara!', 'secondary');
+      expect(woman.cacheStatus).toBe('STATIC');
+      expect(woman.audio.toString()).toBe('woman');
+      expect(man.audio.toString()).toBe('man');
+      expect(gateway.speechTarget).not.toHaveBeenCalled();
+      // The same text in the other voice is not in the manifest: normal path.
+      await expect(
+        service.speak('free', 'Hi, Ben!', 'secondary'),
+      ).rejects.toThrow('upgrade');
+    } finally {
+      if (previous === undefined) delete process.env['DIALOGUE_TTS_DIR'];
+      else process.env['DIALOGUE_TTS_DIR'] = previous;
+    }
+  });
+});

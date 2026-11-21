@@ -13,7 +13,8 @@ tools/colab/
 ├── export-starter-tts-input.mjs   # استخراج خودکار لیست متن‌های دک‌های استارتر زبان به JSON
 └── jobs/
     ├── _template.py               # الگوی استاندارد برای اضافه کردن job جدید
-    └── kokoro_tts.py              # تولید دسته‌ای MP3 (و حالت تست زنده /v1/audio/speech) با Kokoro
+    ├── kokoro_tts.py              # تولید دسته‌ای MP3 (و حالت تست زنده /v1/audio/speech) با Kokoro
+    └── dialogue_video.py          # ویدیو مکالمهٔ دونفره (دو صدای Kokoro + زیرنویس) از یک JSON
 ```
 
 ## نحوه استفاده
@@ -50,6 +51,25 @@ python /content/work/kokoro_tts.py \
 
 ```bash
 python /content/work/kokoro_tts.py --serve --cache-dir /content/colab_cache --voice af_bella
+```
+
+### مثال اجرای `dialogue_video.py` (ویدیو مکالمهٔ دونفره)
+
+متن مکالمه یک JSON است (نمونه: `tools/colab/inputs/a1-football-dialogue.json`): عنوان، سطح، دو گوینده با صدای Kokoro
+و رنگ، و برای هر جمله `speaker`، `text` و ترجمهٔ اختیاری `fa`. خروجی یک ZIP شامل MP4 و زیرنویس SRT است. GPU لازم نیست.
+
+در سلول ۲ این سه فایل را آپلود کن: `jobs/dialogue_video.py`، فایل JSON، و `design-system/all-in-one/logo/poshtetgarm-1024.png`.
+در سلول ۳:
+
+- `JOB_SCRIPT = dialogue_video.py`
+- `INPUT_FILE = a1-football-dialogue.json`
+- `OUTPUT_NAME = football-a1.zip`
+- `EXTRA_ARGS = --logo /content/work/poshtetgarm-1024.png` (برای Reel: `--format 9:16`، بدون ترجمه: `--no-fa`)
+
+پیش‌نمایش بی‌صدا (بدون دانلود مدل، برای دیدن چیدمان و زمان‌بندی روی لپ‌تاپ):
+
+```bash
+python tools/colab/jobs/dialogue_video.py --input tools/colab/inputs/a1-football-dialogue.json --output /tmp/preview.zip --cache-dir /tmp/colab_cache --no-tts --skip-install
 ```
 
 ## اضافه کردن Job جدید

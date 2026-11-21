@@ -1043,3 +1043,13 @@ contain`). Works on the web, the PWA and the current Android shell without a new
      support searching by name, email or phone (including Persian/Arabic digits and `09…` → `+989…`)
      and filtering by role (`CUSTOMER`, `ADMIN`) and status (`paid`, `free`, `vpn_friend`,
      `vpn_eligible`, `telegram`).
+
+198. **Ready shadowing dialogues with usage events (2026-11-21).** The owner asked for ready conversations for every
+     level in the shadowing practice («۱و ۲ برای هر سطح چنتایی بساز و روشون ایونت بذار که اگه دارن استفاده میشن
+     بیشترشون کنیم»). `DIALOGUE_LIBRARY` (english contracts) holds at least three dialogues per level A1, A2, B1, B2;
+     the first speaker is a woman (`primary` voice), the second a man (`secondary`), alternating. Their audio is made
+     once with Kokoro on Colab (`tools/colab/jobs/dialogue_tts.py`, directive 193) and served from
+     `libs/applets/english-learning/api/assets/dialogue-tts` (`SpeechService`, `STATIC`), so playing them needs no AI
+     access and costs nothing. Opening and finishing one is recorded in `english_dialogue_events` (`OPEN`, `FINISH`
+     with the session score) and shown per dialogue in `/admin/content`, staff excluded; write more dialogues for the
+     levels and topics that are used. Roadmap: `docs/roadmaps/aio-english-dialogues-v1.md`.

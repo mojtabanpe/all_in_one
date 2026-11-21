@@ -1,6 +1,9 @@
 import { httpResource } from '@angular/common/http';
 import { Component, computed, inject } from '@angular/core';
-import type { StarterDeck } from '@all-in-one/applets/english-learning/contracts';
+import type {
+  DialogueUsage,
+  StarterDeck,
+} from '@all-in-one/applets/english-learning/contracts';
 import {
   type Diet,
   MEAL_TYPE_LABELS,
@@ -42,6 +45,10 @@ export class Content {
   protected readonly decks = httpResource<StarterDeck[]>(
     () => `${this.api}/english/starter-decks`,
   );
+  /** Use of the ready shadowing dialogues (staff excluded): which to write more of. */
+  protected readonly dialogues = httpResource<DialogueUsage[]>(
+    () => `${this.api}/english/dialogues/usage`,
+  );
   protected readonly diets = httpResource<Diet[]>(
     () => `${this.api}/health/diets`,
   );
@@ -62,6 +69,24 @@ export class Content {
         title: d.title,
         badge: `${d.level}، ${this.locale.number(d.cardCount)}`,
         badgeDirection: 'ltr',
+      })),
+    },
+    {
+      title: 'گفتگوهای آماده شدوینگ',
+      description: `${this.locale.number((this.dialogues.value() ?? []).length)} گفتگو، به ترتیب بیشترین باز شدن`,
+      items: (this.dialogues.value() ?? []).map((d) => ({
+        id: d.slug,
+        title: d.title,
+        badge: d.level,
+        badgeDirection: 'ltr',
+        description: [
+          `${this.locale.number(d.opens)} بار باز شده (${this.locale.number(d.users)} کاربر)`,
+          `${this.locale.number(d.finishes)} بار تا آخر`,
+          d.avgScore === null
+            ? 'بدون نمره'
+            : `میانگین نمره ${this.locale.number(d.avgScore)}`,
+          `۷ روز اخیر: ${this.locale.number(d.opens7d)}`,
+        ].join('، '),
       })),
     },
     {

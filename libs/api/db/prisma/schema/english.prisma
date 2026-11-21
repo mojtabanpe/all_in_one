@@ -101,3 +101,23 @@ model EnglishPracticeScore {
   @@index([userId, kind, createdAt])
   @@map("english_shadowing_sessions")
 }
+
+enum EnglishDialogueEventKind {
+  OPEN
+  FINISH
+}
+
+/// Use of a ready shadowing dialogue (`DIALOGUE_LIBRARY`, by slug): what to write more of.
+model EnglishDialogueEvent {
+  id        String                   @id @default(uuid(7)) @db.Uuid
+  userId    String                   @db.Uuid
+  user      User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slug      String
+  kind      EnglishDialogueEventKind
+  score     Int?
+  createdAt DateTime                 @default(now())
+
+  @@index([slug, kind])
+  @@index([userId, createdAt])
+  @@map("english_dialogue_events")
+}

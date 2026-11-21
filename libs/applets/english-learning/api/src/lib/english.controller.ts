@@ -20,7 +20,8 @@ import {
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
-import { type AuthUser, CurrentUser } from '@all-in-one/api/auth';
+import { type AuthUser, CurrentUser, Roles } from '@all-in-one/api/auth';
+import { DialogueEventsService } from './dialogue-events.service';
 import { PracticeScoresService } from './practice-scores.service';
 import {
   type Card,
@@ -32,6 +33,9 @@ import {
   type CreateDeckInput,
   createDeckSchema,
   type CreatePracticeScoreInput,
+  type DialogueEventInput,
+  type DialogueUsage,
+  dialogueEventSchema,
   createPracticeScoreSchema,
   PRACTICE_KINDS,
   type PracticeKind,
@@ -433,5 +437,28 @@ export class EnglishPracticeScoresController {
     input: CreatePracticeScoreInput,
   ): Promise<PracticeScore> {
     return this.scores.save(user.id, input);
+  }
+}
+
+/** Ready shadowing dialogues: usage events (per slug) and the admin report. */
+@Controller('english/dialogues')
+export class EnglishDialoguesController {
+  constructor(private readonly events: DialogueEventsService) {}
+
+  @Post(':slug/events')
+  @HttpCode(204)
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  record(
+    @CurrentUser() user: AuthUser,
+    @Param('slug') slug: string,
+    @Body({ schema: dialogueEventSchema }) input: DialogueEventInput,
+  ): Promise<void> {
+    return this.events.record(user.id, slug, input);
+  }
+
+  @Get('usage')
+  @Roles('ADMIN')
+  usage(): Promise<DialogueUsage[]> {
+    return this.events.usage();
   }
 }

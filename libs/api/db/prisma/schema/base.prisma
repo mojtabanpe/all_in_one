@@ -88,6 +88,7 @@ model User {
   englishTexts    EnglishText[]
   englishDays     EnglishReviewDay[]
   englishPracticeScores EnglishPracticeScore[]
+  englishDialogueEvents EnglishDialogueEvent[]
   healthProfile   HealthProfile?
   workoutLogs     WorkoutLog[]
   healthRoutines  HealthRoutine[]

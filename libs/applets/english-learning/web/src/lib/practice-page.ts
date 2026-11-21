@@ -1,4 +1,4 @@
-import { NgTemplateOutlet } from '@angular/common';
+import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
 import {
   Component,
   computed,
@@ -11,6 +11,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import {
   checkShadowing,
   CONVERSATION_SITUATIONS,
+  DIALOGUE_LEVELS,
+  DIALOGUE_LIBRARY,
+  type DialogueLevel,
+  type LibraryDialogue,
+  libraryAsDialogue,
   type ConversationSituation,
   type DeckWithStats,
   type Dialogue,
@@ -87,6 +92,7 @@ const MODE_KIND: Record<Mode, PracticeKind> = {
 };
 const MODES: Mode[] = ['writing', 'speaking', 'listening', 'shadowing'];
 const DECK_KEY = 'aio.english.practice.deck';
+const LIBRARY_LEVEL_KEY = 'aio.english.shadowing.level';
 const MAX_RECORDING = 1500 * 1024;
 
 interface TaskState {
@@ -235,26 +241,31 @@ const freshTask = (): TaskState => ({
         }
       </section>
 
-      <div class="grid grid-cols-2 gap-3">
-        <aio-select-field
-          [label]="'Situation' | aioTranslate"
-          controlId="practice-situation"
-          [value]="situation()"
-          [options]="situations"
-          valueKey="id"
-          labelKey="label"
-          (valueChange)="situation.set($any($event))"
-        />
-        <aio-select-field
-          [label]="'Level' | aioTranslate"
-          controlId="practice-level"
-          [value]="level()"
-          [options]="levels"
-          valueKey="id"
-          labelKey="label"
-          (valueChange)="level.set($any($event))"
-        />
-      </div>
+      <ng-template #aiOptions>
+        <div class="grid grid-cols-2 gap-3">
+          <aio-select-field
+            [label]="'Situation' | aioTranslate"
+            controlId="practice-situation"
+            [value]="situation()"
+            [options]="situations"
+            valueKey="id"
+            labelKey="label"
+            (valueChange)="situation.set($any($event))"
+          />
+          <aio-select-field
+            [label]="'Level' | aioTranslate"
+            controlId="practice-level"
+            [value]="level()"
+            [options]="levels"
+            valueKey="id"
+            labelKey="label"
+            (valueChange)="level.set($any($event))"
+          />
+        </div>
+      </ng-template>
+      @if (mode() !== 'shadowing') {
+        <ng-container [ngTemplateOutlet]="aiOptions" />
+      }
 
       @if (error()) {
         <p class="text-destructive text-sm" role="alert">
@@ -276,19 +287,72 @@ const freshTask = (): TaskState => ({
                 | aioTranslate
             }}
           </p>
-          <button
-            size="lg"
-            [disabled]="busy() || recording() || recordingPending()"
-            (click)="newDialogue()"
-            aioAsyncButton
-            [busy]="busy()"
-            [label]="'New exercise' | aioTranslate"
-            [busyLabel]="'Preparing…' | aioTranslate"
-            icon="lucideHeadphones"
-          ></button>
-          <p class="text-muted-foreground text-sm">
-            {{ 'New exercises and audio use Poshtetgarm AI.' | aioTranslate }}
-          </p>
+          <div class="flex flex-col gap-3">
+            <h3 id="ready-dialogues-title" class="font-semibold">
+              {{ 'Ready conversations' | aioTranslate }}
+            </h3>
+            <div
+              aioToggleGroup
+              type="single"
+              spacing="1"
+              class="grid w-full grid-cols-4 rounded-2xl"
+              [attr.aria-label]="'Level' | aioTranslate"
+              [value]="libraryLevel()"
+              (valueChange)="setLibraryLevel($event)"
+            >
+              @for (l of libraryLevels; track l) {
+                <button
+                  aioToggleGroupItem
+                  [value]="l"
+                  class="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground h-11 rounded-xl"
+                >
+                  <span lang="en" dir="ltr">{{ l }}</span>
+                </button>
+              }
+            </div>
+            <ul
+              class="flex flex-col gap-2"
+              aria-labelledby="ready-dialogues-title"
+            >
+              @for (x of libraryList(); track x.slug) {
+                <li>
+                  <button
+                    aioBtn
+                    variant="outline"
+                    class="h-auto min-h-11 w-full justify-between gap-3 py-2 text-start"
+                    [attr.aria-pressed]="librarySlug() === x.slug"
+                    [class.border-primary]="librarySlug() === x.slug"
+                    [disabled]="recording() || recordingPending()"
+                    (click)="pickLibrary(x)"
+                  >
+                    <span class="min-w-0 truncate" lang="en" dir="ltr">{{
+                      x.title
+                    }}</span>
+                    <span class="text-muted-foreground shrink-0 text-xs">{{
+                      '{0} sentences' | aioTranslate: [number(x.lines.length)]
+                    }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          </div>
+          <div class="border-border flex flex-col gap-3 border-t pt-4">
+            <ng-container [ngTemplateOutlet]="aiOptions" />
+            <button
+              size="lg"
+              variant="outline"
+              [disabled]="busy() || recording() || recordingPending()"
+              (click)="newDialogue()"
+              aioAsyncButton
+              [busy]="busy()"
+              [label]="'New exercise with AI' | aioTranslate"
+              [busyLabel]="'Preparing…' | aioTranslate"
+              icon="lucideHeadphones"
+            ></button>
+            <p class="text-muted-foreground text-sm">
+              {{ 'New exercises and audio use Poshtetgarm AI.' | aioTranslate }}
+            </p>
+          </div>
         </section>
         @if (shadowLine(); as sentence) {
           <section
@@ -1035,6 +1099,7 @@ export class PracticePage {
   private readonly tts = inject(Tts);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly document = inject(DOCUMENT);
 
   protected readonly modes = MODES;
   protected readonly modeLabels: Record<Mode, string> = {
@@ -1071,6 +1136,18 @@ export class PracticePage {
   });
 
   protected readonly dialogue = signal<Dialogue | null>(null);
+  /** Ready dialogues (free, pre-recorded audio) of the chosen level. */
+  protected readonly libraryLevels = DIALOGUE_LEVELS;
+  protected readonly libraryLevel = signal<DialogueLevel>(
+    (DIALOGUE_LEVELS as readonly string[]).includes(remember(LIBRARY_LEVEL_KEY))
+      ? (remember(LIBRARY_LEVEL_KEY) as DialogueLevel)
+      : 'A1',
+  );
+  protected readonly libraryList = computed(() =>
+    DIALOGUE_LIBRARY.filter((x) => x.level === this.libraryLevel()),
+  );
+  /** Slug of the ready dialogue being practised; null for an AI one. */
+  protected readonly librarySlug = signal<string | null>(null);
   protected readonly shadowIndex = signal(0);
   protected readonly shadowFinished = signal(false);
   protected readonly shadowLine = computed(
@@ -1198,6 +1275,11 @@ export class PracticePage {
     this.error.set('');
     this.busy.set(false);
     this.run++;
+    // A ready dialogue has no listening questions: leave it to shadowing.
+    if (this.librarySlug()) {
+      this.dialogue.set(null);
+      this.librarySlug.set(null);
+    }
     this.mode.set(value as Mode);
     void this.router.navigate([], {
       relativeTo: this.route,
@@ -1268,19 +1350,56 @@ export class PracticePage {
     );
   }
 
+  protected setLibraryLevel(value: unknown) {
+    if (!(DIALOGUE_LEVELS as readonly unknown[]).includes(value)) return;
+    this.libraryLevel.set(value as DialogueLevel);
+    remember(LIBRARY_LEVEL_KEY, value as string);
+  }
+
+  /** Starts a ready dialogue: no AI is needed to play it. */
+  protected pickLibrary(x: LibraryDialogue) {
+    if (this.recording() || this.recordingPending()) return;
+    this.run++;
+    this.stop();
+    this.cancelRecording();
+    this.error.set('');
+    this.busy.set(false);
+    this.resetDialogue(libraryAsDialogue(x));
+    this.librarySlug.set(x.slug);
+    this.track(x.slug, { kind: 'OPEN' });
+    // On a phone the first sentence is below the list: bring it into view.
+    setTimeout(() =>
+      this.document
+        .getElementById('shadow-sentence-title')
+        ?.scrollIntoView({ block: 'start' }),
+    );
+  }
+
+  private resetDialogue(dialogue: Dialogue) {
+    this.dialogue.set(dialogue);
+    this.librarySlug.set(null);
+    this.showText.set(false);
+    this.choices.set({});
+    this.shadowIndex.set(0);
+    this.shadowFinished.set(false);
+    this.shadowChecks.set({});
+    this.shadowSaved.set(null);
+    this.listeningSaved.set(null);
+  }
+
+  private track(
+    slug: string,
+    input: Parameters<EnglishApi['dialogueEvent']>[1],
+  ) {
+    this.api.dialogueEvent(slug, input).catch(() => undefined);
+  }
+
   protected newDialogue() {
     this.cancelRecording();
     return this.load(
       () => this.api.dialogue(this.situation(), this.level()),
       (dialogue) => {
-        this.dialogue.set(dialogue);
-        this.showText.set(false);
-        this.choices.set({});
-        this.shadowIndex.set(0);
-        this.shadowFinished.set(false);
-        this.shadowChecks.set({});
-        this.shadowSaved.set(null);
-        this.listeningSaved.set(null);
+        this.resetDialogue(dialogue);
       },
     );
   }
@@ -1316,6 +1435,14 @@ export class PracticePage {
       this.shadowSaved.set(null);
     } else if (this.shadowIndex() + direction >= lines.length) {
       this.shadowFinished.set(true);
+      const slug = this.librarySlug();
+      if (slug)
+        this.track(slug, {
+          kind: 'FINISH',
+          ...(this.shadowAttempted()
+            ? { score: this.shadowSessionScore() }
+            : {}),
+        });
       void this.saveShadowSession();
     } else {
       this.shadowIndex.set(Math.max(0, this.shadowIndex() + direction));

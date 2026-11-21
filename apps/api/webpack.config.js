@@ -22,6 +22,11 @@ module.exports = {
           glob: '**/*',
           output: 'assets/starter-tts',
         },
+        {
+          input: '../../libs/applets/english-learning/api/assets/dialogue-tts',
+          glob: '**/*',
+          output: 'assets/dialogue-tts',
+        },
       ],
       optimization: false,
       outputHashing: 'none',

@@ -23,6 +23,7 @@ import type {
   CreatePracticeScoreInput,
   PracticeKind,
   PracticeScore,
+  DialogueEventInput,
 } from '@all-in-one/applets/english-learning/contracts';
 import { API_BASE_URL } from '@all-in-one/web/shared';
 import { firstValueFrom } from 'rxjs';
@@ -155,6 +156,10 @@ export class EnglishApi {
         params: { kind },
       }),
     );
+  }
+  /** Records use of a ready dialogue; never blocks practice. */
+  dialogueEvent(slug: string, input: DialogueEventInput): Promise<void> {
+    return this.post(`/dialogues/${encodeURIComponent(slug)}/events`, input);
   }
   savePracticeScore(input: CreatePracticeScoreInput): Promise<PracticeScore> {
     return this.post('/practice/scores', input);
