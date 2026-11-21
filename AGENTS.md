@@ -1022,3 +1022,9 @@ contain`). Works on the web, the PWA and the current Android shell without a new
      query-string stripping) to `POST /api/monitor/errors`. Takes effect in the next native shell build.
 
 193. **Reusable Google Colab infrastructure (2026-11-21).** The owner wants heavy AI/media/batch workloads (such as TTS batch generation, Whisper subtitles, video processing, and model evaluation) to run on Google Colab rather than downloading large models onto the local laptop. The shared Colab runner lives in `tools/colab/`: a single reusable notebook (`tools/colab/runner.ipynb`, with optional Google Drive cache at `/content/drive/MyDrive/poshtetgarm-colab/`), versioned CLI job scripts in `tools/colab/jobs/` (`_template.py`, `kokoro_tts.py`, standard `--input`/`--output`/`--cache-dir` contract), and repo exporters such as `tools/colab/export-starter-tts-input.mjs`. Colab is for offline/batch jobs and temporary dev testing only, never 24/7 production services.
+
+194. **Private standalone VPN for invited customers (2026-11-21).** The owner wants VPN managed by a
+     separately runnable service that Poshtetgarm calls. Admins mark a customer «آشنا». Only a linked,
+     paid customer with that flag sees «وی‌پی‌ان من», in the Telegram bot only. A paid month grants
+     50 GB, so three months grant 150 GB. Expiration follows paid access and revoking the flag
+     disables the assigned VPN client. No customer app or public listing exposes VPN access.

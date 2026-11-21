@@ -22,6 +22,21 @@ export const envSchema = z.object({
   /** Relay outside Iran (deploy/telegram-relay); defaults to Telegram itself. */
   TELEGRAM_API_URL: z.url().optional(),
   TELEGRAM_RELAY_KEY: z.string().optional(),
+  VPN_SERVICE_URL: z
+    .url({ protocol: /^https?$/ })
+    .refine((value) => {
+      const url = new URL(value);
+      return (
+        !url.username &&
+        !url.password &&
+        !url.hash &&
+        !url.search &&
+        (url.protocol === 'https:' ||
+          ['127.0.0.1', '[::1]', 'localhost'].includes(url.hostname))
+      );
+    })
+    .optional(),
+  VPN_SERVICE_TOKEN: z.string().min(24).optional(),
   /** Channel a user must join to use the bot (directive 170); empty turns it off. */
   TELEGRAM_REQUIRED_CHANNEL: z.string().optional(),
   /** GlitchTip on this server's loopback (directive 184): http://<key>@127.0.0.1:4340/<project id>; empty = log only. */

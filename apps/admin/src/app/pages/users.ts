@@ -1,10 +1,16 @@
-import { httpResource } from '@angular/common/http';
+import { HttpClient, httpResource } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
-import type { AdminUserList } from '@all-in-one/shared/schemas';
+import { firstValueFrom } from 'rxjs';
+import type {
+  AdminUserList,
+  AdminVpnFriendInput,
+} from '@all-in-one/shared/schemas';
 import {
   AioTranslate,
   AioBadge,
   AioButton,
+  AioCheckbox,
+  AioNotifications,
   AioTableDirectives,
   AioLocale,
   AioDatePipe,
@@ -13,7 +19,14 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
 
 @Component({
   selector: 'admin-users',
-  imports: [AioDatePipe, AioBadge, AioButton, AioTableDirectives, AioTranslate],
+  imports: [
+    AioDatePipe,
+    AioBadge,
+    AioButton,
+    AioCheckbox,
+    AioTableDirectives,
+    AioTranslate,
+  ],
   template: `
     <div class="flex flex-col gap-4">
       <header class="flex items-end justify-between">
@@ -30,6 +43,7 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
               <th aioTh>{{ 'ایمیل یا موبایل' | aioTranslate }}</th>
               <th aioTh>{{ 'نقش' | aioTranslate }}</th>
               <th aioTh>{{ 'عضویت' | aioTranslate }}</th>
+              <th aioTh>{{ 'دسترسی خصوصی' | aioTranslate }}</th>
             </tr>
           </thead>
           <tbody aioTBody>
@@ -59,6 +73,22 @@ import { API_BASE_URL } from '@all-in-one/web/shared';
                           }
                       | aioTranslate
                   }}
+                </td>
+                <td aioTd>
+                  @if (u.role === 'CUSTOMER') {
+                    <label
+                      class="flex min-h-11 w-fit items-center gap-2"
+                      [for]="'vpn-friend-' + u.id"
+                    >
+                      <aio-checkbox
+                        [inputId]="'vpn-friend-' + u.id"
+                        [checked]="friendChanges().get(u.id) ?? u.vpnFriend"
+                        [disabled]="saving().has(u.id)"
+                        (checkedChange)="setFriend(u.id, $event)"
+                      />
+                      {{ 'آشنا' | aioTranslate }}
+                    </label>
+                  }
                 </td>
               </tr>
             }
@@ -92,9 +122,38 @@ export class Users {
   protected readonly locale = inject(AioLocale);
 
   private readonly api = inject(API_BASE_URL);
+  private readonly http = inject(HttpClient);
+  private readonly notices = inject(AioNotifications);
+  protected readonly friendChanges = signal(new Map<string, boolean>());
+  protected readonly saving = signal(new Set<string>());
   protected readonly page = signal(1);
   protected readonly list = httpResource<AdminUserList>(
     () => `${this.api}/admin/users?page=${this.page()}`,
   );
   protected readonly fa = (n: number) => this.locale.number(n);
+
+  protected async setFriend(id: string, enabled: boolean) {
+    if (this.saving().has(id)) return;
+    const previous = this.friendChanges().get(id);
+    this.saving.update((saving) => new Set(saving).add(id));
+    this.friendChanges.update((changes) => new Map(changes).set(id, enabled));
+    try {
+      const body: AdminVpnFriendInput = { enabled };
+      await firstValueFrom(
+        this.http.put(`${this.api}/admin/users/${id}/vpn-friend`, body),
+      );
+    } catch {
+      this.friendChanges.update((changes) => {
+        const updated = new Map(changes);
+        if (previous === undefined) updated.delete(id);
+        else updated.set(id, previous);
+        return updated;
+      });
+      this.notices.error('تغییر دسترسی خصوصی ذخیره نشد.');
+    } finally {
+      this.saving.update(
+        (saving) => new Set([...saving].filter((userId) => userId !== id)),
+      );
+    }
+  }
 }

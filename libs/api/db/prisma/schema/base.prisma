@@ -53,6 +53,8 @@ model User {
   reviewReminder ReviewReminderSetting?
   progressNotification ProgressNotificationSetting?
   smsNotices SmsNotice[]
+  vpnFriend Boolean @default(false)
+  vpnSyncAt DateTime?
   telegramLink TelegramLink?
   telegramLinkCodes TelegramLinkCode[]
   passwordResets     PasswordReset[]
@@ -99,6 +101,7 @@ model User {
   aiPresets UserAiPreset[]
   aiUsage   AiUsageDay[]
 
+  @@index([vpnSyncAt])
   @@map("users")
 }
 

@@ -21,6 +21,11 @@ const config = { get: (key: string) => env[key] } as unknown as ConfigService;
 function setup(
   membership: string | Error = 'member',
   enabledApplets: string[] | null = null,
+  vpn?: {
+    enabled: boolean;
+    eligible: ReturnType<typeof vi.fn>;
+    forChat: ReturnType<typeof vi.fn>;
+  },
 ) {
   const sent: { chat: string; text: string; buttons?: unknown }[] = [];
   const db = {
@@ -153,6 +158,8 @@ function setup(
     speech as never,
     scores as never,
     sections,
+    undefined,
+    vpn as never,
   );
   const api = (
     service as unknown as {
@@ -213,6 +220,43 @@ const message = (text: string, id = 42) => ({
 });
 
 describe('Telegram bot', () => {
+  it('shows VPN only in the linked eligible chat and opens its own configuration', async () => {
+    const vpn = {
+      enabled: true,
+      eligible: vi.fn().mockResolvedValue(true),
+      forChat: vi.fn().mockResolvedValue({
+        link: 'vless://test',
+        quotaBytes: 50 * 1024 ** 3,
+        remainingBytes: 22 * 1024 ** 3,
+        expiresAt: Date.parse('2026-12-21T12:00:00Z'),
+      }),
+    };
+    const t = setup('member', null, vpn);
+    t.db.telegramLink.findUnique.mockResolvedValue({
+      userId: 'u1',
+      language: 'en',
+      menuVersion: MENU_VERSION,
+    });
+    await t.service.handle(message('/start'));
+    expect(JSON.stringify(t.sent.at(-1)?.buttons)).toContain('My VPN');
+    await t.service.handle(message('My VPN'));
+    expect(vpn.forChat).toHaveBeenCalledWith('u1', 42n);
+    expect(t.sent.at(-1)?.text).toContain('22 of 50 GB');
+    expect(t.sent.at(-1)?.text).toContain('vless://test');
+
+    vpn.eligible.mockResolvedValue(false);
+    vpn.forChat.mockResolvedValue(null);
+    t.db.telegramLink.findUnique.mockResolvedValue({
+      userId: 'u1',
+      language: 'en',
+      menuVersion: MENU_VERSION,
+      vpnMenuVisible: true,
+    });
+    await t.service.handle(message('My VPN'));
+    expect(JSON.stringify(t.sent.at(-2)?.buttons)).not.toContain('My VPN');
+    expect(t.sent.at(-1)?.text).toBe('VPN is unavailable for this account.');
+  });
+
   it('creates a one-time link and stores only the hash', async () => {
     const { service, db } = setup();
     const { url } = await service.createLink('u1', 'fa');

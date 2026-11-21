@@ -1,3 +1,4 @@
+import * as z from 'zod/mini';
 import type { User } from './user';
 
 /** Dashboard numbers for the admin app. */
@@ -15,5 +16,8 @@ export interface AdminStats {
 
 export interface AdminUserList {
   total: number;
-  users: User[];
+  users: (User & { vpnFriend: boolean })[];
 }
+
+export const adminVpnFriendSchema = z.object({ enabled: z.boolean() });
+export type AdminVpnFriendInput = z.infer<typeof adminVpnFriendSchema>;

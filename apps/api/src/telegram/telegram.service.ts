@@ -7,6 +7,7 @@ import {
   Optional,
   ServiceUnavailableException,
 } from '@nestjs/common';
+import { PrivateVpnService } from '../vpn/private-vpn.service';
 import { BillingService } from '../billing/billing.service';
 import { ConfigService } from '@nestjs/config';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
@@ -40,7 +41,13 @@ import {
   type TelegramButton,
   type TelegramMarkup,
 } from './telegram-api';
-import { plainReply, type Lang } from './telegram-format';
+import {
+  formatDay,
+  formatTime,
+  num,
+  plainReply,
+  type Lang,
+} from './telegram-format';
 import {
   activePending,
   callbackSection,
@@ -66,6 +73,7 @@ export const MENU_LABELS = {
   newTask: { fa: 'کار جدید', en: 'New task' },
   /** Kept for keyboards sent before directive 174. */
   shadow: { fa: 'شادوینگ', en: 'Shadowing' },
+  vpn: { fa: 'وی‌پی‌ان من', en: 'My VPN' },
   help: { fa: 'راهنما', en: 'Help' },
 } as const;
 const SECTIONS: readonly AppApplet[] = [
@@ -102,6 +110,7 @@ const isMenu = (text: string, key: keyof typeof MENU_LABELS) => {
 export function menuKeyboard(
   language: Lang,
   applets: readonly AppApplet[] = DEFAULT_CUSTOMER_APPLETS,
+  vpnVisible = false,
 ) {
   // Most used first: today's tasks and a new task; then the sections two by two; help last.
   const rows: { text: string }[][] = [
@@ -115,7 +124,10 @@ export function menuKeyboard(
   );
   for (let i = 0; i < sections.length; i += 2)
     rows.push(sections.slice(i, i + 2));
-  rows.push([button('help', language)]);
+  rows.push([
+    ...(vpnVisible ? [button('vpn', language)] : []),
+    button('help', language),
+  ]);
   return {
     keyboard: rows,
     resize_keyboard: true,
@@ -317,6 +329,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     private readonly scores: PracticeScoresService,
     private readonly sections: TelegramSectionsService,
     @Optional() private readonly billing?: BillingService,
+    @Optional() private readonly vpn?: PrivateVpnService,
   ) {
     this.api = new TelegramApi(config);
   }
@@ -608,6 +621,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
         section ||
         isMenu(text, 'today') ||
         isMenu(text, 'newTask') ||
+        isMenu(text, 'vpn') ||
         isMenu(text, 'help'))
     )
       await this.sections.savePending(chatId, null);
@@ -617,6 +631,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
         HELP_TEXT.en,
         await this.keyboard(link.userId, language),
       );
+    if (isMenu(text, 'vpn')) return this.sendVpn(link.userId, chatId, language);
     if (text === '/today' || isMenu(text, 'today'))
       return this.today(link.userId, chatId, language);
     if (text === '/new' || isMenu(text, 'newTask'))
@@ -667,26 +682,84 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
 
   /** A chat still showing an older keyboard gets the current one once (Telegram keeps the last one sent). */
   private async refreshMenu(
-    link: { userId: string; menuVersion?: number | null },
+    link: {
+      userId: string;
+      menuVersion?: number | null;
+      vpnMenuVisible?: boolean;
+    },
     chatId: bigint,
     language: Lang,
   ) {
     // The column is never null in the database (default 0); a missing value is treated as current.
-    if ((link.menuVersion ?? MENU_VERSION) >= MENU_VERSION) return;
+    const vpnVisible = (await this.vpn?.eligible(link.userId)) ?? false;
+    if (
+      (link.menuVersion ?? MENU_VERSION) >= MENU_VERSION &&
+      (link.vpnMenuVisible ?? false) === vpnVisible
+    )
+      return;
     await this.db.telegramLink.updateMany({
       where: { chatId },
-      data: { menuVersion: MENU_VERSION },
+      data:
+        this.vpn?.enabled || link.vpnMenuVisible
+          ? { menuVersion: MENU_VERSION, vpnMenuVisible: vpnVisible }
+          : { menuVersion: MENU_VERSION },
     });
     await this.reply(
       chatId,
       language === 'en' ? 'The bot menu is updated.' : 'منوی ربات به‌روز شد.',
-      await this.keyboard(link.userId, language),
+      await this.keyboard(link.userId, language, vpnVisible),
     );
   }
 
   /** The reply keyboard with the sections this account has on. */
-  private async keyboard(userId: string, language: Lang) {
-    return menuKeyboard(language, await this.sections.applets(userId));
+  private async keyboard(userId: string, language: Lang, vpnVisible?: boolean) {
+    if (vpnVisible === undefined && this.vpn?.enabled) {
+      vpnVisible = await this.vpn.eligible(userId);
+      await this.db.telegramLink.updateMany({
+        where: { userId, vpnMenuVisible: !vpnVisible },
+        data: { vpnMenuVisible: vpnVisible },
+      });
+    }
+    return menuKeyboard(
+      language,
+      await this.sections.applets(userId),
+      vpnVisible,
+    );
+  }
+
+  private async sendVpn(userId: string, chatId: bigint, language: Lang) {
+    let access;
+    try {
+      access = await this.vpn?.forChat(userId, chatId);
+    } catch {
+      return this.reply(
+        chatId,
+        language === 'en'
+          ? 'Your VPN is temporarily unavailable. Try again in a minute.'
+          : 'وی‌پی‌ان موقتاً در دسترس نیست. یک دقیقه دیگر دوباره امتحان کن.',
+      );
+    }
+    if (!access)
+      return this.reply(
+        chatId,
+        language === 'en'
+          ? 'VPN is unavailable for this account.'
+          : 'وی‌پی‌ان برای این حساب در دسترس نیست.',
+      );
+    const gb = (bytes: number) => num(language, bytes / 1024 ** 3);
+    const expires = new Date(access.expiresAt);
+    const day = formatDay(language, isoDateIn(expires, 'Asia/Tehran'));
+    const time = formatTime(language, expires);
+    const summary =
+      language === 'en'
+        ? `Remaining: ${gb(access.remainingBytes)} of ${gb(access.quotaBytes)} GB\nExpires: ${day}, ${time} Tehran time`
+        : `${gb(access.remainingBytes)} گیگابایت از ${gb(access.quotaBytes)} گیگابایت باقی مانده\nاعتبار تا ${day}، ساعت ${time} تهران`;
+    const details =
+      access.link ??
+      (language === 'en'
+        ? 'Your VPN quota has been used up.'
+        : 'حجم وی‌پی‌ان تمام شده است.');
+    return this.reply(chatId, `${summary}\n\n${details}`);
   }
 
   /** Runs a section action and sends what it returns; AI and other errors get the usual replies. */

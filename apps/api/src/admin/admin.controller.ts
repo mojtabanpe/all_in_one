@@ -1,17 +1,27 @@
 import {
+  Body,
   Controller,
   DefaultValuePipe,
   Get,
+  NotFoundException,
+  Param,
   ParseIntPipe,
+  ParseUUIDPipe,
+  Put,
   Query,
 } from '@nestjs/common';
 import { Roles, toUser } from '@all-in-one/api/auth';
 import { PrismaService } from '@all-in-one/api/db';
-import type { AdminStats, AdminUserList } from '@all-in-one/shared/schemas';
+import {
+  adminVpnFriendSchema,
+  type AdminStats,
+  type AdminUserList,
+  type AdminVpnFriendInput,
+} from '@all-in-one/shared/schemas';
 
 const PAGE_SIZE = 50;
 
-/** Read-only endpoints for the admin app. */
+/** Account administration and dashboard totals. */
 @Roles('ADMIN')
 @Controller('admin')
 export class AdminController {
@@ -72,6 +82,31 @@ export class AdminController {
         take: PAGE_SIZE,
       }),
     ]);
-    return { total, users: users.map(toUser) };
+    return {
+      total,
+      users: users.map((user) => ({
+        ...toUser(user),
+        vpnFriend: user.vpnFriend,
+      })),
+    };
+  }
+
+  @Put('users/:id/vpn-friend')
+  async setVpnFriend(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body({ schema: adminVpnFriendSchema }) input: AdminVpnFriendInput,
+  ) {
+    await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.user.updateMany({
+        where: { id, role: 'CUSTOMER' },
+        data: { vpnFriend: input.enabled },
+      });
+      if (!updated.count) throw new NotFoundException();
+      await tx.user.updateMany({
+        where: { id, vpnSyncAt: { not: null } },
+        data: { vpnSyncAt: new Date() },
+      });
+    });
+    return input;
   }
 }

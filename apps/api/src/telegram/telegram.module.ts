@@ -5,6 +5,7 @@ import { ExpensesApiModule } from '@all-in-one/applets/expenses/api';
 import { HealthApiModule } from '@all-in-one/applets/health/api';
 import { AssistantModule } from '../assistant/assistant.module';
 import { BillingModule } from '../billing/billing.module';
+import { PrivateVpnModule } from '../vpn/private-vpn.module';
 import { TelegramController } from './telegram.controller';
 import { TelegramSectionsService } from './telegram-sections';
 import { TelegramService } from './telegram.service';
@@ -14,6 +15,7 @@ import { TelegramService } from './telegram.service';
   imports: [
     AssistantModule,
     BillingModule,
+    PrivateVpnModule,
     PlannerApiModule,
     EnglishApiModule,
     HealthApiModule,
