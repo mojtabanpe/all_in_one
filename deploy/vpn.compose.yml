@@ -1,0 +1,15 @@
+name: all-in-one-vpn
+services:
+  vpn:
+    image: all-in-one-vpn:${VPN_RELEASE:?Set VPN_RELEASE}
+    network_mode: host
+    restart: unless-stopped
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    environment:
+      VPN_HOST: 127.0.0.1
+      VPN_SERVICE_TOKEN: ${VPN_SERVICE_TOKEN:?Set VPN_SERVICE_TOKEN}
+      VPN_PANEL_URL: ${VPN_PANEL_URL:?Set VPN_PANEL_URL}
+      VPN_PANEL_TOKEN: ${VPN_PANEL_TOKEN:?Set VPN_PANEL_TOKEN}
+      VPN_INBOUND_ID: ${VPN_INBOUND_ID:?Set VPN_INBOUND_ID}
+      VPN_CLIENT_ENDPOINT: ${VPN_CLIENT_ENDPOINT:?Set VPN_CLIENT_ENDPOINT}

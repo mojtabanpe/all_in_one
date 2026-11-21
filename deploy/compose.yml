@@ -29,6 +29,8 @@ services:
       # Supplied by the production GitHub Environment secret at release time.
       # Never stored in images, the checkout, or copied from a developer machine.
       FCM_SERVICE_ACCOUNT_JSON: ${FCM_SERVICE_ACCOUNT_JSON:-}
+      VPN_SERVICE_URL: http://127.0.0.1:4390
+      VPN_SERVICE_TOKEN: ${VPN_SERVICE_TOKEN:-}
     depends_on:
       postgres:
         condition: service_healthy

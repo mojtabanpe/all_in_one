@@ -13,6 +13,24 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml* ./
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
+# Independently built and deployed VPN controller. It only carries the pruned Nest runtime.
+FROM deps AS vpn-build
+ENV NX_DAEMON=false NX_NO_CLOUD=true
+COPY . .
+RUN pnpm nx run vpn:prune
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm --dir dist/apps/vpn install --prod --frozen-lockfile
+
+FROM node:24-bookworm-slim AS vpn
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=vpn-build /app/dist/apps/vpn/main.js ./main.js
+COPY --from=vpn-build /app/dist/apps/vpn/node_modules ./node_modules
+USER node
+HEALTHCHECK --interval=10s --timeout=5s --retries=6 \
+  CMD node -e "fetch('http://127.0.0.1:4390/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "main.js"]
+
 FROM deps AS build
 ENV NX_DAEMON=false NX_NO_CLOUD=true
 COPY . .

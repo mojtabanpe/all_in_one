@@ -1,0 +1,71 @@
+name: Deploy VPN
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-private-vpn
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.image.outputs.release }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: crazy-max/ghaction-github-runtime@v3
+      - id: image
+        run: |
+          release=$(git rev-parse --short HEAD)
+          docker buildx build --load -f deploy/images.dockerfile --target vpn \
+            --cache-from type=gha,scope=aio-vpn --cache-to type=gha,scope=aio-vpn,mode=max \
+            -t "all-in-one-vpn:$release" .
+          docker save "all-in-one-vpn:$release" | gzip -1 > image-vpn.tar.gz
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-vpn
+          path: image-vpn.tar.gz
+          retention-days: 1
+          compression-level: 0
+
+  deploy:
+    needs: build
+    runs-on: [self-hosted, aio]
+    environment: production
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: image-vpn
+          path: ${{ runner.temp }}/vpn-${{ github.run_id }}
+      - name: Start and verify the private service
+        env:
+          VPN_RELEASE: ${{ needs.build.outputs.release }}
+          VPN_SERVICE_TOKEN: ${{ secrets.VPN_SERVICE_TOKEN }}
+          VPN_PANEL_URL: ${{ secrets.VPN_PANEL_URL }}
+          VPN_PANEL_TOKEN: ${{ secrets.VPN_PANEL_TOKEN }}
+          VPN_INBOUND_ID: ${{ vars.VPN_INBOUND_ID }}
+          VPN_CLIENT_ENDPOINT: ${{ secrets.VPN_CLIENT_ENDPOINT }}
+        run: |
+          docker load -i "$RUNNER_TEMP/vpn-$GITHUB_RUN_ID/image-vpn.tar.gz"
+          docker compose -f deploy/vpn.compose.yml run --rm --no-deps --entrypoint node vpn -e '
+            (async () => {
+              const url = process.env.VPN_PANEL_URL.replace(/\/$/, "") + "/panel/api/inbounds/options";
+              const response = await fetch(url, {
+                headers: { Authorization: "Bearer " + process.env.VPN_PANEL_TOKEN },
+                redirect: "error", signal: AbortSignal.timeout(10000)
+              });
+              if (!response.ok) throw Error();
+              const data = await response.json();
+              if (!data.success || !data.obj.some(entry =>
+                entry.id === Number(process.env.VPN_INBOUND_ID) && entry.protocol === "vless")) throw Error();
+            })().catch(() => { console.error("VPN panel authorization or inbound preflight failed"); process.exit(1); });
+          '
+          docker compose -f deploy/vpn.compose.yml up -d --wait --wait-timeout 80
+          curl --fail --silent --show-error --max-time 5 http://127.0.0.1:4390/health

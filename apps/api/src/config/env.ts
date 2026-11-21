@@ -36,7 +36,7 @@ export const envSchema = z.object({
       );
     })
     .optional(),
-  VPN_SERVICE_TOKEN: z.string().min(24).optional(),
+  VPN_SERVICE_TOKEN: z.union([z.string().min(24), z.literal('')]).optional(),
   /** Channel a user must join to use the bot (directive 170); empty turns it off. */
   TELEGRAM_REQUIRED_CHANNEL: z.string().optional(),
   /** GlitchTip on this server's loopback (directive 184): http://<key>@127.0.0.1:4340/<project id>; empty = log only. */

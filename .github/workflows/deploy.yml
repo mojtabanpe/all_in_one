@@ -249,6 +249,7 @@ jobs:
       - name: Start release
         env:
           FCM_SERVICE_ACCOUNT_JSON: ${{ secrets.FCM_SERVICE_ACCOUNT_JSON }}
+          VPN_SERVICE_TOKEN: ${{ secrets.VPN_SERVICE_TOKEN }}
           RELEASE: ${{ needs.build.outputs.release }}
         run: |
           # A wrong Firebase secret stops the release (exit 1). Google's token endpoint being unreachable from

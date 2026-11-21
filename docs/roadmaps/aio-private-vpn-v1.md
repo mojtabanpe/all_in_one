@@ -3,13 +3,18 @@
 An optional VPN benefit for paid customers selected by an admin. Telegram is the only customer entry
 point. The previous manual VLESS test confirmed the Iran–foreign tunnel.
 
-| Checkpoint                               | Status | Evidence                                                                                                                                                                              |
-| ---------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Independent runtime and 3x-ui management | DONE   | `apps/vpn` builds independently. A local HTTP smoke test against a mock panel verified auth, quota, renewal and revocation.                                                           |
-| Admin eligibility, billing and Telegram  | DONE   | The admin Users table and API require an active purchase before saving the invitation. Admin and API builds passed. Unit tests cover linking, menu eligibility, renewals and refunds. |
-| Production activation                    | TODO   | Release the service separately, configure the private connection and verify one invited account through Telegram.                                                                     |
+| Checkpoint                               | Status      | Evidence                                                                                                                                                                              |
+| ---------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Independent runtime and 3x-ui management | DONE        | `apps/vpn` builds independently. A local HTTP smoke test against a mock panel verified auth, quota, renewal and revocation.                                                           |
+| Admin eligibility, billing and Telegram  | DONE        | The admin Users table and API require an active purchase before saving the invitation. Admin and API builds passed. Unit tests cover linking, menu eligibility, renewals and refunds. |
+| Production activation                    | IN_PROGRESS | Independent GitHub Actions workflow and production configuration prepared. Verify the runner health check and application activation.                                                 |
 
 ## Service configuration
+
+On production, GitHub Actions **Deploy VPN** builds the standalone image and starts a dedicated
+Compose project on the `aio` runner. The service listens on loopback on `flashcard`; it manages
+3x-ui on `vpn` over HTTPS. See the production environment for the service and panel secrets.
+The main **Deploy** workflow supplies the service token to each new API release.
 
 Build with Node 24 and `pnpm nx run vpn:prune`. Run `node main.js` from the generated
 `dist/apps/vpn` artifact after installing its runtime dependencies from the pruned lockfile.
