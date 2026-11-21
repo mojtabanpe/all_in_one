@@ -59,4 +59,25 @@ describe('SpeechService shared audio cache', () => {
     );
     expect(cache.get).toHaveBeenCalledTimes(1);
   });
+
+  it('serves pre-generated starter audio without calling the TTS gateway or cache', async () => {
+    const { service, gateway, cache } = setup();
+    const term = await service.speak('free', '  weekend  ');
+    const definition = await service.speak('free', 'To stop sleeping.');
+    expect(term.cacheStatus).toBe('STATIC');
+    expect(term.contentType).toBe('audio/mpeg');
+    expect(term.audio.length).toBeGreaterThan(1000);
+    expect(definition.cacheStatus).toBe('STATIC');
+    expect(definition.audio.length).toBeGreaterThan(1000);
+    expect(gateway.speechTarget).not.toHaveBeenCalled();
+    expect(gateway.speech).not.toHaveBeenCalled();
+    expect(cache.get).not.toHaveBeenCalled();
+  });
+
+  it('uses the TTS gateway for secondary dialogue voice even when text matches a starter card', async () => {
+    const { service, gateway } = setup();
+    const res = await service.speak('user-a', 'weekend', 'secondary');
+    expect(res.cacheStatus).toBe('MISS');
+    expect(gateway.speech).toHaveBeenCalledTimes(1);
+  });
 });

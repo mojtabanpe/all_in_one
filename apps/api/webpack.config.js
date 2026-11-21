@@ -15,7 +15,14 @@ module.exports = {
       compiler: 'tsc',
       main: './src/main.ts',
       tsConfig: './tsconfig.app.json',
-      assets: ['./src/assets'],
+      assets: [
+        './src/assets',
+        {
+          input: '../../libs/applets/english-learning/api/assets/starter-tts',
+          glob: '**/*',
+          output: 'assets/starter-tts',
+        },
+      ],
       optimization: false,
       outputHashing: 'none',
       generatePackageJson: true,
