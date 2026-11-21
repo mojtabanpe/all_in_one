@@ -755,3 +755,25 @@ Claim checked against the code: the assistant has `batch_create_tasks` / `create
   `18100205603411196`, message 9) were deleted by the owner.
 - `VERIFY` (after republication) views/reach against episode 1 at equal age, and Bazaar/Myket signups and first planner
   tasks in the 3 days after vs before.
+
+## Reel «شدوینگ — مصاحبه انگلیسی» (Amir, male voice) — published 2026-11-21
+
+- Character: new male character `amir` (~27, software developer in an online English interview), male voice throughout
+  (Gemini TTS `Charon` verified via ElevenLabs Scribe + native Kokoro male voice `am_michael` from `b1-job-interview`
+  sentence 12 «Yes. What does a typical day look like in this role?»).
+- Production: brief `marketing/promo-videos/briefs/shadowing-interview.json` (local, gitignored); portrait + two 8 s
+  shots on Flow u0 via temporary `ywa-ai` pipeline (48 credits, temporary folders removed); real mobile app recording
+  captured locally via Playwright on the Shadowing tab (real Kokoro audio, real `MediaRecorder` + ElevenLabs Scribe STT,
+  real `100/100` word check rendered on screen); assembled as
+  `marketing/promo-videos/out/shadowing-interview/poshtetgarm-shadowing-interview-reel.mp4` (24.6 s, 1080×1920, sound
+  from 0 s, mean `-18.7 dB`, SHA-256 `994b4317a285b9834dd0e0c85a8a993b620f36c78acf81acd83ba9046540b9d5`, 5,711,593
+  bytes). Hosted in Drive folder `ywa` (`Poshtetgarm_Shadowing_Interview_Reel.mp4`, ID
+  `1iu4ElgzMyal4nm5uuL9vzEpEbDYnsc8o`); anonymous range request returned `206 video/mp4`.
+- `DONE` Instagram (owner: «خوب بود / منتشر کن»): Windsor `create_video_post` to `poshtetgarm` (`17841425571593489`),
+  `share_to_feed=true`, `thumb_offset=1500`, 2026-11-21 23:20:49 Tehran:
+  [Reel](https://www.instagram.com/reel/DgBBWzujDpy/), media `18205769545332369`. Separate Windsor read-back matched
+  ID, permalink, exact Persian caption and `REELS`.
+- `DONE` Telegram (owner: «تلگرام هم منتشر کن»): `sendVideo` to `@poshtetgarm`, message `11`
+  (`https://t.me/poshtetgarm/11`), same video with the channel caption and `english_7day_pilot` UTM link.
+- `VERIFY` reach, watch time, saves/shares and English shadowing/dialogue usage in the 3 days after vs before (note:
+  release `D6` in `aio-english-dialogues-v1.md` so visitors see the ready dialogues on production).

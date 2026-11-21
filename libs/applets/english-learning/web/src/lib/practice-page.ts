@@ -34,10 +34,12 @@ import {
 } from '@all-in-one/applets/english-learning/contracts';
 import {
   AioTranslate,
+  AioBadge,
   AioButton,
   AioIcon,
   AioNativeSelect,
   AioNativeSelectOption,
+  AioProgressDirectives,
   AioSpinner,
   AioTextarea,
   AioToggleGroupDirectives,
@@ -117,10 +119,12 @@ const freshTask = (): TaskState => ({
 @Component({
   selector: 'english-learning-practice',
   imports: [
+    AioBadge,
     AioButton,
     AioIcon,
     AioNativeSelect,
     AioNativeSelectOption,
+    AioProgressDirectives,
     AioSpinner,
     AioTextarea,
     AioToggleGroupDirectives,
@@ -359,36 +363,60 @@ const freshTask = (): TaskState => ({
             class="lx-glass flex min-w-0 flex-col gap-4 rounded-2xl p-4"
             aria-labelledby="shadow-sentence-title"
           >
-            <h2
-              id="shadow-sentence-title"
-              class="font-semibold"
-              aria-live="polite"
-            >
-              {{
-                'Sentence {0} of {1}'
-                  | aioTranslate
-                    : [
-                        number(shadowIndex() + 1),
-                        number(dialogue()!.lines.length),
-                      ]
-              }}
-            </h2>
+            <div class="flex flex-col gap-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <h2
+                  id="shadow-sentence-title"
+                  class="min-w-0 truncate text-base font-semibold"
+                  dir="ltr"
+                  lang="en"
+                >
+                  {{ dialogue()!.title }}
+                </h2>
+                <span
+                  aioBadge
+                  variant="secondary"
+                  class="shrink-0 tabular-nums"
+                  aria-live="polite"
+                >
+                  {{
+                    'Sentence {0} of {1}'
+                      | aioTranslate
+                        : [
+                            number(shadowIndex() + 1),
+                            number(dialogue()!.lines.length),
+                          ]
+                  }}
+                </span>
+              </div>
+              <div
+                aioProgress
+                class="bg-muted/70 h-2 w-full rounded-full"
+                [value]="shadowProgress()"
+              >
+                <div aioProgressIndicator class="bg-primary rounded-full"></div>
+              </div>
+            </div>
+
             @if (shadowFinished()) {
-              <div class="flex flex-col gap-1" role="status">
-                <p class="text-success font-semibold">
+              <div
+                class="bg-success/10 border-success/25 flex flex-col gap-1.5 rounded-xl border p-3.5"
+                role="status"
+              >
+                <p class="text-success text-sm font-semibold">
                   {{
                     'Well done! You practised every sentence. Try another round to build fluency.'
                       | aioTranslate
                   }}
                 </p>
                 @if (shadowAttempted()) {
-                  <p class="text-3xl font-bold">
+                  <p class="text-3xl font-bold tabular-nums">
                     {{ number(shadowSessionScore())
                     }}<span class="text-muted-foreground text-base font-medium"
                       >/{{ number(100) }}</span
                     >
                   </p>
-                  <p class="text-muted-foreground text-sm">
+                  <p class="text-muted-foreground text-xs leading-5">
                     {{
                       'Session score: {0} of {1} sentences recorded. Sentences you did not record count as zero.'
                         | aioTranslate
@@ -398,14 +426,14 @@ const freshTask = (): TaskState => ({
                             ]
                     }}
                   </p>
-                  <p class="text-muted-foreground text-sm">
+                  <p class="text-muted-foreground text-xs">
                     {{
                       (shadowSaved() ? 'Saved to your progress.' : 'Saving…')
                         | aioTranslate
                     }}
                   </p>
                 } @else {
-                  <p class="font-semibold">
+                  <p class="text-sm font-semibold">
                     {{
                       'Record yourself on each sentence to get a score.'
                         | aioTranslate
@@ -414,64 +442,111 @@ const freshTask = (): TaskState => ({
                 }
               </div>
             }
-            <div class="flex flex-wrap gap-2">
-              <div
-                aioToggleGroup
-                type="single"
-                variant="outline"
-                [value]="speedValue()"
-                (valueChange)="setShadowSpeed($event)"
-                [attr.aria-label]="'Speaker speed' | aioTranslate"
-              >
-                <button aioToggleGroupItem value="0.75" class="min-h-11">
-                  {{ 'Slow' | aioTranslate }}
-                </button>
-                <button aioToggleGroupItem value="1" class="min-h-11">
-                  {{ 'Normal' | aioTranslate }}
-                </button>
+
+            <div
+              class="bg-background/65 border-border/70 flex flex-col gap-3 rounded-xl border p-4"
+            >
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                @if (sentence.speaker) {
+                  <span
+                    aioBadge
+                    variant="outline"
+                    class="text-muted-foreground text-xs"
+                    dir="ltr"
+                    lang="en"
+                  >
+                    {{ sentence.speaker }}
+                  </span>
+                }
+                <div class="ms-auto flex items-center gap-2">
+                  <div
+                    aioToggleGroup
+                    type="single"
+                    variant="outline"
+                    [value]="speedValue()"
+                    (valueChange)="setShadowSpeed($event)"
+                    [attr.aria-label]="'Speaker speed' | aioTranslate"
+                  >
+                    <button
+                      aioToggleGroupItem
+                      value="0.75"
+                      class="h-11 px-3 text-xs"
+                    >
+                      {{ 'Slow' | aioTranslate }}
+                    </button>
+                    <button
+                      aioToggleGroupItem
+                      value="1"
+                      class="h-11 px-3 text-xs"
+                    >
+                      {{ 'Normal' | aioTranslate }}
+                    </button>
+                  </div>
+                  <button
+                    aioBtn
+                    variant="ghost"
+                    class="h-11 px-2.5 text-xs"
+                    [attr.aria-pressed]="showText()"
+                    (click)="showText.update((v) => !v)"
+                  >
+                    <aio-icon
+                      [name]="showText() ? 'lucideEyeOff' : 'lucideEye'"
+                      size="sm"
+                    />
+                    {{
+                      (showText() ? 'Hide transcript' : 'Show transcript')
+                        | aioTranslate
+                    }}
+                  </button>
+                </div>
               </div>
-              <button
-                aioBtn
-                variant="ghost"
-                [attr.aria-pressed]="showText()"
-                (click)="showText.update((v) => !v)"
-              >
-                <aio-icon
-                  [name]="showText() ? 'lucideEyeOff' : 'lucideEye'"
-                  size="sm"
-                />
-                {{
-                  (showText() ? 'Hide transcript' : 'Show transcript')
-                    | aioTranslate
-                }}
-              </button>
+
+              @if (showText()) {
+                <p
+                  dir="ltr"
+                  lang="en"
+                  class="text-start text-lg leading-8 font-medium wrap-anywhere sm:text-xl sm:leading-9"
+                >
+                  {{ sentence.text }}
+                </p>
+              } @else {
+                <button
+                  type="button"
+                  class="border-border/80 text-muted-foreground hover:border-primary/40 hover:text-foreground flex min-h-14 w-full items-center justify-center gap-2 rounded-lg border border-dashed px-3 py-3 text-sm transition-colors"
+                  (click)="showText.set(true)"
+                >
+                  <aio-icon name="lucideEye" size="sm" />
+                  <span>{{
+                    'Text is hidden. Listen first or tap to reveal.'
+                      | aioTranslate
+                  }}</span>
+                </button>
+              }
             </div>
-            @if (showText()) {
-              <p
-                dir="ltr"
-                lang="en"
-                class="text-start text-xl leading-9 wrap-anywhere"
-              >
-                {{ sentence.text }}
-              </p>
-            }
-            <div class="flex flex-wrap gap-3">
+
+            <div class="grid grid-cols-2 gap-3">
               <button
                 aioBtn
+                class="h-12 w-full justify-center gap-2"
                 [disabled]="recordingPending()"
                 (click)="playShadow()"
               >
                 <aio-icon
-                  [name]="playing() ? 'lucideSquare' : 'lucidePlay'"
+                  [name]="playing() ? 'lucideSquare' : 'lucideVolume2'"
                   size="sm"
                 />
-                {{
+                <span>{{
                   (playing() ? 'Stop speaker' : 'Play sentence') | aioTranslate
-                }}
+                }}</span>
               </button>
               <button
                 aioBtn
-                variant="outline"
+                [variant]="recording() ? 'default' : 'outline'"
+                [class]="
+                  recording()
+                    ? 'h-12 w-full justify-center gap-2 [--primary:var(--destructive)]'
+                    : 'h-12 w-full justify-center gap-2'
+                "
                 [disabled]="recordingPending()"
                 (click)="record()"
               >
@@ -483,15 +558,16 @@ const freshTask = (): TaskState => ({
                     size="sm"
                   />
                 }
-                {{
+                <span>{{
                   (recording()
                     ? 'Stop recording'
                     : 'Record along with the speaker'
                   ) | aioTranslate
-                }}
+                }}</span>
               </button>
             </div>
-            <p class="text-muted-foreground text-sm" role="status">
+
+            <p class="text-muted-foreground text-xs leading-5" role="status">
               {{
                 (recording()
                   ? 'Recording. Play the sentence and repeat along. Recording stops after one minute.'
@@ -499,98 +575,134 @@ const freshTask = (): TaskState => ({
                 ) | aioTranslate
               }}
             </p>
-            @if (recordingUrl()) {
-              <div class="flex min-w-0 flex-col gap-2">
-                <span id="shadow-recording-label" class="text-sm font-medium">{{
-                  'Your recording — compare it with the speaker' | aioTranslate
-                }}</span>
-                <audio
-                  [src]="recordingUrl()"
-                  controls
-                  class="h-12 w-full min-w-0"
-                  aria-labelledby="shadow-recording-label"
-                  (play)="stop()"
-                ></audio>
-              </div>
-            }
-            @if (shadowChecking()) {
-              <p class="text-muted-foreground text-sm" role="status">
-                {{ 'Checking your words…' | aioTranslate }}
-              </p>
-            } @else if (shadowCheck(); as c) {
+
+            @if (shadowChecking() || shadowCheck() || recordingUrl()) {
               <div
-                class="flex min-w-0 flex-col gap-3"
-                role="status"
-                aria-live="polite"
+                class="bg-background/70 border-border/70 flex min-w-0 flex-col gap-3 rounded-xl border p-4"
               >
-                <p class="font-semibold">
-                  {{
-                    'Score for this sentence: {0}/100'
-                      | aioTranslate: [number(c.score)]
-                  }}
-                </p>
-                <p dir="ltr" lang="en" class="text-lg leading-9">
-                  @for (w of c.words; track $index) {
-                    <span
-                      [class]="
-                        w.status === 'ok'
-                          ? ''
-                          : w.status === 'missed'
-                            ? 'text-destructive decoration-destructive line-through decoration-2'
-                            : 'text-destructive decoration-destructive underline decoration-wavy decoration-2'
-                      "
-                      >{{ w.word }}</span
-                    >{{ ' ' }}
-                  }
-                </p>
-                <ul class="flex flex-col gap-1 text-sm">
-                  @for (w of c.words; track $index) {
-                    @if (w.status === 'wrong') {
-                      <li>
+                @if (shadowChecking()) {
+                  <div
+                    class="text-muted-foreground flex items-center gap-2 text-sm"
+                    role="status"
+                  >
+                    <aio-spinner [aria-label]="'Loading' | aioTranslate" />
+                    <span>{{ 'Checking your words…' | aioTranslate }}</span>
+                  </div>
+                } @else if (shadowCheck(); as c) {
+                  <div
+                    class="flex min-w-0 flex-col gap-3"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <div class="flex items-center justify-between gap-2">
+                      <p class="text-sm font-semibold">
                         {{
-                          'You said “{0}” instead of “{1}”.'
-                            | aioTranslate
-                              : [verbatim(w.heard), verbatim(w.word)]
+                          'Score for this sentence: {0}/100'
+                            | aioTranslate: [number(c.score)]
                         }}
-                      </li>
-                    } @else if (w.status === 'missed') {
-                      <li>
-                        {{
-                          'You skipped “{0}”.'
-                            | aioTranslate: [verbatim(w.word)]
-                        }}
-                      </li>
-                    }
-                  }
-                  @if (c.extra.length) {
-                    <li>
+                      </p>
+                      <span
+                        aioBadge
+                        [variant]="c.score >= 80 ? 'default' : 'secondary'"
+                        class="tabular-nums"
+                      >
+                        {{ number(c.score) }}/{{ number(100) }}
+                      </span>
+                    </div>
+                    <p
+                      dir="ltr"
+                      lang="en"
+                      class="bg-muted/40 rounded-lg px-3 py-2 text-base leading-8"
+                    >
+                      @for (w of c.words; track $index) {
+                        <span
+                          [class]="
+                            w.status === 'ok'
+                              ? ''
+                              : w.status === 'missed'
+                                ? 'text-destructive decoration-destructive line-through decoration-2'
+                                : 'text-destructive decoration-destructive underline decoration-wavy decoration-2'
+                          "
+                          >{{ w.word }}</span
+                        >{{ ' ' }}
+                      }
+                    </p>
+                    <ul class="flex flex-col gap-1 text-sm">
+                      @for (w of c.words; track $index) {
+                        @if (w.status === 'wrong') {
+                          <li>
+                            {{
+                              'You said “{0}” instead of “{1}”.'
+                                | aioTranslate
+                                  : [verbatim(w.heard), verbatim(w.word)]
+                            }}
+                          </li>
+                        } @else if (w.status === 'missed') {
+                          <li>
+                            {{
+                              'You skipped “{0}”.'
+                                | aioTranslate: [verbatim(w.word)]
+                            }}
+                          </li>
+                        }
+                      }
+                      @if (c.extra.length) {
+                        <li>
+                          {{
+                            'Extra words: {0}'
+                              | aioTranslate: [verbatim(c.extra.join(', '))]
+                          }}
+                        </li>
+                      }
+                      @if (c.score === 100) {
+                        <li class="text-success font-medium">
+                          {{ 'Every word was right.' | aioTranslate }}
+                        </li>
+                      }
+                    </ul>
+                    <p class="text-muted-foreground text-xs">
                       {{
-                        'Extra words: {0}'
-                          | aioTranslate: [verbatim(c.extra.join(', '))]
+                        'We heard: “{0}”' | aioTranslate: [verbatim(c.heard)]
                       }}
-                    </li>
-                  }
-                  @if (c.score === 100) {
-                    <li class="text-success">
-                      {{ 'Every word was right.' | aioTranslate }}
-                    </li>
-                  }
-                </ul>
-                <p class="text-muted-foreground text-xs">
-                  {{ 'We heard: “{0}”' | aioTranslate: [verbatim(c.heard)] }}
-                </p>
-                <p class="text-muted-foreground text-xs">
-                  {{
-                    'This checks your words from a transcript of your voice: skipped or wrong words, not accent or intonation.'
-                      | aioTranslate
-                  }}
-                </p>
+                    </p>
+                    <p class="text-muted-foreground text-xs leading-5">
+                      {{
+                        'This checks your words from a transcript of your voice: skipped or wrong words, not accent or intonation.'
+                          | aioTranslate
+                      }}
+                    </p>
+                  </div>
+                }
+
+                @if (recordingUrl()) {
+                  <div
+                    class="border-border/60 flex min-w-0 flex-col gap-1.5 border-t pt-3"
+                  >
+                    <span
+                      id="shadow-recording-label"
+                      class="text-muted-foreground text-xs font-medium"
+                      >{{
+                        'Your recording — compare it with the speaker'
+                          | aioTranslate
+                      }}</span
+                    >
+                    <audio
+                      [src]="recordingUrl()"
+                      controls
+                      class="h-11 w-full min-w-0"
+                      aria-labelledby="shadow-recording-label"
+                      (play)="stop()"
+                    ></audio>
+                  </div>
+                }
               </div>
             }
-            <div class="flex flex-wrap gap-3">
+
+            <div class="border-border/60 grid grid-cols-2 gap-3 border-t pt-3">
               <button
                 aioBtn
                 variant="outline"
+                class="h-11 w-full justify-center"
                 [disabled]="
                   shadowIndex() === 0 || recording() || recordingPending()
                 "
@@ -600,6 +712,8 @@ const freshTask = (): TaskState => ({
               </button>
               <button
                 aioBtn
+                variant="secondary"
+                class="h-11 w-full justify-center"
                 [disabled]="recording() || recordingPending()"
                 (click)="moveShadow(1)"
               >
@@ -1153,6 +1267,10 @@ export class PracticePage {
   protected readonly shadowLine = computed(
     () => this.dialogue()?.lines[this.shadowIndex()],
   );
+  protected readonly shadowProgress = computed(() => {
+    const total = this.dialogue()?.lines.length ?? 0;
+    return total ? Math.round(((this.shadowIndex() + 1) / total) * 100) : 0;
+  });
   /** Latest check of each sentence of the current dialogue (by index). */
   protected readonly shadowChecks = signal<Record<number, ShadowCheck>>({});
   protected readonly shadowChecking = signal(false);
