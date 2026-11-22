@@ -143,7 +143,10 @@ export class AiRouterService {
     try {
       const response = await this.callProvider(plan.primary, payload);
       firstStatus = response.status;
-      firstBody = await parseResponseBody(response);
+      firstBody = sanitizeProviderBody(
+        plan.primary.name,
+        await parseResponseBody(response),
+      );
       if (
         response.ok ||
         !plan.fallback ||
@@ -176,7 +179,10 @@ export class AiRouterService {
 
     try {
       const fallbackResponse = await this.callProvider(plan.fallback, payload);
-      const fallbackBody = await parseResponseBody(fallbackResponse);
+      const fallbackBody = sanitizeProviderBody(
+        plan.fallback.name,
+        await parseResponseBody(fallbackResponse),
+      );
       return {
         status: fallbackResponse.status,
         body: fallbackBody,
@@ -228,6 +234,10 @@ export class AiRouterService {
       ...payload,
       model: provider.model,
       stream: false,
+      ...(provider.name === 'self-hosted' &&
+      !('chat_template_kwargs' in payload)
+        ? { chat_template_kwargs: { enable_thinking: false } }
+        : {}),
     };
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -286,4 +296,26 @@ async function parseResponseBody(
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'unknown error';
+}
+
+const THINK_TAG_RE = /^(?:<think>[\s\S]*?<\/think>|<\/think>)\s*/i;
+
+/** Strips leaked Qwen3 thinking tags from self-hosted llama-server replies. */
+function sanitizeProviderBody(
+  provider: ProviderConfig['name'],
+  body: unknown,
+): unknown {
+  if (provider !== 'self-hosted' || !body || typeof body !== 'object') {
+    return body;
+  }
+  const record = body as {
+    choices?: Array<{ message?: { content?: unknown } }>;
+  };
+  if (!Array.isArray(record.choices)) return body;
+  for (const choice of record.choices) {
+    if (typeof choice?.message?.content === 'string') {
+      choice.message.content = choice.message.content.replace(THINK_TAG_RE, '');
+    }
+  }
+  return body;
 }

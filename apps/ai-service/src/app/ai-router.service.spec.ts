@@ -168,4 +168,28 @@ describe('AiRouterService', () => {
     expect(service.isAuthorized('Bearer wrong')).toBe(false);
     expect(service.isAuthorized('Bearer super-secret-token')).toBe(true);
   });
+
+  it('sends enable_thinking=false and strips stray </think> tags from self-hosted Qwen3 responses', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(okJson('</think>\n\n{"in_scope":true}'));
+    const config = loadAiRouterConfig({
+      AI_SELF_HOSTED_ENABLED: 'true',
+      AI_SELF_HOSTED_MODE: 'primary',
+      AI_SELF_HOSTED_URL: 'http://127.0.0.1:8085/v1',
+      AI_SELF_HOSTED_MODEL: 'poshtetgarm-qwen3-1.7b',
+    });
+
+    const service = new AiRouterService(config, fetchMock as never);
+    const result = await service.chatCompletions({
+      messages: [{ role: 'user', content: 'سلام' }],
+    });
+
+    const sentBody = JSON.parse(fetchMock.mock.calls[0][1].body as string);
+    expect(sentBody.chat_template_kwargs).toEqual({ enable_thinking: false });
+    const body = result.body as {
+      choices: Array<{ message: { content: string } }>;
+    };
+    expect(body.choices[0].message.content).toBe('{"in_scope":true}');
+  });
 });
