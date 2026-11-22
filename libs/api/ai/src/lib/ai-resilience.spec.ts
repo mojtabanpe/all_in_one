@@ -53,8 +53,13 @@ const audioReply = () =>
     headers: { 'content-type': 'audio/mpeg' },
   });
 
-function setup(options: { fallback?: boolean } = {}) {
-  const config = new ConfigService({ JWT_SECRET: SECRET });
+function setup(
+  options: { fallback?: boolean; env?: Record<string, string> } = {},
+) {
+  const config = new ConfigService({
+    JWT_SECRET: SECRET,
+    ...(options.env ?? {}),
+  });
   const prisma = {
     managedAiConfiguration: {
       findUnique: vi.fn().mockResolvedValue({ settings: primaryRow }),
@@ -183,6 +188,56 @@ describe('AI fallback', () => {
     expect((await gateway.testManaged('chat')).ok).toBe(false);
     expect(request).toHaveBeenCalledTimes(1);
     expect(report(health).hour.chat.calls).toBe(0);
+  });
+
+  it('uses standalone ai-service as chat fallback when AI_SERVICE_ENABLED=true (mode=fallback) and no DB fallback exists', async () => {
+    const { gateway, health, request } = setup({
+      fallback: false,
+      env: {
+        AI_SERVICE_ENABLED: 'true',
+        AI_SERVICE_URL: 'http://127.0.0.1:4395/v1',
+        AI_SERVICE_TOKEN: 'svc-secret',
+        AI_SERVICE_MODEL: 'poshtetgarm-chat',
+        AI_SERVICE_MODE: 'fallback',
+      },
+    });
+    request
+      .mockResolvedValueOnce(new Response('busy', { status: 503 }) as never)
+      .mockResolvedValueOnce(chatReply() as never);
+    const reply = await gateway.chat('user', [
+      { role: 'user', content: 'سلام' },
+    ]);
+    expect(reply.content).toBe('ok');
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(request.mock.calls[1][0]).toEqual({
+      endpoint: 'http://127.0.0.1:4395/v1/chat/completions',
+      model: 'poshtetgarm-chat',
+      key: 'svc-secret',
+      proxy: null,
+      provider: 'openai',
+    });
+    expect(report(health).hour.chat.fellBack).toBe(1);
+  });
+
+  it('routes chat directly to standalone ai-service when AI_SERVICE_ENABLED=true and AI_SERVICE_MODE=primary', async () => {
+    const { gateway, request } = setup({
+      fallback: false,
+      env: {
+        AI_SERVICE_ENABLED: 'true',
+        AI_SERVICE_URL: 'http://127.0.0.1:4395/v1',
+        AI_SERVICE_TOKEN: 'svc-secret',
+        AI_SERVICE_MODE: 'primary',
+      },
+    });
+    request.mockResolvedValueOnce(chatReply() as never);
+    const reply = await gateway.chat('user', [
+      { role: 'user', content: 'سلام' },
+    ]);
+    expect(reply.content).toBe('ok');
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(request.mock.calls[0][0].endpoint).toBe(
+      'http://127.0.0.1:4395/v1/chat/completions',
+    );
   });
 });
 

@@ -19,6 +19,7 @@ import { fetch, FormData } from 'undici';
 import {
   AiSettingsService,
   ELEVEN_DEFAULTS,
+  endpointFor,
   type AiTarget,
 } from './ai-settings.service';
 import { assertPublicUrl, guardedAgent, proxyAgent } from './net-guard';
@@ -144,7 +145,12 @@ export class AiGateway {
       if (testing) throw error;
       failure = error;
     }
-    const fallback = await this.settings.fallbackTarget(kind);
+    const dbFallback = await this.settings.fallbackTarget(kind);
+    const svcFallback =
+      !dbFallback && kind === 'chat' ? this.standaloneChatService() : null;
+    const fallback =
+      dbFallback ??
+      (svcFallback?.mode === 'fallback' ? svcFallback.target : null);
     const reason = response ? `HTTP ${response.status}` : 'unreachable';
     if (!fallback) {
       this.health?.record(kind, { ok: false, fellBack: false, error: reason });
@@ -201,6 +207,44 @@ export class AiGateway {
     return this.config.get('AI_ALLOW_PRIVATE_URLS') === 'true';
   }
 
+  /**
+   * Optional standalone `ai-service` connection (disabled by default).
+   * Keeps provider routing (DeepSeek + self-hosted llama-server) isolated outside `apps/api`.
+   */
+  private standaloneChatService(): {
+    target: AiTarget;
+    mode: 'fallback' | 'primary';
+  } | null {
+    if (this.config.get('AI_SERVICE_ENABLED') !== 'true') return null;
+    const url = (
+      this.config.get<string>('AI_SERVICE_URL') ?? 'http://127.0.0.1:4395/v1'
+    ).trim();
+    if (!url) return null;
+    const mode =
+      this.config.get<string>('AI_SERVICE_MODE')?.trim().toLowerCase() ===
+      'primary'
+        ? 'primary'
+        : 'fallback';
+    const model =
+      this.config.get<string>('AI_SERVICE_MODEL')?.trim() || 'poshtetgarm-chat';
+    const key = this.config.get<string>('AI_SERVICE_TOKEN')?.trim() || null;
+    return {
+      mode,
+      target: {
+        endpoint: endpointFor('chat', url),
+        model,
+        key,
+        proxy: null,
+        provider: 'openai',
+      },
+    };
+  }
+
+  private isStandaloneServiceEndpoint(endpoint: string): boolean {
+    const svc = this.standaloneChatService();
+    return Boolean(svc && svc.target.endpoint === endpoint);
+  }
+
   status() {
     return this.settings.status();
   }
@@ -218,6 +262,17 @@ export class AiGateway {
         },
         402,
       );
+    }
+    if (kind === 'chat') {
+      const svc = this.standaloneChatService();
+      if (svc?.mode === 'primary') {
+        return {
+          ...(svc.target as NonNullable<
+            Awaited<ReturnType<AiSettingsService['targets']>>[K]
+          >),
+          tier,
+        };
+      }
     }
     const targets = await this.settings.targets();
     const target = targets[kind];
@@ -237,8 +292,10 @@ export class AiGateway {
     },
   ) {
     const url = new URL(target.endpoint);
+    const allowPrivate =
+      this.allowPrivate || this.isStandaloneServiceEndpoint(target.endpoint);
     try {
-      assertPublicUrl(url, this.allowPrivate);
+      assertPublicUrl(url, allowPrivate);
       return await fetch(url, {
         method: 'POST',
         headers: {
@@ -250,7 +307,7 @@ export class AiGateway {
         redirect: 'error',
         dispatcher: target.proxy
           ? proxyAgent(target.proxy)
-          : guardedAgent(this.allowPrivate),
+          : guardedAgent(allowPrivate),
         signal: AbortSignal.timeout(init.timeout),
       });
     } catch {

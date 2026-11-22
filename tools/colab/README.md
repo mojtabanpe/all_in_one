@@ -10,7 +10,11 @@
 tools/colab/
 ├── README.md                      # همین راهنما
 ├── runner.ipynb                   # نوت‌بوک اصلی (یک بار روی Colab آپلود یا در Drive ذخیره می‌شود)
+├── qwen25_1_5b_finetune_gguf.ipynb # فاین‌تیون Qwen2.5-1.5B-Instruct با Unsloth + تست کیفیت + خروجی GGUF Q4_K_M
+├── build-qwen-dataset.mjs         # ساخت و اعتبارسنجی dataset.jsonl مطابق پرامپت‌های ۵ بخش اصلی LLM
 ├── export-starter-tts-input.mjs   # استخراج خودکار لیست متن‌های دک‌های استارتر زبان به JSON
+├── inputs/
+│   └── qwen-finetune/dataset.jsonl # دیتاست اولیه فاین‌تیون (۷۷ نمونه معتبر در ۵ حوزه)
 └── jobs/
     ├── _template.py               # الگوی استاندارد برای اضافه کردن job جدید
     ├── kokoro_tts.py              # تولید دسته‌ای MP3 (و حالت تست زنده /v1/audio/speech) با Kokoro
