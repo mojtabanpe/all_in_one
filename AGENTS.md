@@ -1072,16 +1072,6 @@ contain`). Works on the web, the PWA and the current Android shell without a new
      `https://agent.meta.ai/api/hatch/oauth/callback` is accepted like ChatGPT's and Claude's. This is a
      permanent supported client, not a one-off allowance; do not remove the host.
 
-201. **Build and publish the «کمتر از یک ماه» build-in-public Reel (2026-11-23).** To break the pattern of previous
-     Reels, the owner picked idea 1 («1», the build-in-public story: 25 days, 583 commits, 92k+ lines of code, 80
-     commits in one day, 198 rules in `AGENTS.md`, real app montage, live Cafe Bazaar and Myket listings, and a terminal
-     end card teasing episode 2), instructed «همه چی رو خودت بساز» (rendered locally with Playwright + ffmpeg and male
-     Persian `Charon` voice-over verified with ElevenLabs Scribe, zero generation credits spent), and after reviewing the
-     24.0-second draft instructed «اوکی پابلیش کن». This authorizes publishing that one Reel
-     (`poshtetgarm-build-in-public-reel.mp4`, hosted in the `ywa` Drive folder as 164) with its prepared Persian caption
-     on `@poshtetgarm` Instagram only; it is not standing authorization for future posts. Evidence lives in
-     `docs/roadmaps/aio-growth-v1.md`.
-
 201. **Build and publish the «کمتر از یک ماه» build-in-public Reel, and post both recent Reels to Telegram (2026-11-23).**
      To break the pattern of previous Reels, the owner picked idea 1 («1», the build-in-public story: 25 days, 583
      commits, 92k+ lines of code, 80 commits in one day, 198 rules in `AGENTS.md`, real app montage, live Cafe Bazaar
@@ -1093,14 +1083,14 @@ contain`). Works on the web, the PWA and the current Android shell without a new
      Reel (`poshtetgarm-workout-alternatives-reel.mp4`) to `@poshtetgarm` Telegram; it is not standing authorization for
      future posts. Evidence lives in `docs/roadmaps/aio-growth-v1.md`.
 
-200. **Rotated `@poshtetgarm_bot` Telegram token (2026-11-23).** The owner supplied a new BotFather token for the
+202. **Rotated `@poshtetgarm_bot` Telegram token (2026-11-23).** The owner supplied a new BotFather token for the
      customer bot `@poshtetgarm_bot` (bot ID `9298989399`). Following directive 169, `TELEGRAM_BOT_TOKEN` in the
      server's `/opt/all-in-one/shared/.env` was updated over `ssh flashcard` (backup taken, `0600 recall-deploy:recall-deploy`
      preserved, secret never committed), the webhook was re-registered on `https://poshtetgarm-telegram-relay.memnpe.workers.dev/webhook`
      with `TELEGRAM_WEBHOOK_SECRET`, and the live API container was restarted cleanly and verified healthy. Local `.env`
      keeps `@poshtetgarm_develop_bot` for channel publishing.
 
-201. **Android update notice per store, Bazaar first (2026-11-23).** Store users never saw the update notice: requests
+203. **Android update notice per store, Bazaar first (2026-11-23).** Store users never saw the update notice: requests
      through the service worker lose the shell's user agent, so the customer app sends the shell markers in
      `X-Aio-Shell` and the api reads them with `withShellMarkers`. The owner asked to send the update notice to Myket
      users only once Myket publishes the version («بازار منتشر شده ولی مایکت هنوز در انتظاره»، «اول بازار») and not to
