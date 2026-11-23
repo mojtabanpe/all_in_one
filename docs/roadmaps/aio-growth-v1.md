@@ -777,3 +777,54 @@ Claim checked against the code: the assistant has `batch_create_tasks` / `create
   (`https://t.me/poshtetgarm/11`), same video with the channel caption and `english_7day_pilot` UTM link.
 - `VERIFY` reach, watch time, saves/shares and English shadowing/dialogue usage in the 3 days after vs before (note:
   release `D6` in `aio-english-dialogues-v1.md` so visitors see the ready dialogues on production).
+
+## Reel «کمتر از یک ماه» (build in public) — script draft (2026-11-23)
+
+Why: Windsor read for `@poshtetgarm` (2026-11-23, 15 Reels). Every Reel so far shares one skeleton (pain → grey
+flashback or motion graphic → app screen → «در کافه‌بازار و مایکت» card). Only «با یه جمله» (1,272 views, 38% skipped)
+and «شدوینگ مصاحبه» (1,224 views, 18 saves, the most) passed the first test audience; the rest stayed at 124–182
+(workout alternatives, 2026-11-22: 124). Attributed signups came mostly from the tech Telegram partner Linuxor (6) vs
+organic Instagram (1). So break the format: the owner's own build story, aimed at the tech audience, as a series. The
+owner picked it from five proposals (2026-11-23, «1»). Status: `TODO` owner approval of the script and the voice
+choice; nothing recorded, generated, spent or published.
+
+Facts checked in the repository on 2026-11-23 (recompute on the publishing day):
+
+- First commit 2026-10-29 → 25 days on 2026-11-23. 583 commits; 303 carry `Co-authored-by: Claude` (Codex commits have
+  no trailer, so «with ChatGPT» rests on directive 107, not a count). Busiest day 2026-11-07: 80 commits (also the
+  evening the deploy died mid-release and the runner went offline — episode 2).
+- About 92,000 lines of hand-kept code: `.ts/.html/.css/.prisma` in `apps/` and `libs/`, excluding specs, migrations,
+  `libs/shared/spartan` and the generated `lib/spartan` wrappers. 130 spec files, 64 migrations, about 145 assistant tools
+  (`apps/api/src/tools`), 198 owner directives in `AGENTS.md`.
+- Live in Myket (2026-11-15) and Cafe Bazaar (2026-11-17).
+
+Script — vertical 9:16, about 24 s (under 25 s, directive 162), Persian on-screen text and voice-over, sound from 0 s:
+
+| Time    | Picture (all real, no generated video)                                                                      | On screen                                                        | Voice-over                                                                  |
+| ------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 0–2.5 s | Terminal, `git log --oneline` scrolling very fast; a commit counter rolls 0 → 583                           | «۲۵ روز پیش این اپ وجود نداشت.»                                  | «بیست‌وپنج روز پیش، این اپ وجود نداشت.»                                     |
+| 2.5–6 s | Screen recording of a Claude Code / Codex session writing code                                              | «یه برنامه‌نویس. بدون تیم. با دو تا هوش مصنوعی»                  | «من برنامه‌نویسم؛ بدون تیم، با Claude و ChatGPT ساختمش.»                    |
+| 6–10 s  | Numbers stack up on the terminal background                                                                 | «۵۸۳ کامیت»، «۹۲ هزار خط کد»، «یه روزش: ۸۰ کامیت»                | «پونصد و هشتاد و سه کامیت. یه روزش هشتاد تا.»                               |
+| 10–13 s | `AGENTS.md` scrolling down to directive 198                                                                 | «۱۹۸ تا قانون براشون نوشتم که یادشون نره»                        | «هوش مصنوعی فراموش می‌کنه؛ برای همین صد و نود و هشت تا قانون براش نوشتم.»   |
+| 13–19 s | Fast real app cuts (~1 s each): planner, shadowing, workout, expenses, Telegram bot, a one-sentence request | «برنامه‌ریز، زبان، سلامت، مخارج، ربات تلگرام»                    | «نتیجه‌ش: برنامه‌ریز، زبان، سلامت، و یه دستیار که با یه جمله انجامش می‌ده.» |
+| 19–21 s | Real Cafe Bazaar and Myket store pages                                                                      | «الان توی کافه‌بازار و مایکته»                                   | «الان توی کافه‌بازار و مایکته.»                                             |
+| 21–24 s | Terminal-style end card (not the shared promo ending): blinking cursor, `$ poshtetgarm`, official logo      | «قسمت ۲: شبی که سرور وسط انتشار خوابید» / «اگه می‌خوای، بنویس ۲» | «قسمت بعد رو می‌خوای؟ کامنت کن.»                                            |
+
+- Voice: the owner's own voice-over (recommended, recorded on a phone in a quiet room) or Gemini TTS `Charon` (male,
+  verified on the shadowing Reel), checked back with ElevenLabs Scribe either way. `TODO` owner choice.
+- Production: no generation credits. Text, counters and end card rendered with the `marketing/promo-videos` engine; music
+  bed from `audio.mjs`; app cuts reuse existing real recordings (`out/ba-ye-jomle*`, `out/shadowing-interview`,
+  `out/workout-alternatives`) or new ones. Terminal and agent-session clips recorded by the owner.
+- Never on screen: VPN commits or the VPN service (filter the shown log, e.g. `git log --oneline | grep -vi vpn`), `.env`,
+  keys, server host names, SSH, admin pages, real user data. Pause and check every frame of the `AGENTS.md` and terminal
+  clips before export.
+- Caption: «کمتر از یک ماه پیش «پشتت گرم» وجود نداشت. یه برنامه‌نویس، بدون تیم، با Claude و ChatGPT: ۵۸۳ کامیت و بیش از
+  ۹۰ هزار خط کد، تا یه اپ کامل با برنامه‌ریز، یادگیری زبان، سلامت، مخارج و ربات تلگرام. / سؤالی دربارهٔ ساختن اپ با هوش
+  مصنوعی داری؟ کامنت کن؛ جواب‌ها می‌شن قسمت‌های بعدی. / «پشتت گرم» رو در کافه‌بازار یا مایکت جست‌وجو کن. #پشتت_گرم
+  #برنامه_نویسی #هوش_مصنوعی #استارتاپ #برنامه_نویس #ChatGPT #Claude»
+- Series candidates (only true stories from this roadmap): 2) 2026-11-07, the release that died mid-deploy; 3) where the
+  AI got it wrong (dinner-ad lip sync, raw `**` in the assistant reply); 4) what the AI cost (needs the owner's numbers).
+- Distribution: Instagram around 18:00 Tehran and the @poshtetgarm Telegram channel; fits tech Telegram channels too
+  (a paid partner post is the owner's decision).
+- Measurement: views/reach, saves, comments and follows vs the two breakout Reels at equal age; Bazaar/Myket signups in
+  the 3 days after vs before (`growth_client_days`, `signup_completed`).
