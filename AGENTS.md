@@ -1092,3 +1092,10 @@ contain`). Works on the web, the PWA and the current Android shell without a new
      as 164) on `@poshtetgarm` Instagram and `@poshtetgarm` Telegram, plus posting the previous workout-alternatives
      Reel (`poshtetgarm-workout-alternatives-reel.mp4`) to `@poshtetgarm` Telegram; it is not standing authorization for
      future posts. Evidence lives in `docs/roadmaps/aio-growth-v1.md`.
+
+200. **Rotated `@poshtetgarm_bot` Telegram token (2026-11-23).** The owner supplied a new BotFather token for the
+     customer bot `@poshtetgarm_bot` (bot ID `9298989399`). Following directive 169, `TELEGRAM_BOT_TOKEN` in the
+     server's `/opt/all-in-one/shared/.env` was updated over `ssh flashcard` (backup taken, `0600 recall-deploy:recall-deploy`
+     preserved, secret never committed), the webhook was re-registered on `https://poshtetgarm-telegram-relay.memnpe.workers.dev/webhook`
+     with `TELEGRAM_WEBHOOK_SECRET`, and the live API container was restarted cleanly and verified healthy. Local `.env`
+     keeps `@poshtetgarm_develop_bot` for channel publishing.
