@@ -826,5 +826,20 @@ Script — vertical 9:16, about 24 s (under 25 s, directive 162), Persian on-scr
   AI got it wrong (dinner-ad lip sync, raw `**` in the assistant reply); 4) what the AI cost (needs the owner's numbers).
 - Distribution: Instagram around 18:00 Tehran and the @poshtetgarm Telegram channel; fits tech Telegram channels too
   (a paid partner post is the owner's decision).
+- 2026-11-23: owner asked to build the entire Reel locally («همه چی رو خودت بساز»). Rendered and assembled locally as
+  `marketing/promo-videos/out/build-in-public/poshtetgarm-build-in-public-reel.mp4` (local, gitignored, 24.0 s,
+  1080×1920, 30 fps H.264/AAC, 4,261,950 bytes, SHA-256
+  `913b04adec85bbff83d357786d0672d75d5f2bddd88ed9fe939e7fab71b3c9ad`, zero video generation credits spent).
+  - Visuals: sanitized real `git log --oneline` (VPN/secrets/keys/colab filtered out) with animated counter `۱ → ۵۸۳`;
+    Claude Code + ChatGPT/Codex pair-programming terminal view; three animated stat cards (`۵۸۳`, `+۹۲K`, `۸۰`);
+    scrolling `AGENTS.md` highlighting directive `#198`; five fast real app cuts (1.0–1.1 s each: planner + assistant,
+    English shadowing `100/100`, guided workout, expenses, Telegram bot); real live Cafe Bazaar and Myket store
+    listings captured via Playwright; terminal-style end card teasing episode 2 (`$ git log --grep="incident-2026-11-07"`).
+  - Audio: male Persian voice-over throughout (Gemini TTS `Charon`, verified line-by-line and on the final mixed MP4 via
+    ElevenLabs Scribe: «بیست و پنج روز پیش این اپ وجود نداشت. من برنامه‌نویسم. بدون تیم با Claude و ChatGPT ساختمش. 583
+    کامیت. یه روزش هشتاد تا. هوش مصنوعی فراموش می‌کنه. برای همین 198 تا قانون براش نوشتم. نتیجه‌ش برنامه‌ریز، زبان،
+    سلامت و دستیاری که با یه جمله کار می‌کنه. الان توی کافه بازار و مایکته. قسمت بعد رو می‌خوای؟ کامنت کن.») mixed over
+    the planner instrumental bed (`mean_volume` -15.7 to -18.3 dB across all seven segments, sound from 0 s).
+  - Status: `TODO` owner review of `poshtetgarm-build-in-public-reel.mp4`; publish only after explicit owner approval.
 - Measurement: views/reach, saves, comments and follows vs the two breakout Reels at equal age; Bazaar/Myket signups in
   the 3 days after vs before (`growth_client_days`, `signup_completed`).
