@@ -1064,3 +1064,10 @@ contain`). Works on the web, the PWA and the current Android shell without a new
      unchanged. This is a permanent property of the Myket build, not a review-period switch: never add a
      way to turn Telegram back on for Myket clients after a store approval. Myket release changelogs must
      not mention Telegram either.
+
+200. **Muse (Meta AI) is an MCP client too (2026-11-23).** The owner asked to connect his own Muse to the
+     Poshtetgarm MCP server («این رو هم نصب کن برای اپ خودمه») and then to fix the connection error himself
+     («خودت انجام بده»). Muse's OAuth callback host `agent.meta.ai` is in `DEFAULT_REDIRECT_HOSTS`
+     (`apps/api/src/mcp/mcp-auth.service.ts`), extending directive 106: dynamic registration from
+     `https://agent.meta.ai/api/hatch/oauth/callback` is accepted like ChatGPT's and Claude's. This is a
+     permanent supported client, not a one-off allowance; do not remove the host.

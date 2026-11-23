@@ -77,7 +77,7 @@ validates input with the same Zod contracts as the REST api.
 ## Security
 
 - OAuth: S256 PKCE, registered redirect hosts only (always `chatgpt.com`, `chat.openai.com`, `claude.ai`,
-  `claude.com`, plus any in `MCP_REDIRECT_HOSTS`; loopback http on any port for native clients such as
+  `claude.com`, `agent.meta.ai` (Muse), plus any in `MCP_REDIRECT_HOSTS`; loopback http on any port for native clients such as
   Claude Code, RFC 8252), browser-bound consent
   (cookie + Origin check), one-use 5-minute codes, 1-hour access tokens, rotating 30-day
   refresh tokens. Only SHA-256 hashes of tokens, codes and requests are stored (Postgres).

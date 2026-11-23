@@ -29,6 +29,7 @@ describe('MCP client registration', () => {
     'https://chatgpt.com/connector_platform_oauth_redirect',
     'https://claude.ai/api/mcp/auth_callback',
     'https://claude.com/api/mcp/auth_callback',
+    'https://agent.meta.ai/api/hatch/oauth/callback',
     'http://localhost:53122/callback',
     'http://127.0.0.1:8080/callback',
   ])('accepts %s', async (uri) => {

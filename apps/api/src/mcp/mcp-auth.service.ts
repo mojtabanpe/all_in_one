@@ -37,12 +37,13 @@ const CODE_LIFETIME = 5 * 60_000;
 const ACCESS_LIFETIME = 60 * 60_000;
 const REFRESH_LIFETIME = 30 * 86_400_000;
 
-/** OAuth callback hosts of the supported clients: ChatGPT and Claude (web, desktop, mobile). */
+/** OAuth callback hosts of the supported clients: ChatGPT, Claude (web, desktop, mobile) and Muse. */
 export const DEFAULT_REDIRECT_HOSTS = [
   'chatgpt.com',
   'chat.openai.com',
   'claude.ai',
   'claude.com',
+  'agent.meta.ai',
 ];
 const LOOPBACK = ['127.0.0.1', 'localhost', '[::1]'];
 
@@ -63,7 +64,7 @@ const asParams = (json: Prisma.JsonValue): AuthorizationParams => {
 };
 
 /**
- * OAuth for the ChatGPT and Claude connections (Recall's flow): dynamic client
+ * OAuth for the ChatGPT, Claude and Muse connections (Recall's flow): dynamic client
  * registration, S256 PKCE, a consent page where the user pastes a personal
  * token, one-use codes, 1-hour access and rotating 30-day refresh tokens.
  * Only SHA-256 hashes of every secret are stored.
@@ -131,7 +132,7 @@ export class McpAuthService implements OAuthServerProvider {
         'client_id' | 'client_id_issued_at'
       >,
     ): Promise<OAuthClientInformationFull> => {
-      // ChatGPT and Claude (claude.ai, Claude Desktop) always; extra hosts from the env.
+      // ChatGPT, Claude (claude.ai, Claude Desktop) and Muse always; extra hosts from the env.
       const hosts = [
         ...DEFAULT_REDIRECT_HOSTS,
         ...(this.config.get<string>('MCP_REDIRECT_HOSTS') || '')
@@ -156,7 +157,7 @@ export class McpAuthService implements OAuthServerProvider {
         !client.redirect_uris.every((uri) => allowed(String(uri)))
       )
         throw new InvalidClientMetadataError(
-          'Redirect URI must belong to ChatGPT, Claude or a loopback address.',
+          'Redirect URI must belong to ChatGPT, Claude, Muse or a loopback address.',
         );
       const full: OAuthClientInformationFull = {
         ...client,
