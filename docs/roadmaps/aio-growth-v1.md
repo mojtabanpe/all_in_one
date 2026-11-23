@@ -778,6 +778,17 @@ Claim checked against the code: the assistant has `batch_create_tasks` / `create
 - `VERIFY` reach, watch time, saves/shares and English shadowing/dialogue usage in the 3 days after vs before (note:
   release `D6` in `aio-english-dialogues-v1.md` so visitors see the ready dialogues on production).
 
+## Reel «حرکت‌های جایگزین باشگاه» (workout alternatives) — published 2026-11-22 / Telegram 2026-11-23
+
+- Video: `marketing/promo-videos/out/workout-alternatives/poshtetgarm-workout-alternatives-reel.mp4` (27.93 s,
+  1080×1920, 4,422,033 bytes, hosted in Drive folder `ywa` as `Poshtetgarm_Workout_Alternatives_Reel.mp4`, ID
+  `1fP5h7Vy7JJVP6T-26FF-sey_dDXx5d3U`).
+- `DONE` Instagram (2026-11-22 21:49:37 Tehran, `2026-11-22T18:19:37+0000`):
+  [Reel](https://www.instagram.com/reel/DgDbtSmFHWO/), media `18145763914720050`.
+- `DONE` Telegram (2026-11-23 11:21:45 Tehran, owner: «اره قبلی رو هم تو تلگرام نذاشتی»): `sendVideo` to
+  `@poshtetgarm` through `@poshtetgarm_develop_bot`, message `12` (`https://t.me/poshtetgarm/12`), with the channel
+  caption and `home_workout` UTM link.
+
 ## Reel «کمتر از یک ماه» (build in public) — published 2026-11-23 (directive 199)
 
 Why: Windsor read for `@poshtetgarm` (2026-11-23, 15 Reels). Every Reel so far shares one skeleton (pain → grey
@@ -848,5 +859,8 @@ Script — vertical 9:16, about 24 s (under 25 s, directive 162), Persian on-scr
     `poshtetgarm` (`17841425571593489`), `share_to_feed=true`, `thumb_offset=8500`:
     [Reel](https://www.instagram.com/reel/DgE3MizlDSL/), media `18117977882029687`. Independent Windsor `get_data`
     read-back matched media ID, permalink, exact Persian caption, timestamp and `REELS` product type.
+  - `DONE` Telegram (2026-11-23 11:21:51 Tehran, owner: «اره قبلی رو هم تو تلگرام نذاشتی»): `sendVideo` to
+    `@poshtetgarm` through `@poshtetgarm_develop_bot`, message `13` (`https://t.me/poshtetgarm/13`), with the channel
+    caption (no hashtags).
 - `VERIFY` views/reach, saves, comments and follows vs the two breakout Reels at equal age; Bazaar/Myket signups in
   the 3 days after vs before (`growth_client_days`, `signup_completed`).
