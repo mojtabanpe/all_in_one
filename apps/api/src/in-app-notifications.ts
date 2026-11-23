@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Get,
-  Headers,
   HttpCode,
   Injectable,
   Optional,
@@ -11,6 +10,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ShellUserAgent } from './shell-user-agent';
 import { ConfigService } from '@nestjs/config';
 import { CurrentUser, Roles, type AuthUser } from '@all-in-one/api/auth';
 import { PrismaService } from '@all-in-one/api/db';
@@ -19,8 +19,6 @@ import {
   inAppContentSchema,
   isNewerVersion,
   parseSemver,
-  SHELL_HEADER,
-  withShellMarkers,
   type CreateInAppNotification,
   type InAppContent,
   type InAppNotification,
@@ -387,16 +385,10 @@ export class InAppNotificationsController {
   @Get()
   pending(
     @CurrentUser() user: AuthUser,
-    @Headers('user-agent') userAgent?: string,
-    @Headers(SHELL_HEADER.toLowerCase()) shell?: string,
+    @ShellUserAgent() userAgent: string,
     @Query('client') client?: string,
   ) {
-    return this.service.pending(
-      user.id,
-      new Date(),
-      withShellMarkers(userAgent, shell),
-      client,
-    );
+    return this.service.pending(user.id, new Date(), userAgent, client);
   }
 
   @Post(':id/dismiss')

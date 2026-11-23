@@ -3,7 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  Headers,
   Module,
   Param,
   Post,
@@ -11,6 +10,7 @@ import {
   ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
+import { ShellUserAgent } from '../shell-user-agent';
 import { Throttle } from '@nestjs/throttler';
 import { AuthModule, CurrentUser, type AuthUser } from '@all-in-one/api/auth';
 import { PrismaModule } from '@all-in-one/api/db';
@@ -29,8 +29,6 @@ import {
   localScheduleQuerySchema,
   LOCAL_SCHEDULE_LIMIT,
   type LocalScheduleQuery,
-  SHELL_HEADER,
-  withShellMarkers,
 } from '@all-in-one/shared/schemas';
 import { PushService, type LocalReminderClient } from './push.service';
 import { storeFromUserAgent } from '../in-app-notifications';
@@ -70,8 +68,7 @@ class PushController {
   async localSchedule(
     @CurrentUser() user: AuthUser,
     @Query({ schema: localScheduleQuerySchema }) query: LocalScheduleQuery,
-    @Headers('user-agent') userAgent?: string,
-    @Headers(SHELL_HEADER.toLowerCase()) shell?: string,
+    @ShellUserAgent() userAgent: string,
   ) {
     const language = query.language ?? 'fa';
     // Defaults first, so the first schedule already holds the default reminders.
@@ -85,7 +82,7 @@ class PushController {
       .slice(0, LOCAL_SCHEDULE_LIMIT);
     await this.push.recordLocalDevice(
       user.id,
-      localClient(userAgent, shell),
+      localClient(userAgent),
       schedule.length,
     );
     return schedule;
@@ -94,10 +91,9 @@ class PushController {
   @Delete('local-device')
   removeLocalDevice(
     @CurrentUser() user: AuthUser,
-    @Headers('user-agent') userAgent?: string,
-    @Headers(SHELL_HEADER.toLowerCase()) shell?: string,
+    @ShellUserAgent() userAgent: string,
   ) {
-    return this.push.removeLocalDevice(user.id, localClient(userAgent, shell));
+    return this.push.removeLocalDevice(user.id, localClient(userAgent));
   }
   @Get('weekly-progress')
   weeklyProgress(@CurrentUser() user: AuthUser) {
@@ -151,11 +147,8 @@ class PushController {
  * Store builds name themselves in the user agent (directive 120), which requests through the service worker lose, so
  * the web app's shell header counts too; any other caller is the direct APK.
  */
-function localClient(
-  userAgent: string | undefined,
-  shell?: string,
-): LocalReminderClient {
-  return storeFromUserAgent(withShellMarkers(userAgent, shell)) ?? 'direct_apk';
+function localClient(userAgent: string): LocalReminderClient {
+  return storeFromUserAgent(userAgent) ?? 'direct_apk';
 }
 @Module({
   imports: [AuthModule, PrismaModule, PlannerApiModule],

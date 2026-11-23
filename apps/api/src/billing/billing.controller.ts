@@ -4,7 +4,6 @@ import {
   Delete,
   HttpCode,
   Get,
-  Headers,
   Param,
   ParseUUIDPipe,
   Post,
@@ -12,6 +11,7 @@ import {
   Query,
   Redirect,
 } from '@nestjs/common';
+import { ShellUserAgent } from '../shell-user-agent';
 import { Throttle } from '@nestjs/throttler';
 import {
   CurrentUser,
@@ -69,7 +69,7 @@ export class BillingController {
   @Get('reward-offers')
   rewardOffers(
     @CurrentUser() user: AuthUser,
-    @Headers('user-agent') userAgent?: string,
+    @ShellUserAgent() userAgent: string,
   ) {
     return this.billing.rewardOffers(
       user.id,
@@ -84,7 +84,7 @@ export class BillingController {
     @CurrentUser() user: AuthUser,
     @Body({ schema: billingRewardRequestSchema })
     input: BillingRewardRequestInput,
-    @Headers('user-agent') userAgent?: string,
+    @ShellUserAgent() userAgent: string,
   ) {
     return this.billing.requestReward(
       user.id,

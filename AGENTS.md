@@ -1092,7 +1092,9 @@ contain`). Works on the web, the PWA and the current Android shell without a new
 
 203. **Android update notice per store, Bazaar first (2026-11-23).** Store users never saw the update notice: requests
      through the service worker lose the shell's user agent, so the customer app sends the shell markers in
-     `X-Aio-Shell` and the api reads them with `withShellMarkers`. The owner asked to send the update notice to Myket
+     `X-Aio-Shell` and the api reads them with `withShellMarkers`. Every server check of the store build (in-app
+     notices, local reminder devices, Telegram for Myket (199), store billing) reads `@ShellUserAgent()`
+     (`apps/api/src/shell-user-agent.ts`), never `@Headers('user-agent')` alone. The owner asked to send the update notice to Myket
      users only once Myket publishes the version («بازار منتشر شده ولی مایکت هنوز در انتظاره»، «اول بازار») and not to
      hand Myket users our own APK: `ANDROID_SHELL_LATEST_VERSION_<BAZAAR|MYKET|DIRECT_APK>` overrides the shared value per
      build, and a non-SemVer value such as `off` holds that build's notice back until its store has the version.
