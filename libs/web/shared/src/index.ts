@@ -3,6 +3,7 @@ export * from './lib/page-refresh/page-refresh';
 export * from './lib/api/api-base-url';
 export * from './lib/api/app-version.interceptor';
 export * from './lib/api/restart-retry.interceptor';
+export * from './lib/api/shell.interceptor';
 export * from './lib/auth/auth.guards';
 export * from './lib/auth/auth.store';
 export { PushSettings } from './lib/auth/push-settings';

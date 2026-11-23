@@ -19,6 +19,8 @@ import {
   inAppContentSchema,
   isNewerVersion,
   parseSemver,
+  SHELL_HEADER,
+  withShellMarkers,
   type CreateInAppNotification,
   type InAppContent,
   type InAppNotification,
@@ -210,13 +212,17 @@ export class InAppNotificationsService {
     userAgent: string | undefined,
     clientHint?: string,
   ): Promise<void> {
-    const latest = (
-      this.config?.get<string>('ANDROID_SHELL_LATEST_VERSION') ??
-      process.env['ANDROID_SHELL_LATEST_VERSION']
-    )?.trim();
-    if (!latest || !parseSemver(latest)) return;
     const client = androidShellClient(userAgent, clientHint);
     if (!client) return;
+    // A store can lag behind the others in review: `ANDROID_SHELL_LATEST_VERSION_<BAZAAR|MYKET|DIRECT_APK>` overrides
+    // the shared value for that build, and any non-SemVer value there (e.g. `off`) holds the notice back.
+    const setting = (name: string) =>
+      this.config?.get<string>(name) ?? process.env[name];
+    const latest = (
+      setting(`ANDROID_SHELL_LATEST_VERSION_${client.toUpperCase()}`) ??
+      setting('ANDROID_SHELL_LATEST_VERSION')
+    )?.trim();
+    if (!latest || !parseSemver(latest)) return;
     const key = `android-shell-update:${latest}`;
     if (
       await this.db.inAppNotification.findUnique({
@@ -382,9 +388,15 @@ export class InAppNotificationsController {
   pending(
     @CurrentUser() user: AuthUser,
     @Headers('user-agent') userAgent?: string,
+    @Headers(SHELL_HEADER.toLowerCase()) shell?: string,
     @Query('client') client?: string,
   ) {
-    return this.service.pending(user.id, new Date(), userAgent, client);
+    return this.service.pending(
+      user.id,
+      new Date(),
+      withShellMarkers(userAgent, shell),
+      client,
+    );
   }
 
   @Post(':id/dismiss')

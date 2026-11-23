@@ -24,6 +24,7 @@ import {
   localScheduleInterceptor,
   provideErrorMonitor,
   restartRetryInterceptor,
+  shellInterceptor,
 } from '@all-in-one/web/shared';
 import { aiPaywallInterceptor } from './billing/ai-paywall';
 import { appRoutes } from './app.routes';
@@ -49,6 +50,7 @@ export const appConfig: ApplicationConfig = {
       withFetch(),
       withInterceptors([
         appVersionInterceptor,
+        shellInterceptor,
         restartRetryInterceptor,
         authInterceptor,
         aiPaywallInterceptor,

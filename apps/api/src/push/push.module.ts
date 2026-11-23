@@ -29,6 +29,8 @@ import {
   localScheduleQuerySchema,
   LOCAL_SCHEDULE_LIMIT,
   type LocalScheduleQuery,
+  SHELL_HEADER,
+  withShellMarkers,
 } from '@all-in-one/shared/schemas';
 import { PushService, type LocalReminderClient } from './push.service';
 import { storeFromUserAgent } from '../in-app-notifications';
@@ -69,6 +71,7 @@ class PushController {
     @CurrentUser() user: AuthUser,
     @Query({ schema: localScheduleQuerySchema }) query: LocalScheduleQuery,
     @Headers('user-agent') userAgent?: string,
+    @Headers(SHELL_HEADER.toLowerCase()) shell?: string,
   ) {
     const language = query.language ?? 'fa';
     // Defaults first, so the first schedule already holds the default reminders.
@@ -82,7 +85,7 @@ class PushController {
       .slice(0, LOCAL_SCHEDULE_LIMIT);
     await this.push.recordLocalDevice(
       user.id,
-      localClient(userAgent),
+      localClient(userAgent, shell),
       schedule.length,
     );
     return schedule;
@@ -92,8 +95,9 @@ class PushController {
   removeLocalDevice(
     @CurrentUser() user: AuthUser,
     @Headers('user-agent') userAgent?: string,
+    @Headers(SHELL_HEADER.toLowerCase()) shell?: string,
   ) {
-    return this.push.removeLocalDevice(user.id, localClient(userAgent));
+    return this.push.removeLocalDevice(user.id, localClient(userAgent, shell));
   }
   @Get('weekly-progress')
   weeklyProgress(@CurrentUser() user: AuthUser) {
@@ -143,9 +147,15 @@ class PushController {
     return this.push.test(user.id, input.endpoint);
   }
 }
-/** Store builds name themselves in the user agent (directive 120); any other caller is the direct APK. */
-function localClient(userAgent: string | undefined): LocalReminderClient {
-  return storeFromUserAgent(userAgent) ?? 'direct_apk';
+/**
+ * Store builds name themselves in the user agent (directive 120), which requests through the service worker lose, so
+ * the web app's shell header counts too; any other caller is the direct APK.
+ */
+function localClient(
+  userAgent: string | undefined,
+  shell?: string,
+): LocalReminderClient {
+  return storeFromUserAgent(withShellMarkers(userAgent, shell)) ?? 'direct_apk';
 }
 @Module({
   imports: [AuthModule, PrismaModule, PlannerApiModule],

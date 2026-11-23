@@ -257,6 +257,7 @@ describe('old Android shell update notice', () => {
 
   function setupShell(opts: {
     latest?: string;
+    perStore?: Record<string, string>;
     existing?: boolean;
     hasLocalReminders?: boolean;
   }) {
@@ -283,9 +284,10 @@ describe('old Android shell update notice', () => {
       access: vi.fn().mockResolvedValue({ tier: 'free', trialUntil: null }),
       rewardOffers: vi.fn().mockResolvedValue([]),
     };
-    const config = new ConfigService(
-      opts.latest ? { ANDROID_SHELL_LATEST_VERSION: opts.latest } : {},
-    );
+    const config = new ConfigService({
+      ...(opts.latest ? { ANDROID_SHELL_LATEST_VERSION: opts.latest } : {}),
+      ...opts.perStore,
+    });
     const service = new InAppNotificationsService(
       db as unknown as PrismaService,
       billing as unknown as BillingService,
@@ -323,6 +325,23 @@ describe('old Android shell update notice', () => {
     await directRun.service.pending('owner', now, android, 'direct_apk');
     expect(directRun.updateCalls()[0][0].create.content.actions[0].url).toBe(
       'https://github.com/mojtabanpe/all_in_one/releases/latest',
+    );
+  });
+
+  it('lets one store hold the notice back while another is offered it', async () => {
+    const perStore = { ANDROID_SHELL_LATEST_VERSION_MYKET: 'off' };
+    const bazaarRun = setupShell({ latest: '1.0.7', perStore });
+    await bazaarRun.service.pending('owner', now, bazaar);
+    expect(bazaarRun.updateCalls()).toHaveLength(1);
+    const myketRun = setupShell({ latest: '1.0.7', perStore });
+    await myketRun.service.pending('owner', now, myket);
+    expect(myketRun.updateCalls()).toHaveLength(0);
+    const bazaarOnly = setupShell({
+      perStore: { ANDROID_SHELL_LATEST_VERSION_BAZAAR: '1.0.7' },
+    });
+    await bazaarOnly.service.pending('owner', now, bazaar);
+    expect(bazaarOnly.updateCalls()[0][0].where.userId_key.key).toBe(
+      'android-shell-update:1.0.7',
     );
   });
 

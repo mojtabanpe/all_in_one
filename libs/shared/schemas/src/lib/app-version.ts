@@ -1,6 +1,31 @@
 /** Response header carrying the API's running SemVer so web clients notice updates without the service worker. */
 export const APP_VERSION_HEADER = 'X-Aio-Version';
 
+/**
+ * Request header carrying the native shell's markers (`PoshtetgarmApp/<ver>`, `PoshtetgarmStore/<store>`) from the
+ * page's own user agent. The Android WebView applies the shell's user agent to the page, but requests the service
+ * worker forwards go out with the default WebView user agent, so the server cannot rely on `User-Agent` alone.
+ */
+export const SHELL_HEADER = 'X-Aio-Shell';
+
+const SHELL_MARKER =
+  /\bPoshtetgarm(?:App\/\d{1,4}\.\d{1,4}\.\d{1,4}|Store\/(?:bazaar|myket))\b/g;
+
+/** Only the shell markers of a user agent (or header value), space-separated; empty when there are none. */
+export function shellMarkers(value: string | null | undefined): string {
+  return [...new Set((value ?? '').slice(0, 1024).match(SHELL_MARKER))].join(
+    ' ',
+  );
+}
+
+/** `User-Agent` plus the markers of {@link SHELL_HEADER}, for the user-agent checks on the server. */
+export function withShellMarkers(
+  userAgent: string | null | undefined,
+  shellHeader: string | null | undefined,
+): string {
+  return [userAgent ?? '', shellMarkers(shellHeader)].filter(Boolean).join(' ');
+}
+
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)$/;
 
 export function parseSemver(
