@@ -778,7 +778,7 @@ Claim checked against the code: the assistant has `batch_create_tasks` / `create
 - `VERIFY` reach, watch time, saves/shares and English shadowing/dialogue usage in the 3 days after vs before (note:
   release `D6` in `aio-english-dialogues-v1.md` so visitors see the ready dialogues on production).
 
-## Reel «کمتر از یک ماه» (build in public) — script draft (2026-11-23)
+## Reel «کمتر از یک ماه» (build in public) — published 2026-11-23 (directive 199)
 
 Why: Windsor read for `@poshtetgarm` (2026-11-23, 15 Reels). Every Reel so far shares one skeleton (pain → grey
 flashback or motion graphic → app screen → «در کافه‌بازار و مایکت» card). Only «با یه جمله» (1,272 views, 38% skipped)
@@ -840,6 +840,13 @@ Script — vertical 9:16, about 24 s (under 25 s, directive 162), Persian on-scr
     کامیت. یه روزش هشتاد تا. هوش مصنوعی فراموش می‌کنه. برای همین 198 تا قانون براش نوشتم. نتیجه‌ش برنامه‌ریز، زبان،
     سلامت و دستیاری که با یه جمله کار می‌کنه. الان توی کافه بازار و مایکته. قسمت بعد رو می‌خوای؟ کامنت کن.») mixed over
     the planner instrumental bed (`mean_volume` -15.7 to -18.3 dB across all seven segments, sound from 0 s).
-  - Status: `TODO` owner review of `poshtetgarm-build-in-public-reel.mp4`; publish only after explicit owner approval.
-- Measurement: views/reach, saves, comments and follows vs the two breakout Reels at equal age; Bazaar/Myket signups in
+  - Status: `DONE` owner approved and instructed «اوکی پابلیش کن» (directive 199).
+  - Hosted in Drive folder `ywa` (rclone `ywa:Poshtetgarm_Build_In_Public_Reel.mp4`, ID
+    `1_LNqQ89RkvJaFsqpHw9oTgGM5o_WAm4T`); anonymous range request (`bytes=0-1023`) returned `HTTP/2 206` `video/mp4`
+    (`content-range: bytes 0-1023/4261950`).
+  - `DONE` Instagram (2026-11-23 11:08:54 Tehran, `2026-11-23T07:38:54+0000`): Windsor `create_video_post` to
+    `poshtetgarm` (`17841425571593489`), `share_to_feed=true`, `thumb_offset=8500`:
+    [Reel](https://www.instagram.com/reel/DgE3MizlDSL/), media `18117977882029687`. Independent Windsor `get_data`
+    read-back matched media ID, permalink, exact Persian caption, timestamp and `REELS` product type.
+- `VERIFY` views/reach, saves, comments and follows vs the two breakout Reels at equal age; Bazaar/Myket signups in
   the 3 days after vs before (`growth_client_days`, `signup_completed`).

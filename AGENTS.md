@@ -1071,3 +1071,13 @@ contain`). Works on the web, the PWA and the current Android shell without a new
      (`apps/api/src/mcp/mcp-auth.service.ts`), extending directive 106: dynamic registration from
      `https://agent.meta.ai/api/hatch/oauth/callback` is accepted like ChatGPT's and Claude's. This is a
      permanent supported client, not a one-off allowance; do not remove the host.
+
+201. **Build and publish the «کمتر از یک ماه» build-in-public Reel (2026-11-23).** To break the pattern of previous
+     Reels, the owner picked idea 1 («1», the build-in-public story: 25 days, 583 commits, 92k+ lines of code, 80
+     commits in one day, 198 rules in `AGENTS.md`, real app montage, live Cafe Bazaar and Myket listings, and a terminal
+     end card teasing episode 2), instructed «همه چی رو خودت بساز» (rendered locally with Playwright + ffmpeg and male
+     Persian `Charon` voice-over verified with ElevenLabs Scribe, zero generation credits spent), and after reviewing the
+     24.0-second draft instructed «اوکی پابلیش کن». This authorizes publishing that one Reel
+     (`poshtetgarm-build-in-public-reel.mp4`, hosted in the `ywa` Drive folder as 164) with its prepared Persian caption
+     on `@poshtetgarm` Instagram only; it is not standing authorization for future posts. Evidence lives in
+     `docs/roadmaps/aio-growth-v1.md`.
