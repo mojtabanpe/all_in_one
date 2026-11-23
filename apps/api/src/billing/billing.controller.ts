@@ -4,6 +4,7 @@ import {
   Delete,
   HttpCode,
   Get,
+  Headers,
   Param,
   ParseUUIDPipe,
   Post,
@@ -42,6 +43,7 @@ import {
   type BillingRefundInput,
 } from '@all-in-one/shared/schemas';
 import { BillingService } from './billing.service';
+import { storeFromUserAgent } from '../in-app-notifications';
 
 @Controller('billing')
 export class BillingController {
@@ -65,8 +67,15 @@ export class BillingController {
   }
 
   @Get('reward-offers')
-  rewardOffers(@CurrentUser() user: AuthUser) {
-    return this.billing.rewardOffers(user.id);
+  rewardOffers(
+    @CurrentUser() user: AuthUser,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    return this.billing.rewardOffers(
+      user.id,
+      new Date(),
+      storeFromUserAgent(userAgent),
+    );
   }
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
@@ -75,8 +84,14 @@ export class BillingController {
     @CurrentUser() user: AuthUser,
     @Body({ schema: billingRewardRequestSchema })
     input: BillingRewardRequestInput,
+    @Headers('user-agent') userAgent?: string,
   ) {
-    return this.billing.requestReward(user.id, input);
+    return this.billing.requestReward(
+      user.id,
+      input,
+      new Date(),
+      storeFromUserAgent(userAgent),
+    );
   }
 
   @Get('orders')

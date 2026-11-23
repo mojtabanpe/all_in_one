@@ -1053,3 +1053,14 @@ contain`). Works on the web, the PWA and the current Android shell without a new
      access and costs nothing. Opening and finishing one is recorded in `english_dialogue_events` (`OPEN`, `FINISH`
      with the session score) and shown per dialogue in `/admin/content`, staff excluded; write more dialogues for the
      levels and topics that are used. Roadmap: `docs/roadmaps/aio-english-dialogues-v1.md`.
+
+199. **No Telegram referral in the Myket build (2026-11-23).** Myket rejected release 1.0.7 because the account
+     section refers users to the Telegram bot and the release changelog mentioned it. The owner chose the
+     permanent channel split over removing Telegram for everyone: clients whose native shell announces
+     `PoshtetgarmStore/myket` in the user agent (directive 120) never see a Telegram referral — the api
+     reports the bot unavailable to them (`TelegramService.status`), refuses link/reward calls from them,
+     omits the `TELEGRAM_JOIN` reward offer for them (`BillingService.rewardOffers`/`requestReward`), and
+     never sends them the Telegram in-app prompt (`InAppPrompts`). Bazaar, direct and web clients are
+     unchanged. This is a permanent property of the Myket build, not a review-period switch: never add a
+     way to turn Telegram back on for Myket clients after a store approval. Myket release changelogs must
+     not mention Telegram either.

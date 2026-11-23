@@ -304,6 +304,25 @@ describe('Telegram bot', () => {
     expect(JSON.stringify(stored)).not.toContain(code);
   });
 
+  it('hides the bot for the Myket store build and keeps it for others (199)', async () => {
+    const { service, db } = setup();
+    db.telegramLink.findUnique.mockResolvedValue(null);
+    expect(await service.status('u1', 'myket')).toEqual({
+      available: false,
+      linked: false,
+    });
+    expect(await service.status('u1', 'bazaar')).toEqual({
+      available: true,
+      linked: false,
+    });
+    expect(await service.status('u1')).toEqual({
+      available: true,
+      linked: false,
+    });
+    await expect(service.createLink('u1', 'fa', 'myket')).rejects.toThrow();
+    expect(db.telegramLinkCode.create).not.toHaveBeenCalled();
+  });
+
   it('links a chat with a valid code and refuses an expired one', async () => {
     const { service, db, sent } = setup();
     db.telegramLink.findUnique.mockResolvedValue(null);
