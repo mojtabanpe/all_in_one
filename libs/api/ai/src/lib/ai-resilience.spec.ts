@@ -363,12 +363,16 @@ describe('fallback and price settings', () => {
       },
       managedAiPreset: {
         findMany: vi.fn(
-          async ({ where }: { where: { id?: { in: string[] } } }) =>
+          async ({ where }: { where?: { id?: { in: string[] } } } = {}) =>
             presets.filter((p) =>
-              where.id ? where.id.in.includes((p as { id: string }).id) : true,
+              where?.id ? where.id.in.includes((p as { id: string }).id) : true,
             ),
         ),
         findUnique: vi.fn(
+          async ({ where }: { where: { id: string } }) =>
+            presets.find((p) => (p as { id: string }).id === where.id) ?? null,
+        ),
+        findFirst: vi.fn(
           async ({ where }: { where: { id: string } }) =>
             presets.find((p) => (p as { id: string }).id === where.id) ?? null,
         ),
@@ -452,5 +456,64 @@ describe('fallback and price settings', () => {
         dailyBudgetUsd: 5,
       }),
     ).resolves.toBeDefined();
+  });
+
+  it('automatically promotes the previously active preset to fallback when applying another preset', async () => {
+    const deepgramTts = {
+      id: '0190e5b8-0000-7000-8000-000000000010',
+      kind: 'tts',
+      url: 'https://api.eu.deepgram.com/',
+      model: 'aura-2-thalia-en',
+      model2: 'aura-2-orpheus-en',
+      key: box.seal('dg-key'),
+      proxy: null,
+      elevenlabs: false,
+      deepgram: true,
+      createdAt: new Date('2026-11-20T00:00:00Z'),
+    };
+    const elevenTts = {
+      id: '0190e5b8-0000-7000-8000-000000000011',
+      kind: 'tts',
+      url: 'https://api.elevenlabs.io/',
+      model: '21m00Tcm4TlvDq8ikWAM',
+      model2: 'pNInz6obpgDQgcFmaJgB',
+      key: box.seal('el-key'),
+      proxy: 'http://127.0.0.1:7890',
+      elevenlabs: true,
+      deepgram: false,
+      createdAt: new Date('2026-11-19T00:00:00Z'),
+    };
+    const settings = settingsWith(
+      {
+        ...primaryRow,
+        ttsUrl: deepgramTts.url,
+        ttsModel: deepgramTts.model,
+        ttsModel2: deepgramTts.model2,
+        ttsKey: deepgramTts.key,
+        ttsProxyOn: false,
+        ttsProxy: null,
+        ttsEleven: false,
+        ttsDeepgram: true,
+        fallbacks: { tts: elevenTts.id },
+      },
+      [deepgramTts, elevenTts],
+    );
+    const updateSpy = vi
+      .spyOn(settings, 'update')
+      .mockResolvedValue({} as never);
+
+    await settings.applyPreset(elevenTts.id);
+    expect(updateSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tts: expect.objectContaining({
+          url: elevenTts.url,
+          model: elevenTts.model,
+          elevenlabs: true,
+          deepgram: false,
+        }),
+        fallbacks: { tts: deepgramTts.id },
+      }),
+      { kind: 'tts', key: elevenTts.key },
+    );
   });
 });

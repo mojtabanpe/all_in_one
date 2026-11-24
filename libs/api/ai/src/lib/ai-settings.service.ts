@@ -368,13 +368,24 @@ export class AiSettingsService {
     return this.view();
   }
 
-  /** Make a saved setup the current one for its service, key included. */
+  /** Make a saved setup the current one for its service, key included, and promote the previous active preset to fallback. */
   async applyPreset(id: string): Promise<AiSettings> {
     const p = await this.prisma.managedAiPreset.findFirst({
       where: { id },
     });
     if (!p) throw new NotFoundException();
     const kind = p.kind as AiKind;
+    const current = await this.row();
+    const list = await this.presets(current);
+    const previousActive = list.find(
+      (item) => item.kind === kind && item.active && item.id !== p.id,
+    );
+    const nextFallback = previousActive
+      ? previousActive.id
+      : current?.fallbacks?.[kind] === p.id
+        ? (list.find((item) => item.kind === kind && item.id !== p.id)?.id ??
+          null)
+        : undefined;
     return this.update(
       {
         [kind]: {
@@ -387,6 +398,9 @@ export class AiSettingsService {
             : {}),
           ...(p.proxy ? { proxyUrl: p.proxy } : {}),
         },
+        ...(nextFallback !== undefined
+          ? { fallbacks: { [kind]: nextFallback } }
+          : {}),
       },
       { kind, key: p.key },
     );
