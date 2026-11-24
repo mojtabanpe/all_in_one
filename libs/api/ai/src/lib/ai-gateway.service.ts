@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  AI_KINDS,
   AI_USER_CONCURRENCY,
   type AiKind,
   type AiTestResult,
@@ -74,6 +75,19 @@ export const RECORDING_TYPES: Record<string, string> = {
 export const AI_ACCESS = Symbol('AI_ACCESS');
 const OPERATOR_TEST = Symbol('OPERATOR_TEST');
 type AiCaller = string | typeof OPERATOR_TEST;
+
+/** Human-readable Persian service names for error messages and alerts. */
+export const AI_SERVICE_NAMES: Record<AiKind, string> = {
+  chat: 'سرویس گفتگو',
+  tts: 'سرویس متن به گفتار',
+  stt: 'سرویس گفتار به متن',
+};
+
+export interface AiProbeOutcome {
+  configured: boolean;
+  ok: boolean;
+  error?: string;
+}
 
 export interface AiAccess {
   access(userId: string): Promise<BillingAccessState>;
@@ -277,7 +291,9 @@ export class AiGateway {
     const targets = await this.settings.targets();
     const target = targets[kind];
     if (!target)
-      throw new ServiceUnavailableException('سرویس هوش مصنوعی در دسترس نیست.');
+      throw new ServiceUnavailableException(
+        `${AI_SERVICE_NAMES[kind]} در دسترس نیست.`,
+      );
     return { ...(target as NonNullable<(typeof targets)[K]>), tier };
   }
 
@@ -289,6 +305,8 @@ export class AiGateway {
       timeout: number;
       /** Raw body type (Deepgram takes the audio itself). */
       contentType?: string;
+      /** Service name for network/timeout error messages. */
+      kind?: AiKind;
     },
   ) {
     const url = new URL(target.endpoint);
@@ -311,7 +329,8 @@ export class AiGateway {
         signal: AbortSignal.timeout(init.timeout),
       });
     } catch {
-      throw new BadGatewayException('سرویس هوش مصنوعی در دسترس نیست.');
+      const name = init.kind ? AI_SERVICE_NAMES[init.kind] : 'سرویس هوش مصنوعی';
+      throw new BadGatewayException(`${name} در دسترس نیست.`);
     }
   }
 
@@ -344,6 +363,7 @@ export class AiGateway {
       primary,
       (target) =>
         this.request(target, {
+          kind: 'chat',
           json: true,
           timeout: options.timeout ?? 60_000,
           body: JSON.stringify({
@@ -491,6 +511,7 @@ export class AiGateway {
         for (let attempt = 1; ; attempt++) {
           try {
             response = await this.request(call, {
+              kind: 'tts',
               json: true,
               timeout: 30_000,
               body,
@@ -552,6 +573,7 @@ export class AiGateway {
       (service) => {
         const target = sttTarget(service);
         return this.request(target, {
+          kind: 'stt',
           ...sttBody(target, audio, mime, `speech.${extension}`),
           timeout: 90_000,
         });
@@ -585,6 +607,7 @@ export class AiGateway {
       const probe = sttTarget(await this.target(OPERATOR_TEST, 'stt'));
       // A minimal request: a valid answer or a 4xx about the audio both prove the url and key work.
       const response = await this.request(probe, {
+        kind: 'stt',
         ...sttBody(probe, silentWav(), 'audio/wav', 'probe.wav'),
         timeout: 30_000,
       });
@@ -593,6 +616,67 @@ export class AiGateway {
     } catch (error) {
       return { ok: false, message: (error as Error).message };
     }
+  }
+
+  /**
+   * Zero-cost reachability check (`HEAD`, no auth or payload) for a configured AI service endpoint.
+   * Any HTTP status < 500 (including 401/403/404/405) proves DNS, proxy/network, TLS and the provider
+   * gateway are reachable without consuming tokens or characters; retries once before reporting a failure.
+   */
+  async probeService(kind: AiKind): Promise<AiProbeOutcome> {
+    const targets = await this.settings.targets();
+    const standalone = kind === 'chat' ? this.standaloneChatService() : null;
+    const raw =
+      standalone?.mode === 'primary' ? standalone.target : targets[kind];
+    if (!raw) return { configured: false, ok: true };
+    const target: AiTarget =
+      kind === 'tts'
+        ? { ...raw, endpoint: speechEndpoint(raw, raw.model) }
+        : kind === 'stt'
+          ? sttTarget(raw)
+          : raw;
+    let lastError = 'unreachable';
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const response = await this.probeEndpoint(target, 8_000);
+        const status = response.status;
+        await response.body?.cancel().catch(() => undefined);
+        if (status < 500) return { configured: true, ok: true };
+        lastError = `HTTP ${status}`;
+      } catch {
+        lastError = 'unreachable';
+      }
+      if (attempt < 2) await sleep(600);
+    }
+    this.health?.recordError(kind, `probe: ${lastError}`);
+    return { configured: true, ok: false, error: lastError };
+  }
+
+  async probeAll(): Promise<Record<AiKind, AiProbeOutcome>> {
+    const entries = await Promise.all(
+      AI_KINDS.map(
+        async (kind) => [kind, await this.probeService(kind)] as const,
+      ),
+    );
+    return Object.fromEntries(entries) as Record<AiKind, AiProbeOutcome>;
+  }
+
+  private async probeEndpoint(
+    target: AiTarget,
+    timeout: number,
+  ): Promise<HttpResponse> {
+    const url = new URL(target.endpoint);
+    const allowPrivate =
+      this.allowPrivate || this.isStandaloneServiceEndpoint(target.endpoint);
+    assertPublicUrl(url, allowPrivate);
+    return fetch(url, {
+      method: 'HEAD',
+      redirect: 'error',
+      dispatcher: target.proxy
+        ? proxyAgent(target.proxy)
+        : guardedAgent(allowPrivate),
+      signal: AbortSignal.timeout(timeout),
+    });
   }
 }
 

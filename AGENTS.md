@@ -1098,3 +1098,17 @@ contain`). Works on the web, the PWA and the current Android shell without a new
      users only once Myket publishes the version («بازار منتشر شده ولی مایکت هنوز در انتظاره»، «اول بازار») and not to
      hand Myket users our own APK: `ANDROID_SHELL_LATEST_VERSION_<BAZAAR|MYKET|DIRECT_APK>` overrides the shared value per
      build, and a non-SemVer value such as `off` holds that build's notice back until its store has the version.
+
+204. **Deepgram EU endpoint (`api.eu.deepgram.com`), service-specific AI errors, and periodic AI endpoint healthcheck (2026-11-24).**
+     After a `502 BadGatewayException: سرویس هوش مصنوعی در دسترس نیست.` on `/api/english/speech`, checking the production
+     server showed that all four US Deepgram PoPs (`sac1`, `sv1`, `va1`, `md1`) time out from the Iranian server's network
+     (`md1` worked briefly overnight and then timed out as well), whereas Deepgram's European endpoint
+     `https://api.eu.deepgram.com` (AWS Frankfurt) connects in ~140 ms with a certificate for `api.eu.deepgram.com`. With the
+     owner's approval («بله» and «۱و ۲ ر. انجام بده»): (a) `ttsUrl` and `sttUrl` in `managed_ai_configuration` and the two
+     Deepgram rows in `managed_ai_presets` on `flashcard` were updated to `https://api.eu.deepgram.com/` (`/etc/hosts` restored
+     to clean state, live TTS and STT verified 200 OK inside `all-in-one-api-a-1`); (b) `AiGateway` names the specific
+     service (`سرویس گفتگو`, `سرویس متن به گفتار`, `سرویس گفتار به متن` via `AI_SERVICE_NAMES`) on unconfigured/network errors
+     instead of a generic message; and (c) `AiHealthMonitorService` (`apps/api/src/monitor/ai-health-monitor.service.ts`)
+     probes configured AI endpoints every 15 minutes with zero-cost `HEAD` requests (one retry, any status `< 500` healthy)
+     and alerts `MonitorService` (`poshtetgarm_develop_bot` + GlitchTip) before a customer hits an unreachable upstream,
+     clearing the alert fingerprint on recovery.

@@ -330,6 +330,27 @@ describe('AI health alerts', () => {
     expect(result.day.chat.calls).toBe(1);
     expect(result.lastError.chat).toBeNull();
   });
+
+  it('names the specific AI service when unconfigured or unreachable, and probes endpoints with zero-cost HEAD requests', async () => {
+    const { gateway, health } = setup({ fallback: false });
+    const probeSpy = vi
+      .spyOn(gateway as never, 'probeEndpoint' as never)
+      .mockImplementation((async (target: AiTarget) => {
+        if (target.endpoint.endsWith('/audio/speech'))
+          throw new Error('timeout');
+        return new Response(null, { status: 401 });
+      }) as never);
+
+    const probed = await gateway.probeAll();
+    expect(probeSpy).toHaveBeenCalledTimes(4);
+    expect(probed).toEqual({
+      chat: { configured: true, ok: true },
+      tts: { configured: true, ok: false, error: 'unreachable' },
+      stt: { configured: true, ok: true },
+    });
+    expect(report(health).lastError.tts?.message).toBe('probe: unreachable');
+    expect(report(health).hour.tts.calls).toBe(0);
+  });
 });
 
 describe('fallback and price settings', () => {

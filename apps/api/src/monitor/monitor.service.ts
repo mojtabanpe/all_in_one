@@ -193,6 +193,11 @@ export class MonitorService {
     return !!this.target;
   }
 
+  /** Clears a remembered alert fingerprint after a service recovers so a later outage alerts again. */
+  forgetFingerprint(fingerprint: readonly string[]): void {
+    this.announced.delete(fingerprint.join('|'));
+  }
+
   /** Tells the dev/ops bot chats about a problem not seen in the last day. Never throws. */
   private async announce(event: MonitorEvent): Promise<void> {
     try {

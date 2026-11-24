@@ -10,6 +10,7 @@ import {
   parseStack,
   serverErrorEvent,
 } from './monitor.service';
+import { AiHealthMonitorService } from './ai-health-monitor.service';
 
 const base: ClientError = {
   app: 'customer',
@@ -211,5 +212,53 @@ describe('Telegram alerts', () => {
 
   it('formats the alert', () => {
     expect(alertText(event('TypeError: a'))).toContain('customer');
+  });
+
+  it('alerts on an unreachable AI service probe once and re-alerts if it fails again after recovery', async () => {
+    const { m, fetchSpy } = setup({ MONITOR_TELEGRAM_CHAT_ID: '12345' });
+    const probeAll = vi.fn().mockResolvedValue({
+      chat: { configured: true, ok: true },
+      tts: { configured: true, ok: false, error: 'unreachable' },
+      stt: { configured: false, ok: true },
+    });
+    const aiMonitor = new AiHealthMonitorService(
+      config({ NODE_ENV: 'test' }),
+      m,
+      { probeAll } as never,
+    );
+
+    await aiMonitor.check();
+    await aiMonitor.check();
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+    const firstText = JSON.parse(
+      fetchSpy.mock.calls[0][1]!.body as string,
+    ).text;
+    expect(firstText).toContain(
+      'سرویس متن به گفتار در دسترس نیست (unreachable).',
+    );
+    expect(firstText).toContain('/api/ai/health/tts');
+
+    // Recovery clears the failing state and forgets the fingerprint so a later outage alerts again.
+    probeAll.mockResolvedValueOnce({
+      chat: { configured: true, ok: true },
+      tts: { configured: true, ok: true },
+      stt: { configured: false, ok: true },
+    });
+    await aiMonitor.check();
+
+    probeAll.mockResolvedValueOnce({
+      chat: { configured: true, ok: true },
+      tts: { configured: true, ok: false, error: 'HTTP 503' },
+      stt: { configured: false, ok: true },
+    });
+    await aiMonitor.check();
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2));
+    const secondText = JSON.parse(
+      fetchSpy.mock.calls[1][1]!.body as string,
+    ).text;
+    expect(secondText).toContain(
+      'سرویس متن به گفتار در دسترس نیست (HTTP 503).',
+    );
+    fetchSpy.mockRestore();
   });
 });

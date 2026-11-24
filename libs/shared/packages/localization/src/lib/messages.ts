@@ -679,6 +679,15 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['سرویس گفتگو پاسخ داد.', 'Chat service replied.'],
   ['سرویس متن به گفتار صدا ساخت.', 'Text-to-speech service.'],
   ['سرویس گفتار به متن در دسترس است.', 'Speech to text service is available.'],
+  ['سرویس گفتگو در دسترس نیست.', 'The chat service is unavailable.'],
+  [
+    'سرویس متن به گفتار در دسترس نیست.',
+    'The text-to-speech service is unavailable.',
+  ],
+  [
+    'سرویس گفتار به متن در دسترس نیست.',
+    'The speech-to-text service is unavailable.',
+  ],
   [
     'این نشانی به شبکه داخلی سرور می‌رسد',
     "This address reaches the server's internal network",

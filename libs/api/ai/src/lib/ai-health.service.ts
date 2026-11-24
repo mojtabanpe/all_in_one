@@ -54,11 +54,15 @@ export class AiHealthService {
     while (drop < list.length && list[drop].at < cutoff) drop++;
     if (list.length - drop > MAX_EVENTS) drop = list.length - MAX_EVENTS;
     if (drop) list.splice(0, drop);
-    if (outcome.error)
-      this.lastError[kind] = {
-        at: new Date(now).toISOString(),
-        message: outcome.error.slice(0, 200),
-      };
+    if (outcome.error) this.recordError(kind, outcome.error, now);
+  }
+
+  /** Records a background probe failure on the service without counting it as a customer call. */
+  recordError(kind: AiKind, error: string, now = Date.now()): void {
+    this.lastError[kind] = {
+      at: new Date(now).toISOString(),
+      message: error.slice(0, 200),
+    };
   }
 
   private window(kind: AiKind, ms: number, now: number): AiServiceHealth {
