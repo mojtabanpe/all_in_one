@@ -44,6 +44,11 @@ describe('Dashboard churn by channel', () => {
     expect(table.textContent).toContain('مایکت');
     expect(table.textContent).toContain('۰');
     expect(table.textContent).toContain('PWA');
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '#account-activation',
+      ),
+    ).not.toBeNull();
     http.verify();
   });
   it('lists each channel with its churn and never-active share, then the total', async () => {
