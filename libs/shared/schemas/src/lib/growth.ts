@@ -268,6 +268,62 @@ export interface GrowthRetentionCohort {
   }[];
 }
 
+/** Sources that mark QA traffic in every growth report (case-insensitive). */
+export const GROWTH_QA_SOURCES = ['qa', 'test', 'roadmap_check'] as const;
+
+const SIGNUP_SOURCE = /^[a-z0-9][a-z0-9._-]{0,39}$/;
+/**
+ * The bounded first-touch source kept once on a new account (`users.signupSource`): the lower-cased
+ * `utm_source`, `direct` when the recorded signup carried no tag, `other` for a value outside
+ * `[a-z0-9._-]{1,40}`. Nothing else from the campaign or the visitor is kept on the account.
+ */
+export function signupSourceOf(utmSource: string | undefined): string {
+  if (!utmSource) return 'direct';
+  const value = utmSource.trim().toLowerCase();
+  return SIGNUP_SOURCE.test(value) ? value : 'other';
+}
+
+/** Signup days (Tehran, both inclusive) of `GET /growth/account-activation`. */
+export const growthAccountActivationFilterSchema = z
+  .strictObject({ from: z.iso.date(), to: z.iso.date() })
+  .check(z.refine(({ from, to }) => from <= to));
+export type GrowthAccountActivationFilter = z.infer<
+  typeof growthAccountActivationFilterSchema
+>;
+
+/** `percent` is 0..100 (one decimal), `null` when `eligible` is 0. */
+export interface GrowthAccountActivationMetric {
+  eligible: number;
+  successful: number;
+  percent: number | null;
+}
+
+/**
+ * Account-level activation of a signup cohort. Definitions: docs/roadmaps/aio-activation-v1.fa.md
+ * («گزارش فعال‌سازی حساب‌ها»). `medianFirstActionMinutes` is `null` when no first-action time is known.
+ */
+export interface GrowthAccountActivationMetrics {
+  firstAction: GrowthAccountActivationMetric;
+  d1: GrowthAccountActivationMetric;
+  d7: GrowthAccountActivationMetric;
+  medianFirstActionMinutes: number | null;
+}
+
+/** Aggregate counts only; `null` source or platform = not recorded. */
+export interface GrowthAccountActivationReport {
+  from: string;
+  to: string;
+  overall: GrowthAccountActivationMetrics;
+  bySource: {
+    source: string | null;
+    metrics: GrowthAccountActivationMetrics;
+  }[];
+  bySignupPlatform: {
+    signupPlatform: string | null;
+    metrics: GrowthAccountActivationMetrics;
+  }[];
+}
+
 export interface GrowthReportAuditEntry {
   id: string;
   actorId: string;

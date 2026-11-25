@@ -70,6 +70,8 @@ model EnglishReviewDay {
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   date    DateTime @db.Date
   reviews Int      @default(0)
+  /// Server time of the day's first review; null on rows written before 2026-11-25.
+  firstReviewAt DateTime?
 
   @@id([userId, date])
   @@map("english_review_days")

@@ -14,8 +14,14 @@ import type {
   GrowthClientVisitInput,
   GrowthClientReport,
   GrowthClient,
+  GrowthAccountActivationFilter,
+  GrowthAccountActivationReport,
 } from '@all-in-one/shared/schemas';
-import { GROWTH_CHURN_DAYS, GROWTH_CLIENTS } from '@all-in-one/shared/schemas';
+import {
+  GROWTH_CHURN_DAYS,
+  GROWTH_CLIENTS,
+  GROWTH_QA_SOURCES,
+} from '@all-in-one/shared/schemas';
 
 const WINDOW_DAYS = 30;
 const dayAt = (date: Date) =>
@@ -363,6 +369,135 @@ export class GrowthService {
           medium: row.medium ?? 'unknown',
           ...metrics(row),
         })),
+    };
+  }
+
+  /**
+   * Account-level first action and D1/D7 return for customer accounts that signed up on Tehran days
+   * `from`..`to`. Only aggregate counts leave the database query; no account ID, time or content does.
+   * Definitions (docs/roadmaps/aio-activation-v1.fa.md, «گزارش فعال‌سازی حساب‌ها»):
+   * - action: a planner task the account created (not a recurring-occurrence copy), an English review,
+   *   a meal log or a workout log, at its server-side creation time and at or after the signup time.
+   *   Review rows written before `firstReviewAt` existed only carry their stored day.
+   * - day N: the Tehran calendar day N days after the signup day; a metric's denominator holds only
+   *   accounts whose day N ended before today, so today and future days never count.
+   * - QA accounts (a retained QA source) and non-customer roles are left out.
+   */
+  async accountActivation(
+    filter: GrowthAccountActivationFilter,
+    now = new Date(),
+  ): Promise<GrowthAccountActivationReport> {
+    const today = dayAt(now);
+    const oldest = dayAt(new Date(now.getTime() - 89 * 86_400_000));
+    if (filter.from < oldest || filter.to > today || filter.from > filter.to)
+      throw new BadRequestException('بازهٔ گزارش باید در ۹۰ روز گذشته باشد.');
+    const rows = await this.prisma.$queryRaw<
+      {
+        level: number;
+        source: string | null;
+        platform: string | null;
+        accounts: bigint;
+        e0: bigint;
+        s0: bigint;
+        e1: bigint;
+        s1: bigint;
+        e7: bigint;
+        s7: bigint;
+        median: number | null;
+      }[]
+    >`
+      WITH cohort AS (
+        SELECT u.id, u."createdAt" AS signed_at,
+          ((u."createdAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Tehran')::date AS day0,
+          u."signupSource" AS source, u."signupClient" AS platform
+        FROM users u
+        WHERE u.role = 'CUSTOMER'
+          AND u."createdAt" >= ((${filter.from}::date::timestamp AT TIME ZONE 'Asia/Tehran') AT TIME ZONE 'UTC')
+          AND u."createdAt" < (((${filter.to}::date + 1)::timestamp AT TIME ZONE 'Asia/Tehran') AT TIME ZONE 'UTC')
+          AND (u."signupSource" IS NULL
+            OR LOWER(u."signupSource") <> ALL(${[...GROWTH_QA_SOURCES]}::text[]))
+      ), stamped AS (
+        SELECT t."userId" AS id, t."createdAt" AS at FROM planner_tasks t
+          WHERE t."seriesId" IS NULL AND t."userId" IN (SELECT id FROM cohort)
+        UNION ALL SELECT m."userId", m."createdAt" FROM meal_logs m
+          WHERE m."userId" IN (SELECT id FROM cohort)
+        UNION ALL SELECT w."userId", w."createdAt" FROM workout_logs w
+          WHERE w."userId" IN (SELECT id FROM cohort)
+        UNION ALL SELECT r."userId", r."firstReviewAt" FROM english_review_days r
+          WHERE r."firstReviewAt" IS NOT NULL AND r."userId" IN (SELECT id FROM cohort)
+      ), timed AS (
+        SELECT s.id, s.at, ((s.at AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Tehran')::date AS day
+        FROM stamped s JOIN cohort c ON c.id = s.id
+        -- Day 7 ends within 9 days of any signup time; later actions cannot change a metric.
+        WHERE s.at >= c.signed_at AND s.at < c.signed_at + INTERVAL '9 days'
+      ), untimed AS (
+        SELECT r."userId" AS id, r.date AS day
+        FROM english_review_days r JOIN cohort c ON c.id = r."userId"
+        WHERE r."firstReviewAt" IS NULL AND r.date BETWEEN c.day0 AND c.day0 + 7
+      ), active AS (
+        SELECT id, day FROM timed UNION SELECT id, day FROM untimed
+      ), accounts AS (
+        SELECT c.source, c.platform,
+          c.day0 < ${today}::date AS e0,
+          c.day0 + 1 < ${today}::date AS e1,
+          c.day0 + 7 < ${today}::date AS e7,
+          EXISTS (SELECT 1 FROM active a WHERE a.id = c.id AND a.day = c.day0) AS s0,
+          EXISTS (SELECT 1 FROM active a WHERE a.id = c.id AND a.day = c.day0 + 1) AS s1,
+          EXISTS (SELECT 1 FROM active a WHERE a.id = c.id AND a.day = c.day0 + 7) AS s7,
+          -- Unknown when an untimed review on day 0 could have come first.
+          CASE WHEN NOT EXISTS (SELECT 1 FROM untimed u WHERE u.id = c.id AND u.day = c.day0)
+            THEN (SELECT EXTRACT(EPOCH FROM MIN(t.at) - c.signed_at) / 60
+              FROM timed t WHERE t.id = c.id AND t.day = c.day0)
+          END AS minutes
+        FROM cohort c
+      )
+      SELECT GROUPING(source, platform) AS level, source, platform,
+        COUNT(*) AS accounts,
+        COUNT(*) FILTER (WHERE e0) AS e0, COUNT(*) FILTER (WHERE e0 AND s0) AS s0,
+        COUNT(*) FILTER (WHERE e1) AS e1, COUNT(*) FILTER (WHERE e1 AND s1) AS s1,
+        COUNT(*) FILTER (WHERE e7) AS e7, COUNT(*) FILTER (WHERE e7 AND s7) AS s7,
+        (percentile_cont(0.5) WITHIN GROUP (ORDER BY minutes)
+          FILTER (WHERE e0 AND s0 AND minutes IS NOT NULL))::float8 AS median
+      FROM accounts
+      GROUP BY GROUPING SETS ((), (source), (platform))
+    `;
+    const metric = (eligible: bigint, successful: bigint) => ({
+      eligible: Number(eligible),
+      successful: Number(successful),
+      percent: Number(eligible)
+        ? Math.round((Number(successful) / Number(eligible)) * 1000) / 10
+        : null,
+    });
+    const metrics = (row?: (typeof rows)[number]) => ({
+      firstAction: metric(row?.e0 ?? 0n, row?.s0 ?? 0n),
+      d1: metric(row?.e1 ?? 0n, row?.s1 ?? 0n),
+      d7: metric(row?.e7 ?? 0n, row?.s7 ?? 0n),
+      medianFirstActionMinutes:
+        row?.median == null ? null : Math.round(row.median * 10) / 10,
+    });
+    // Largest groups first, unrecorded last; at most 20 groups per breakdown.
+    const groups = (level: number, key: 'source' | 'platform') =>
+      rows
+        .filter((row) => row.level === level)
+        .sort(
+          (a, b) =>
+            Number(b.accounts - a.accounts) ||
+            Number(a[key] === null) - Number(b[key] === null) ||
+            String(a[key]).localeCompare(String(b[key])),
+        )
+        .slice(0, 20);
+    return {
+      from: filter.from,
+      to: filter.to,
+      overall: metrics(rows.find((row) => row.level === 3)),
+      bySource: groups(1, 'source').map((row) => ({
+        source: row.source,
+        metrics: metrics(row),
+      })),
+      bySignupPlatform: groups(2, 'platform').map((row) => ({
+        signupPlatform: row.platform,
+        metrics: metrics(row),
+      })),
     };
   }
 

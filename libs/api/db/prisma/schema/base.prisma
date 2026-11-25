@@ -38,6 +38,9 @@ model User {
   onboardingCompletedAt DateTime?
   /// App or browser the first-step page was opened in (`GROWTH_CLIENTS`); set once.
   signupClient String? @db.VarChar(24)
+  /// First-touch source of a new signup (`signupSourceOf`), set once at creation; null = not recorded
+  /// (older account, analytics opt-out or analytics off). Never backfilled.
+  signupSource String? @db.VarChar(40)
   /// Expenses is experimental and opt-in (directive 160), so it is not in the default.
   enabledApplets String[] @default(["planner", "english", "health"])
   onboardingGoalChanges OnboardingGoalChange[]
