@@ -25,6 +25,8 @@ import {
   type GrowthReportAuditEntry,
   growthClientVisitSchema,
   type GrowthClientVisitInput,
+  growthAccountActivationFilterSchema,
+  type GrowthAccountActivationFilter,
 } from '@all-in-one/shared/schemas';
 import { GrowthService } from './growth.service';
 
@@ -115,6 +117,22 @@ export class GrowthController {
       admin,
       'RETENTION',
       this.growth.retentionCohorts(filter),
+    );
+  }
+
+  /** Aggregate account activation; audited as a summary view (no new audit enum value). */
+  @Roles('ADMIN')
+  @Get('account-activation')
+  accountActivation(
+    @CurrentUser() admin: AuthUser,
+    @Query({ schema: growthAccountActivationFilterSchema })
+    filter: GrowthAccountActivationFilter,
+  ) {
+    this.requireEnabled();
+    return this.auditedView(
+      admin,
+      'SUMMARY',
+      this.growth.accountActivation(filter),
     );
   }
 

@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PrismaService } from '@all-in-one/api/db';
+import { Prisma, PrismaService } from '@all-in-one/api/db';
 import type {
   GrowthEventInput,
   GrowthCampaignFilter,
@@ -14,8 +14,17 @@ import type {
   GrowthClientVisitInput,
   GrowthClientReport,
   GrowthClient,
+  GrowthAccountActivationFilter,
+  GrowthAccountActivationReport,
+  GrowthAccountActivationSource,
 } from '@all-in-one/shared/schemas';
-import { GROWTH_CHURN_DAYS, GROWTH_CLIENTS } from '@all-in-one/shared/schemas';
+import {
+  GROWTH_CHURN_DAYS,
+  GROWTH_CLIENTS,
+  GROWTH_QA_SOURCES,
+  GROWTH_SIGNUP_SOURCES,
+  RESERVED_TEST_EMAIL_PATTERN,
+} from '@all-in-one/shared/schemas';
 
 const WINDOW_DAYS = 30;
 const dayAt = (date: Date) =>
@@ -366,6 +375,77 @@ export class GrowthService {
     };
   }
 
+  /**
+   * Account-level first action and D1/D7 return for customer accounts that signed up on Tehran days
+   * `from`..`to`. Only aggregate counts leave the database query; no account ID, email or time does.
+   * Definitions (docs/roadmaps/aio-activation-v1.fa.md, «گزارش فعال‌سازی حساب‌ها»):
+   * - action: a planner task the account created (not a recurring-occurrence copy), an English review,
+   *   a meal log or a workout log, at its server time, from the signup time to the end of Tehran day 7.
+   *   A review row counts by its first and latest review times; a row without times counts for nothing
+   *   and is reported in `coverage.untimedReviewAccounts`.
+   * - day N: the Tehran calendar day N days after the signup day; a metric's denominator holds only
+   *   accounts whose day N ended before today, so today and future days never count.
+   * - test accounts (non-customer role, QA source, reserved email domain) are left out.
+   */
+  async accountActivation(
+    filter: GrowthAccountActivationFilter,
+    now = new Date(),
+  ): Promise<GrowthAccountActivationReport> {
+    const today = dayAt(now);
+    const oldest = dayAt(new Date(now.getTime() - 89 * 86_400_000));
+    if (filter.from < oldest || filter.to > today || filter.from > filter.to)
+      throw new BadRequestException('بازهٔ گزارش باید در ۹۰ روز گذشته باشد.');
+    const rows = await this.prisma.$queryRaw<ActivationRow[]>(
+      accountActivationQuery(filter, today),
+    );
+    const count = (value: bigint | undefined) => Number(value ?? 0);
+    const metric = (eligible?: bigint, successful?: bigint) => ({
+      eligible: count(eligible),
+      successful: count(successful),
+      percent: count(eligible)
+        ? Math.round((count(successful) / count(eligible)) * 1000) / 10
+        : null,
+    });
+    const metrics = (row?: ActivationRow) => ({
+      firstAction: metric(row?.e0, row?.s0),
+      d1: metric(row?.e1, row?.s1),
+      d7: metric(row?.e7, row?.s7),
+      medianFirstActionMinutes:
+        row?.median == null ? null : Math.round(row.median * 10) / 10,
+    });
+    // Both keys come from bounded lists (at most 13 groups with null), so no group is ever dropped.
+    // Largest groups first; on a tie the recorded value before null, then by name.
+    const groups = (level: number, key: 'source' | 'platform') =>
+      rows
+        .filter((row) => row.level === level)
+        .sort(
+          (a, b) =>
+            count(b.accounts) - count(a.accounts) ||
+            Number(a[key] === null) - Number(b[key] === null) ||
+            String(a[key]).localeCompare(String(b[key])),
+        );
+    const overall = rows.find((row) => row.level === 3);
+    return {
+      from: filter.from,
+      to: filter.to,
+      overall: metrics(overall),
+      coverage: {
+        accounts: count(overall?.accounts),
+        excludedTestAccounts: count(overall?.excluded),
+        untimedReviewAccounts: count(overall?.untimed),
+        phoneOnlyAccounts: count(overall?.phone_only),
+      },
+      bySource: groups(1, 'source').map((row) => ({
+        source: row.source as GrowthAccountActivationSource | null,
+        metrics: metrics(row),
+      })),
+      bySignupPlatform: groups(2, 'platform').map((row) => ({
+        signupPlatform: row.platform as GrowthClient | 'other' | null,
+        metrics: metrics(row),
+      })),
+    };
+  }
+
   async auditReport(
     actorId: string,
     report: GrowthReportAuditEntry['report'],
@@ -661,4 +741,107 @@ export class GrowthService {
       })),
     };
   }
+}
+
+interface ActivationRow {
+  level: number;
+  source: string | null;
+  platform: string | null;
+  accounts: bigint;
+  excluded: bigint;
+  untimed: bigint;
+  phone_only: bigint;
+  e0: bigint;
+  s0: bigint;
+  e1: bigint;
+  s1: bigint;
+  e7: bigint;
+  s7: bigint;
+  median: number | null;
+}
+
+const REPORTED_SOURCES: string[] = GROWTH_SIGNUP_SOURCES.filter(
+  (source) => !(GROWTH_QA_SOURCES as readonly string[]).includes(source),
+);
+
+/**
+ * The account activation query (exported for EXPLAIN). Every action branch is bounded to the
+ * account's signup time .. end of its Tehran day 7; activity is aggregated once per account and
+ * Tehran day, and the first-action minutes come from that same set.
+ */
+export function accountActivationQuery(
+  filter: GrowthAccountActivationFilter,
+  today: string,
+): Prisma.Sql {
+  return Prisma.sql`
+    WITH base AS (
+      SELECT u.id, u."createdAt" AS signed_at,
+        ((u."createdAt" AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Tehran')::date AS day0,
+        u.email IS NULL AS phone_only,
+        (u.role <> 'CUSTOMER'
+          OR LOWER(COALESCE(u."signupSource", '')) = ANY(${[...GROWTH_QA_SOURCES]}::text[])
+          OR COALESCE(u.email, '') ~* ${RESERVED_TEST_EMAIL_PATTERN}) AS test,
+        CASE WHEN u."signupSource" IS NULL THEN NULL
+          WHEN u."signupSource" = ANY(${REPORTED_SOURCES}::text[]) THEN u."signupSource"
+          ELSE 'other' END AS source,
+        CASE WHEN u."signupClient" IS NULL THEN NULL
+          WHEN u."signupClient" = ANY(${[...GROWTH_CLIENTS]}::text[]) THEN u."signupClient"
+          ELSE 'other' END AS platform
+      FROM users u
+      WHERE u."createdAt" >= ((${filter.from}::date::timestamp AT TIME ZONE 'Asia/Tehran') AT TIME ZONE 'UTC')
+        AND u."createdAt" < (((${filter.to}::date + 1)::timestamp AT TIME ZONE 'Asia/Tehran') AT TIME ZONE 'UTC')
+    ), cohort AS (
+      SELECT b.*,
+        (((b.day0 + 8)::timestamp AT TIME ZONE 'Asia/Tehran') AT TIME ZONE 'UTC') AS until_at
+      FROM base b WHERE NOT b.test
+    ), events AS (
+      SELECT c.id, t."createdAt" AS at FROM cohort c JOIN planner_tasks t ON t."userId" = c.id
+        AND t."seriesId" IS NULL AND t."createdAt" >= c.signed_at AND t."createdAt" < c.until_at
+      UNION ALL SELECT c.id, m."createdAt" FROM cohort c JOIN meal_logs m ON m."userId" = c.id
+        AND m."createdAt" >= c.signed_at AND m."createdAt" < c.until_at
+      UNION ALL SELECT c.id, w."createdAt" FROM cohort c JOIN workout_logs w ON w."userId" = c.id
+        AND w."createdAt" >= c.signed_at AND w."createdAt" < c.until_at
+      UNION ALL SELECT c.id, r."firstReviewAt" FROM cohort c JOIN english_review_days r
+        ON r."userId" = c.id AND r.date BETWEEN c.day0 - 1 AND c.day0 + 8
+        AND r."firstReviewAt" >= c.signed_at AND r."firstReviewAt" < c.until_at
+      UNION ALL SELECT c.id, r."lastReviewAt" FROM cohort c JOIN english_review_days r
+        ON r."userId" = c.id AND r.date BETWEEN c.day0 - 1 AND c.day0 + 8
+        AND r."lastReviewAt" >= c.signed_at AND r."lastReviewAt" < c.until_at
+    ), days AS (
+      SELECT id, ((at AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Tehran')::date AS day,
+        MIN(at) AS first_at
+      FROM events GROUP BY 1, 2
+    ), untimed AS (
+      -- A server-day row is at most one day off its Tehran days, so these may touch days 0..7.
+      SELECT DISTINCT c.id FROM cohort c JOIN english_review_days r ON r."userId" = c.id
+      WHERE r."firstReviewAt" IS NULL AND r.date BETWEEN c.day0 - 1 AND c.day0 + 8
+    ), accounts AS (
+      SELECT c.source, c.platform, c.phone_only, u.id IS NOT NULL AS untimed,
+        c.day0 < ${today}::date AS e0,
+        c.day0 + 1 < ${today}::date AS e1,
+        c.day0 + 7 < ${today}::date AS e7,
+        COALESCE(bool_or(d.day = c.day0), false) AS s0,
+        COALESCE(bool_or(d.day = c.day0 + 1), false) AS s1,
+        COALESCE(bool_or(d.day = c.day0 + 7), false) AS s7,
+        EXTRACT(EPOCH FROM MIN(d.first_at) FILTER (WHERE d.day = c.day0) - c.signed_at) / 60
+          AS minutes
+      FROM cohort c
+      LEFT JOIN days d ON d.id = c.id
+      LEFT JOIN untimed u ON u.id = c.id
+      GROUP BY c.id, c.source, c.platform, c.phone_only, c.day0, c.signed_at, u.id
+    )
+    SELECT GROUPING(source, platform) AS level, source, platform,
+      COUNT(*) AS accounts,
+      (SELECT COUNT(*) FROM base WHERE test) AS excluded,
+      COUNT(*) FILTER (WHERE untimed) AS untimed,
+      COUNT(*) FILTER (WHERE phone_only) AS phone_only,
+      COUNT(*) FILTER (WHERE e0) AS e0, COUNT(*) FILTER (WHERE e0 AND s0) AS s0,
+      COUNT(*) FILTER (WHERE e1) AS e1, COUNT(*) FILTER (WHERE e1 AND s1) AS s1,
+      COUNT(*) FILTER (WHERE e7) AS e7, COUNT(*) FILTER (WHERE e7 AND s7) AS s7,
+      -- An account with an untimed review may have acted earlier than its timed first action.
+      (percentile_cont(0.5) WITHIN GROUP (ORDER BY minutes)
+        FILTER (WHERE e0 AND s0 AND NOT untimed AND minutes IS NOT NULL))::float8 AS median
+    FROM accounts
+    GROUP BY GROUPING SETS ((), (source), (platform))
+  `;
 }

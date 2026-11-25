@@ -12,8 +12,11 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { createHash, randomBytes } from 'node:crypto';
 import {
+  GROWTH_QA_SOURCES,
   growthCampaignSchema,
   resolveEnabledApplets,
+  signupSourceOf,
+  type GrowthSignupSource,
   type AppApplet,
   type GrowthAttribution,
   type LoginInput,
@@ -99,6 +102,7 @@ export class AuthService {
     if (await this.prisma.user.findUnique({ where: { email } })) {
       throw new ConflictException('این ایمیل قبلاً ثبت شده است');
     }
+    const attribution = await this.signupAttribution(input.acquisition);
     const user = await this.prisma.user.create({
       data: {
         email,
@@ -106,6 +110,7 @@ export class AuthService {
         passwordHash: await hashPassword(input.password),
         role: 'CUSTOMER',
         emailVerifiedAt: verify ? null : new Date(),
+        signupSource: attribution?.source ?? null,
         ...(input.goal
           ? {
               onboardingGoal: input.goal,
@@ -114,7 +119,7 @@ export class AuthService {
           : {}),
       },
     });
-    await this.recordSignup(input.acquisition);
+    await this.recordSignup(input.acquisition, attribution);
     if (verify)
       this.sendVerificationLink(
         email,
@@ -137,12 +142,14 @@ export class AuthService {
   ): Promise<{ user: DbUser; created: boolean }> {
     const existing = await this.prisma.user.findUnique({ where: { phone } });
     if (existing) return { user: existing, created: false };
+    const attribution = await this.signupAttribution(acquisition);
     try {
       const user = await this.prisma.user.create({
         data: {
           phone,
           phoneVerifiedAt: new Date(),
           role: 'CUSTOMER',
+          signupSource: attribution?.source ?? null,
           ...(goal
             ? {
                 onboardingGoal: goal,
@@ -151,7 +158,7 @@ export class AuthService {
             : {}),
         },
       });
-      await this.recordSignup(acquisition);
+      await this.recordSignup(acquisition, attribution);
       return { user, created: true };
     } catch (error) {
       // Another request created the account for this number first (unique phone).
@@ -185,21 +192,67 @@ export class AuthService {
   }
 
   /**
-   * Only a successfully created account can emit this event. Analytics must never turn a successful
-   * registration into an error or send auth fields.
+   * The signup's campaign (for `signup_completed`, unchanged) and the controlled source kept once on
+   * the new account: the visitor's earliest recorded source wins over the signup URL (first touch),
+   * then the URL's, else `direct`; a retained QA tag wins over both, which keeps the account out of
+   * reports. `unknown` when the source could not be read. Nothing is resolved without attribution: a
+   * visitor who turned analytics off sends none (and the controller drops it when the opt-out cookie
+   * is present), and GROWTH_ANALYTICS_ENABLED=false keeps it off, so those accounts keep a null source.
+   * Never throws.
    */
-  private async recordSignup(acquisition?: GrowthAttribution): Promise<void> {
+  private async signupAttribution(
+    acquisition?: GrowthAttribution,
+  ): Promise<
+    { campaign?: GrowthCampaign; source: GrowthSignupSource } | undefined
+  > {
     if (
       !acquisition ||
       this.config.get<string>('GROWTH_ANALYTICS_ENABLED') === 'false'
     )
-      return;
+      return undefined;
+    const { visitorId } = acquisition;
+    const campaign = await this.signupCampaign(visitorId, acquisition.campaign);
+    const given = acquisition.campaign?.utm_source;
+    const qaSources: readonly string[] = GROWTH_QA_SOURCES;
+    let source: GrowthSignupSource;
+    try {
+      const [row] = await this.prisma.$queryRaw<
+        { first: string | null; qa: string | null }[]
+      >`
+        SELECT
+          (SELECT campaign->>'utm_source' FROM growth_events
+            WHERE "visitorId" = ${visitorId}::uuid
+              AND NULLIF(campaign->>'utm_source', '') IS NOT NULL
+            ORDER BY "createdAt", id LIMIT 1) AS first,
+          (SELECT LOWER(campaign->>'utm_source') FROM growth_events
+            WHERE "visitorId" = ${visitorId}::uuid
+              AND LOWER(campaign->>'utm_source') = ANY(${[...qaSources]}::text[])
+            LIMIT 1) AS qa`;
+      const qa =
+        row?.qa ??
+        (given && qaSources.includes(given.trim().toLowerCase())
+          ? given
+          : null);
+      source = signupSourceOf(qa ?? row?.first ?? given);
+    } catch {
+      // An analytics read must never cost the signup.
+      source = 'unknown';
+    }
+    return { campaign, source };
+  }
+
+  /**
+   * Only a successfully created account can emit this event. Analytics must never turn a successful
+   * registration into an error or send auth fields.
+   */
+  private async recordSignup(
+    acquisition?: GrowthAttribution,
+    attribution?: { campaign?: GrowthCampaign },
+  ): Promise<void> {
+    if (!acquisition || !attribution) return;
     try {
       const { visitorId, language } = acquisition;
-      const campaign = await this.signupCampaign(
-        visitorId,
-        acquisition.campaign,
-      );
+      const { campaign } = attribution;
       await this.prisma.growthEvent.createMany({
         data: [
           {

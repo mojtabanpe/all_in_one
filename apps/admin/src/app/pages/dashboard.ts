@@ -1,3 +1,4 @@
+import { AccountActivationReport } from './account-activation-report';
 import { CampaignReport } from './campaign-report';
 import { httpResource } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
@@ -30,6 +31,7 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
   selector: 'admin-dashboard',
   imports: [
     CampaignReport,
+    AccountActivationReport,
     AioCardDirectives,
     ApiStatus,
     AioCardHeading,
@@ -505,6 +507,7 @@ import { API_BASE_URL, ApiStatus } from '@all-in-one/web/shared';
           </div>
         }
       </section>
+      <admin-account-activation-report [platformLabel]="signupClientLabel" />
       <section aioCard>
         <div
           aioCardHeading

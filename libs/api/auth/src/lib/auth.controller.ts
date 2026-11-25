@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   HttpCode,
   NotFoundException,
   Post,
@@ -12,6 +13,7 @@ import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost } from '@nestjs/core';
 import { Throttle } from '@nestjs/throttler';
 import {
+  growthOptedOut,
   type ChangePasswordInput,
   changePasswordSchema,
   type EmailOnlyInput,
@@ -121,11 +123,12 @@ export class AuthController {
   async smsLogin(
     @Body({ schema: smsLoginSchema }) input: SmsLoginInput,
     @Res({ passthrough: true }) res: unknown,
+    @Headers('cookie') cookie?: string,
   ): Promise<SmsLoginResult> {
     const phone = await this.phones.verifyLogin(input.phone, input.code);
     const { user, created } = await this.auth.signInByPhone(
       phone,
-      input.acquisition,
+      growthOptedOut(cookie) ? undefined : input.acquisition,
       input.goal,
     );
     await this.startSession(res, user);
@@ -158,8 +161,12 @@ export class AuthController {
   async register(
     @Body({ schema: registerSchema }) input: RegisterInput,
     @Res({ passthrough: true }) res: unknown,
+    @Headers('cookie') cookie?: string,
   ): Promise<RegisterResult> {
-    const user = await this.auth.register(input);
+    // An opted-out visitor's attribution is dropped even when a client sends it anyway.
+    const user = await this.auth.register(
+      growthOptedOut(cookie) ? { ...input, acquisition: undefined } : input,
+    );
     if (!user.emailVerifiedAt)
       return { status: 'verify-email', email: user.email ?? input.email };
     await this.startSession(res, user);
