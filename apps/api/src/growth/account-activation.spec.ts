@@ -8,7 +8,12 @@ import {
   SESSION_COOKIE,
 } from '@all-in-one/api/auth';
 import {
+  GROWTH_CLIENTS,
+  GROWTH_QA_SOURCES,
+  GROWTH_SIGNUP_SOURCES,
   growthAccountActivationFilterSchema,
+  growthOptedOut,
+  isReservedTestEmail,
   signupSourceOf,
 } from '@all-in-one/shared/schemas';
 import { GrowthController } from './growth.controller';
@@ -23,6 +28,9 @@ const row = (over: Record<string, unknown>) => ({
   source: null,
   platform: null,
   accounts: 0n,
+  excluded: 0n,
+  untimed: 0n,
+  phone_only: 0n,
   e0: 0n,
   s0: 0n,
   e1: 0n,
@@ -51,14 +59,60 @@ describe('Account activation contract', () => {
       );
   });
 
-  it('keeps a bounded, lower-cased source and never a free-form value', () => {
+  it('keeps only controlled source values, never a free-form one', () => {
     expect(signupSourceOf(undefined)).toBe('direct');
     expect(signupSourceOf('')).toBe('direct');
     expect(signupSourceOf(' Instagram ')).toBe('instagram');
-    expect(signupSourceOf('tg_partner.v2-a')).toBe('tg_partner.v2-a');
+    expect(signupSourceOf('referral')).toBe('referral');
     expect(signupSourceOf('QA')).toBe('qa');
-    for (const value of ['اینستاگرام', 'a b', 'x'.repeat(41), '-lead', 'a/b'])
+    // Look-alikes of a phone number, an ID or a reserved value never come back as typed.
+    for (const value of [
+      '09120000000',
+      '+989120000000',
+      'user-1234',
+      '019a59e3-4070-7000-8000-000000000001',
+      'tg_partner',
+      'اینستاگرام',
+      'direct',
+      'unknown',
+      'other',
+    ])
       expect(signupSourceOf(value)).toBe('other');
+  });
+
+  it('fits every breakdown group, null included, under the 20-group bound', () => {
+    const sources = GROWTH_SIGNUP_SOURCES.filter(
+      (source) => !(GROWTH_QA_SOURCES as readonly string[]).includes(source),
+    );
+    expect(sources.length + 1).toBeLessThanOrEqual(20);
+    expect(GROWTH_CLIENTS.length + 2).toBeLessThanOrEqual(20);
+  });
+
+  it('recognises reserved test domains and the analytics opt-out cookie', () => {
+    for (const email of [
+      'a@example.com',
+      'a@EXAMPLE.org',
+      'a@mail.example.net',
+      'a@x.test',
+      'a@x.example',
+      'a@x.invalid',
+      'a@localhost',
+      'a@app.localhost',
+    ])
+      expect(isReservedTestEmail(email)).toBe(true);
+    for (const email of [
+      null,
+      'a@gmail.com',
+      'a@example.co',
+      'a@notexample.com',
+      'a@test.ir',
+      'example.com@gmail.com',
+    ])
+      expect(isReservedTestEmail(email)).toBe(false);
+    expect(growthOptedOut('x=1; aio_growth_preference=denied')).toBe(true);
+    expect(growthOptedOut('aio_growth_consent=denied')).toBe(true);
+    expect(growthOptedOut('aio_growth_preference=granted')).toBe(false);
+    expect(growthOptedOut(undefined)).toBe(false);
   });
 });
 
@@ -142,6 +196,9 @@ describe('Account activation aggregation', () => {
         row({
           level: 3,
           accounts: 7n,
+          excluded: 2n,
+          untimed: 1n,
+          phone_only: 3n,
           e0: 6n,
           s0: 2n,
           e1: 3n,
@@ -167,6 +224,12 @@ describe('Account activation aggregation', () => {
         d7: { eligible: 0, successful: 0, percent: null },
         medianFirstActionMinutes: 75,
       },
+      coverage: {
+        accounts: 7,
+        excludedTestAccounts: 2,
+        untimedReviewAccounts: 1,
+        phoneOnlyAccounts: 3,
+      },
       bySource: [
         expect.objectContaining({ source: null }),
         expect.objectContaining({ source: 'instagram' }),
@@ -185,7 +248,7 @@ describe('Account activation aggregation', () => {
     expect(report.bySource[2].metrics.firstAction.percent).toBe(0);
     expect(report.bySource[0].metrics.medianFirstActionMinutes).toBeNull();
     // No identifier or timestamp field leaves the report.
-    expect(JSON.stringify(report)).not.toMatch(/userId|"id"|At"|accounts/);
+    expect(JSON.stringify(report)).not.toMatch(/userId|"id"|email|phone"|At"/);
   });
 
   it('reports an empty window as zero counts, null rates and empty breakdowns', async () => {
@@ -204,6 +267,12 @@ describe('Account activation aggregation', () => {
         d1: empty,
         d7: empty,
         medianFirstActionMinutes: null,
+      },
+      coverage: {
+        accounts: 0,
+        excludedTestAccounts: 0,
+        untimedReviewAccounts: 0,
+        phoneOnlyAccounts: 0,
       },
       bySource: [],
       bySignupPlatform: [],

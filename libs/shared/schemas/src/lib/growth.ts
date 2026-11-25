@@ -271,16 +271,60 @@ export interface GrowthRetentionCohort {
 /** Sources that mark QA traffic in every growth report (case-insensitive). */
 export const GROWTH_QA_SOURCES = ['qa', 'test', 'roadmap_check'] as const;
 
-const SIGNUP_SOURCE = /^[a-z0-9][a-z0-9._-]{0,39}$/;
+/** Acquisition sources used by the growth links (directives 129, 183): kept as they are. */
+export const GROWTH_KNOWN_SOURCES = [
+  'instagram',
+  'telegram',
+  'linkedin',
+  'youtube',
+  GROWTH_REFERRAL_SOURCE,
+] as const;
 /**
- * The bounded first-touch source kept once on a new account (`users.signupSource`): the lower-cased
- * `utm_source`, `direct` when the recorded signup carried no tag, `other` for a value outside
- * `[a-z0-9._-]{1,40}`. Nothing else from the campaign or the visitor is kept on the account.
+ * The only values `users.signupSource` and the activation report hold. `direct` = the recorded signup
+ * had no tag; `unknown` = attribution was sent but the source could not be read; `other` = any tag
+ * outside the known list (so a phone number or an ID typed into a link never comes back). QA tags are
+ * kept so the account stays out of reports; `null` (not in this list) = nothing recorded.
  */
-export function signupSourceOf(utmSource: string | undefined): string {
-  if (!utmSource) return 'direct';
-  const value = utmSource.trim().toLowerCase();
-  return SIGNUP_SOURCE.test(value) ? value : 'other';
+export const GROWTH_SIGNUP_SOURCES = [
+  ...GROWTH_KNOWN_SOURCES,
+  'direct',
+  'unknown',
+  'other',
+  ...GROWTH_QA_SOURCES,
+] as const;
+export type GrowthSignupSource = (typeof GROWTH_SIGNUP_SOURCES)[number];
+
+/** The controlled signup source of an `utm_source` value. */
+export function signupSourceOf(
+  utmSource: string | null | undefined,
+): GrowthSignupSource {
+  const value = utmSource?.trim().toLowerCase();
+  if (!value) return 'direct';
+  return (GROWTH_SIGNUP_SOURCES as readonly string[]).includes(value) &&
+    value !== 'direct' &&
+    value !== 'unknown' &&
+    value !== 'other'
+    ? (value as GrowthSignupSource)
+    : 'other';
+}
+
+/** The visitor turned acquisition analytics off (cookie set by `GrowthAnalytics.choose`). */
+export function growthOptedOut(cookieHeader: string | null | undefined) {
+  return /(?:^|;\s*)aio_growth_(?:preference|consent)=denied(?:;|$)/.test(
+    cookieHeader ?? '',
+  );
+}
+
+/**
+ * Test accounts by email: reserved names of RFC 2606 / RFC 6761 (`example.com|net|org` and the
+ * `.test`, `.example`, `.invalid`, `.localhost` TLDs, subdomains included). Create every new test
+ * account with such an address (or a QA source); phone-only accounts cannot be recognised.
+ * PostgreSQL `~*` pattern; `isReservedTestEmail` is the same rule in TypeScript.
+ */
+export const RESERVED_TEST_EMAIL_PATTERN =
+  '@([^@]+\\.)?(example\\.(com|net|org)|test|example|invalid|localhost)$';
+export function isReservedTestEmail(email: string | null | undefined) {
+  return !!email && new RegExp(RESERVED_TEST_EMAIL_PATTERN, 'i').test(email);
 }
 
 /** Signup days (Tehran, both inclusive) of `GET /growth/account-activation`. */
@@ -309,17 +353,43 @@ export interface GrowthAccountActivationMetrics {
   medianFirstActionMinutes: number | null;
 }
 
-/** Aggregate counts only; `null` source or platform = not recorded. */
+/** Aggregate coverage of the cohort; every field is an account count. */
+export interface GrowthAccountActivationCoverage {
+  /** Accounts in the report (after test exclusion). */
+  accounts: number;
+  /** Test accounts left out: non-customer role, QA source or reserved email domain. */
+  excludedTestAccounts: number;
+  /**
+   * Accounts with a review day written without review times (before this release, or by the
+   * previous release during a switch) that may touch days 0–7: such reviews are not counted, so the
+   * rates may be undercounted for them.
+   */
+  untimedReviewAccounts: number;
+  /** Accounts without an email: the reserved-domain test rule cannot apply to them. */
+  phoneOnlyAccounts: number;
+}
+
+/** A source of `GROWTH_SIGNUP_SOURCES` except the QA tags; `null` = not recorded. */
+export type GrowthAccountActivationSource = Exclude<
+  GrowthSignupSource,
+  (typeof GROWTH_QA_SOURCES)[number]
+>;
+
+/**
+ * Aggregate counts only. Both breakdowns are bounded lists (at most 20 groups) and always keep the
+ * `null` group when it has accounts; a platform outside `GROWTH_CLIENTS` is reported as `other`.
+ */
 export interface GrowthAccountActivationReport {
   from: string;
   to: string;
   overall: GrowthAccountActivationMetrics;
+  coverage: GrowthAccountActivationCoverage;
   bySource: {
-    source: string | null;
+    source: GrowthAccountActivationSource | null;
     metrics: GrowthAccountActivationMetrics;
   }[];
   bySignupPlatform: {
-    signupPlatform: string | null;
+    signupPlatform: GrowthClient | 'other' | null;
     metrics: GrowthAccountActivationMetrics;
   }[];
 }

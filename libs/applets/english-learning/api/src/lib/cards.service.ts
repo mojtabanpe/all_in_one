@@ -153,9 +153,15 @@ export class CardsService {
       const date = new Date(`${toIsoDate(now)}T00:00:00Z`);
       await tx.englishReviewDay.upsert({
         where: { userId_date: { userId, date } },
-        // The day's first review time feeds the account activation report.
-        create: { userId, date, reviews: 1, firstReviewAt: now },
-        update: { reviews: { increment: 1 } },
+        // The day's first and latest review times feed the account activation report.
+        create: {
+          userId,
+          date,
+          reviews: 1,
+          firstReviewAt: now,
+          lastReviewAt: now,
+        },
+        update: { reviews: { increment: 1 }, lastReviewAt: now },
       });
       return toCard(
         await tx.englishCard.update({

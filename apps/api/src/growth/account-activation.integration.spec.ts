@@ -17,9 +17,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
     let service: GrowthService;
     const users: string[] = [];
     const visitors: string[] = [];
-    const run = randomUUID().slice(0, 8);
-    const activity = `pg002-${run}`;
-    const source = `pg002-${run}`;
+    const activity = `pg002-${randomUUID().slice(0, 8)}`;
     // A fixed future "today" (Tehran 2031-03-20 13:30) keeps synthetic rows apart from any real data.
     const now = new Date('2031-03-20T10:00:00Z');
 
@@ -40,6 +38,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       });
     });
     afterAll(async () => {
+      vi.useRealTimers();
       if (!prisma) return;
       await prisma.user.deleteMany({ where: { id: { in: users } } });
       await prisma.growthEvent.deleteMany({
@@ -49,17 +48,19 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       await prisma.$disconnect();
     });
 
+    /** Synthetic accounts have no email unless a test needs one (then a reserved domain). */
     const account = async (
       signedAt: Date,
       extra: {
         role?: 'CUSTOMER' | 'ADMIN';
+        email?: string;
         signupSource?: string | null;
         signupClient?: string | null;
       } = {},
     ) => {
       const user = await prisma.user.create({
         data: {
-          email: `pg002-${randomUUID()}@example.invalid`,
+          email: extra.email ?? null,
           createdAt: signedAt,
           role: extra.role ?? 'CUSTOMER',
           signupSource: extra.signupSource ?? null,
@@ -107,22 +108,24 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
               createdAt: at,
             },
           }),
-        review: (day: string, firstReviewAt: Date | null) =>
+        /** A review-day row; `null` times mimic rows written before this release. */
+        review: (day: string, first: Date | null, last: Date | null = first) =>
           prisma.englishReviewDay.create({
             data: {
               userId: user.id,
               date: dayOnly(day),
               reviews: 1,
-              firstReviewAt,
+              firstReviewAt: first,
+              lastReviewAt: last,
             },
           }),
       };
     };
 
-    it('counts Tehran days 0/1/7 per account with complete-day denominators and no QA, admin or pre-signup actions', async () => {
+    it('counts Tehran days 0/1/7 with complete-day denominators and leaves out test, untimed and pre-signup data', async () => {
       // Day 0, 1 and 7 actions; repeated actions and devices on one day count once.
       const full = await account(tehran('2031-03-10', '10:00'), {
-        signupSource: source,
+        signupSource: 'instagram',
         signupClient: 'bazaar',
       });
       await full.task(tehran('2031-03-10', '10:30'));
@@ -132,7 +135,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       await full.workout(tehran('2031-03-17', '08:00'));
       // Signed up at 23:59; the 00:01 action belongs to day 1, not day 0.
       const boundary = await account(tehran('2031-03-10', '23:59'), {
-        signupSource: source,
+        signupSource: 'instagram',
         signupClient: 'myket',
       });
       await boundary.task(tehran('2031-03-11', '00:01'));
@@ -153,40 +156,58 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
       // Signed up today: in the cohort, eligible for nothing yet.
       const today = await account(tehran('2031-03-20', '08:00'));
       await today.task(tehran('2031-03-20', '08:05'));
-      // Older account: reviews from before firstReviewAt existed count by day, time unknown.
+      // Untimed review rows prove nothing: day 0 counts by its task, day 1 not at all.
       const legacy = await account(tehran('2031-03-09', '10:00'));
       await legacy.review('2031-03-09', null);
       await legacy.task(tehran('2031-03-09', '11:00'));
       await legacy.review('2031-03-10', null);
+      // A row first written by the previous release keeps a real latest-review time.
+      const mixed = await account(tehran('2031-03-10', '08:00'), {
+        signupSource: 'telegram',
+      });
+      await mixed.review('2031-03-10', null, tehran('2031-03-11', '09:00'));
       // A task stamped before signup and a recurring-occurrence copy are not actions.
       const prior = await account(tehran('2031-03-09', '12:00'));
       const series = await prior.task(tehran('2031-03-08', '12:00'));
       await prior.task(tehran('2031-03-09', '13:00'), series.id);
-      // QA and admin accounts stay out.
-      const qa = await account(tehran('2031-03-10', '10:00'), {
-        signupSource: 'QA',
+      // Stored values outside the controlled lists are reported as other.
+      await account(tehran('2031-03-12', '09:00'), {
+        signupSource: 'tg_partner',
+        signupClient: 'weird',
       });
-      await qa.task(tehran('2031-03-10', '10:05'));
-      const admin = await account(tehran('2031-03-10', '10:00'), {
-        role: 'ADMIN',
-      });
-      await admin.task(tehran('2031-03-10', '10:05'));
+      // Test accounts stay out: QA source, reserved email domain, admin.
+      for (const extra of [
+        { signupSource: 'QA' },
+        { email: `pg002-${randomUUID()}@qa.example.com` },
+        { role: 'ADMIN' as const },
+      ]) {
+        const test = await account(tehran('2031-03-10', '10:00'), extra);
+        await test.task(tehran('2031-03-10', '10:05'));
+      }
 
       const report = await service.accountActivation(
         { from: '2031-03-01', to: '2031-03-20' },
         now,
       );
       expect(report.overall).toEqual({
-        firstAction: { eligible: 7, successful: 4, percent: 57.1 },
-        d1: { eligible: 7, successful: 3, percent: 42.9 },
-        d7: { eligible: 6, successful: 1, percent: 16.7 },
-        // full 30, late 120, young 10; legacy unknown, today not eligible.
+        firstAction: { eligible: 9, successful: 4, percent: 44.4 },
+        d1: { eligible: 9, successful: 3, percent: 33.3 },
+        d7: { eligible: 8, successful: 1, percent: 12.5 },
+        // full 30, late 120, young 10; legacy has an untimed review, today is not eligible.
         medianFirstActionMinutes: 30,
+      });
+      expect(report.coverage).toEqual({
+        accounts: 10,
+        excludedTestAccounts: 3,
+        untimedReviewAccounts: 2,
+        phoneOnlyAccounts: 10,
       });
       expect(report.bySource.map((row) => row.source)).toEqual([
         null,
         'direct',
-        source,
+        'instagram',
+        'other',
+        'telegram',
       ]);
       expect(report.bySource[2].metrics.firstAction).toEqual({
         eligible: 2,
@@ -194,6 +215,11 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         percent: 50,
       });
       expect(report.bySource[2].metrics.d1.successful).toBe(2);
+      expect(report.bySource[4].metrics.d1).toEqual({
+        eligible: 1,
+        successful: 1,
+        percent: 100,
+      });
       expect(report.bySignupPlatform).toEqual([
         expect.objectContaining({ signupPlatform: null }),
         expect.objectContaining({
@@ -204,6 +230,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
           }),
         }),
         expect.objectContaining({ signupPlatform: 'myket' }),
+        expect.objectContaining({ signupPlatform: 'other' }),
       ]);
       expect(JSON.stringify(report)).not.toContain(full.id);
 
@@ -230,6 +257,7 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         d7: { eligible: 0, successful: 0, percent: null },
         medianFirstActionMinutes: null,
       });
+      expect(onlyToday.coverage.accounts).toBe(1);
     });
 
     it('reports a window without signups as empty', async () => {
@@ -242,11 +270,76 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         successful: 0,
         percent: null,
       });
+      expect(report.coverage).toEqual({
+        accounts: 0,
+        excludedTestAccounts: 0,
+        untimedReviewAccounts: 0,
+        phoneOnlyAccounts: 0,
+      });
       expect(report.bySource).toEqual([]);
       expect(report.bySignupPlatform).toEqual([]);
     });
 
-    it('stores the signup source once at creation, QA tags included, and nothing when opted out', async () => {
+    // The server day of a review row is the process's local day; under UTC it straddles Tehran midnight.
+    it.runIf(new Date().getTimezoneOffset() === 0)(
+      'counts day 0 and day 1 from two real reviews at 23:58 and 00:01 Tehran in one UTC row',
+      async () => {
+        const learner = await account(tehran('2031-03-05', '10:00'));
+        const deck = await prisma.englishDeck.create({
+          data: { userId: learner.id, name: 'synthetic' },
+        });
+        const card = await prisma.englishCard.create({
+          data: { deckId: deck.id, userId: learner.id, front: 'a', back: 'b' },
+        });
+        const cards = new CardsService(prisma, {} as never);
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(tehran('2031-03-05', '23:58'));
+        await cards.review(learner.id, card.id, 'good');
+        vi.setSystemTime(tehran('2031-03-06', '00:01'));
+        await cards.review(learner.id, card.id, 'good');
+        vi.useRealTimers();
+        const rows = await prisma.englishReviewDay.findMany({
+          where: { userId: learner.id },
+        });
+        expect(rows).toHaveLength(1);
+        expect(rows[0]).toMatchObject({
+          date: dayOnly('2031-03-05'),
+          reviews: 2,
+          firstReviewAt: tehran('2031-03-05', '23:58'),
+          lastReviewAt: tehran('2031-03-06', '00:01'),
+        });
+        const report = await service.accountActivation(
+          { from: '2031-03-05', to: '2031-03-05' },
+          now,
+        );
+        expect(report.overall.firstAction.successful).toBe(1);
+        expect(report.overall.d1).toEqual({
+          eligible: 1,
+          successful: 1,
+          percent: 100,
+        });
+        expect(report.overall.d7.successful).toBe(0);
+        expect(report.overall.medianFirstActionMinutes).toBe(838);
+        expect(report.coverage.untimedReviewAccounts).toBe(0);
+      },
+    );
+
+    it('treats a review row without times as coverage, never as a return', async () => {
+      const learner = await account(tehran('2031-03-06', '10:00'));
+      await learner.review('2031-03-07', null);
+      const report = await service.accountActivation(
+        { from: '2031-03-06', to: '2031-03-06' },
+        now,
+      );
+      expect(report.overall.d1).toEqual({
+        eligible: 1,
+        successful: 0,
+        percent: 0,
+      });
+      expect(report.coverage.untimedReviewAccounts).toBe(1);
+    });
+
+    it('stores the controlled first-touch source once at creation, QA tags included, and nothing when opted out', async () => {
       const auth = new AuthService(
         prisma,
         {} as never,
@@ -266,64 +359,40 @@ describe.skipIf(process.env['GROWTH_DB_INTEGRATION'] !== '1')(
         return (await prisma.user.findUniqueOrThrow({ where: { id: user.id } }))
           .signupSource;
       };
-      const visitor = () => {
+      const visitor = async (...sources: string[]) => {
         const id = randomUUID();
         visitors.push(id);
+        for (const [index, utm_source] of sources.entries())
+          await prisma.growthEvent.create({
+            data: {
+              visitorId: id,
+              name: index ? 'signup_started' : 'landing_view',
+              language: 'fa',
+              day: `2031-03-0${index + 1}`,
+              campaign: { utm_source },
+              createdAt: new Date(Date.UTC(2031, 2, index + 1)),
+            },
+          });
         return id;
       };
-      expect(
-        await register({
-          visitorId: visitor(),
+      const signup = async (id: string, utm_source?: string) =>
+        register({
+          visitorId: id,
           language: 'fa',
-          campaign: { utm_source: source.toUpperCase() },
-        }),
-      ).toBe(source);
-      expect(await register({ visitorId: visitor(), language: 'fa' })).toBe(
-        'direct',
+          ...(utm_source ? { campaign: { utm_source } } : {}),
+        });
+      // Entered from A (telegram), signed up through B (instagram): A.
+      expect(await signup(await visitor('Telegram'), 'instagram')).toBe(
+        'telegram',
       );
-      const qaVisitor = visitor();
-      await prisma.growthEvent.create({
-        data: {
-          visitorId: qaVisitor,
-          name: 'landing_view',
-          language: 'fa',
-          day: '2031-03-01',
-          campaign: { utm_source: 'Test' },
-        },
-      });
-      expect(
-        await register({
-          visitorId: qaVisitor,
-          language: 'fa',
-          campaign: { utm_source: 'instagram' },
-        }),
-      ).toBe('test');
+      expect(await signup(await visitor(), 'INSTAGRAM')).toBe('instagram');
+      expect(await signup(await visitor())).toBe('direct');
+      // An ID or a phone number in a link never comes back as typed.
+      expect(await signup(await visitor('09120000000'), 'instagram')).toBe(
+        'other',
+      );
+      expect(await signup(await visitor('instagram', 'Test'))).toBe('test');
       expect(await register()).toBeNull();
-    });
-
-    it('keeps the first review time of each review day', async () => {
-      const learner = await account(new Date());
-      const deck = await prisma.englishDeck.create({
-        data: { userId: learner.id, name: 'synthetic' },
-      });
-      const card = await prisma.englishCard.create({
-        data: { deckId: deck.id, userId: learner.id, front: 'a', back: 'b' },
-      });
-      const cards = new CardsService(prisma, {} as never);
-      const before = new Date();
-      await cards.review(learner.id, card.id, 'good');
-      const [first] = await prisma.englishReviewDay.findMany({
-        where: { userId: learner.id },
-      });
-      expect(first.firstReviewAt?.getTime()).toBeGreaterThanOrEqual(
-        before.getTime() - 1,
-      );
-      await cards.review(learner.id, card.id, 'good');
-      const [second] = await prisma.englishReviewDay.findMany({
-        where: { userId: learner.id },
-      });
-      expect(second.reviews).toBe(2);
-      expect(second.firstReviewAt).toEqual(first.firstReviewAt);
     });
   },
 );
