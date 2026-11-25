@@ -8,6 +8,9 @@ services:
     security_opt: [no-new-privileges:true]
     environment:
       VPN_HOST: 127.0.0.1
+      NODE_USE_ENV_PROXY: '1'
+      HTTPS_PROXY: ${VPN_PANEL_PROXY:-http://127.0.0.1:7890}
+      NO_PROXY: 127.0.0.1,localhost
       VPN_SERVICE_TOKEN: ${VPN_SERVICE_TOKEN:?Set VPN_SERVICE_TOKEN}
       VPN_PANEL_URL: ${VPN_PANEL_URL:?Set VPN_PANEL_URL}
       VPN_PANEL_TOKEN: ${VPN_PANEL_TOKEN:?Set VPN_PANEL_TOKEN}

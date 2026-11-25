@@ -52,6 +52,7 @@ jobs:
           VPN_PANEL_TOKEN: ${{ secrets.VPN_PANEL_TOKEN }}
           VPN_INBOUND_ID: ${{ vars.VPN_INBOUND_ID }}
           VPN_CLIENT_ENDPOINT: ${{ secrets.VPN_CLIENT_ENDPOINT }}
+          VPN_PANEL_PROXY: ${{ vars.VPN_PANEL_PROXY }}
         run: |
           docker load -i "$RUNNER_TEMP/vpn-$GITHUB_RUN_ID/image-vpn.tar.gz"
           docker compose -f deploy/vpn.compose.yml run --rm --no-deps --entrypoint node vpn -e '
