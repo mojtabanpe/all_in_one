@@ -62,8 +62,8 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'Not recorded (older account / no consent)',
   ],
   [
-    'اولین اقدام یعنی اقدام در روز ثبت‌نام به وقت تهران (روز صفر)، مثل ساخت کار، مرور کارت یا ثبت وعده یا ورزش. میانه، زمان ثبت‌نام تا اولین اقدام را فقط برای حساب‌های موفق روز صفر نشان می‌دهد و حساب‌هایی که فقط مرور بدون زمان ثبت‌شده دارند در آن نمی‌آیند.',
-    'The first action is an action on the signup day in Tehran time (day zero), such as creating a task, reviewing a card, or logging a meal or workout. The median measures the time from signup to the first action only among accounts that succeeded on day zero; accounts with only an untimed review are not included.',
+    'اولین اقدام یعنی اقدام در روز ثبت‌نام به وقت تهران (روز صفر)، مثل ساخت کار، مرور کارت یا ثبت وعده یا ورزش. میانه، زمان ثبت‌نام تا اولین اقدام را فقط برای حساب‌های موفق روز صفر نشان می‌دهد؛ حساب‌هایی که در روزهای ۰ تا ۷ مرور بدون زمان ثبت‌شده دارند از میانه کنار می‌روند.',
+    'The first action is an action on the signup day in Tehran time (day zero), such as creating a task, reviewing a card, or logging a meal or workout. The median measures the time from signup to the first action only among accounts that succeeded on day zero; accounts with an untimed review on days 0 to 7 are excluded from the median.',
   ],
   [
     'بازگشت D1 و D7 یعنی فعالیت دقیقاً در روز تقویمی ۱ یا ۷ پس از روز ثبت‌نام به وقت تهران. روز ثبت‌نام روز صفر است. مخرج هر نرخ فقط حساب‌هایی را شامل می‌شود که روز مربوط برایشان به پایان رسیده است.',
