@@ -80,3 +80,24 @@ describe('application messages', () => {
     expect(translateMessage('خانه', 'en')).toBe('Home');
   });
 });
+
+describe('activation report median durations', () => {
+  beforeAll(() => loadMessages());
+  it('uses singular and plural English units without changing Persian', () => {
+    const t = (key: string, values: unknown[] = []) =>
+      translateMessage(key, 'en', values);
+    expect(t('۱ دقیقه')).toBe('1 minute');
+    expect(t('{0} دقیقه', ['12.5'])).toBe('12.5 minutes');
+    expect(t('۱ ساعت')).toBe('1 hour');
+    expect(t('{0} ساعت', ['۲'])).toBe('2 hours');
+    expect(t('۱ ساعت و ۱ دقیقه')).toBe('1 hour and 1 minute');
+    expect(t('۱ ساعت و {0} دقیقه', ['۱۵'])).toBe('1 hour and 15 minutes');
+    expect(t('{0} ساعت و ۱ دقیقه', ['۲'])).toBe('2 hours and 1 minute');
+    expect(t('{0} ساعت و {1} دقیقه', ['۲', '۱۵'])).toBe(
+      '2 hours and 15 minutes',
+    );
+    expect(translateMessage('{0} ساعت و ۱ دقیقه', 'fa', ['۲'])).toBe(
+      '۲ ساعت و ۱ دقیقه',
+    );
+  });
+});

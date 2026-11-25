@@ -37,8 +37,8 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'Choose a start and end date in order. The end date is at most today in Tehran and the start date is within the last 90 days, including today.',
   ],
   [
-    'اولین اقدام یعنی اقدام در روز ثبت‌نام به وقت تهران. حساب‌های تست حذف می‌شوند: ادمین، برچسب QA و ایمیل‌های دامنهٔ رزرو (example و test). حساب تست قدیمی بدون این نشانه، و حساب فقط پیامکی، تشخیص‌پذیر نیست.',
-    'First action means an action on the signup day in Tehran time. Test accounts are excluded: admins, QA-tagged accounts and emails on reserved domains (example and test). Older test accounts without these marks, and phone-only accounts, cannot be recognised.',
+    'اولین اقدام یعنی اقدام در روز ثبت‌نام به وقت تهران. حساب‌های تست حذف می‌شوند: ادمین، برچسب QA و ایمیل‌های دامنه‌های رزرو (example.com، example.net، example.org و پسوندهای test، example، invalid، localhost). حساب تست قدیمی بدون این نشانه، و حساب فقط پیامکی، تشخیص‌پذیر نیست.',
+    'First action means an action on the signup day in Tehran time. Test accounts are excluded: admins, QA-tagged accounts and emails on reserved domains (example.com, example.net, example.org and the test, example, invalid and localhost suffixes). Older test accounts without these marks, and phone-only accounts, cannot be recognised.',
   ],
   [
     'بازهٔ انتخاب‌شده پذیرفته نشد. بازه را در ۹۰ روز گذشته و تا امروز تهران انتخاب کن.',
@@ -52,13 +52,18 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
     'هشدار: ممکن است کم‌شمارش باشد. برای {0} حساب، مرور کارتِ بدون زمان ثبت‌شده در روز ۰ تا ۷ وجود دارد و در نرخ‌ها نیامده است.',
     'Warning: counts may be undercounted. {0} accounts have card reviews without a recorded time on days 0 to 7, and these are not included in the rates.',
   ],
+  ['۱ دقیقه', '1 minute'],
+  ['۱ ساعت', '1 hour'],
+  ['۱ ساعت و ۱ دقیقه', '1 hour and 1 minute'],
+  ['۱ ساعت و {0} دقیقه', '1 hour and {0} minutes'],
+  ['{0} ساعت و ۱ دقیقه', '{0} hours and 1 minute'],
   [
     'ثبت‌نشده (حساب قدیمی/بدون رضایت)',
     'Not recorded (older account / no consent)',
   ],
   [
-    'اولین اقدام یعنی نخستین فعالیت ثبت‌شده پس از ثبت‌نام، مثل ساخت کار، مرور کارت یا ثبت وعده یا ورزش. میانه، زمان ثبت‌نام تا اولین اقدام را برای حساب‌هایی نشان می‌دهد که اقدام کرده‌اند.',
-    'The first action is the first recorded activity after signup, such as creating a task, reviewing a card, or logging a meal or workout. The median measures the time from signup to the first action among accounts that acted.',
+    'اولین اقدام یعنی اقدام در روز ثبت‌نام به وقت تهران (روز صفر)، مثل ساخت کار، مرور کارت یا ثبت وعده یا ورزش. میانه، زمان ثبت‌نام تا اولین اقدام را فقط برای حساب‌های موفق روز صفر نشان می‌دهد و حساب‌هایی که فقط مرور بدون زمان ثبت‌شده دارند در آن نمی‌آیند.',
+    'The first action is an action on the signup day in Tehran time (day zero), such as creating a task, reviewing a card, or logging a meal or workout. The median measures the time from signup to the first action only among accounts that succeeded on day zero; accounts with only an untimed review are not included.',
   ],
   [
     'بازگشت D1 و D7 یعنی فعالیت دقیقاً در روز تقویمی ۱ یا ۷ پس از روز ثبت‌نام به وقت تهران. روز ثبت‌نام روز صفر است. مخرج هر نرخ فقط حساب‌هایی را شامل می‌شود که روز مربوط برایشان به پایان رسیده است.',

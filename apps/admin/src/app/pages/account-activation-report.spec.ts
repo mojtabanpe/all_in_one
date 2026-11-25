@@ -286,10 +286,17 @@ describe('Account activation report', () => {
       ?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
     fixture.detectChanges();
     selectDay('to', '2026-11-26');
+    // With today = 2026-11-26 the oldest allowed day is 2026-08-29.
     submit();
-    request('2026-08-28', '2026-11-26').flush(
-      emptyReport('2026-08-28', '2026-11-26'),
+    expect(element.querySelector('[role="alert"]')).not.toBeNull();
+    http.expectNone((candidate) => candidate.url.startsWith(endpoint));
+    selectDay('from', '2026-08-29');
+    submit();
+    request('2026-08-29', '2026-11-26').flush(
+      emptyReport('2026-08-29', '2026-11-26'),
     );
+    await fixture.whenStable();
+    expect(element.querySelector('[role="alert"]')).toBeNull();
   });
 
   it('explains a rejected range (400) without a retry button', async () => {
@@ -299,5 +306,45 @@ describe('Account activation report', () => {
       'بازهٔ انتخاب‌شده پذیرفته نشد',
     );
     expect(element.textContent).not.toContain('تلاش دوباره');
+  });
+
+  it('shows coverage counts, hides the warning at zero and labels other platforms', async () => {
+    request().flush({
+      ...emptyReport('2026-10-26', '2026-11-24'),
+      overall: {
+        ...emptyMetrics,
+        firstAction: { eligible: 2, successful: 1, percent: 50 },
+        medianFirstActionMinutes: 1,
+      },
+      coverage: {
+        accounts: 7,
+        excludedTestAccounts: 3,
+        untimedReviewAccounts: 0,
+        phoneOnlyAccounts: 2,
+      },
+      bySignupPlatform: [
+        {
+          signupPlatform: 'other',
+          metrics: {
+            ...emptyMetrics,
+            firstAction: { eligible: 2, successful: 1, percent: 50 },
+          },
+        },
+      ],
+    } satisfies GrowthAccountActivationReport);
+    await fixture.whenStable();
+
+    const text = element.textContent ?? '';
+    expect(text).toContain('حساب‌های گزارش: ۷');
+    expect(text).toContain('حساب تست حذف‌شده: ۳');
+    expect(text).toContain('بدون بررسی دامنهٔ تست): ۲');
+    expect(text).not.toContain('ممکن است کم‌شمارش باشد');
+    expect(element.querySelector('[role="status"]')).toBeNull();
+    const platform = element.querySelectorAll('table')[2];
+    expect(platform.tBodies[0].rows[0].cells[0].textContent).toContain('سایر');
+    expect(
+      element.querySelectorAll('table')[0].tBodies[0].rows[0].cells[4]
+        .textContent,
+    ).toContain('۱ دقیقه');
   });
 });

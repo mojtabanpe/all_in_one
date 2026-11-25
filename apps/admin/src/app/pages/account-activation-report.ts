@@ -107,7 +107,7 @@ function sourceLabel(source: GrowthAccountActivationSource | null): {
       <div class="space-y-1 text-sm leading-7 text-muted-foreground">
         <p>
           {{
-            'اولین اقدام یعنی نخستین فعالیت ثبت‌شده پس از ثبت‌نام، مثل ساخت کار، مرور کارت یا ثبت وعده یا ورزش. میانه، زمان ثبت‌نام تا اولین اقدام را برای حساب‌هایی نشان می‌دهد که اقدام کرده‌اند.'
+            'اولین اقدام یعنی اقدام در روز ثبت‌نام به وقت تهران (روز صفر)، مثل ساخت کار، مرور کارت یا ثبت وعده یا ورزش. میانه، زمان ثبت‌نام تا اولین اقدام را فقط برای حساب‌های موفق روز صفر نشان می‌دهد و حساب‌هایی که فقط مرور بدون زمان ثبت‌شده دارند در آن نمی‌آیند.'
               | aioTranslate
           }}
         </p>
@@ -121,7 +121,7 @@ function sourceLabel(source: GrowthAccountActivationSource | null): {
 
       <p class="text-sm leading-7 text-muted-foreground">
         {{
-          'اولین اقدام یعنی اقدام در روز ثبت‌نام به وقت تهران. حساب‌های تست حذف می‌شوند: ادمین، برچسب QA و ایمیل‌های دامنهٔ رزرو (example و test). حساب تست قدیمی بدون این نشانه، و حساب فقط پیامکی، تشخیص‌پذیر نیست.'
+          'اولین اقدام یعنی اقدام در روز ثبت‌نام به وقت تهران. حساب‌های تست حذف می‌شوند: ادمین، برچسب QA و ایمیل‌های دامنه‌های رزرو (example.com، example.net، example.org و پسوندهای test، example، invalid، localhost). حساب تست قدیمی بدون این نشانه، و حساب فقط پیامکی، تشخیص‌پذیر نیست.'
             | aioTranslate
         }}
       </p>
@@ -270,21 +270,9 @@ function sourceLabel(source: GrowthAccountActivationSource | null): {
                             @let median = row.metrics.medianFirstActionMinutes;
                             @if (median === null) {
                               {{ 'غیرقابل محاسبه' | aioTranslate }}
-                            } @else if (median <= 60) {
-                              {{
-                                '{0} دقیقه'
-                                  | aioTranslate
-                                    : [
-                                        locale.number(median, {
-                                          maximumFractionDigits: 1,
-                                        }),
-                                      ]
-                              }}
                             } @else {
-                              {{
-                                longMedian(median)
-                                  | aioTranslate: longArgs(median)
-                              }}
+                              @let text = medianText(median);
+                              {{ text.key | aioTranslate: text.args }}
                             }
                           </td>
                         </tr>
@@ -419,16 +407,29 @@ export class AccountActivationReport {
     });
   }
 
-  protected longMedian(minutes: number): string {
-    return Math.round(minutes) % 60 === 0 ? '{0} ساعت' : '{0} ساعت و {1} دقیقه';
-  }
-
-  protected longArgs(minutes: number): string[] {
+  /** Persian key and values; fixed `۱` keys give English "1 hour" / "1 minute". */
+  protected medianText(minutes: number): { key: string; args: string[] } {
+    if (minutes <= 60) {
+      return minutes === 1
+        ? { key: '۱ دقیقه', args: [] }
+        : {
+            key: '{0} دقیقه',
+            args: [this.locale.number(minutes, { maximumFractionDigits: 1 })],
+          };
+    }
     const total = Math.round(minutes);
-    return [
-      this.locale.number(Math.floor(total / 60)),
-      this.locale.number(total % 60),
-    ];
+    const hours = Math.floor(total / 60);
+    const rest = total % 60;
+    const args: string[] = [];
+    const unit = (count: number, word: string) => {
+      if (count === 1) return `۱ ${word}`;
+      args.push(this.locale.number(count));
+      return `{${args.length - 1}} ${word}`;
+    };
+    const hourPart = unit(hours, 'ساعت');
+    return rest === 0
+      ? { key: hourPart, args }
+      : { key: `${hourPart} و ${unit(rest, 'دقیقه')}`, args };
   }
 
   protected percent(value: number): string {
