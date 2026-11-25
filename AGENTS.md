@@ -217,6 +217,7 @@ origin master` and read the index and the roadmap; after work, update its status
     push a separate branch unless the owner explicitly asks for one in that conversation. (This overrides the
     usual "branch first" habit.)
     **Commit locally and push only on the owner's word: see 124.**
+    **For the Poshtetgarm team PR workflow, see 206.**
 
 ## Memory (2026-10-29)
 
@@ -1116,3 +1117,40 @@ contain`). Works on the web, the PWA and the current Android shell without a new
      (`apps/api/src/monitor/ai-health-monitor.service.ts`) probes configured AI endpoints every 15 minutes with zero-cost
      `HEAD` requests (one retry, any status `< 500` healthy) and alerts `MonitorService` (`poshtetgarm_develop_bot` +
      GlitchTip) before a customer hits an unreachable upstream, clearing the alert fingerprint on recovery.
+
+205. **Stop terminal/faceless Reels; publish the English smart-flashcard Reel at ~10:00 morning to isolate content vs timing, and build Reels 2 and 3 (2026-11-24).**
+     After the terminal-led build-in-public Reel (`DgE3MizlDSL`, published 2026-11-23 11:08 Tehran) stalled at 10 views /
+     5 reach (not distributed to non-followers despite 10.4 s average watch time and 42.9% skip rate), the owner picked
+     idea 1 («۱», English smart flashcard & SM-2 review with Amir's human face in the first 3 s), asked to build ideas 2
+     (daily expenses in one sentence) and 3 (Iranian home-cooked food calories in one sentence) for tomorrow and the day
+     after («۲و ۳ رو هم بساز واسه فردا و پس فردا»), and instructed «الان پابلیش کن ک ببینیم مشکل از محتوا بوده یا تایم یا
+     دوتاش» to publish Reel 1 immediately in the morning (~09:59 Tehran) as a controlled test of human-face/problem-led
+     content at the same morning window. This authorizes publishing `poshtetgarm-english-flashcard-reel.mp4` (hosted in
+     the `ywa` Drive folder as 164) on `@poshtetgarm` Instagram and `@poshtetgarm` Telegram only; it is not standing
+     authorization for future posts (Reels 2 and 3 still wait for the owner's publish word). Evidence lives in
+     `docs/roadmaps/aio-growth-v1.md`.
+
+206. **Poshtetgarm team pull requests go to Technical Lead (2026-11-25).**
+     The owner delegated merge approval for the team's PRs to Technical Lead in the Poshtetgarm channel. The team
+     uses feature PRs and submits each one to Technical Lead with the task ID, PR link and test evidence.
+     Technical Lead records approval for the reviewed revision after independent code review, QA and applicable
+     CI checks pass. If merging triggers production deployment, obtain the owner's explicit deployment approval
+     before merging. This supersedes directive 16 for the Poshtetgarm team's PR workflow.
+     **The per-release approval requirement is superseded by 207.**
+
+207. **Routine Poshtetgarm releases follow approved master merges (2026-11-25).**
+     The owner grants standing approval for routine automatic production deployment through existing CI/CD
+     following a Technical Lead-approved team PR merge into master. Changes to release controls and production
+     operations outside that path require their own approval. This supersedes the per-release approval
+     requirement in directive 206 and applies to the approved PR merge and its automatic release.
+
+208. **Route standalone VPN panel requests through the local V2Ray tunnel (2026-11-25).**
+     When the Telegram bot returned «وی‌پی‌ان موقتاً در دسترس نیست» (`VPN account reconciliation failed`),
+     direct TCP from `flashcard` to the 3x-ui panel (`back.poshtetgarm.ir:3398` on `vpn`) was taking ~5 s for
+     the TLS handshake alone due to international packet loss, exceeding `apps/vpn`'s 4 s timeout while the
+     tunneled paths (`127.0.0.1:7890` V2Ray proxy and `:2053` KCP+FEC client tunnel) responded in ~160–514 ms.
+     With the owner's approval («اوکی»), `deploy/vpn.compose.yml` sets `NODE_USE_ENV_PROXY=1`,
+     `HTTPS_PROXY=${VPN_PANEL_PROXY:-http://127.0.0.1:7890}` and `NO_PROXY=127.0.0.1,localhost`,
+     `apps/vpn/src/app/app.service.ts` raises the panel request timeout to 10 s, and `all-in-one-vpn-vpn-1` on
+     `flashcard` was recreated with those proxy settings and verified reconciling all three invited accounts in
+     ~0.7 s total without errors.

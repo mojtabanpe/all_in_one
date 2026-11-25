@@ -184,7 +184,7 @@ export class AppService {
     const response = await fetch(`${base}/panel/api/clients/${path}`, {
       method: body ? 'POST' : 'GET',
       redirect: 'error',
-      signal: AbortSignal.timeout(4_000),
+      signal: AbortSignal.timeout(10_000),
       headers: {
         Authorization: `Bearer ${this.panelToken}`,
         'Content-Type': 'application/json',
