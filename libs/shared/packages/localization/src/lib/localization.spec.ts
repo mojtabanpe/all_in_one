@@ -79,6 +79,14 @@ describe('application messages', () => {
     );
     expect(translateMessage('خانه', 'en')).toBe('Home');
   });
+  it('formats the start-of-Persian-month label in Persian and English', () => {
+    expect(translateMessage('از اول {0}', 'fa', ['آذر'])).toBe('از اول آذر');
+    expect(translateMessage('از اول {0}', 'en', ['آذر'])).toBe('Since 1 Azar');
+    expect(translateMessage('از اول {0}', 'en', ['آبان'])).toBe('Since 1 Aban');
+    expect(translateMessage('از اول {0}', 'en', ['فروردین'])).toBe(
+      'Since 1 Farvardin',
+    );
+  });
 });
 
 describe('activation report median durations', () => {
