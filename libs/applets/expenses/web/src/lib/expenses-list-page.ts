@@ -58,6 +58,7 @@ import {
   lucideX,
 } from '@ng-icons/lucide';
 import { ExpensesApi } from './expenses-api';
+import { tehranPersianMonthName } from './persian-month';
 
 interface BatchExpenseDraft {
   title: string;
@@ -285,18 +286,18 @@ interface BatchExpenseDraft {
           aioToggleGroup
           type="single"
           variant="outline"
-          class="w-full"
+          class="w-full items-stretch"
           [attr.aria-label]="'بازهٔ هزینه‌ها' | aioTranslate"
           [value]="filterPreset()"
           (valueChange)="onPresetChange($event)"
         >
-          @for (preset of presets; track preset.value) {
+          @for (preset of presets(); track preset.value) {
             <button
               aioToggleGroupItem
               [value]="preset.value"
-              class="h-11 min-w-0 flex-1 px-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+              class="h-auto min-h-11 min-w-0 flex-1 whitespace-normal break-words px-1 py-1 text-center text-xs leading-tight sm:px-2 sm:text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
             >
-              {{ preset.label | aioTranslate }}
+              {{ preset.label }}
             </button>
           }
         </div>
@@ -655,12 +656,19 @@ export class ExpensesListPage implements OnInit {
   protected readonly filterPreset = signal<
     'all' | 'today' | 'last7day' | 'this_month'
   >('this_month');
-  protected readonly presets = [
-    { value: 'all', label: 'همه' },
-    { value: 'today', label: 'امروز' },
-    { value: 'last7day', label: '۷ روز اخیر' },
-    { value: 'this_month', label: 'این ماه' },
-  ] as const;
+  protected readonly currentMonthName = signal(tehranPersianMonthName());
+  protected readonly presets = computed(() => {
+    const month = this.currentMonthName();
+    return [
+      { value: 'all', label: this.locale.text('همه') },
+      { value: 'today', label: this.locale.text('امروز') },
+      { value: 'last7day', label: this.locale.text('۷ روز اخیر') },
+      {
+        value: 'this_month',
+        label: this.locale.text('از اول {0}', [month]),
+      },
+    ] as const;
+  });
   protected readonly filterCategoryId = signal('');
   protected readonly searchQuery = signal('');
 
@@ -699,6 +707,7 @@ export class ExpensesListPage implements OnInit {
   }
 
   async loadExpenses(): Promise<void> {
+    this.currentMonthName.set(tehranPersianMonthName());
     this.loading.set(true);
     try {
       const preset = this.filterPreset();
@@ -722,7 +731,7 @@ export class ExpensesListPage implements OnInit {
   }
 
   protected onPresetChange(value: unknown): void {
-    const preset = this.presets.find((p) => p.value === value);
+    const preset = this.presets().find((p) => p.value === value);
     if (preset) this.setPreset(preset.value);
   }
 

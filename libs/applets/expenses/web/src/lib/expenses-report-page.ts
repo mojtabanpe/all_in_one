@@ -51,6 +51,7 @@ import {
   lucideWallet,
 } from '@ng-icons/lucide';
 import { ExpensesApi } from './expenses-api';
+import { tehranPersianMonthName } from './persian-month';
 
 interface DailyChartRow {
   date: string;
@@ -138,7 +139,7 @@ interface DailyChartRow {
             class="h-8 rounded-lg text-xs"
             (click)="setPreset('this_month')"
           >
-            {{ 'این ماه' | aioTranslate }}
+            {{ 'از اول {0}' | aioTranslate: [currentMonthName()] }}
           </button>
           <button
             aioBtn
@@ -505,6 +506,7 @@ export class ExpensesReportPage implements OnInit {
   private readonly notifications = inject(AioNotifications);
 
   protected readonly preset = signal<ExpenseReportPreset>('this_month');
+  protected readonly currentMonthName = signal(tehranPersianMonthName());
   protected readonly report = signal<ExpenseReport | null>(null);
   protected readonly loading = signal(false);
 
@@ -554,6 +556,7 @@ export class ExpensesReportPage implements OnInit {
   }
 
   async loadReport(): Promise<void> {
+    this.currentMonthName.set(tehranPersianMonthName());
     this.loading.set(true);
     try {
       const data = await this.api.getReport({ preset: this.preset() });
