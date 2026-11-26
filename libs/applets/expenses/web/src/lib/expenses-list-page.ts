@@ -286,7 +286,7 @@ interface BatchExpenseDraft {
           aioToggleGroup
           type="single"
           variant="outline"
-          class="w-full"
+          class="w-full items-stretch"
           [attr.aria-label]="'بازهٔ هزینه‌ها' | aioTranslate"
           [value]="filterPreset()"
           (valueChange)="onPresetChange($event)"
@@ -295,7 +295,7 @@ interface BatchExpenseDraft {
             <button
               aioToggleGroupItem
               [value]="preset.value"
-              class="h-11 min-w-0 flex-1 px-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+              class="h-auto min-h-11 min-w-0 flex-1 whitespace-normal break-words px-1 py-1 text-center text-xs leading-tight sm:px-2 sm:text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
             >
               {{ preset.label }}
             </button>
