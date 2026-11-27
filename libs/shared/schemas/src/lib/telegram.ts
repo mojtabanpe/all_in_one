@@ -6,7 +6,11 @@ export interface TelegramStatus {
   linked: boolean;
 }
 
+export const TELEGRAM_LINK_ENTRIES = ['review_end', 'notify_failed'] as const;
+export type TelegramLinkEntry = (typeof TELEGRAM_LINK_ENTRIES)[number];
+
 export const telegramLinkRequestSchema = z.object({
   language: z.optional(z.enum(['fa', 'en'])),
+  entry: z.optional(z.enum(TELEGRAM_LINK_ENTRIES)),
 });
 export type TelegramLinkRequest = z.infer<typeof telegramLinkRequestSchema>;
