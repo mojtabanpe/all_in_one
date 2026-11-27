@@ -111,56 +111,21 @@ interface DailyChartRow {
         </div>
 
         <div class="flex flex-wrap items-center gap-1.5">
-          <button
-            aioBtn
-            type="button"
-            [variant]="preset() === 'today' ? 'default' : 'ghost'"
-            size="sm"
-            class="h-8 rounded-lg text-xs"
-            (click)="setPreset('today')"
-          >
-            {{ 'امروز' | aioTranslate }}
-          </button>
-          <button
-            aioBtn
-            type="button"
-            [variant]="preset() === 'last7day' ? 'default' : 'ghost'"
-            size="sm"
-            class="h-8 rounded-lg text-xs"
-            (click)="setPreset('last7day')"
-          >
-            {{ '۷ روز گذشته' | aioTranslate }}
-          </button>
-          <button
-            aioBtn
-            type="button"
-            [variant]="preset() === 'this_month' ? 'default' : 'ghost'"
-            size="sm"
-            class="h-8 rounded-lg text-xs"
-            (click)="setPreset('this_month')"
-          >
-            {{ 'از اول {0}' | aioTranslate: [currentMonthName()] }}
-          </button>
-          <button
-            aioBtn
-            type="button"
-            [variant]="preset() === 'last30day' ? 'default' : 'ghost'"
-            size="sm"
-            class="h-8 rounded-lg text-xs"
-            (click)="setPreset('last30day')"
-          >
-            {{ '۳۰ روز گذشته' | aioTranslate }}
-          </button>
-          <button
-            aioBtn
-            type="button"
-            [variant]="preset() === 'last90day' ? 'default' : 'ghost'"
-            size="sm"
-            class="h-8 rounded-lg text-xs"
-            (click)="setPreset('last90day')"
-          >
-            {{ '۹۰ روز گذشته' | aioTranslate }}
-          </button>
+          @for (item of presets; track item.value) {
+            <button
+              aioBtn
+              type="button"
+              [variant]="preset() === item.value ? 'default' : 'ghost'"
+              class="h-auto min-h-11 min-w-11 whitespace-normal break-words rounded-lg px-3 py-1.5 text-center text-xs leading-tight"
+              (click)="setPreset(item.value)"
+            >
+              {{
+                item.value === 'this_month'
+                  ? ('از اول {0}' | aioTranslate: [currentMonthName()])
+                  : (item.label | aioTranslate)
+              }}
+            </button>
+          }
         </div>
       </section>
 
@@ -506,6 +471,16 @@ export class ExpensesReportPage implements OnInit {
   private readonly notifications = inject(AioNotifications);
 
   protected readonly preset = signal<ExpenseReportPreset>('this_month');
+  protected readonly presets: readonly {
+    value: ExpenseReportPreset;
+    label: string;
+  }[] = [
+    { value: 'today', label: 'امروز' },
+    { value: 'last7day', label: '۷ روز گذشته' },
+    { value: 'this_month', label: 'از اول {0}' },
+    { value: 'last30day', label: '۳۰ روز گذشته' },
+    { value: 'last90day', label: '۹۰ روز گذشته' },
+  ];
   protected readonly currentMonthName = signal(tehranPersianMonthName());
   protected readonly report = signal<ExpenseReport | null>(null);
   protected readonly loading = signal(false);
