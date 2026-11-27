@@ -15,11 +15,18 @@ import express, { type Express } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { Prisma, PrismaService } from '@all-in-one/api/db';
 import { TasksService } from '@all-in-one/applets/planner/api';
-import { isoDateIn, zonedInstant } from '@all-in-one/applets/planner/contracts';
+import {
+  addDays,
+  isoDateIn,
+  zonedInstant,
+} from '@all-in-one/applets/planner/contracts';
 import {
   DAILY_TASKS_DEFAULT_TIME,
   DEFAULT_CUSTOMER_APPLETS,
+  GROWTH_QA_SOURCES,
+  isReservedTestEmail,
   type AppApplet,
+  type TelegramLinkEntry,
   type TelegramRewardCheck,
   type TelegramStatus,
 } from '@all-in-one/shared/schemas';
@@ -63,6 +70,10 @@ const CODE_TTL_MS = 10 * 60_000;
 /** The morning summary is due from the chosen time for three hours, like the push digest (154). */
 const SUMMARY_WINDOW_MS = 3 * 3_600_000;
 const SUMMARY_TASKS = 5;
+/** Default evening review reminder time when `review_reminder_settings` has no row (matches `PushService.reviewSettings`). */
+export const REVIEW_REMINDER_DEFAULT_TIME = '20:00';
+/** Same 5-minute midnight grace for yesterday's reminder as `PushService` (directive 72). */
+const REVIEW_MIDNIGHT_GRACE_MS = 5 * 60_000;
 
 /** Labels of the reply keyboard (directive 172); a tap sends the label as a message. */
 export const MENU_LABELS = {
@@ -289,6 +300,18 @@ export function summaryText(
   return lines.join('\n');
 }
 
+/** Daily English card-review reminder text in the link's language, or null when nothing is due (PG-012). */
+export function reviewReminderText(
+  language: Lang,
+  cards: number,
+): string | null {
+  if (cards <= 0) return null;
+  const count = num(language, cards);
+  return language === 'en'
+    ? `You have ${count} card${cards === 1 ? '' : 's'} ready to review.`
+    : `${count} کارت آمادهٔ مرور داری.`;
+}
+
 interface TelegramUpdate {
   message?: {
     text?: string;
@@ -465,6 +488,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     );
     this.timer = setInterval(() => void this.tick(), 60_000);
     this.timer.unref();
+    void this.tick();
     void this.registerMenu();
   }
 
@@ -515,6 +539,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     userId: string,
     language: Lang,
     store?: 'bazaar' | 'myket' | null,
+    entry?: TelegramLinkEntry,
   ): Promise<{ url: string }> {
     if (!this.enabled || store === 'myket')
       throw new ServiceUnavailableException('ربات تلگرام فعال نیست.');
@@ -528,6 +553,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
           codeHash: telegramCodeHash(code),
           userId,
           language,
+          ...(entry ? { entry } : {}),
           expiresAt: new Date(Date.now() + CODE_TTL_MS),
         },
       }),
@@ -830,11 +856,69 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async link(chatId: bigint, code: string) {
-    const row = await this.db.telegramLinkCode.findUnique({
-      where: { codeHash: telegramCodeHash(code) },
+  private isCountableUser(
+    user?: {
+      role?: string | null;
+      email?: string | null;
+      signupSource?: string | null;
+    } | null,
+  ): boolean {
+    if (!user || (user.role !== undefined && user.role !== 'CUSTOMER'))
+      return false;
+    if (isReservedTestEmail(user.email)) return false;
+    if (
+      user.signupSource &&
+      (GROWTH_QA_SOURCES as readonly string[]).includes(
+        user.signupSource.toLowerCase(),
+      )
+    )
+      return false;
+    return true;
+  }
+
+  private async isCountableCustomer(userId: string): Promise<boolean> {
+    const user = await this.db.user.findUnique({
+      where: { id: userId },
+      select: { role: true, email: true, signupSource: true },
     });
-    if (!row || row.expiresAt < new Date())
+    return this.isCountableUser(user);
+  }
+
+  private async incrementDailyCount(
+    day: string,
+    kind: 'linked' | 'reminder_sent',
+    entry: TelegramLinkEntry | '' = '',
+  ): Promise<void> {
+    await this.db.$executeRaw`
+      INSERT INTO "telegram_daily_counts" ("day", "kind", "entry", "count")
+      VALUES (${day}, ${kind}, ${entry}, 1)
+      ON CONFLICT ("day", "kind", "entry")
+      DO UPDATE SET "count" = "telegram_daily_counts"."count" + 1
+    `;
+  }
+
+  /** Aggregate daily Telegram link and review-reminder counts (no personal data). */
+  async dailyCounts(from: string, to: string) {
+    return this.db.telegramDailyCount.findMany({
+      where: { day: { gte: from, lte: to } },
+      orderBy: [{ day: 'asc' }, { kind: 'asc' }, { entry: 'asc' }],
+    });
+  }
+
+  private async link(chatId: bigint, code: string, now = new Date()) {
+    const codeHash = telegramCodeHash(code);
+    const row = await this.db.telegramLinkCode.findUnique({
+      where: { codeHash },
+    });
+    if (!row || row.expiresAt < now)
+      return this.reply(
+        chatId,
+        'این لینک منقضی شده است. در اپ دوباره «وصل به تلگرام» را بزن.\nThis link has expired. Tap «Connect Telegram» in the app again.',
+      );
+    const consumed = await this.db.telegramLinkCode.deleteMany({
+      where: { codeHash, expiresAt: { gte: now } },
+    });
+    if (consumed.count === 0)
       return this.reply(
         chatId,
         'این لینک منقضی شده است. در اپ دوباره «وصل به تلگرام» را بزن.\nThis link has expired. Tap «Connect Telegram» in the app again.',
@@ -853,6 +937,17 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
       }),
       this.db.telegramLinkCode.deleteMany({ where: { userId: row.userId } }),
     ]);
+    const entry: TelegramLinkEntry | '' =
+      row.entry === 'review_end' || row.entry === 'notify_failed'
+        ? row.entry
+        : '';
+    if (await this.isCountableCustomer(row.userId)) {
+      await this.incrementDailyCount(
+        isoDateIn(now, 'Asia/Tehran'),
+        'linked',
+        entry,
+      ).catch(() => this.logger.warn('Telegram link count failed'));
+    }
     const language: Lang = row.language === 'en' ? 'en' : 'fa';
     await this.reply(
       chatId,
@@ -1242,56 +1337,170 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  /** Morning summary at the account's digest time (10:00 by default), once a Tehran day, only when there is something. */
+  /** Scheduled sweeps: morning summary (10:00 default) and evening card-review reminder (20:00 default, PG-012). */
   async tick(now = new Date()): Promise<void> {
     if (this.running || !this.enabled) return;
     this.running = true;
     try {
       const today = isoDateIn(now, 'Asia/Tehran');
-      const links = await this.db.telegramLink.findMany({
-        where: {
-          OR: [{ lastSummaryDay: null }, { lastSummaryDay: { not: today } }],
-        },
-        include: {
-          user: {
-            select: {
-              progressNotification: { select: { dailyTasksTime: true } },
-            },
-          },
-        },
-      });
-      for (const link of links) {
-        const time =
-          link.user.progressNotification?.dailyTasksTime ??
-          DAILY_TASKS_DEFAULT_TIME;
-        const due = zonedInstant(today, time, 'Asia/Tehran')?.getTime();
-        if (
-          due === undefined ||
-          now.getTime() < due ||
-          now.getTime() >= due + SUMMARY_WINDOW_MS
-        )
-          continue;
-        const claimed = await this.db.telegramLink.updateMany({
-          where: { userId: link.userId, lastSummaryDay: link.lastSummaryDay },
-          data: { lastSummaryDay: today },
-        });
-        if (!claimed.count) continue;
-        try {
-          await this.summary(
-            link.userId,
-            link.chatId,
-            link.language,
-            today,
-            now,
-          );
-        } catch {
-          this.logger.warn('Telegram summary failed');
-        }
+      try {
+        await this.sweepSummaries(today, now);
+      } catch {
+        this.logger.error('Telegram summary sweep failed');
       }
-    } catch {
-      this.logger.error('Telegram summary sweep failed');
+      try {
+        await this.sweepReviewReminders(today, now);
+      } catch {
+        this.logger.error('Telegram review reminder sweep failed');
+      }
     } finally {
       this.running = false;
+    }
+  }
+
+  private async sweepSummaries(today: string, now: Date): Promise<void> {
+    const links = await this.db.telegramLink.findMany({
+      where: {
+        OR: [{ lastSummaryDay: null }, { lastSummaryDay: { not: today } }],
+      },
+      include: {
+        user: {
+          select: {
+            progressNotification: { select: { dailyTasksTime: true } },
+          },
+        },
+      },
+    });
+    for (const link of links) {
+      const time =
+        link.user.progressNotification?.dailyTasksTime ??
+        DAILY_TASKS_DEFAULT_TIME;
+      const due = zonedInstant(today, time, 'Asia/Tehran')?.getTime();
+      if (
+        due === undefined ||
+        now.getTime() < due ||
+        now.getTime() >= due + SUMMARY_WINDOW_MS
+      )
+        continue;
+      const claimed = await this.db.telegramLink.updateMany({
+        where: { userId: link.userId, lastSummaryDay: link.lastSummaryDay },
+        data: { lastSummaryDay: today },
+      });
+      if (!claimed.count) continue;
+      try {
+        await this.summary(link.userId, link.chatId, link.language, today, now);
+      } catch {
+        this.logger.warn('Telegram summary failed');
+      }
+    }
+  }
+
+  /**
+   * Daily card-review reminder in Telegram (PG-012): for each linked chat that is a channel member (170),
+   * has review reminders on (`review_reminder_settings`; absent row = on at 20:00, matching `reviewSettings()`),
+   * and has non-suspended cards due, sends at most one reminder per Tehran day with a button that starts review.
+   * Restart-resilient like `PushService` (directive 72): eligible from the chosen time through the end of the
+   * Tehran day (with a 5-minute midnight grace for yesterday), and rolls back the day claim on transient send errors.
+   */
+  private async sweepReviewReminders(today: string, now: Date): Promise<void> {
+    const previousDay = addDays(today, -1);
+    const links = await this.db.telegramLink.findMany({
+      where: {
+        OR: [
+          { lastReviewReminderDay: null },
+          { lastReviewReminderDay: { not: today } },
+        ],
+      },
+      include: {
+        user: {
+          select: {
+            role: true,
+            email: true,
+            signupSource: true,
+            reviewReminder: { select: { enabled: true, time: true } },
+          },
+        },
+      },
+    });
+    for (const link of links) {
+      const enabled = link.user?.reviewReminder?.enabled ?? true;
+      if (!enabled) continue;
+      const time =
+        link.user?.reviewReminder?.time ?? REVIEW_REMINDER_DEFAULT_TIME;
+      for (const date of [previousDay, today]) {
+        if (
+          link.lastReviewReminderDay != null &&
+          link.lastReviewReminderDay >= date
+        )
+          continue;
+        const due = zonedInstant(date, time, 'Asia/Tehran')?.getTime();
+        if (
+          due === undefined ||
+          due > now.getTime() ||
+          (date !== today && due < now.getTime() - REVIEW_MIDNIGHT_GRACE_MS)
+        )
+          continue;
+        const cards = await this.db.englishCard.count({
+          where: {
+            userId: link.userId,
+            suspended: false,
+            dueAt: { lte: now },
+            deck: { userId: link.userId },
+          },
+        });
+        if (!cards) break;
+        if (!(await this.member(link.chatId))) break;
+        const previousClaim = link.lastReviewReminderDay ?? null;
+        const claimed = await this.db.telegramLink.updateMany({
+          where: {
+            userId: link.userId,
+            OR: [
+              { lastReviewReminderDay: null },
+              { lastReviewReminderDay: { lt: date } },
+            ],
+          },
+          data: { lastReviewReminderDay: date },
+        });
+        if (!claimed.count) continue;
+        const language: Lang = link.language === 'en' ? 'en' : 'fa';
+        const text = reviewReminderText(language, cards);
+        if (!text) break;
+        const buttons: TelegramButton[][] = [
+          [
+            {
+              text: language === 'en' ? 'Start review' : 'شروع مرور',
+              callback_data: 'E:cd:all',
+            },
+          ],
+        ];
+        try {
+          await this.api.sendMessage(link.chatId, text, buttons);
+        } catch (error) {
+          if (error instanceof TelegramError && error.gone) {
+            await this.db.telegramLink.deleteMany({
+              where: { chatId: link.chatId },
+            });
+          } else {
+            this.logger.warn('Telegram review reminder send failed');
+            await this.db.telegramLink
+              .updateMany({
+                where: {
+                  userId: link.userId,
+                  lastReviewReminderDay: date,
+                },
+                data: { lastReviewReminderDay: previousClaim },
+              })
+              .catch(() => undefined);
+          }
+          break;
+        }
+        if (this.isCountableUser(link.user)) {
+          await this.incrementDailyCount(today, 'reminder_sent', '').catch(() =>
+            this.logger.warn('Telegram review reminder count failed'),
+          );
+        }
+        break;
+      }
     }
   }
 

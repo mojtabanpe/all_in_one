@@ -36,6 +36,7 @@ export class TelegramController {
       user.id,
       input.language ?? 'fa',
       storeFromUserAgent(userAgent),
+      input.entry,
     );
   }
 
