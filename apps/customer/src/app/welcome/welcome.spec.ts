@@ -230,7 +230,7 @@ describe('welcome page', () => {
 
   it('records a declined or failed notification offer', async () => {
     const enable = vi.fn(async () => undefined);
-    const { http, navigate, settle, click, track } = setup({
+    const { fixture, http, navigate, settle, click, track } = setup({
       supported: true,
       enable,
     });
@@ -243,6 +243,12 @@ describe('welcome page', () => {
     await click('روشن کردن اعلان‌ها');
     expect(enable).toHaveBeenCalledTimes(1);
     expect(navigate).not.toHaveBeenCalled();
+    // The failed step offers the Telegram reminder instead.
+    http
+      .expectOne('/api/telegram/status')
+      .flush({ available: true, linked: false });
+    await settle();
+    expect(fixture.nativeElement.textContent).toContain('یادآور در تلگرام');
     // A failed setup still lets the account into the app, without counting it as a refusal.
     await click('ورود به برنامه');
     expect(navigate).toHaveBeenCalledWith('/planner');
@@ -250,6 +256,7 @@ describe('welcome page', () => {
       ['welcome_viewed'],
       ['notify_prompt_viewed'],
       ['notify_failed'],
+      ['tg_offer_viewed_notify'],
     ]);
   });
 
