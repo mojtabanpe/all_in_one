@@ -5279,6 +5279,12 @@ export const MESSAGES: readonly (readonly [string, string])[] = [
   ['باز کردن تلگرام و زدن Start', 'Open Telegram and tap Start'],
   ['لینک ۱۰ دقیقه اعتبار دارد.', 'The link is valid for 10 minutes.'],
   ['وصل به تلگرام', 'Connect Telegram'],
+  ['یادآور در تلگرام', 'Telegram reminder'],
+  [
+    'وقتی کارت برای مرور داری، در تلگرام خبرت می‌کنیم.',
+    'We message you on Telegram when you have cards to review.',
+  ],
+  ['تلگرام وصل است.', 'Telegram is connected.'],
   ['وقت مرور کارت‌های زبان است', 'Time to review your English cards'],
   ['یادآوری‌ها روی این دستگاه روشن است.', 'Reminders are on for this device.'],
   ['تمام', 'Done'],

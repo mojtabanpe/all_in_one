@@ -19,6 +19,7 @@ import {
   apiErrorMessage,
   AuthStore,
   PushSettings,
+  TelegramOffer,
 } from '@all-in-one/web/shared';
 
 /** Widgets shown inside an in-app prompt sheet (in-app-prompts.ts on the api). Loaded only when a prompt arrives. */
@@ -35,7 +36,7 @@ export function tehranDay(now = new Date(), offsetDays = 0): string {
 
 @Component({
   selector: 'customer-push-prompt',
-  imports: [AioButton, AioTranslate],
+  imports: [AioButton, AioTranslate, TelegramOffer],
   template: `
     <div class="flex flex-col items-start gap-3">
       @if (push.enabled()) {
@@ -60,6 +61,12 @@ export function tehranDay(now = new Date(), offsetDays = 0): string {
             {{ push.message() | aioTranslate }}
           </p>
         }
+        <!-- The review-end sheet offers it from the start; any sheet offers it once enabling has failed. -->
+        @if (failed() || review()) {
+          <web-telegram-offer
+            [entry]="failed() ? 'notify_failed' : 'review_end'"
+          />
+        }
       }
     </div>
   `,
@@ -71,8 +78,11 @@ export class PushPrompt {
   private readonly sheet = inject(AioInAppNotifications);
   private readonly http = inject(HttpClient);
   private readonly api = inject(API_BASE_URL);
+  /** A try in this sheet ended without notifications (blocked, unsupported or no answer). */
+  protected readonly failed = signal(false);
   protected async enable(): Promise<void> {
     await this.push.enable();
+    this.failed.set(!this.push.enabled());
     const time = this.review();
     if (this.push.enabled() && time)
       await firstValueFrom(

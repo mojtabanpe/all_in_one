@@ -41,6 +41,11 @@ export const GROWTH_EVENTS = [
   'notify_enabled',
   'notify_failed',
   'notify_declined',
+  // Telegram review-reminder offer (PG-012): review-end sheet and failed/unsupported notification fallback.
+  'tg_offer_viewed_review_end',
+  'tg_offer_viewed_notify',
+  'tg_offer_clicked_review_end',
+  'tg_offer_clicked_notify',
 ] as const;
 const campaignValue = z.string().check(
   z.minLength(1),
