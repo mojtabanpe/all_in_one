@@ -3,6 +3,7 @@ import type { InAppWidgetKind } from '@all-in-one/shared/schemas';
 import {
   AiConnection,
   PhoneSettings,
+  TelegramOffer,
   TelegramSettings,
 } from '@all-in-one/web/shared';
 import {
@@ -13,6 +14,12 @@ import {
   RewardsPrompt,
   WeightGoalPrompt,
 } from './prompt-widgets';
+
+/** For a device that cannot get notifications: the Telegram reminder takes the push widget's place. */
+export const telegramReminderWidget = {
+  component: TelegramOffer,
+  inputs: { entry: 'notify_failed' },
+};
 
 /** The component a prompt sheet embeds for its widget kind. Imported lazily by the layout. */
 export function promptWidget(

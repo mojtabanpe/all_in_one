@@ -46,6 +46,7 @@ import { APP_VERSION } from '../release-version';
 import { AiConnection } from './ai-connection';
 import { localMobile, PhoneSettings } from './phone-settings';
 import { TelegramSettings } from './telegram-settings';
+import { TelegramOffer } from './telegram-offer';
 import { PhoneReset } from './phone-reset';
 import { AuthStore } from './auth.store';
 
@@ -381,6 +382,7 @@ export function accountTab(
     AioBadge,
     PhoneSettings,
     TelegramSettings,
+    TelegramOffer,
     RouterLink,
     AioButton,
     AioCheckbox,
@@ -762,7 +764,7 @@ export function accountTab(
                   <button
                     aioBtn
                     [disabled]="push.busy()"
-                    (click)="push.enable()"
+                    (click)="enablePush()"
                   >
                     {{
                       (push.enabled()
@@ -797,6 +799,13 @@ export function accountTab(
                       | aioTranslate
                   }}
                 </p>
+              }
+              <!-- Hidden tabs stay in the DOM: only the open one may count the offer as seen. -->
+              @if (
+                tab() === 'alerts' &&
+                (!push.supported || (pushFailed() && !push.enabled()))
+              ) {
+                <web-telegram-offer entry="notify_failed" />
               }
               <form
                 class="border-border mt-2 flex flex-col gap-3 border-t pt-4"
@@ -1099,6 +1108,12 @@ export class AccountPage implements OnInit {
     void this.push.loadReview();
   }
   protected readonly push = inject(PushSettings);
+  protected readonly pushFailed = signal(false);
+  protected async enablePush() {
+    this.pushFailed.set(false);
+    await this.push.enable();
+    this.pushFailed.set(!this.push.enabled());
+  }
   protected readonly auth = inject(AuthStore);
   protected readonly current = signal('');
   protected readonly next = signal('');

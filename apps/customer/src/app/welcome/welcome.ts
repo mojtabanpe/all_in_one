@@ -42,6 +42,7 @@ import {
   API_BASE_URL,
   GrowthAnalytics,
   PushSettings,
+  TelegramOffer,
 } from '@all-in-one/web/shared';
 import {
   lucideBell,
@@ -84,6 +85,7 @@ export function mealTypeAt(hour: number): MealType {
     AioInput,
     AioSkeletonLines,
     AioTranslate,
+    TelegramOffer,
   ],
   providers: [
     provideIcons({
@@ -355,6 +357,7 @@ export function mealTypeAt(hour: number): MealType {
                     }}
                   </p>
                 </div>
+                <web-telegram-offer entry="notify_failed" />
                 <!-- Never blocked by a push request still pending in the background. -->
                 <button
                   aioBtn

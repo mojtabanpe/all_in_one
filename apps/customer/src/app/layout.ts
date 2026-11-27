@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { filter, map } from 'rxjs';
+import { filter, firstValueFrom, map } from 'rxjs';
 import {
   NavigationEnd,
   NavigationStart,
@@ -47,6 +47,7 @@ import {
   type AssistantContext,
   type BillingAccessState,
   type InAppNotification,
+  type TelegramStatus,
 } from '@all-in-one/shared/schemas';
 import { Pwa } from './pwa';
 import { AiPaywall } from './billing/ai-paywall';
@@ -398,11 +399,17 @@ export class Layout {
       for (const { widget, ...notice } of this.notices.value()) {
         if (seen.has(notice.id)) continue;
         seen.add(notice.id);
-        // A reminders prompt is useless where this device cannot get them (an iPhone browser tab).
-        if (widget?.kind === 'push' && !this.canPush()) continue;
-        const enqueue = (embedded?: AioInAppNotification['widget']) =>
+        // A reminders prompt is useless where this device cannot get them (an iPhone browser tab). The English
+        // review reminder can still go to Telegram, so only that one stays, with the Telegram option.
+        const unsupported = widget?.kind === 'push' && !this.canPush();
+        if (unsupported && !widget.data?.['review']) continue;
+        const enqueue = (
+          embedded?: AioInAppNotification['widget'],
+          message: AioInAppNotification['message'] = notice.message,
+        ) =>
           this.inApp.enqueue({
             ...notice,
+            message,
             widget: embedded,
             actions: notice.actions.map((action) => ({
               ...action,
@@ -430,7 +437,8 @@ export class Layout {
                 .subscribe({ error: () => undefined });
             },
           });
-        if (!widget) enqueue();
+        if (unsupported) void this.offerTelegramInstead(enqueue);
+        else if (!widget) enqueue();
         // The prompt widgets (forms for the hard steps) load only when a prompt arrives.
         else
           void import('./prompts/prompt-registry').then(
@@ -450,6 +458,29 @@ export class Layout {
       }
       previous = url;
     });
+  }
+
+  /** Shown only when there is something to offer: never in Myket, without the bot, or once linked. */
+  private async offerTelegramInstead(
+    enqueue: (
+      widget: AioInAppNotification['widget'],
+      message: AioInAppNotification['message'],
+    ) => void,
+  ) {
+    try {
+      const status = await firstValueFrom(
+        this.http.get<TelegramStatus>(`${this.api}/telegram/status`),
+      );
+      if (!status.available || status.linked) return;
+      const { telegramReminderWidget } =
+        await import('./prompts/prompt-registry');
+      enqueue(telegramReminderWidget, {
+        fa: 'اعلان روی این دستگاه در دسترس نیست، ولی می‌توانی یادآور مرور را در تلگرام بگیری.',
+        en: 'Notifications are not available on this device, but you can get your review reminder in Telegram.',
+      });
+    } catch {
+      /* The prompt stays pending for a later visit. */
+    }
   }
 
   protected async logout() {
