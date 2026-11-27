@@ -1,7 +1,9 @@
 import { HttpException } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
+import { TelegramController } from './telegram.controller';
 import {
   plainReply,
+  reviewReminderText,
   summaryText,
   telegramCodeHash,
   TelegramService,
@@ -33,6 +35,7 @@ function setup(
     buttons?: unknown;
     entities?: unknown;
   }[] = [];
+  const metricWrites: [string, string, string][] = [];
   const db = {
     telegramLink: {
       findUnique: vi.fn(),
@@ -46,11 +49,25 @@ function setup(
       deleteMany: vi.fn((x) => x),
       create: vi.fn((x) => x),
     },
+    telegramDailyCount: {
+      findMany: vi.fn(async () => []),
+    },
     englishCard: { count: vi.fn(() => 0), findFirst: vi.fn() },
     user: {
       findUnique: vi.fn(async () => ({ enabledApplets, role: 'CUSTOMER' })),
     },
     $transaction: vi.fn(async (ops: unknown[]) => ops),
+    $executeRaw: vi.fn(
+      async (
+        _strings: TemplateStringsArray,
+        day: string,
+        kind: string,
+        entry: string,
+      ) => {
+        metricWrites.push([day, kind, entry]);
+        return 1;
+      },
+    ),
   };
   const assistant = { chat: vi.fn() };
   const tasks = {
@@ -228,6 +245,7 @@ function setup(
     decks,
     cards,
     expenses,
+    metricWrites,
   };
 }
 const message = (text: string, id = 42) => ({
@@ -998,6 +1016,287 @@ describe('Telegram bot', () => {
       const { service, db } = withBilling('member');
       db.telegramLink.findUnique.mockResolvedValue(null);
       expect(await service.claimChannelWeek('u1')).toBe('not_linked');
+    });
+  });
+
+  describe('English review reminder and link entry (PG-012)', () => {
+    it('stores optional entry on one-time link codes and blocks Myket (199)', async () => {
+      const { service, db } = setup();
+      const controller = new TelegramController(service);
+
+      await controller.link(
+        { id: 'u1' } as never,
+        { language: 'fa', entry: 'review_end' },
+        'Mozilla/5.0 PoshtetgarmStore/bazaar',
+      );
+      expect(db.telegramLinkCode.create).toHaveBeenLastCalledWith({
+        data: expect.objectContaining({
+          userId: 'u1',
+          language: 'fa',
+          entry: 'review_end',
+        }),
+      });
+
+      await controller.link(
+        { id: 'u2' } as never,
+        { language: 'en', entry: 'notify_failed' },
+        'Mozilla/5.0',
+      );
+      expect(db.telegramLinkCode.create).toHaveBeenLastCalledWith({
+        data: expect.objectContaining({
+          userId: 'u2',
+          language: 'en',
+          entry: 'notify_failed',
+        }),
+      });
+
+      await expect(
+        controller.link(
+          { id: 'u3' } as never,
+          { language: 'fa', entry: 'notify_failed' },
+          'Mozilla/5.0 PoshtetgarmStore/myket',
+        ),
+      ).rejects.toThrow();
+      expect(db.telegramLinkCode.create).toHaveBeenCalledTimes(2);
+    });
+
+    it('counts successful links by entry without personal data and skips test/staff or consumed codes', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-11-27T16:00:00Z'));
+      try {
+        const t = setup();
+        t.db.telegramLink.findUnique.mockResolvedValue(null);
+        t.db.telegramLinkCode.findUnique.mockResolvedValueOnce({
+          userId: 'u1',
+          language: 'fa',
+          entry: 'notify_failed',
+          expiresAt: new Date('2026-11-27T16:05:00Z'),
+        });
+        await t.service.handle(message('/start abcdefghijklmnopqrstuvwx'));
+        expect(t.metricWrites).toEqual([
+          ['2026-11-27', 'linked', 'notify_failed'],
+        ]);
+
+        // Double-tap / already consumed code neither links again nor increments.
+        t.db.telegramLinkCode.findUnique.mockResolvedValueOnce({
+          userId: 'u1',
+          language: 'fa',
+          entry: 'notify_failed',
+          expiresAt: new Date('2026-11-27T16:05:00Z'),
+        });
+        t.db.telegramLinkCode.deleteMany.mockResolvedValueOnce({
+          count: 0,
+        } as never);
+        await t.service.handle(message('/start abcdefghijklmnopqrstuvwx'));
+        expect(t.metricWrites).toHaveLength(1);
+
+        // Reserved test email and ADMIN accounts still link normally, without inflating aggregate counts.
+        t.db.user.findUnique.mockResolvedValueOnce({
+          enabledApplets: null,
+          role: 'CUSTOMER',
+          email: 'qa-check@example.invalid',
+        } as never);
+        t.db.telegramLinkCode.findUnique.mockResolvedValueOnce({
+          userId: 'u-test',
+          language: 'en',
+          entry: 'review_end',
+          expiresAt: new Date('2026-11-27T16:05:00Z'),
+        });
+        await t.service.handle(message('/start abcdefghijklmnopqrstuvwy'));
+        expect(t.metricWrites).toHaveLength(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('sends the 20:00 Tehran reminder once per day, recovers after restart, and retries on transient send error', async () => {
+      const t = setup();
+      const link = {
+        userId: 'u1',
+        chatId: 42n,
+        language: 'fa',
+        lastSummaryDay: '2026-11-27',
+        lastReviewReminderDay: null as string | null,
+        user: {
+          role: 'CUSTOMER',
+          email: null,
+          signupSource: null,
+          reviewReminder: null,
+        },
+      };
+      t.db.telegramLink.findMany.mockImplementation(
+        async (args?: { where?: unknown }) =>
+          JSON.stringify(args?.where ?? '').includes('lastSummaryDay')
+            ? []
+            : link.lastReviewReminderDay === '2026-11-27'
+              ? []
+              : [link],
+      );
+      t.db.englishCard.count.mockResolvedValue(5 as never);
+
+      // 19:59 Tehran (16:29 UTC): before default 20:00 -> nothing sent.
+      await t.service.tick(new Date('2026-11-27T16:29:00Z'));
+      expect(t.sent).toHaveLength(0);
+
+      // Transient send failure at 20:00 rolls back lastReviewReminderDay and does not count.
+      const api = (
+        t.service as unknown as {
+          api: { sendMessage: ReturnType<typeof vi.fn> };
+        }
+      ).api;
+      api.sendMessage.mockRejectedValueOnce(new Error('relay timeout'));
+      await t.service.tick(new Date('2026-11-27T16:30:00Z'));
+      expect(t.sent).toHaveLength(0);
+      expect(t.metricWrites).toHaveLength(0);
+      expect(t.db.telegramLink.updateMany).toHaveBeenLastCalledWith({
+        where: { userId: 'u1', lastReviewReminderDay: '2026-11-27' },
+        data: { lastReviewReminderDay: null },
+      });
+
+      // Restart recovery later the same Tehran day (21:45 Tehran = 18:15 UTC) delivers once.
+      t.db.telegramLink.updateMany.mockImplementationOnce(async () => {
+        link.lastReviewReminderDay = '2026-11-27';
+        return { count: 1 };
+      });
+      await t.service.tick(new Date('2026-11-27T18:15:00Z'));
+      expect(t.sent).toHaveLength(1);
+      expect(t.sent[0]).toEqual({
+        chat: '42',
+        text: '۵ کارت آمادهٔ مرور داری.',
+        buttons: [[{ text: 'شروع مرور', callback_data: 'E:cd:all' }]],
+      });
+      expect(t.metricWrites).toEqual([['2026-11-27', 'reminder_sent', '']]);
+
+      // Subsequent sweep on the same day sends nothing.
+      await t.service.tick(new Date('2026-11-27T19:00:00Z'));
+      expect(t.sent).toHaveLength(1);
+      expect(t.metricWrites).toHaveLength(1);
+    });
+
+    it('sends nothing when cards due is 0, reminder setting is off, or user left the channel', async () => {
+      const dueTime = new Date('2026-11-27T16:35:00Z'); // 20:05 Tehran
+
+      // 1) 0 due cards -> silent, no claim
+      const noCards = setup('member');
+      noCards.db.telegramLink.findMany.mockImplementation(
+        async (args?: { where?: unknown }) =>
+          JSON.stringify(args?.where ?? '').includes('lastSummaryDay')
+            ? []
+            : [
+                {
+                  userId: 'u1',
+                  chatId: 42n,
+                  language: 'fa',
+                  lastReviewReminderDay: null,
+                  user: { reviewReminder: null },
+                },
+              ],
+      );
+      noCards.db.englishCard.count.mockResolvedValue(0 as never);
+      await noCards.service.tick(dueTime);
+      expect(noCards.sent).toHaveLength(0);
+      expect(noCards.db.telegramLink.updateMany).not.toHaveBeenCalled();
+
+      // 2) Setting disabled -> silent, does not even count cards
+      const disabled = setup('member');
+      disabled.db.telegramLink.findMany.mockImplementation(
+        async (args?: { where?: unknown }) =>
+          JSON.stringify(args?.where ?? '').includes('lastSummaryDay')
+            ? []
+            : [
+                {
+                  userId: 'u1',
+                  chatId: 42n,
+                  language: 'fa',
+                  lastReviewReminderDay: null,
+                  user: { reviewReminder: { enabled: false, time: '20:00' } },
+                },
+              ],
+      );
+      disabled.db.englishCard.count.mockResolvedValue(4 as never);
+      await disabled.service.tick(dueTime);
+      expect(disabled.sent).toHaveLength(0);
+      expect(disabled.db.englishCard.count).not.toHaveBeenCalled();
+
+      // 3) Non-member -> silent, no claim
+      const left = setup('left');
+      left.db.telegramLink.findMany.mockImplementation(
+        async (args?: { where?: unknown }) =>
+          JSON.stringify(args?.where ?? '').includes('lastSummaryDay')
+            ? []
+            : [
+                {
+                  userId: 'u1',
+                  chatId: 42n,
+                  language: 'fa',
+                  lastReviewReminderDay: null,
+                  user: { reviewReminder: { enabled: true, time: '20:00' } },
+                },
+              ],
+      );
+      left.db.englishCard.count.mockResolvedValue(4 as never);
+      await left.service.tick(dueTime);
+      expect(left.sent).toHaveLength(0);
+      expect(left.db.telegramLink.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('formats English reminders and tapping the inline button starts the existing card review', async () => {
+      expect(reviewReminderText('fa', 0)).toBeNull();
+      expect(reviewReminderText('en', 1)).toBe(
+        'You have 1 card ready to review.',
+      );
+      expect(reviewReminderText('en', 3)).toBe(
+        'You have 3 cards ready to review.',
+      );
+
+      const t = setup('member');
+      t.db.telegramLink.findMany.mockImplementation(
+        async (args?: { where?: unknown }) =>
+          JSON.stringify(args?.where ?? '').includes('lastSummaryDay')
+            ? []
+            : [
+                {
+                  userId: 'u1',
+                  chatId: 42n,
+                  language: 'en',
+                  lastReviewReminderDay: null,
+                  user: { reviewReminder: { enabled: true, time: '21:00' } },
+                },
+              ],
+      );
+      t.db.englishCard.count.mockResolvedValue(1 as never);
+      await t.service.tick(new Date('2026-11-27T17:30:00Z')); // 21:00 Tehran
+      expect(t.sent[0]).toEqual({
+        chat: '42',
+        text: 'You have 1 card ready to review.',
+        buttons: [[{ text: 'Start review', callback_data: 'E:cd:all' }]],
+      });
+
+      const cardId = '22222222-2222-4222-8222-222222222222';
+      const callbackData = (
+        t.sent[0].buttons as { text: string; callback_data: string }[][]
+      )[0][0].callback_data;
+      t.db.telegramLink.findUnique.mockResolvedValue({
+        userId: 'u1',
+        chatId: 42n,
+        language: 'en',
+        menuVersion: MENU_VERSION,
+        pending: null,
+      });
+      t.db.englishCard.findFirst.mockResolvedValue({
+        id: cardId,
+        front: 'resilient',
+        unit: '',
+      });
+      await t.service.handle({
+        callback_query: {
+          id: 'q-rem',
+          data: callbackData,
+          message: { chat: { id: 42 } },
+        },
+      });
+      expect(t.sent[1].text).toContain('resilient');
+      expect(JSON.stringify(t.sent[1].buttons)).toContain(`c:a:${cardId}:a`);
     });
   });
 });
