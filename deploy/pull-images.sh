@@ -3,10 +3,11 @@
 # 1. If `pkg-containers.githubusercontent.com` (GHCR's Fastly blob CDN) completes a direct TLS handshake,
 #    uses `docker pull` directly.
 # 2. When `dockerd` hits direct TLS handshake timeouts to `pkg-containers.githubusercontent.com` (or `docker pull`
-#    fails), pulls the OCI manifest and config from `ghcr.io`, reuses the contiguous layer prefix already unpacked
-#    in local `all-in-one-<target>:*` images on the server, downloads only the changed layer blobs (using the local
-#    loopback tunnel proxy when direct TLS is filtered), verifies every blob's SHA-256 digest, loads the OCI archive
-#    into Docker and verifies the image rootfs with `docker run --rm --entrypoint true`.
+#    fails), pulls the authoritative OCI manifest from `ghcr.io`, reuses the contiguous layer prefix already unpacked
+#    in local `all-in-one-<target>:*` images on the server, downloads only the changed layer blobs (trying Liara's
+#    free GHCR mirror `ghcr-mirror.liara.ir` with an anonymous Harbor token first, then falling back automatically to
+#    `ghcr.io` via the local loopback tunnel proxy), verifies every blob's SHA-256 digest against the `ghcr.io`
+#    manifest, loads the OCI archive into Docker and verifies the image rootfs with `docker run --rm --entrypoint true`.
 #
 # Usage:
 #   REGISTRY=ghcr.io/mojtabanpe RELEASE=<sha> GHCR_TOKEN=<token> sh deploy/pull-images.sh api public web
@@ -20,6 +21,7 @@ trap 'rm -rf "$DIR"' EXIT
 
 ACTOR=${GITHUB_ACTOR:-${REGISTRY#*/}}
 PROXY=${AIO_PULL_PROXY:-http://127.0.0.1:7890}
+MIRROR=${AIO_GHCR_MIRROR:-ghcr-mirror.liara.ir}
 
 direct_cdn_ok=false
 if curl -sSI -o /dev/null --connect-timeout 4 --max-time 6 https://pkg-containers.githubusercontent.com/ 2>/dev/null; then
@@ -35,7 +37,7 @@ fi
 
 oci_delta_pull() {
   target=$1
-  python3 - "$REGISTRY" "$RELEASE" "$target" "$DIR" "$PROXY" "$direct_cdn_ok" <<'PY'
+  python3 - "$REGISTRY" "$RELEASE" "$target" "$DIR" "$PROXY" "$direct_cdn_ok" "$MIRROR" <<'PY'
 import base64
 import hashlib
 import io
@@ -49,7 +51,7 @@ import time
 import urllib.parse
 import urllib.request
 
-registry, release, target, workdir, proxy_url, direct_cdn_arg = sys.argv[1:7]
+registry, release, target, workdir, proxy_url, direct_cdn_arg, mirror_host = sys.argv[1:8]
 direct_cdn_ok = direct_cdn_arg == "true"
 owner = registry.split("/", 1)[1]
 repo = f"{owner}/all-in-one-{target}"
@@ -101,14 +103,67 @@ def sha256_file(path: str) -> str:
             h.update(chunk)
     return h.hexdigest()
 
+mirror_token = ""
+if mirror_host:
+    try:
+        raw_mt = curl_bytes(
+            f"https://{mirror_host}/service/token?service=harbor-registry&scope=repository:{repo}:pull",
+            [],
+            use_proxy=False,
+            timeout_sec=8,
+        )
+        mirror_token = json.loads(raw_mt.decode("utf-8")).get("token", "")
+    except Exception:
+        mirror_token = ""
+    if mirror_token:
+        try:
+            # Warm Harbor's proxy-cache for this tag so subsequent blob requests by digest hit the mirror cache.
+            curl_bytes(
+                f"https://{mirror_host}/v2/{repo}/manifests/{release}",
+                [
+                    f"Authorization: Bearer {mirror_token}",
+                    "Accept: application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json, application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.list.v2+json",
+                ],
+                use_proxy=False,
+                timeout_sec=15,
+            )
+        except Exception:
+            pass
+
 def download_blob(digest: str, expected_size: int, token: str, blob_dir: str) -> str:
-    global prefer_proxy
+    global prefer_proxy, mirror_token
     alg, hex_digest = digest.split(":", 1)
     if alg != "sha256":
         raise RuntimeError(f"Unsupported digest algorithm: {digest}")
     dest = os.path.join(blob_dir, hex_digest)
     if os.path.exists(dest) and sha256_file(dest) == hex_digest:
         return hex_digest
+
+    # 1. Try Liara GHCR mirror first (anonymous Harbor token only; never send GitHub tokens to the mirror).
+    if mirror_host and mirror_token:
+        mirror_url = f"https://{mirror_host}/v2/{repo}/blobs/{digest}"
+        m_cmd = [
+            "curl", "-fsSL", "-C", "-",
+            "--connect-timeout", "8",
+            "--speed-limit", "102400",
+            "--speed-time", "15",
+            "-H", f"Authorization: Bearer {mirror_token}",
+            "-o", dest, mirror_url,
+        ]
+        if subprocess.call(m_cmd) == 0 and os.path.exists(dest):
+            actual = sha256_file(dest)
+            if actual == hex_digest:
+                return hex_digest
+            print(f"::warning::Mirror blob {hex_digest[:12]} sha256 mismatch ({actual[:12]}); falling back to ghcr.io", flush=True)
+            try:
+                os.remove(dest)
+            except OSError:
+                pass
+        else:
+            try:
+                os.remove(dest)
+            except OSError:
+                pass
 
     url = f"https://ghcr.io/v2/{repo}/blobs/{digest}"
     headers = [f"Authorization: Bearer {token}"]
