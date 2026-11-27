@@ -20,6 +20,12 @@ unzip_member() {
   fi
 }
 
+PROXY=${AIO_PULL_PROXY:-http://127.0.0.1:7890}
+has_proxy=false
+if python3 -c 'import socket, sys, urllib.parse; p = urllib.parse.urlparse(sys.argv[1]); s = socket.create_connection((p.hostname or "127.0.0.1", p.port or 7890), timeout=1.5); s.close()' "$PROXY" 2>/dev/null; then
+  has_proxy=true
+fi
+
 fetch() {
   name=$1 id=$2 digest=$3
   zip=$DIR/$name.zip
@@ -27,10 +33,15 @@ fetch() {
   attempt=1
   while :; do
     start=$(date +%s)
-    # -C - resumes a partial file; a transfer under 20 KB/s for 60 s counts as stalled and is retried.
+    proxy_args=""
+    if [ "$has_proxy" = true ] && [ $((attempt % 2)) -eq 0 ]; then
+      proxy_args="-x $PROXY"
+    fi
+    # -C - resumes a partial file; a transfer under 100 KB/s for 30 s counts as stalled and is retried
+    # (alternating with the local loopback tunnel proxy when available so throttled single-TCP flows recover).
     # Each attempt asks the API again, so the short-lived blob url behind the redirect is always fresh.
-    if curl -fsSL -C - --connect-timeout 30 --speed-limit 20480 --speed-time 60 \
-      -H "Authorization: Bearer $GH_TOKEN" -o "$zip" "$url"; then
+    if curl -fsSL -C - --connect-timeout 30 --speed-limit 102400 --speed-time 30 \
+      $proxy_args -H "Authorization: Bearer $GH_TOKEN" -o "$zip" "$url"; then
       actual=$(sha256sum "$zip" | cut -d' ' -f1)
       if [ -z "$digest" ] || [ "$actual" = "$digest" ]; then
         if unzip_member "$zip" "$name.tar.gz" | gzip -t; then

@@ -31,13 +31,41 @@ HEALTHCHECK --interval=10s --timeout=5s --retries=6 \
   CMD node -e "fetch('http://127.0.0.1:4390/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 CMD ["node", "main.js"]
 
+FROM deps AS api-deps
+# Prune frontend packages, build-only devDependencies (keeping prisma CLI for startup migrations and tslib)
+# and non-linux-x64 native binaries before `COPY . .`, so the api's runtime node_modules layer (~145 MiB
+# compressed instead of ~481 MiB) still stays byte-identical until package.json or pnpm-lock.yaml changes.
+RUN node -e 'const fs = require("fs"); \
+  const pkg = JSON.parse(fs.readFileSync("package.json", "utf8")); \
+  for (const name of Object.keys(pkg.dependencies)) { \
+    if (/^(@angular|@fontsource-variable|@ng-icons|@spartan-ng|@tanstack|class-variance-authority|clsx|ngx-scrollbar|tailwind-merge|zone\.js)(\/|$)/.test(name)) { \
+      delete pkg.dependencies[name]; \
+    } \
+  } \
+  pkg.dependencies.prisma = pkg.devDependencies.prisma; \
+  pkg.dependencies.tslib = pkg.devDependencies.tslib; \
+  delete pkg.devDependencies; \
+  fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));' \
+ && pnpm prune --prod \
+ && rm -rf \
+  node_modules/.pnpm/onnxruntime-node*/node_modules/onnxruntime-node/bin/napi-v6/darwin \
+  node_modules/.pnpm/onnxruntime-node*/node_modules/onnxruntime-node/bin/napi-v6/win32 \
+  node_modules/.pnpm/onnxruntime-node*/node_modules/onnxruntime-node/bin/napi-v6/linux/arm64 \
+  node_modules/.pnpm/onnxruntime-web*/node_modules/onnxruntime-web/dist \
+  node_modules/.pnpm/@img+sharp-libvips-linuxmusl* \
+  node_modules/.pnpm/@electric-sql+pglite*/node_modules/@electric-sql/pglite/dist
+
+# The AI scope check's local model, baked in before `COPY . .`: the server never downloads it at runtime
+# (Hugging Face may be unreachable), and code changes do not rebuild or change the digest of this ~70 MiB layer.
+FROM deps AS scope-model
+COPY tools/scripts/fetch-scope-model.mjs ./tools/scripts/fetch-scope-model.mjs
+RUN node tools/scripts/fetch-scope-model.mjs /app/models
+
 FROM deps AS build
 ENV NX_DAEMON=false NX_NO_CLOUD=true
 COPY . .
 RUN pnpm nx run api-db:prisma-generate \
  && pnpm nx run-many -t build -p api public customer admin --configuration=production
-# The AI scope check's local model, baked in: the server never downloads it (Hugging Face may be unreachable).
-RUN node tools/scripts/fetch-scope-model.mjs /app/models
 
 # ---- api: NestJS + Prisma migrations on start
 FROM node:24-bookworm-slim AS api
@@ -46,11 +74,11 @@ ENV NODE_ENV=production
 RUN groupadd -g 10001 app && useradd -u 10001 -g app -s /usr/sbin/nologin app \
  && mkdir -p /app/data/exercise-videos \
  && chown -R app:app /app/data
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=api-deps /app/node_modules ./node_modules
 COPY --from=deps /app/package.json ./package.json
-COPY --from=build /app/dist/apps/api ./dist/apps/api
-COPY --from=build /app/models ./models
+COPY --from=scope-model /app/models ./models
 ENV AI_SCOPE_MODEL_DIR=/app/models
+COPY --from=build /app/dist/apps/api ./dist/apps/api
 COPY --from=build /app/libs/api/db/prisma ./libs/api/db/prisma
 COPY --from=build /app/libs/api/db/prisma.config.ts ./libs/api/db/prisma.config.ts
 USER app
