@@ -132,47 +132,27 @@ jobs:
     needs: build
     runs-on: [self-hosted, aio]
     permissions:
+      contents: read
       packages: read
     outputs:
       pulled: ${{ steps.pull.outputs.pulled }}
     steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
       - id: pull
         env:
           RELEASE: ${{ needs.build.outputs.release }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -u
-          export DOCKER_CONFIG="$RUNNER_TEMP/ghcr-auth"
-          mkdir -p "$DOCKER_CONFIG"
-          trap 'rm -rf "$DOCKER_CONFIG"' EXIT
           pulled=false
-          if echo "$GHCR_TOKEN" | timeout 60 docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin >/dev/null; then
+          if sh deploy/pull-images.sh api public web; then
             pulled=true
-            for t in api public web; do
-              ref="$REGISTRY/all-in-one-$t:$RELEASE"
-              ok=false
-              for attempt in 1 2 3; do
-                start=$(date +%s)
-                # Finished layers stay on the server, so a retry continues where the last attempt stopped.
-                if timeout 1200 docker pull "$ref"; then
-                  echo "Pulled $t in $(($(date +%s) - start))s"
-                  ok=true
-                  break
-                fi
-                echo "::warning::Pulling $ref failed (attempt $attempt)"
-                sleep 15
-              done
-              if [ "$ok" != true ]; then
-                pulled=false
-                break
-              fi
-              docker tag "$ref" "all-in-one-$t:$RELEASE"
-              docker image rm "$ref" >/dev/null # only the registry name; the layers stay with the local tag
-            done
           else
-            echo "::warning::Cannot log in to ghcr.io from the server"
+            echo "::warning::GHCR pull failed; falling back to artifacts"
           fi
-          [ "$pulled" = true ] || echo "::warning::GHCR pull failed; falling back to artifacts"
           echo "pulled=$pulled" >> "$GITHUB_OUTPUT"
 
   # Fallback only: per-image artifacts built from the pushed images.
