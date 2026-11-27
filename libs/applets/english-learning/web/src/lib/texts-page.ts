@@ -1,5 +1,5 @@
 import { httpResource } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   READING_LEVELS,
@@ -25,6 +25,8 @@ import {
   AioSectionHeading,
   AioSkeletonLines,
   AioAsyncButton,
+  AioNativeSelect,
+  AioNativeSelectOption,
   AioSelectField,
   AioLocale,
   AioNotifications,
@@ -59,6 +61,8 @@ import { EnglishApi } from './english-api';
     AioSectionHeading,
     AioSkeletonLines,
     AioAsyncButton,
+    AioNativeSelect,
+    AioNativeSelectOption,
     AioSelectField,
     AioTranslate,
   ],
@@ -213,15 +217,23 @@ import { EnglishApi } from './english-api';
         >
           <div class="lx-glass flex flex-col gap-3 rounded-2xl p-3">
             <div class="grid grid-cols-2 gap-3">
-              <aio-select-field
+              <aio-form-field
+                class="block min-w-0"
                 [label]="'Topic' | aioTranslate"
                 controlId="text-topic"
-                [value]="topic()"
-                [options]="topics"
-                valueKey="id"
-                labelKey="label"
-                (valueChange)="topic.set($any($event))"
-              />
+              >
+                <aio-native-select
+                  selectId="text-topic"
+                  [value]="topic()"
+                  (valueChange)="topic.set($any($event))"
+                >
+                  @for (item of topics(); track item.id) {
+                    <option aioNativeSelectOption [value]="item.id">
+                      {{ item.label }}
+                    </option>
+                  }
+                </aio-native-select>
+              </aio-form-field>
               <aio-select-field
                 [label]="'Level' | aioTranslate"
                 controlId="text-level"
@@ -316,7 +328,13 @@ export class TextsPage {
   protected readonly texts = httpResource<ReadingText[]>(
     () => `${this.api.base}/texts`,
   );
-  protected readonly topics = READING_TOPICS;
+  protected readonly topics = computed(() => {
+    const english = this.locale.english();
+    return READING_TOPICS.map((t) => ({
+      id: t.id,
+      label: english ? t.label : t.fa,
+    }));
+  });
   protected readonly levels = READING_LEVELS;
   protected readonly modalOpen = signal(false);
   protected readonly title = signal('');
