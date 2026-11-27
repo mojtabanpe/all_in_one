@@ -59,7 +59,10 @@ import {
 import { defineChart, dot, lineY } from '@tanstack/charts';
 import { scaleLinear } from '@tanstack/charts/scales/linear';
 import { scalePoint } from '@tanstack/charts/scales/point';
-import { englishErrorMessage as apiErrorMessage } from './english-locale';
+import {
+  englishErrorMessage as apiErrorMessage,
+  localizedOptions,
+} from './english-locale';
 import {
   lucideChartLine,
   lucideCheck,
@@ -251,18 +254,20 @@ const freshTask = (): TaskState => ({
             [label]="'Situation' | aioTranslate"
             controlId="practice-situation"
             [value]="situation()"
-            [options]="situations"
+            [options]="situations()"
             valueKey="id"
             labelKey="label"
+            [translateLabels]="false"
             (valueChange)="situation.set($any($event))"
           />
           <aio-select-field
             [label]="'Level' | aioTranslate"
             controlId="practice-level"
             [value]="level()"
-            [options]="levels"
+            [options]="levels()"
             valueKey="id"
             labelKey="label"
+            [translateLabels]="false"
             (valueChange)="level.set($any($event))"
           />
         </div>
@@ -1228,8 +1233,12 @@ export class PracticePage {
     listening: 'lucideHeadphones',
     shadowing: 'lucideVolume2',
   };
-  protected readonly situations = CONVERSATION_SITUATIONS;
-  protected readonly levels = READING_LEVELS;
+  protected readonly situations = computed(() =>
+    localizedOptions(CONVERSATION_SITUATIONS, this.locale.english()),
+  );
+  protected readonly levels = computed(() =>
+    localizedOptions(READING_LEVELS, this.locale.english()),
+  );
 
   protected readonly mode = signal<Mode>('writing');
   protected readonly situation = signal<ConversationSituation>('small-talk');

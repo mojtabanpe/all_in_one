@@ -25,14 +25,15 @@ import {
   AioSectionHeading,
   AioSkeletonLines,
   AioAsyncButton,
-  AioNativeSelect,
-  AioNativeSelectOption,
   AioSelectField,
   AioLocale,
   AioNotifications,
   AioDatePipe,
 } from '@all-in-one/ui';
-import { englishErrorMessage as apiErrorMessage } from './english-locale';
+import {
+  englishErrorMessage as apiErrorMessage,
+  localizedOptions,
+} from './english-locale';
 import {
   lucideFileText,
   lucidePlus,
@@ -61,8 +62,6 @@ import { EnglishApi } from './english-api';
     AioSectionHeading,
     AioSkeletonLines,
     AioAsyncButton,
-    AioNativeSelect,
-    AioNativeSelectOption,
     AioSelectField,
     AioTranslate,
   ],
@@ -217,30 +216,24 @@ import { EnglishApi } from './english-api';
         >
           <div class="lx-glass flex flex-col gap-3 rounded-2xl p-3">
             <div class="grid grid-cols-2 gap-3">
-              <aio-form-field
-                class="block min-w-0"
+              <aio-select-field
                 [label]="'Topic' | aioTranslate"
                 controlId="text-topic"
-              >
-                <aio-native-select
-                  selectId="text-topic"
-                  [value]="topic()"
-                  (valueChange)="topic.set($any($event))"
-                >
-                  @for (item of topics(); track item.id) {
-                    <option aioNativeSelectOption [value]="item.id">
-                      {{ item.label }}
-                    </option>
-                  }
-                </aio-native-select>
-              </aio-form-field>
+                [value]="topic()"
+                [options]="topics()"
+                valueKey="id"
+                labelKey="label"
+                [translateLabels]="false"
+                (valueChange)="topic.set($any($event))"
+              />
               <aio-select-field
                 [label]="'Level' | aioTranslate"
                 controlId="text-level"
                 [value]="level()"
-                [options]="levels"
+                [options]="levels()"
                 valueKey="id"
                 labelKey="label"
+                [translateLabels]="false"
                 (valueChange)="level.set($any($event))"
               />
             </div>
@@ -328,14 +321,12 @@ export class TextsPage {
   protected readonly texts = httpResource<ReadingText[]>(
     () => `${this.api.base}/texts`,
   );
-  protected readonly topics = computed(() => {
-    const english = this.locale.english();
-    return READING_TOPICS.map((t) => ({
-      id: t.id,
-      label: english ? t.label : t.fa,
-    }));
-  });
-  protected readonly levels = READING_LEVELS;
+  protected readonly topics = computed(() =>
+    localizedOptions(READING_TOPICS, this.locale.english()),
+  );
+  protected readonly levels = computed(() =>
+    localizedOptions(READING_LEVELS, this.locale.english()),
+  );
   protected readonly modalOpen = signal(false);
   protected readonly title = signal('');
   protected readonly body = signal('');
