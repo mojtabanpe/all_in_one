@@ -1,5 +1,5 @@
 import { httpResource } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   READING_LEVELS,
@@ -30,7 +30,10 @@ import {
   AioNotifications,
   AioDatePipe,
 } from '@all-in-one/ui';
-import { englishErrorMessage as apiErrorMessage } from './english-locale';
+import {
+  englishErrorMessage as apiErrorMessage,
+  localizedOptions,
+} from './english-locale';
 import {
   lucideFileText,
   lucidePlus,
@@ -217,18 +220,20 @@ import { EnglishApi } from './english-api';
                 [label]="'Topic' | aioTranslate"
                 controlId="text-topic"
                 [value]="topic()"
-                [options]="topics"
+                [options]="topics()"
                 valueKey="id"
                 labelKey="label"
+                [translateLabels]="false"
                 (valueChange)="topic.set($any($event))"
               />
               <aio-select-field
                 [label]="'Level' | aioTranslate"
                 controlId="text-level"
                 [value]="level()"
-                [options]="levels"
+                [options]="levels()"
                 valueKey="id"
                 labelKey="label"
+                [translateLabels]="false"
                 (valueChange)="level.set($any($event))"
               />
             </div>
@@ -316,8 +321,12 @@ export class TextsPage {
   protected readonly texts = httpResource<ReadingText[]>(
     () => `${this.api.base}/texts`,
   );
-  protected readonly topics = READING_TOPICS;
-  protected readonly levels = READING_LEVELS;
+  protected readonly topics = computed(() =>
+    localizedOptions(READING_TOPICS, this.locale.english()),
+  );
+  protected readonly levels = computed(() =>
+    localizedOptions(READING_LEVELS, this.locale.english()),
+  );
   protected readonly modalOpen = signal(false);
   protected readonly title = signal('');
   protected readonly body = signal('');

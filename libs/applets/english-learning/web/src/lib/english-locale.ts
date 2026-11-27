@@ -1,5 +1,27 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
+export interface BilingualOption<TId extends string = string> {
+  readonly id: TId;
+  readonly label: string;
+  readonly fa: string;
+}
+
+export interface LocalizedOption<TId extends string = string> {
+  readonly id: TId;
+  readonly label: string;
+}
+
+/** Pick pre-translated `{ id, label }` options for the active language so `aio-select-field` skips phrase translation. */
+export function localizedOptions<TId extends string>(
+  items: readonly BilingualOption<TId>[],
+  english: boolean,
+): LocalizedOption<TId>[] {
+  return items.map((item) => ({
+    id: item.id,
+    label: english ? item.label : item.fa,
+  }));
+}
+
 export const englishNumber = (value: number) => value.toLocaleString('en-US');
 
 /** Gregorian date in English (Persian screens use `aioDate`). */

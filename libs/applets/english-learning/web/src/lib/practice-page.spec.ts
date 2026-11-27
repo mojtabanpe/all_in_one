@@ -1,4 +1,8 @@
 import { AioLocale } from '@all-in-one/ui';
+import {
+  CONVERSATION_SITUATIONS,
+  READING_LEVELS,
+} from '@all-in-one/applets/english-learning/contracts';
 import { TestBed } from '@angular/core/testing';
 import {
   ActivatedRoute,
@@ -255,6 +259,81 @@ describe('Shadowing practice', () => {
       expect.objectContaining({ kind: 'WRITING', score: 70, mistakes: 1 }),
     );
     expect(el.textContent).toContain('Saved to your progress.');
+  });
+
+  it('shows clean fa and en labels for practice situations and levels while keeping ids intact', async () => {
+    const { api, fixture, el } = await setup();
+    const locale = TestBed.inject(AioLocale);
+    fixture.componentInstance['setMode']('writing');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const readOptions = (id: string) => {
+      const select = el.querySelector(`#${id}`) as HTMLSelectElement | null;
+      expect(select).toBeTruthy();
+      return [...select!.options].map((option) => ({
+        value: option.value,
+        label: option.textContent?.trim() ?? '',
+      }));
+    };
+
+    locale.setLanguage('fa');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const faSituations = readOptions('practice-situation');
+    expect(faSituations).toHaveLength(CONVERSATION_SITUATIONS.length);
+    for (const [index, item] of CONVERSATION_SITUATIONS.entries()) {
+      expect(faSituations[index].value).toBe(item.id);
+      expect(faSituations[index].label).toBe(item.fa);
+      expect(faSituations[index].label).not.toMatch(/[A-Za-z]/);
+    }
+
+    const faLevels = readOptions('practice-level');
+    expect(faLevels).toHaveLength(READING_LEVELS.length);
+    for (const [index, level] of READING_LEVELS.entries()) {
+      expect(faLevels[index].value).toBe(level.id);
+      expect(faLevels[index].label).toBe(level.fa);
+      expect(faLevels[index].label.replace(/\b(B1|B2|C1)\b/g, '')).not.toMatch(
+        /[A-Za-z]/,
+      );
+    }
+
+    locale.setLanguage('en');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const enSituations = readOptions('practice-situation');
+    expect(enSituations).toHaveLength(CONVERSATION_SITUATIONS.length);
+    for (const [index, item] of CONVERSATION_SITUATIONS.entries()) {
+      expect(enSituations[index].value).toBe(item.id);
+      expect(enSituations[index].label).toBe(item.label);
+      expect(enSituations[index].label).not.toMatch(/\p{Script=Arabic}/u);
+    }
+
+    const enLevels = readOptions('practice-level');
+    expect(enLevels).toHaveLength(READING_LEVELS.length);
+    for (const [index, level] of READING_LEVELS.entries()) {
+      expect(enLevels[index].value).toBe(level.id);
+      expect(enLevels[index].label).toBe(level.label);
+      expect(enLevels[index].label).not.toMatch(/\p{Script=Arabic}/u);
+    }
+
+    const situationSelect = el.querySelector(
+      '#practice-situation',
+    ) as HTMLSelectElement;
+    situationSelect.value = 'work';
+    situationSelect.dispatchEvent(new Event('change'));
+    const levelSelect = el.querySelector(
+      '#practice-level',
+    ) as HTMLSelectElement;
+    levelSelect.value = 'B2';
+    levelSelect.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    await fixture.componentInstance['newTask']();
+    expect(api.writingTask).toHaveBeenLastCalledWith('work', 'B2');
   });
 });
 

@@ -1,5 +1,5 @@
 import { AioTranslate } from '../locale';
-import { Component, input, output } from '@angular/core';
+import { booleanAttribute, Component, input, output } from '@angular/core';
 import { AioNativeSelect } from './controls';
 import { AioNativeSelectOption } from '../spartan';
 import { AioFormField } from './form-field';
@@ -24,7 +24,11 @@ import { AioFormField } from './form-field';
         }
         @for (option of options(); track optionValue(option)) {
           <option aioNativeSelectOption [value]="optionValue(option)">
-            {{ optionLabel(option) | aioTranslate }}
+            {{
+              translateLabels()
+                ? (optionLabel(option) | aioTranslate)
+                : optionLabel(option)
+            }}
           </option>
         }
       </aio-native-select>
@@ -43,6 +47,8 @@ export class AioSelectField<T> {
   readonly labelKey = input<keyof T>();
   readonly fallbackLabelKey = input<keyof T>();
   readonly optionLabels = input<Readonly<Record<string, string>>>({});
+  /** Translate option labels via `aioTranslate` unless the caller already provides localized strings. */
+  readonly translateLabels = input(true, { transform: booleanAttribute });
   readonly valueChange = output<string>();
 
   protected optionValue(option: T): string {

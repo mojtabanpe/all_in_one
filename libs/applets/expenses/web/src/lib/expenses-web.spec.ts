@@ -172,5 +172,22 @@ describe('Expenses month filter label', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     expect(fixture.nativeElement.textContent).toContain('از اول آذر');
+
+    const presetButtons = [
+      ...fixture.nativeElement.querySelectorAll('section button'),
+    ] as HTMLButtonElement[];
+    expect(presetButtons).toHaveLength(5);
+    for (const button of presetButtons) {
+      expect(button.classList.contains('min-h-11')).toBe(true);
+      expect(button.classList.contains('min-w-11')).toBe(true);
+      expect(button.classList.contains('whitespace-normal')).toBe(true);
+      expect(button.classList.contains('h-8')).toBe(false);
+      expect(button.classList.contains('md:min-h-0')).toBe(false);
+    }
+
+    presetButtons[3].click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(getReportMock).toHaveBeenLastCalledWith({ preset: 'last30day' });
   });
 });

@@ -137,6 +137,38 @@ class ChoicesHost {
   readonly submissions = signal(0);
 }
 
+@Component({
+  imports: [AioSelectField],
+  template: `
+    <aio-select-field
+      label="Topic"
+      controlId="translated-select"
+      [options]="items"
+      valueKey="id"
+      labelKey="label"
+      [value]="value()"
+      (valueChange)="value.set($event)"
+    />
+    <aio-select-field
+      label="Topic"
+      controlId="raw-select"
+      [options]="items"
+      valueKey="id"
+      labelKey="label"
+      [translateLabels]="false"
+      [value]="value()"
+      (valueChange)="value.set($event)"
+    />
+  `,
+})
+class SelectTranslationHost {
+  readonly items = [
+    { id: 'home', label: 'خانه' },
+    { id: 'history', label: 'History' },
+  ];
+  readonly value = signal('home');
+}
+
 describe('shared template compositions', () => {
   it('keeps labels connected to projected Signal Forms controls and updates their model', async () => {
     TestBed.inject(AioLocale).setLanguage('en');
@@ -243,6 +275,31 @@ describe('shared template compositions', () => {
     expect(link?.querySelector('[data-slot="skeleton"]')).toBeNull();
     expect(link?.textContent).toContain('Six tasks left');
     expect(link?.textContent).toContain('Continue');
+  });
+
+  it('translates option labels by default and skips translation when translateLabels is false', async () => {
+    const locale = TestBed.inject(AioLocale);
+    locale.setLanguage('fa');
+    const fixture = TestBed.createComponent(SelectTranslationHost);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const readLabels = (id: string) => {
+      const select = fixture.nativeElement.querySelector(
+        `#${id}`,
+      ) as HTMLSelectElement;
+      return [...select.options].map((o) => o.textContent?.trim() ?? '');
+    };
+
+    expect(readLabels('translated-select')).toEqual(['خانه', 'سلامstory']);
+    expect(readLabels('raw-select')).toEqual(['خانه', 'History']);
+
+    locale.setLanguage('en');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(readLabels('translated-select')).toEqual(['Home', 'History']);
+    expect(readLabels('raw-select')).toEqual(['خانه', 'History']);
   });
 });
 
