@@ -93,7 +93,7 @@ describe('Telegram reminder offer', () => {
 
   it('replaces the offer with one line once linked', async () => {
     const { element, track } = await setup({ available: true, linked: true });
-    expect(element.textContent).toContain('یادآور تلگرام فعال است.');
+    expect(element.textContent).toContain('تلگرام وصل است.');
     expect(element.querySelector('button, a')).toBeNull();
     expect(track).not.toHaveBeenCalled();
   });
@@ -112,7 +112,7 @@ describe('Telegram reminder offer', () => {
       .expectOne('/api/telegram/status')
       .flush({ available: true, linked: true });
     await settle();
-    expect(element.textContent).toContain('یادآور تلگرام فعال است.');
+    expect(element.textContent).toContain('تلگرام وصل است.');
   });
 
   it('keeps the button for a retry when the link cannot be made', async () => {

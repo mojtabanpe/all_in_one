@@ -64,6 +64,9 @@ import {
   lucideWallet,
 } from '@ng-icons/lucide';
 
+/** Device-local: the Telegram stand-in for this push prompt was closed here. */
+const TELEGRAM_FALLBACK_HIDDEN = 'aio:telegram-fallback-hidden:';
+
 /** The trial reminder appears in the header this many days before it ends. */
 const TRIAL_NOTICE_DAYS = 3;
 
@@ -402,7 +405,11 @@ export class Layout {
         // A reminders prompt is useless where this device cannot get them (an iPhone browser tab). The English
         // review reminder can still go to Telegram, so only that one stays, with the Telegram option.
         const unsupported = widget?.kind === 'push' && !this.canPush();
-        if (unsupported && !widget.data?.['review']) continue;
+        if (
+          unsupported &&
+          (!widget.data?.['review'] || this.telegramFallbackHidden(notice.id))
+        )
+          continue;
         const enqueue = (
           embedded?: AioInAppNotification['widget'],
           message: AioInAppNotification['message'] = notice.message,
@@ -429,6 +436,12 @@ export class Layout {
               },
             })),
             onDismiss: () => {
+              // The stand-in is not the push prompt: dismissing that on the server would also remove it from a
+              // device that can get notifications (the same account in the installed iPhone app).
+              if (unsupported) {
+                this.hideTelegramFallback(notice.id);
+                return;
+              }
               this.http
                 .post(
                   `${this.api}/in-app-notifications/${notice.id}/dismiss`,
@@ -458,6 +471,22 @@ export class Layout {
       }
       previous = url;
     });
+  }
+
+  private telegramFallbackHidden(id: string): boolean {
+    try {
+      return localStorage.getItem(TELEGRAM_FALLBACK_HIDDEN + id) !== null;
+    } catch {
+      return false;
+    }
+  }
+
+  private hideTelegramFallback(id: string): void {
+    try {
+      localStorage.setItem(TELEGRAM_FALLBACK_HIDDEN + id, '1');
+    } catch {
+      /* Without storage it stays hidden for this visit only. */
+    }
   }
 
   /** Shown only when there is something to offer: never in Myket, without the bot, or once linked. */

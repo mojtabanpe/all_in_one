@@ -50,7 +50,7 @@ const EVENTS = {
     @if (available()) {
       @if (linked()) {
         <p class="text-muted-foreground text-sm" role="status">
-          {{ 'یادآور تلگرام فعال است.' | aioTranslate }}
+          {{ 'تلگرام وصل است.' | aioTranslate }}
         </p>
       } @else {
         <div class="flex w-full flex-col gap-2">
