@@ -33,6 +33,7 @@ import {
   AssistantStore,
   AuthStore,
   PushSettings,
+  TelegramOffer,
 } from '@all-in-one/web/shared';
 import {
   lucideCalendarCheck,
@@ -57,6 +58,7 @@ import {
     RouterLink,
     AioSkeletonRows,
     AioTranslate,
+    TelegramOffer,
   ],
   providers: [
     provideIcons({
@@ -120,6 +122,9 @@ import {
               </li>
             }
           </ul>
+          @if (reminderFailed() && !push.enabled()) {
+            <web-telegram-offer class="px-6 pb-2" entry="notify_failed" />
+          }
         </section>
       }
 
@@ -430,6 +435,7 @@ export class Home {
     () => `${this.api}/onboarding`,
   );
   protected readonly push = inject(PushSettings);
+  protected readonly reminderFailed = signal(false);
   private readonly assistant = inject(AssistantStore);
   private readonly storage = this.document.defaultView?.localStorage;
   private readonly assistantKey = computed(
@@ -481,8 +487,10 @@ export class Home {
         queryParams: { restart: 1 },
       });
     } else if (id === 'reminders') {
+      this.reminderFailed.set(false);
       await this.push.enable();
       if (!this.push.enabled()) {
+        this.reminderFailed.set(true);
         this.notifications.info(this.push.message());
         return;
       }
