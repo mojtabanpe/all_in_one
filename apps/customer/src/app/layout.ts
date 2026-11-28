@@ -5,6 +5,7 @@ import {
   inject,
   afterNextRender,
   signal,
+  untracked,
 } from '@angular/core';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -64,6 +65,8 @@ import {
   lucideWallet,
 } from '@ng-icons/lucide';
 
+/** A flashcard review session. */
+const STUDY_URL = /^\/english\/deck\/[^/?#]+\/study(?:[?#]|$)/;
 /** Device-local: the Telegram stand-in for this push prompt was closed here. */
 const TELEGRAM_FALLBACK_HIDDEN = 'aio:telegram-fallback-hidden:';
 
@@ -259,9 +262,7 @@ export class Layout {
     { initialValue: this.router.url },
   );
   /** A flashcard review keeps its answer and rating buttons at the bottom, where the assistant button would cover them. */
-  protected readonly studySession = computed(() =>
-    /^\/english\/deck\/[^/?#]+\/study(?:[?#]|$)/.test(this.url()),
-  );
+  protected readonly studySession = computed(() => STUDY_URL.test(this.url()));
   /** The assistant focuses on the applet the user is in. */
   protected readonly assistantContext = computed<AssistantContext>(() => {
     const first = this.url().split(/[/?#]/)[1];
@@ -461,6 +462,9 @@ export class Layout {
           );
       }
     });
+    effect(() => {
+      if (this.inApp.checkRequests()) untracked(() => this.notices.reload());
+    });
     // A payment or reward changes access on the billing page; refresh the header after leaving it.
     let previous = this.url();
     effect(() => {
@@ -469,6 +473,9 @@ export class Layout {
         this.access.reload();
         this.notices.reload();
       }
+      // A review left before its last card also counts: its reminder sheet should not wait for the next visit.
+      if (STUDY_URL.test(previous) && !STUDY_URL.test(url))
+        untracked(() => this.notices.reload());
       previous = url;
     });
   }
