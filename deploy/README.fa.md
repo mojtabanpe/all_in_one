@@ -34,6 +34,7 @@ chmod 600 /opt/all-in-one/shared/.env /opt/all-in-one/shared/compose.env
 
 - `JWT_SECRET`: دست‌کم ۳۲ نویسه تصادفی (`openssl rand -base64 48`).
 - `SMTP_URL`: برای بازیابی رمز و تأیید ایمیل هنگام ثبت‌نام لازم است. بدون آن، ثبت‌نام در حالت production خطای «ایمیل در دسترس نیست» می‌دهد.
+- `SMTP_PROXY_URL` (اختیاری): نشانی تونل HTTP محلی سرور برای مسیر جایگزین SMTP در صورتی که همهٔ تلاش‌های مستقیم با خطای موقت شبکه یا timeout مواجه شوند.
 - `MANAGED_AI_CHAT_URL`، `MANAGED_AI_CHAT_MODEL` و در صورت نیاز `MANAGED_AI_CHAT_KEY`: درگاه و مدل گفت‌وگوی مدیریت‌شده. برای گفتار، متغیرهای `MANAGED_AI_TTS_*` و `MANAGED_AI_STT_*` را تنظیم کنید. کلیدهای واقعی فقط در تنظیمات محرمانهٔ سرور قرار می‌گیرند.
 
 ## ۲. ساخت ایمیج‌ها
