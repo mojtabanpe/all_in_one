@@ -77,6 +77,22 @@ export const envSchema = z.object({
 
   // Email (password reset, verification). Without SMTP_URL, development logs emails.
   SMTP_URL: z.string().optional(),
+  SMTP_PROXY_URL: z
+    .union([
+      z.literal(''),
+      z.string().refine(
+        (value) => {
+          try {
+            const parsed = new URL(value);
+            return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+          } catch {
+            return false;
+          }
+        },
+        { message: 'SMTP_PROXY_URL must be an http:// or https:// URL' },
+      ),
+    ])
+    .optional(),
   MAIL_FROM: z.string().optional(),
   REQUIRE_EMAIL_VERIFICATION: z.enum(['true', 'false']).optional(),
 

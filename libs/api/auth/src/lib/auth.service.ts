@@ -380,17 +380,21 @@ export class AuthService {
         expiresAt: new Date(Date.now() + VERIFY_LIFETIME),
       },
     });
-    await this.mail.send({
-      to: email,
-      subject: 'ایمیلت را در «Poshtetgarm» تأیید کن',
-      text: [
-        'برای افزودن این ایمیل به حسابت در «Poshtetgarm»، روی لینک زیر بزن',
-        '(لینک یک بار و تا ۲۴ ساعت کار می‌کند):',
-        this.mail.link('verify-email', token),
-        '',
-        'اگر خودت نخواسته‌ای، این ایمیل را نادیده بگیر.',
-      ].join('\n'),
-    });
+    this.mail
+      .send({
+        to: email,
+        subject: 'ایمیلت را در «Poshtetgarm» تأیید کن',
+        text: [
+          'برای افزودن این ایمیل به حسابت در «Poshtetgarm»، روی لینک زیر بزن',
+          '(لینک یک بار و تا ۲۴ ساعت کار می‌کند):',
+          this.mail.link('verify-email', token),
+          '',
+          'اگر خودت نخواسته‌ای، این ایمیل را نادیده بگیر.',
+        ].join('\n'),
+      })
+      .catch((error: Error) =>
+        this.logger.error('Verification email failed: ' + error.message),
+      );
   }
 
   /**

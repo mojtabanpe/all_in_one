@@ -7,6 +7,11 @@ import {
 } from '@all-in-one/shared/schemas';
 import { createTransport, type Transporter } from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const httpProxyClient =
+  require('nodemailer/lib/smtp-connection/http-proxy-client') as {
+    timeout?: number;
+  };
 
 export interface Mail {
   to: string;
@@ -14,10 +19,14 @@ export interface Mail {
   text: string;
 }
 
-export const SMTP_CONNECTION_TIMEOUT_MS = 15_000;
-export const SMTP_GREETING_TIMEOUT_MS = 15_000;
-export const SMTP_SOCKET_TIMEOUT_MS = 30_000;
+export const SMTP_SEND_DEADLINE_MS = 45_000;
+export const SMTP_PROXY_RESERVED_BUDGET_MS = 15_000;
+export const SMTP_PROXY_TUNNEL_TIMEOUT_MS = 8_000;
+export const SMTP_CONNECTION_TIMEOUT_MS = 8_000;
+export const SMTP_GREETING_TIMEOUT_MS = 8_000;
+export const SMTP_SOCKET_TIMEOUT_MS = 10_000;
 export const SMTP_MAX_DIRECT_ATTEMPTS = 3;
+export const SMTP_MAX_DIRECT_ATTEMPTS_WITH_PROXY = 2;
 export const SMTP_RETRY_DELAYS_MS = [500, 1_500] as const;
 
 type MailRoute = 'direct' | 'proxy';
@@ -41,14 +50,35 @@ const TRANSIENT_MESSAGES = [
   'socket close',
   'connection closed unexpectedly',
   'proxy socket timed out',
+  'send deadline exceeded',
 ];
 
-function buildSmtpOptions(
+export function validateSmtpProxyUrl(rawProxyUrl: string): string {
+  let parsed: URL;
+  try {
+    parsed = new URL(rawProxyUrl);
+  } catch {
+    throw new Error('Invalid SMTP_PROXY_URL: must be a valid http(s) URL');
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error(
+      `Invalid SMTP_PROXY_URL protocol "${parsed.protocol}": only http: and https: are supported`,
+    );
+  }
+  return rawProxyUrl;
+}
+
+export function buildSmtpOptions(
   rawUrl: string,
   proxyUrl?: string,
+  onWarn?: (message: string) => void,
 ): (SMTPTransport.Options & { proxy?: string }) | string {
   try {
     const parsed = new URL(rawUrl);
+    if (!parsed.hostname) {
+      throw new Error('Missing SMTP hostname');
+    }
+    const host = parsed.hostname.replace(/^\[|\]$/g, '');
     const secure =
       parsed.searchParams.get('secure') === 'true'
         ? true
@@ -57,7 +87,7 @@ function buildSmtpOptions(
           : parsed.protocol === 'smtps:';
     const port = Number(parsed.port) || (secure ? 465 : 587);
     const options: SMTPTransport.Options & { proxy?: string } = {
-      host: parsed.hostname || 'localhost',
+      host: host || 'localhost',
       port,
       secure,
       connectionTimeout: SMTP_CONNECTION_TIMEOUT_MS,
@@ -77,10 +107,13 @@ function buildSmtpOptions(
       options.tls = { rejectUnauthorized: rejectUnauthorized === 'true' };
     }
     if (proxyUrl) {
-      options.proxy = proxyUrl;
+      options.proxy = validateSmtpProxyUrl(proxyUrl);
     }
     return options;
   } catch {
+    onWarn?.(
+      'SMTP_URL could not be parsed into options; falling back to default transport settings.',
+    );
     return rawUrl;
   }
 }
@@ -153,14 +186,15 @@ export class MailService {
   constructor(private readonly config: ConfigService) {
     const url = config.get<string>('SMTP_URL')?.trim();
     const proxyUrl = config.get<string>('SMTP_PROXY_URL')?.trim();
-    this.transport = url ? createTransport(buildSmtpOptions(url)) : null;
+    const warn = (msg: string) => this.logger.warn(msg);
+    this.transport = url
+      ? createTransport(buildSmtpOptions(url, undefined, warn))
+      : null;
     if (url && proxyUrl) {
-      const proxyOpts = buildSmtpOptions(url, proxyUrl);
-      const transport = createTransport(proxyOpts);
-      if (typeof transport.setupProxy === 'function') {
-        transport.setupProxy(proxyUrl);
-      }
-      this.proxyTransport = transport;
+      const validProxyUrl = validateSmtpProxyUrl(proxyUrl);
+      httpProxyClient.timeout = SMTP_PROXY_TUNNEL_TIMEOUT_MS;
+      const proxyOpts = buildSmtpOptions(url, validProxyUrl);
+      this.proxyTransport = createTransport(proxyOpts);
     } else {
       this.proxyTransport = null;
     }
@@ -207,6 +241,35 @@ export class MailService {
     await new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  private async sendWithTimeout(
+    transport: Transporter,
+    payload: Mail & { from: { name: string; address: string } },
+    timeoutMs: number,
+  ): Promise<void> {
+    if (timeoutMs <= 0) {
+      throw Object.assign(new Error('SMTP send deadline exceeded'), {
+        code: 'ETIMEDOUT',
+      });
+    }
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await Promise.race([
+        transport.sendMail(payload),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => {
+            reject(
+              Object.assign(new Error('SMTP send deadline exceeded'), {
+                code: 'ETIMEDOUT',
+              }),
+            );
+          }, timeoutMs);
+        }),
+      ]);
+    } finally {
+      if (timer !== undefined) clearTimeout(timer);
+    }
+  }
+
   async send(mail: Mail): Promise<void> {
     if (this.transport) {
       const sender =
@@ -232,20 +295,37 @@ export class MailService {
     payload: Mail & { from: { name: string; address: string } },
   ): Promise<void> {
     const startedAt = Date.now();
+    const deadlineAt = startedAt + SMTP_SEND_DEADLINE_MS;
+    const hasProxy = this.proxyTransport !== null;
+    const directDeadlineAt = hasProxy
+      ? deadlineAt - SMTP_PROXY_RESERVED_BUDGET_MS
+      : deadlineAt;
+    const maxDirectAttempts = hasProxy
+      ? SMTP_MAX_DIRECT_ATTEMPTS_WITH_PROXY
+      : SMTP_MAX_DIRECT_ATTEMPTS;
+
     let attempts = 0;
     let lastRoute: MailRoute = 'direct';
     let lastCode = 'ESMTP_SEND';
 
-    for (let i = 0; i < SMTP_MAX_DIRECT_ATTEMPTS; i++) {
+    for (let i = 0; i < maxDirectAttempts; i++) {
+      const remainingDirectMs = directDeadlineAt - Date.now();
+      if (i > 0 && remainingDirectMs <= 0) {
+        break;
+      }
       attempts++;
       lastRoute = 'direct';
       try {
-        await this.transport!.sendMail(payload);
-        if (attempts > 1) {
-          this.logger.log(
-            `SMTP delivery succeeded after retry (attempts=${attempts}, route=direct, durationMs=${Date.now() - startedAt})`,
-          );
-        }
+        await this.sendWithTimeout(
+          this.transport!,
+          payload,
+          Math.max(1, remainingDirectMs),
+        );
+        this.logger.log(
+          attempts > 1
+            ? `SMTP delivery succeeded after retry (attempts=${attempts}, route=direct, durationMs=${Date.now() - startedAt})`
+            : `SMTP delivery succeeded (attempts=1, route=direct, durationMs=${Date.now() - startedAt})`,
+        );
         return;
       } catch (error) {
         const { transient, code } = classifySmtpError(error);
@@ -258,20 +338,28 @@ export class MailService {
             `SMTP delivery failed (attempts=${attempts}, route=${lastRoute}, code=${lastCode})`,
           );
         }
-        if (i < SMTP_MAX_DIRECT_ATTEMPTS - 1) {
-          await this.delay(
+        if (i < maxDirectAttempts - 1) {
+          const delayMs =
             SMTP_RETRY_DELAYS_MS[i] ??
-              SMTP_RETRY_DELAYS_MS[SMTP_RETRY_DELAYS_MS.length - 1],
-          );
+            SMTP_RETRY_DELAYS_MS[SMTP_RETRY_DELAYS_MS.length - 1];
+          if (Date.now() + delayMs >= directDeadlineAt) {
+            break;
+          }
+          await this.delay(delayMs);
         }
       }
     }
 
     if (this.proxyTransport) {
+      const remainingTotalMs = deadlineAt - Date.now();
       attempts++;
       lastRoute = 'proxy';
       try {
-        await this.proxyTransport.sendMail(payload);
+        await this.sendWithTimeout(
+          this.proxyTransport,
+          payload,
+          Math.max(1, remainingTotalMs),
+        );
         this.logger.log(
           `SMTP delivery succeeded after retry (attempts=${attempts}, route=proxy, durationMs=${Date.now() - startedAt})`,
         );
