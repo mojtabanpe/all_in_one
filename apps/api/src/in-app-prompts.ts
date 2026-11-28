@@ -61,7 +61,6 @@ export class InAppPrompts {
     userId: string,
     now: Date,
     activeDays: () => Promise<number>,
-    store?: 'bazaar' | 'myket' | null,
   ): Promise<void> {
     const recent = await this.db.inAppNotification.findFirst({
       where: {
@@ -119,11 +118,11 @@ export class InAppPrompts {
           ...(user.onboardingGoal === 'english'
             ? [() => this.push(userId, { review: '20:00' })]
             : []),
-          () => this.telegramLink(userId, store),
+          () => this.telegramLink(userId),
         ]
       : [
           () => this.push(userId),
-          () => this.telegramLink(userId, store),
+          () => this.telegramLink(userId),
           async () =>
             user.email &&
             user.emailVerifiedAt &&
@@ -231,12 +230,7 @@ export class InAppPrompts {
         );
   }
 
-  private async telegramLink(
-    userId: string,
-    store?: 'bazaar' | 'myket' | null,
-  ): Promise<Prompt | null> {
-    // The Myket build never prompts to link Telegram (directive 199).
-    if (store === 'myket') return null;
+  private async telegramLink(userId: string): Promise<Prompt | null> {
     if (!this.telegram.enabled) return null;
     if (
       await this.db.telegramLink.findUnique({

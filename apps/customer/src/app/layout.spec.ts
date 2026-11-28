@@ -21,6 +21,8 @@ import { Pwa } from './pwa';
 
 const IPHONE =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15';
+const MYKET =
+  'Mozilla/5.0 (Linux; Android 14; wv) PoshtetgarmApp/1.0.7 PoshtetgarmStore/myket';
 
 /** The English day-one push prompt; the server lists it until somebody dismisses it. */
 const reminder: InAppNotification = {
@@ -43,9 +45,10 @@ describe('reminders prompt across an iPhone tab and the installed app', () => {
   async function visit(
     installed: boolean,
     pending: InAppNotification[] = [reminder],
+    userAgent = IPHONE,
   ) {
     TestBed.resetTestingModule();
-    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(IPHONE);
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(userAgent);
     vi.stubGlobal('matchMedia', () => ({ matches: installed }));
     TestBed.overrideComponent(Layout, { set: { template: '', imports: [] } });
     TestBed.configureTestingModule({
@@ -119,9 +122,11 @@ describe('reminders prompt across an iPhone tab and the installed app', () => {
 
   /** The first session: nothing is pending when the app opens; the server makes the prompt after the first review. */
   describe.each([
-    ['an installed app', true, PushPrompt],
-    ['an iPhone tab', false, TelegramOffer],
-  ] as const)('first review in %s', (_, installed, component) => {
+    ['an installed app', IPHONE, true, PushPrompt],
+    ['an iPhone tab', IPHONE, false, TelegramOffer],
+    ['a Myket Android shell with push', MYKET, true, PushPrompt],
+    ['a Myket user agent without push', MYKET, false, TelegramOffer],
+  ] as const)('first review in %s', (_, userAgent, installed, component) => {
     const arrives = async (tab: Awaited<ReturnType<typeof visit>>) => {
       tab.http.expectOne('/api/in-app-notifications').flush([reminder]);
       await tab.settle();
@@ -132,7 +137,7 @@ describe('reminders prompt across an iPhone tab and the installed app', () => {
     };
 
     it('shows the reminder sheet as soon as the review session ends', async () => {
-      const tab = await visit(installed, []);
+      const tab = await visit(installed, [], userAgent);
       expect(tab.queue.current()).toBeNull();
 
       tab.queue.requestCheck();
@@ -142,7 +147,7 @@ describe('reminders prompt across an iPhone tab and the installed app', () => {
     });
 
     it('also asks when the study page is left before the last card', async () => {
-      const tab = await visit(installed, []);
+      const tab = await visit(installed, [], userAgent);
       const router = TestBed.inject(Router);
       router.resetConfig([{ path: '**', children: [] }]);
       await router.navigateByUrl('/english/deck/d1/study');

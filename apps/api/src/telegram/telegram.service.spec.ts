@@ -1,5 +1,12 @@
-import { HttpException } from '@nestjs/common';
-import type { ConfigService } from '@nestjs/config';
+import { HttpException, StandardSchemaValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Test } from '@nestjs/testing';
+import type { NextFunction, Request, Response } from 'express';
+import request from 'supertest';
+import type { PrismaService } from '@all-in-one/api/db';
+import { BillingController } from '../billing/billing.controller';
+import { BillingService } from '../billing/billing.service';
+import type { ZibalGateway } from '../billing/zibal.gateway';
 import { TelegramController } from './telegram.controller';
 import {
   plainReply,
@@ -322,23 +329,188 @@ describe('Telegram bot', () => {
     expect(JSON.stringify(stored)).not.toContain(code);
   });
 
-  it('hides the bot for the Myket store build and keeps it for others (199)', async () => {
-    const { service, db } = setup();
-    db.telegramLink.findUnique.mockResolvedValue(null);
-    expect(await service.status('u1', 'myket')).toEqual({
-      available: false,
-      linked: false,
+  it('serves Telegram status, link, channel-week reward, and TELEGRAM_JOIN offers to Myket on parity with Bazaar (209)', async () => {
+    const { service, db } = setup('member');
+    vi.spyOn(service, 'onModuleInit').mockImplementation(() => undefined);
+    const grantSocialWeek = vi.fn(async () => 'granted' as const);
+    (service as unknown as { billing: unknown }).billing = { grantSocialWeek };
+
+    const rewardRequests: {
+      userId: string;
+      campaign: string;
+      handle: string;
+    }[] = [];
+    const billingDb = {
+      billingReward: {
+        findMany: vi.fn(async () => []),
+        findUnique: vi.fn(async () => null),
+      },
+      billingRewardRequest: {
+        findMany: vi.fn(async ({ where }: { where: { userId: string } }) =>
+          rewardRequests.filter((row) => row.userId === where.userId),
+        ),
+        createMany: vi.fn(
+          async ({
+            data,
+          }: {
+            data: { userId: string; campaign: string; handle: string }[];
+          }) => {
+            for (const item of data) {
+              if (
+                !rewardRequests.some(
+                  (row) =>
+                    row.userId === item.userId &&
+                    row.campaign === item.campaign,
+                )
+              ) {
+                rewardRequests.push(item);
+              }
+            }
+          },
+        ),
+      },
+      user: {
+        findUniqueOrThrow: vi.fn(async () => ({
+          role: 'CUSTOMER',
+          emailVerifiedAt: new Date('2026-11-28T08:00:00Z'),
+          phoneVerifiedAt: new Date('2026-11-28T08:00:00Z'),
+        })),
+      },
+      subscription: { findUnique: vi.fn(async () => null) },
+      telegramLink: { findUnique: db.telegramLink.findUnique },
+      $executeRaw: vi.fn(async () => 1),
+      $transaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) =>
+        fn(billingDb),
+      ),
+    };
+    const billing = new BillingService(
+      billingDb as unknown as PrismaService,
+      {} as unknown as ZibalGateway,
+      new ConfigService({ BILLING_TELEGRAM_OFFER_ENABLED: 'true' }),
+    );
+    vi.spyOn(billing, 'access').mockResolvedValue({
+      tier: 'trial',
+      paid: false,
+      paidUntil: null,
+      trialUntil: '2026-12-05T08:00:00.000Z',
+      earnedUntil: null,
+      aiUntil: '2026-12-05T08:00:00.000Z',
     });
-    expect(await service.status('u1', 'bazaar')).toEqual({
-      available: true,
-      linked: false,
-    });
-    expect(await service.status('u1')).toEqual({
-      available: true,
-      linked: false,
-    });
-    await expect(service.createLink('u1', 'fa', 'myket')).rejects.toThrow();
-    expect(db.telegramLinkCode.create).not.toHaveBeenCalled();
+
+    let currentUserId = 'u-myket';
+    const moduleRef = await Test.createTestingModule({
+      controllers: [TelegramController, BillingController],
+      providers: [
+        { provide: TelegramService, useValue: service },
+        { provide: BillingService, useValue: billing },
+      ],
+    }).compile();
+    const app = moduleRef.createNestApplication();
+    app.use(
+      (
+        req: Request & { user?: { id: string; role: string } },
+        _res: Response,
+        next: NextFunction,
+      ) => {
+        req.user = { id: currentUserId, role: 'CUSTOMER' };
+        next();
+      },
+    );
+    app.useGlobalPipes(new StandardSchemaValidationPipe());
+    await app.init();
+
+    try {
+      const stores = [
+        [
+          'u-myket',
+          'Mozilla/5.0 (Linux; Android 14; wv) PoshtetgarmApp/1.0.7 PoshtetgarmStore/myket',
+          'PoshtetgarmApp/1.0.7 PoshtetgarmStore/myket',
+        ],
+        [
+          'u-bazaar',
+          'Mozilla/5.0 (Linux; Android 14; wv) PoshtetgarmApp/1.0.7 PoshtetgarmStore/bazaar',
+          'PoshtetgarmApp/1.0.7 PoshtetgarmStore/bazaar',
+        ],
+      ] as const;
+
+      const snapshots = [];
+      for (const [userId, ua, shell] of stores) {
+        currentUserId = userId;
+        db.telegramLink.findUnique.mockResolvedValue(null);
+
+        const statusRes = await request(app.getHttpServer())
+          .get('/telegram/status')
+          .set('User-Agent', ua)
+          .set('X-Aio-Shell', shell)
+          .expect(200);
+
+        const linkRes = await request(app.getHttpServer())
+          .post('/telegram/link')
+          .set('User-Agent', ua)
+          .set('X-Aio-Shell', shell)
+          .send({ language: 'fa', entry: 'review_end' })
+          .expect(200);
+        expect(linkRes.body.url).toMatch(
+          /^https:\/\/t\.me\/poshtetgarm_bot\?start=[A-Za-z0-9_-]+$/,
+        );
+
+        const offersRes = await request(app.getHttpServer())
+          .get('/billing/reward-offers')
+          .set('User-Agent', ua)
+          .set('X-Aio-Shell', shell)
+          .expect(200);
+
+        const requestRes = await request(app.getHttpServer())
+          .post('/billing/reward-requests')
+          .set('User-Agent', ua)
+          .set('X-Aio-Shell', shell)
+          .send({ campaign: 'TELEGRAM_JOIN', handle: '@store_member' })
+          .expect(201);
+
+        db.telegramLink.findUnique.mockResolvedValue({ chatId: 42n });
+        const rewardRes = await request(app.getHttpServer())
+          .post('/telegram/reward')
+          .set('User-Agent', ua)
+          .set('X-Aio-Shell', shell)
+          .expect(200);
+
+        snapshots.push({
+          status: statusRes.body,
+          offers: offersRes.body,
+          requested: requestRes.body,
+          reward: rewardRes.body,
+        });
+      }
+
+      expect(snapshots[0]).toEqual({
+        status: { available: true, linked: false },
+        offers: [
+          {
+            campaign: 'TELEGRAM_JOIN',
+            url: 'https://t.me/poshtetgarm',
+            account: 'poshtetgarm',
+            status: 'available',
+            telegramLinked: false,
+          },
+        ],
+        requested: [
+          {
+            campaign: 'TELEGRAM_JOIN',
+            url: 'https://t.me/poshtetgarm',
+            account: 'poshtetgarm',
+            status: 'pending',
+            handle: 'store_member',
+            telegramLinked: false,
+          },
+        ],
+        reward: { result: 'granted' },
+      });
+      // Exact Myket == Bazaar parity.
+      expect(snapshots[0]).toEqual(snapshots[1]);
+      expect(db.telegramLinkCode.create).toHaveBeenCalledTimes(2);
+    } finally {
+      await app.close();
+    }
   });
 
   it('links a chat with a valid code and refuses an expired one', async () => {
@@ -1020,15 +1192,14 @@ describe('Telegram bot', () => {
   });
 
   describe('English review reminder and link entry (PG-012)', () => {
-    it('stores optional entry on one-time link codes and blocks Myket (199)', async () => {
+    it('stores optional entry on one-time link codes across Bazaar, web and Myket (209)', async () => {
       const { service, db } = setup();
       const controller = new TelegramController(service);
 
-      await controller.link(
-        { id: 'u1' } as never,
-        { language: 'fa', entry: 'review_end' },
-        'Mozilla/5.0 PoshtetgarmStore/bazaar',
-      );
+      await controller.link({ id: 'u1' } as never, {
+        language: 'fa',
+        entry: 'review_end',
+      });
       expect(db.telegramLinkCode.create).toHaveBeenLastCalledWith({
         data: expect.objectContaining({
           userId: 'u1',
@@ -1037,11 +1208,10 @@ describe('Telegram bot', () => {
         }),
       });
 
-      await controller.link(
-        { id: 'u2' } as never,
-        { language: 'en', entry: 'notify_failed' },
-        'Mozilla/5.0',
-      );
+      await controller.link({ id: 'u2' } as never, {
+        language: 'en',
+        entry: 'notify_failed',
+      });
       expect(db.telegramLinkCode.create).toHaveBeenLastCalledWith({
         data: expect.objectContaining({
           userId: 'u2',
@@ -1050,14 +1220,18 @@ describe('Telegram bot', () => {
         }),
       });
 
-      await expect(
-        controller.link(
-          { id: 'u3' } as never,
-          { language: 'fa', entry: 'notify_failed' },
-          'Mozilla/5.0 PoshtetgarmStore/myket',
-        ),
-      ).rejects.toThrow();
-      expect(db.telegramLinkCode.create).toHaveBeenCalledTimes(2);
+      await controller.link({ id: 'u3' } as never, {
+        language: 'fa',
+        entry: 'notify_failed',
+      });
+      expect(db.telegramLinkCode.create).toHaveBeenLastCalledWith({
+        data: expect.objectContaining({
+          userId: 'u3',
+          language: 'fa',
+          entry: 'notify_failed',
+        }),
+      });
+      expect(db.telegramLinkCode.create).toHaveBeenCalledTimes(3);
     });
 
     it('counts successful links by entry without personal data and skips test/staff or consumed codes', async () => {

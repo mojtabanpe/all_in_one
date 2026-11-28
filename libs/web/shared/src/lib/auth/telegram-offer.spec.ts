@@ -11,7 +11,10 @@ import { GrowthAnalytics } from '../growth-analytics';
 import { TelegramOffer } from './telegram-offer';
 
 describe('Telegram reminder offer', () => {
-  afterEach(() => TestBed.resetTestingModule());
+  afterEach(() => {
+    TestBed.resetTestingModule();
+    vi.restoreAllMocks();
+  });
 
   async function setup(
     status: { available: boolean; linked: boolean },
@@ -79,17 +82,60 @@ describe('Telegram reminder offer', () => {
     },
   );
 
-  it('shows and counts nothing while unavailable, as in the Myket build', async () => {
+  it('shows and counts nothing while the bot is unavailable on the server', async () => {
     const { element, track } = await setup({ available: false, linked: false });
     expect(element.textContent?.trim()).toBe('');
     expect(element.querySelector('button, a')).toBeNull();
     expect(track).not.toHaveBeenCalled();
   });
 
-  it('stays silent in Myket for an already linked account too', async () => {
+  it('stays silent when unavailable on the server even for a previously linked account', async () => {
     const { element } = await setup({ available: false, linked: true });
     expect(element.textContent?.trim()).toBe('');
   });
+
+  it.each(['myket', 'bazaar'] as const)(
+    'shows the offer, plain shell navigation, and linked state in the %s Android shell (209)',
+    async (store) => {
+      vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(
+        `Mozilla/5.0 (Linux; Android 14; wv) PoshtetgarmApp/1.0.7 PoshtetgarmStore/${store}`,
+      );
+      const { element, http, settle, track } = await setup(
+        { available: true, linked: false },
+        'review_end',
+      );
+      expect(track.mock.calls).toEqual([['tg_offer_viewed_review_end']]);
+      const button = element.querySelector('button');
+      expect(button?.textContent).toContain('یادآور در تلگرام');
+
+      button?.click();
+      const link = http.expectOne('/api/telegram/link');
+      expect(link.request.body).toEqual({
+        language: 'fa',
+        entry: 'review_end',
+      });
+      link.flush({ url: 'https://t.me/test_bot?start=code' });
+      await settle();
+
+      const anchor = element.querySelector('a');
+      expect(anchor?.getAttribute('href')).toBe(
+        'https://t.me/test_bot?start=code',
+      );
+      expect(anchor?.getAttribute('target')).toBeNull();
+      expect(track.mock.calls).toEqual([
+        ['tg_offer_viewed_review_end'],
+        ['tg_offer_clicked_review_end'],
+      ]);
+
+      document.dispatchEvent(new Event('visibilitychange'));
+      await settle();
+      http
+        .expectOne('/api/telegram/status')
+        .flush({ available: true, linked: true });
+      await settle();
+      expect(element.textContent).toContain('تلگرام وصل است.');
+    },
+  );
 
   it('replaces the offer with one line once linked', async () => {
     const { element, track } = await setup({ available: true, linked: true });

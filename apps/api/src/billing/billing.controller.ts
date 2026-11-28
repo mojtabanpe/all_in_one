@@ -11,7 +11,6 @@ import {
   Query,
   Redirect,
 } from '@nestjs/common';
-import { ShellUserAgent } from '../shell-user-agent';
 import { Throttle } from '@nestjs/throttler';
 import {
   CurrentUser,
@@ -43,7 +42,6 @@ import {
   type BillingRefundInput,
 } from '@all-in-one/shared/schemas';
 import { BillingService } from './billing.service';
-import { storeFromUserAgent } from '../in-app-notifications';
 
 @Controller('billing')
 export class BillingController {
@@ -67,15 +65,8 @@ export class BillingController {
   }
 
   @Get('reward-offers')
-  rewardOffers(
-    @CurrentUser() user: AuthUser,
-    @ShellUserAgent() userAgent: string,
-  ) {
-    return this.billing.rewardOffers(
-      user.id,
-      new Date(),
-      storeFromUserAgent(userAgent),
-    );
+  rewardOffers(@CurrentUser() user: AuthUser) {
+    return this.billing.rewardOffers(user.id);
   }
 
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
@@ -84,14 +75,8 @@ export class BillingController {
     @CurrentUser() user: AuthUser,
     @Body({ schema: billingRewardRequestSchema })
     input: BillingRewardRequestInput,
-    @ShellUserAgent() userAgent: string,
   ) {
-    return this.billing.requestReward(
-      user.id,
-      input,
-      new Date(),
-      storeFromUserAgent(userAgent),
-    );
+    return this.billing.requestReward(user.id, input);
   }
 
   @Get('orders')

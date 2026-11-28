@@ -496,7 +496,7 @@ export class Layout {
     }
   }
 
-  /** Shown only when there is something to offer: never in Myket, without the bot, or once linked. */
+  /** Shown only when there is something to offer: never without the bot or once linked. */
   private async offerTelegramInstead(
     enqueue: (
       widget: AioInAppNotification['widget'],

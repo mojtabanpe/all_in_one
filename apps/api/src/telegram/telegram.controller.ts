@@ -1,8 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Post } from '@nestjs/common';
-import { ShellUserAgent } from '../shell-user-agent';
 import { Throttle } from '@nestjs/throttler';
 import { type AuthUser, CurrentUser } from '@all-in-one/api/auth';
-import { storeFromUserAgent } from '../in-app-notifications';
 import {
   type TelegramLinkRequest,
   type TelegramRewardCheck,
@@ -17,11 +15,8 @@ export class TelegramController {
   constructor(private readonly telegram: TelegramService) {}
 
   @Get('status')
-  status(
-    @CurrentUser() user: AuthUser,
-    @ShellUserAgent() userAgent: string,
-  ): Promise<TelegramStatus> {
-    return this.telegram.status(user.id, storeFromUserAgent(userAgent));
+  status(@CurrentUser() user: AuthUser): Promise<TelegramStatus> {
+    return this.telegram.status(user.id);
   }
 
   @Post('link')
@@ -30,12 +25,10 @@ export class TelegramController {
   link(
     @CurrentUser() user: AuthUser,
     @Body({ schema: telegramLinkRequestSchema }) input: TelegramLinkRequest,
-    @ShellUserAgent() userAgent: string,
   ): Promise<{ url: string }> {
     return this.telegram.createLink(
       user.id,
       input.language ?? 'fa',
-      storeFromUserAgent(userAgent),
       input.entry,
     );
   }
@@ -46,14 +39,9 @@ export class TelegramController {
   @Throttle({ default: { limit: 6, ttl: 60000 } })
   async reward(
     @CurrentUser() user: AuthUser,
-    @ShellUserAgent() userAgent: string,
   ): Promise<{ result: TelegramRewardCheck }> {
     return {
-      result: await this.telegram.claimChannelWeek(
-        user.id,
-        new Date(),
-        storeFromUserAgent(userAgent),
-      ),
+      result: await this.telegram.claimChannelWeek(user.id),
     };
   }
 
