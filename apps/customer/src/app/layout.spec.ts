@@ -5,7 +5,7 @@ import {
 } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import type { InAppNotification } from '@all-in-one/shared/schemas';
 import { AioInAppNotifications } from '@all-in-one/ui';
 import {
@@ -40,7 +40,10 @@ describe('reminders prompt across an iPhone tab and the installed app', () => {
   });
 
   /** One visit of the signed-in shell, without its template: only the prompt queue matters here. */
-  async function visit(installed: boolean) {
+  async function visit(
+    installed: boolean,
+    pending: InAppNotification[] = [reminder],
+  ) {
     TestBed.resetTestingModule();
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(IPHONE);
     vi.stubGlobal('matchMedia', () => ({ matches: installed }));
@@ -70,7 +73,7 @@ describe('reminders prompt across an iPhone tab and the installed app', () => {
     };
     fixture.detectChanges();
     await settle();
-    http.expectOne('/api/in-app-notifications').flush([reminder]);
+    http.expectOne('/api/in-app-notifications').flush(pending);
     await settle();
     const dismissals = () =>
       http.match('/api/in-app-notifications/push-1/dismiss').length;
@@ -112,5 +115,44 @@ describe('reminders prompt across an iPhone tab and the installed app', () => {
     // Dismissing the real push sheet is still permanent.
     app.queue.dismiss();
     expect(app.dismissals()).toBe(1);
+  });
+
+  /** The first session: nothing is pending when the app opens; the server makes the prompt after the first review. */
+  describe.each([
+    ['an installed app', true, PushPrompt],
+    ['an iPhone tab', false, TelegramOffer],
+  ] as const)('first review in %s', (_, installed, component) => {
+    const arrives = async (tab: Awaited<ReturnType<typeof visit>>) => {
+      tab.http.expectOne('/api/in-app-notifications').flush([reminder]);
+      await tab.settle();
+      if (!installed) await telegramFallback(tab);
+      await vi.waitFor(() =>
+        expect(tab.queue.current()?.widget?.component).toBe(component),
+      );
+    };
+
+    it('shows the reminder sheet as soon as the review session ends', async () => {
+      const tab = await visit(installed, []);
+      expect(tab.queue.current()).toBeNull();
+
+      tab.queue.requestCheck();
+      await tab.settle();
+
+      await arrives(tab);
+    });
+
+    it('also asks when the study page is left before the last card', async () => {
+      const tab = await visit(installed, []);
+      const router = TestBed.inject(Router);
+      router.resetConfig([{ path: '**', children: [] }]);
+      await router.navigateByUrl('/english/deck/d1/study');
+      await tab.settle();
+      tab.http.expectNone('/api/in-app-notifications');
+
+      await router.navigateByUrl('/english/deck/d1');
+      await tab.settle();
+
+      await arrives(tab);
+    });
   });
 });
