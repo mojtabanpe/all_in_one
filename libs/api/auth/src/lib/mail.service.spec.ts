@@ -18,19 +18,34 @@ import {
   validateSmtpProxyUrl,
 } from './mail.service';
 
-const { directSendMail, proxySendMail, setupProxy, createTransport } =
-  vi.hoisted(() => {
-    const directSendMail = vi.fn().mockResolvedValue({});
-    const proxySendMail = vi.fn().mockResolvedValue({});
-    const setupProxy = vi.fn();
-    const createTransport = vi.fn((options?: { proxy?: string } | string) => {
-      if (typeof options === 'object' && options?.proxy) {
-        return { sendMail: proxySendMail, setupProxy };
-      }
-      return { sendMail: directSendMail, setupProxy };
-    });
-    return { directSendMail, proxySendMail, setupProxy, createTransport };
+const {
+  directSendMail,
+  proxySendMail,
+  directClose,
+  proxyClose,
+  setupProxy,
+  createTransport,
+} = vi.hoisted(() => {
+  const directSendMail = vi.fn().mockResolvedValue({});
+  const proxySendMail = vi.fn().mockResolvedValue({});
+  const directClose = vi.fn();
+  const proxyClose = vi.fn();
+  const setupProxy = vi.fn();
+  const createTransport = vi.fn((options?: { proxy?: string } | string) => {
+    if (typeof options === 'object' && options?.proxy) {
+      return { sendMail: proxySendMail, close: proxyClose, setupProxy };
+    }
+    return { sendMail: directSendMail, close: directClose, setupProxy };
   });
+  return {
+    directSendMail,
+    proxySendMail,
+    directClose,
+    proxyClose,
+    setupProxy,
+    createTransport,
+  };
+});
 
 vi.mock('nodemailer', () => ({ createTransport }));
 
@@ -38,6 +53,8 @@ describe('Email sender branding', () => {
   beforeEach(() => {
     directSendMail.mockReset().mockResolvedValue({});
     proxySendMail.mockReset().mockResolvedValue({});
+    directClose.mockReset();
+    proxyClose.mockReset();
     setupProxy.mockReset();
     createTransport.mockClear();
   });
@@ -126,6 +143,8 @@ describe('MailService SMTP timeouts, retry and proxy fallback', () => {
   beforeEach(() => {
     directSendMail.mockReset().mockResolvedValue({});
     proxySendMail.mockReset().mockResolvedValue({});
+    directClose.mockReset();
+    proxyClose.mockReset();
     setupProxy.mockReset();
     createTransport.mockClear();
     logSpy = vi
@@ -382,6 +401,75 @@ describe('MailService SMTP timeouts, retry and proxy fallback', () => {
 
     expect(elapsedMs).toBeLessThanOrEqual(SMTP_SEND_DEADLINE_MS);
     expect(proxySendMail).toHaveBeenCalledTimes(1);
+  });
+
+  it('tears down a timed-out direct attempt and destroys its tracked socket before starting the proxy send', async () => {
+    vi.useFakeTimers();
+    const events: string[] = [];
+
+    directSendMail.mockImplementation(() => {
+      events.push('direct:start');
+      return new Promise(() => undefined);
+    });
+    directClose.mockImplementation(() => {
+      events.push('direct:abort');
+    });
+    proxySendMail.mockImplementation(async () => {
+      events.push('proxy:start');
+      return {};
+    });
+
+    const service = new MailService(
+      new ConfigService({
+        SMTP_URL: smtpUrl,
+        SMTP_PROXY_URL: proxyUrl,
+      }),
+    );
+
+    // Also verify the per-attempt socket controller directly destroys an in-flight socket
+    const controller = (
+      service as unknown as {
+        createAttemptSocketController: (
+          route: 'direct' | 'proxy',
+          timeoutMs: number,
+        ) => {
+          getSocket: (
+            options: {
+              host?: string;
+              port?: number;
+              connectionTimeout?: number;
+            },
+            cb: (
+              err: Error | null,
+              res?: { connection: unknown } | false,
+            ) => void,
+          ) => void;
+          abortAttempt: () => void;
+        };
+      }
+    ).createAttemptSocketController('direct', 5_000);
+    controller.abortAttempt();
+    let abortedSocketErr: Error | null = null;
+    controller.getSocket({ host: '127.0.0.1', port: 465 }, (err) => {
+      abortedSocketErr = err;
+    });
+    expect(abortedSocketErr).toMatchObject({
+      message: 'SMTP send deadline exceeded',
+      code: 'ETIMEDOUT',
+    });
+
+    const sendPromise = service.send({
+      to: recipient,
+      subject: 'Verify',
+      text: 'Body',
+    });
+
+    await vi.advanceTimersByTimeAsync(
+      SMTP_SEND_DEADLINE_MS - SMTP_PROXY_RESERVED_BUDGET_MS + 100,
+    );
+    await sendPromise;
+
+    expect(events).toEqual(['direct:start', 'direct:abort', 'proxy:start']);
   });
 
   it('validates SMTP_PROXY_URL protocol, strips IPv6 brackets and logs a sanitized warning on unparseable SMTP_URL', () => {

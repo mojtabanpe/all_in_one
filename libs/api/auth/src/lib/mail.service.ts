@@ -5,13 +5,17 @@ import {
   type GrowthCampaign,
   type RegisterInput,
 } from '@all-in-one/shared/schemas';
+import * as net from 'node:net';
 import { createTransport, type Transporter } from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const httpProxyClient =
-  require('nodemailer/lib/smtp-connection/http-proxy-client') as {
-    timeout?: number;
-  };
+  require('nodemailer/lib/smtp-connection/http-proxy-client') as ((
+    proxyUrl: string,
+    destinationPort: number,
+    destinationHost: string,
+    callback: (err: Error | null, socket?: net.Socket) => void,
+  ) => void) & { timeout?: number };
 
 export interface Mail {
   to: string;
@@ -30,6 +34,14 @@ export const SMTP_MAX_DIRECT_ATTEMPTS_WITH_PROXY = 2;
 export const SMTP_RETRY_DELAYS_MS = [500, 1_500] as const;
 
 type MailRoute = 'direct' | 'proxy';
+
+type SmtpGetSocket = (
+  options: SMTPTransport.Options,
+  callback: (
+    err: Error | null,
+    socketOptions?: { connection: net.Socket } | false,
+  ) => void,
+) => void;
 
 const TRANSIENT_CODES = new Set([
   'ETIMEDOUT',
@@ -179,6 +191,9 @@ function classifySmtpError(error: unknown): {
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
+  private readonly directOptions:
+    (SMTPTransport.Options & { proxy?: string }) | string | null;
+  private readonly proxyUrl: string | null;
   private readonly transport: Transporter | null;
   private readonly proxyTransport: Transporter | null;
   readonly outbox: Mail[] = [];
@@ -187,15 +202,18 @@ export class MailService {
     const url = config.get<string>('SMTP_URL')?.trim();
     const proxyUrl = config.get<string>('SMTP_PROXY_URL')?.trim();
     const warn = (msg: string) => this.logger.warn(msg);
-    this.transport = url
-      ? createTransport(buildSmtpOptions(url, undefined, warn))
+    this.directOptions = url ? buildSmtpOptions(url, undefined, warn) : null;
+    this.transport = this.directOptions
+      ? createTransport(this.directOptions)
       : null;
     if (url && proxyUrl) {
       const validProxyUrl = validateSmtpProxyUrl(proxyUrl);
+      this.proxyUrl = validProxyUrl;
       httpProxyClient.timeout = SMTP_PROXY_TUNNEL_TIMEOUT_MS;
       const proxyOpts = buildSmtpOptions(url, validProxyUrl);
       this.proxyTransport = createTransport(proxyOpts);
     } else {
+      this.proxyUrl = null;
       this.proxyTransport = null;
     }
   }
@@ -241,8 +259,143 @@ export class MailService {
     await new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  /**
+   * Builds a per-attempt `getSocket` hook and abort function so that when an
+   * attempt's deadline timer fires, the underlying TCP/proxy socket (and any
+   * TLS session layered over it by `SMTPConnection._upgradeConnection`) is
+   * immediately destroyed before the next retry or proxy fallback begins.
+   */
+  private createAttemptSocketController(
+    route: MailRoute,
+    timeoutMs: number,
+  ): {
+    getSocket: SmtpGetSocket;
+    abortAttempt: () => void;
+  } {
+    let activeSocket: net.Socket | null = null;
+    let aborted = false;
+
+    const destroySocket = (socket: net.Socket | null) => {
+      if (!socket || socket.destroyed) return;
+      try {
+        socket.destroy(
+          Object.assign(new Error('SMTP send deadline exceeded'), {
+            code: 'ETIMEDOUT',
+          }),
+        );
+      } catch {
+        // ignore teardown errors
+      }
+    };
+
+    const abortAttempt = () => {
+      aborted = true;
+      destroySocket(activeSocket);
+      activeSocket = null;
+    };
+
+    const getSocket: SmtpGetSocket = (options, callback) => {
+      if (aborted) {
+        callback(
+          Object.assign(new Error('SMTP send deadline exceeded'), {
+            code: 'ETIMEDOUT',
+          }),
+        );
+        return;
+      }
+
+      const host = options.host || 'localhost';
+      const port = Number(options.port) || (options.secure ? 465 : 587);
+
+      if (route === 'proxy' && this.proxyUrl) {
+        httpProxyClient.timeout = Math.max(
+          1,
+          Math.min(SMTP_PROXY_TUNNEL_TIMEOUT_MS, timeoutMs),
+        );
+        httpProxyClient(this.proxyUrl, port, host, (err, socket) => {
+          if (err) {
+            callback(err);
+            return;
+          }
+          if (aborted || !socket) {
+            destroySocket(socket ?? null);
+            callback(
+              Object.assign(new Error('SMTP send deadline exceeded'), {
+                code: 'ETIMEDOUT',
+              }),
+            );
+            return;
+          }
+          activeSocket = socket;
+          callback(null, { connection: socket });
+        });
+        return;
+      }
+
+      const connectTimeoutMs = Math.max(
+        1,
+        Math.min(
+          options.connectionTimeout ?? SMTP_CONNECTION_TIMEOUT_MS,
+          timeoutMs,
+        ),
+      );
+      let settled = false;
+      const rawSocket = net.connect({ host, port });
+      activeSocket = rawSocket;
+
+      const connectTimer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        rawSocket.removeListener('error', onConnectError);
+        rawSocket.removeListener('connect', onConnect);
+        try {
+          rawSocket.destroy();
+        } catch {
+          // ignore
+        }
+        callback(
+          Object.assign(new Error('Connection timeout'), {
+            code: 'ETIMEDOUT',
+          }),
+        );
+      }, connectTimeoutMs);
+
+      const onConnectError = (err: Error) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(connectTimer);
+        rawSocket.removeListener('connect', onConnect);
+        callback(err);
+      };
+
+      const onConnect = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(connectTimer);
+        rawSocket.removeListener('error', onConnectError);
+        if (aborted) {
+          destroySocket(rawSocket);
+          callback(
+            Object.assign(new Error('SMTP send deadline exceeded'), {
+              code: 'ETIMEDOUT',
+            }),
+          );
+          return;
+        }
+        rawSocket.setKeepAlive(true);
+        callback(null, { connection: rawSocket });
+      };
+
+      rawSocket.once('error', onConnectError);
+      rawSocket.once('connect', onConnect);
+    };
+
+    return { getSocket, abortAttempt };
+  }
+
   private async sendWithTimeout(
     transport: Transporter,
+    route: MailRoute,
     payload: Mail & { from: { name: string; address: string } },
     timeoutMs: number,
   ): Promise<void> {
@@ -251,12 +404,56 @@ export class MailService {
         code: 'ETIMEDOUT',
       });
     }
+
+    const { getSocket, abortAttempt } = this.createAttemptSocketController(
+      route,
+      timeoutMs,
+    );
+
+    const mailerWithInternalTransport = transport as Transporter & {
+      transporter?: { getSocket?: SmtpGetSocket };
+      close?: () => void;
+    };
+    let attemptTransport = transport;
+    let restoreGetSocket: (() => void) | undefined;
+
+    if (
+      mailerWithInternalTransport.transporter &&
+      typeof mailerWithInternalTransport.transporter === 'object'
+    ) {
+      if (this.directOptions && typeof this.directOptions === 'object') {
+        const perAttemptOpts: SMTPTransport.Options & {
+          getSocket?: SmtpGetSocket;
+        } = {
+          ...this.directOptions,
+          getSocket,
+        };
+        delete (perAttemptOpts as { proxy?: string }).proxy;
+        attemptTransport = createTransport(perAttemptOpts);
+      } else {
+        const target = mailerWithInternalTransport.transporter;
+        const prev = target.getSocket;
+        target.getSocket = getSocket;
+        restoreGetSocket = () => {
+          target.getSocket = prev;
+        };
+      }
+    }
+
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
       await Promise.race([
-        transport.sendMail(payload),
+        attemptTransport.sendMail(payload),
         new Promise<never>((_, reject) => {
           timer = setTimeout(() => {
+            abortAttempt();
+            if (typeof attemptTransport.close === 'function') {
+              try {
+                attemptTransport.close();
+              } catch {
+                // ignore
+              }
+            }
             reject(
               Object.assign(new Error('SMTP send deadline exceeded'), {
                 code: 'ETIMEDOUT',
@@ -267,6 +464,7 @@ export class MailService {
       ]);
     } finally {
       if (timer !== undefined) clearTimeout(timer);
+      restoreGetSocket?.();
     }
   }
 
@@ -318,6 +516,7 @@ export class MailService {
       try {
         await this.sendWithTimeout(
           this.transport!,
+          'direct',
           payload,
           Math.max(1, remainingDirectMs),
         );
@@ -357,6 +556,7 @@ export class MailService {
       try {
         await this.sendWithTimeout(
           this.proxyTransport,
+          'proxy',
           payload,
           Math.max(1, remainingTotalMs),
         );
