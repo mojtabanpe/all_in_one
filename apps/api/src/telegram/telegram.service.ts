@@ -415,10 +415,7 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
   async claimChannelWeek(
     userId: string,
     now = new Date(),
-    store?: 'bazaar' | 'myket' | null,
   ): Promise<TelegramRewardCheck> {
-    // The Myket build never offers Telegram (directive 199).
-    if (store === 'myket') return 'unavailable';
     if (!this.billing || !this.enabled) return 'unavailable';
     const link = await this.db.telegramLink.findUnique({
       where: { userId },
@@ -520,28 +517,21 @@ export class TelegramService implements OnModuleInit, OnModuleDestroy {
     this.stopRewardListener?.();
   }
 
-  async status(
-    userId: string,
-    store?: 'bazaar' | 'myket' | null,
-  ): Promise<TelegramStatus> {
+  async status(userId: string): Promise<TelegramStatus> {
     const link = await this.db.telegramLink.findUnique({
       where: { userId },
       select: { userId: true },
     });
-    // Myket forbids referring its users to Telegram, so the Myket build hides the bot entirely and
-    // permanently (directive 199); every other channel keeps it. The web app hides the whole section
-    // while `available` is false.
-    return { available: this.enabled && store !== 'myket', linked: !!link };
+    return { available: this.enabled, linked: !!link };
   }
 
   /** A one-time `t.me` link; only the code's hash is stored and it expires in 10 minutes. */
   async createLink(
     userId: string,
     language: Lang,
-    store?: 'bazaar' | 'myket' | null,
     entry?: TelegramLinkEntry,
   ): Promise<{ url: string }> {
-    if (!this.enabled || store === 'myket')
+    if (!this.enabled)
       throw new ServiceUnavailableException('ربات تلگرام فعال نیست.');
     const code = randomBytes(18).toString('base64url');
     await this.db.$transaction([

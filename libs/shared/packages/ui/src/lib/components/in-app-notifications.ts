@@ -38,6 +38,14 @@ export class AioInAppNotifications {
   readonly current = computed<AioInAppNotification | null>(
     () => this.queue()[0] ?? null,
   );
+  private readonly checks = signal(0);
+  /** Counts `requestCheck()` calls; the signed-in shell asks the server for new messages on each one. */
+  readonly checkRequests = this.checks.asReadonly();
+
+  /** A step has just ended that may have earned a new message (the first card review). */
+  requestCheck(): void {
+    this.checks.update((count) => count + 1);
+  }
 
   enqueue(notification: AioInAppNotification): void {
     if (this.queue().some((item) => item.id === notification.id)) return;

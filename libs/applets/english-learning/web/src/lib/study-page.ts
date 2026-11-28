@@ -1,10 +1,12 @@
 import {
   Component,
   computed,
+  effect,
   HostListener,
   inject,
   input,
   signal,
+  untracked,
 } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
@@ -28,6 +30,7 @@ import {
   AioSkeletonLines,
   AioLocale,
   AioNotifications,
+  AioInAppNotifications,
 } from '@all-in-one/ui';
 import { englishErrorMessage as apiErrorMessage } from './english-locale';
 import {
@@ -346,6 +349,7 @@ export class StudyPage {
   private readonly tts = inject(Tts);
   private readonly confirm = inject(AioConfirm);
   private readonly route = inject(ActivatedRoute);
+  private readonly inApp = inject(AioInAppNotifications, { optional: true });
 
   protected readonly ratings: Rating[] = ['again', 'hard', 'good', 'easy'];
   protected readonly labels = RATING_LABELS;
@@ -395,7 +399,16 @@ export class StudyPage {
     },
   ]);
 
+  /** At least one card was reviewed and none is left: the end screen. */
+  private readonly sessionDone = computed(
+    () => !this.loading() && !this.current() && this.reviewed() > 0,
+  );
+
   constructor() {
+    // The reminder sheet exists on the server only after the first review, so ask for it now, not on the next visit.
+    effect(() => {
+      if (this.sessionDone()) untracked(() => this.inApp?.requestCheck());
+    });
     queueMicrotask(() => this.load());
   }
 

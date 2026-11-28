@@ -39,8 +39,7 @@ const EVENTS = {
 
 /**
  * «Reminder in Telegram», offered next to device notifications. As in `TelegramSettings`, the one-time link is made
- * first and opened by the user's own tap. Nothing is shown while `available` is false: the bot is not configured, or
- * this is the Myket build (directive 199).
+ * first and opened by the user's own tap. Nothing is shown while `available` is false (the bot is not configured).
  */
 @Component({
   selector: 'web-telegram-offer',

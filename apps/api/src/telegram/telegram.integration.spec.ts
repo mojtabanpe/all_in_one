@@ -102,7 +102,7 @@ describe.skipIf(!dbUrl)(
       await prisma.$disconnect();
     });
 
-    it('persists entry on link codes, blocks Myket, and atomically counts concurrent links without PII', async () => {
+    it('persists entry on link codes (including Myket parity) and atomically counts concurrent links without PII', async () => {
       await prisma.telegramDailyCount.deleteMany({
         where: { day: { in: metricDays } },
       });
@@ -121,23 +121,15 @@ describe.skipIf(!dbUrl)(
 
       const { service } = buildService('member');
 
-      // Myket creates nothing.
-      await expect(
-        service.createLink(u1.id, 'fa', 'myket', 'notify_failed'),
-      ).rejects.toThrow();
-      expect(
-        await prisma.telegramLinkCode.count({ where: { userId: u1.id } }),
-      ).toBe(0);
-
       vi.useFakeTimers();
       // 2032-05-10 19:00 Tehran = 15:30 UTC
       vi.setSystemTime(new Date('2032-05-10T15:30:00Z'));
       try {
         const [l1, l2, l3, lQa] = await Promise.all([
-          service.createLink(u1.id, 'fa', 'bazaar', 'notify_failed'),
-          service.createLink(u2.id, 'en', undefined, 'review_end'),
-          service.createLink(u3.id, 'fa', undefined, 'notify_failed'),
-          service.createLink(qaUser.id, 'fa', undefined, 'review_end'),
+          service.createLink(u1.id, 'fa', 'notify_failed'),
+          service.createLink(u2.id, 'en', 'review_end'),
+          service.createLink(u3.id, 'fa', 'notify_failed'),
+          service.createLink(qaUser.id, 'fa', 'review_end'),
         ]);
         const codeOf = (url: string) => /start=([A-Za-z0-9_-]+)$/.exec(url)![1];
 

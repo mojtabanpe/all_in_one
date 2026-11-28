@@ -1,4 +1,4 @@
-import { AioLocale } from '@all-in-one/ui';
+import { AioInAppNotifications, AioLocale } from '@all-in-one/ui';
 import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
@@ -43,6 +43,7 @@ describe('StudyPage (Recall study)', () => {
   async function setup(due: Card[]) {
     TestBed.configureTestingModule({
       providers: [
+        AioInAppNotifications,
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
@@ -101,6 +102,27 @@ describe('StudyPage (Recall study)', () => {
     expect(el.textContent).toContain('Well done! You did it');
   });
 
+  it('asks for new in-app messages once, when the last card is done', async () => {
+    const { fixture, http, button, settle } = await setup([
+      card('c1', 'take', 'to carry'),
+      card('c2', 'book', 'a written work'),
+    ]);
+    const inApp = TestBed.inject(AioInAppNotifications);
+    for (const [id, asked] of [
+      ['c1', 0],
+      ['c2', 1],
+    ] as const) {
+      button('Show answer').click();
+      await fixture.whenStable();
+      button('Good').click();
+      http
+        .expectOne(`/api/english/cards/${id}/review`)
+        .flush(card(id, 'take', 'to carry', { repetitions: 1 }));
+      await settle();
+      expect(inApp.checkRequests()).toBe(asked);
+    }
+  });
+
   it('brings a failed card back later in the session', async () => {
     const { fixture, http, el, button, settle } = await setup([
       card('c1', 'take', 'to carry'),
@@ -126,6 +148,7 @@ describe('StudyPage (Recall study)', () => {
 
   it('shows an empty state when nothing is due', async () => {
     const { el } = await setup([]);
+    expect(TestBed.inject(AioInAppNotifications).checkRequests()).toBe(0);
     expect(el.textContent).toContain('No cards due right now');
   });
 });

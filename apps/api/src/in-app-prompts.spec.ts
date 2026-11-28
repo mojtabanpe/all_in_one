@@ -1,6 +1,7 @@
 import type { SmsService } from '@all-in-one/api/auth';
 import type { PrismaService } from '@all-in-one/api/db';
 import type { BillingService } from './billing/billing.service';
+import { InAppNotificationsService } from './in-app-notifications';
 import { InAppPrompts, PROMPT_TTL_MS } from './in-app-prompts';
 import type { TelegramService } from './telegram/telegram.service';
 
@@ -166,5 +167,70 @@ describe('in-app prompts (hard steps done in a bottom sheet)', () => {
     fresh.db.englishReviewDay.findFirst.mockResolvedValue({ userId: 'u' });
     await fresh.prompts.offer('u', now, active(3));
     expect(fresh.db.inAppNotification.upsert).not.toHaveBeenCalled();
+  });
+
+  it('sends the Telegram prompt and trial TELEGRAM_JOIN notice to Myket on parity with Bazaar (209)', async () => {
+    const myket =
+      'Mozilla/5.0 (Linux; Android 14; wv) PoshtetgarmApp/1.0.7 PoshtetgarmStore/myket';
+    const bazaar =
+      'Mozilla/5.0 (Linux; Android 14; wv) PoshtetgarmApp/1.0.7 PoshtetgarmStore/bazaar';
+
+    const promptKeysFor = async (ua: string) => {
+      const { db, prompts, created } = setup({ localDevice: true, age: 1 });
+      Object.assign(db.inAppNotification, {
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+        findUnique: vi.fn().mockResolvedValue(null),
+      });
+      db.$queryRaw.mockResolvedValue([{ days: 2n }]);
+      const billing = {
+        access: vi.fn().mockResolvedValue({ tier: 'free', trialUntil: null }),
+        rewardOffers: vi.fn().mockResolvedValue([]),
+      };
+      const service = new InAppNotificationsService(
+        db as unknown as PrismaService,
+        billing as unknown as BillingService,
+        prompts,
+      );
+      await service.pending('u', now, ua);
+      return created().map((c) => c.key);
+    };
+
+    expect(await promptKeysFor(myket)).toEqual(['prompt:telegram']);
+    expect(await promptKeysFor(myket)).toEqual(await promptKeysFor(bazaar));
+
+    const trialActionsFor = async (ua: string) => {
+      const { db } = setup({ age: 1 });
+      Object.assign(db.inAppNotification, {
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+        findUnique: vi.fn().mockResolvedValue(null),
+      });
+      db.$queryRaw.mockResolvedValue([{ days: 1n }]);
+      const end = new Date(now.getTime() + 2 * 86_400_000).toISOString();
+      const billing = {
+        access: vi.fn().mockResolvedValue({
+          tier: 'trial',
+          trialUntil: end,
+          aiUntil: end,
+        }),
+        rewardOffers: vi
+          .fn()
+          .mockResolvedValue([
+            { campaign: 'TELEGRAM_JOIN', status: 'available' },
+          ]),
+      };
+      const service = new InAppNotificationsService(
+        db as unknown as PrismaService,
+        billing as unknown as BillingService,
+      );
+      await service.pending('u', now, ua);
+      const trialCall = db.inAppNotification.upsert.mock.calls.find(
+        ([arg]) => arg.create.source === 'trial',
+      );
+      return trialCall?.[0].create.content.actions;
+    };
+
+    const myketActions = await trialActionsFor(myket);
+    expect(myketActions).toHaveLength(2);
+    expect(myketActions).toEqual(await trialActionsFor(bazaar));
   });
 });
