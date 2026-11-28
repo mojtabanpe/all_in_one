@@ -1059,16 +1059,10 @@ contain`). Works on the web, the PWA and the current Android shell without a new
      with the session score) and shown per dialogue in `/admin/content`, staff excluded; write more dialogues for the
      levels and topics that are used. Roadmap: `docs/roadmaps/aio-english-dialogues-v1.md`.
 
-199. **No Telegram referral in the Myket build (2026-11-23).** Myket rejected release 1.0.7 because the account
-     section refers users to the Telegram bot and the release changelog mentioned it. The owner chose the
-     permanent channel split over removing Telegram for everyone: clients whose native shell announces
-     `PoshtetgarmStore/myket` in the user agent (directive 120) never see a Telegram referral — the api
-     reports the bot unavailable to them (`TelegramService.status`), refuses link/reward calls from them,
-     omits the `TELEGRAM_JOIN` reward offer for them (`BillingService.rewardOffers`/`requestReward`), and
-     never sends them the Telegram in-app prompt (`InAppPrompts`). Bazaar, direct and web clients are
-     unchanged. This is a permanent property of the Myket build, not a review-period switch: never add a
-     way to turn Telegram back on for Myket clients after a store approval. Myket release changelogs must
-     not mention Telegram either.
+199. **Superseded by 209 (2026-11-28; Myket gets all Telegram features on parity with other clients).** _Original (2026-11-23):_
+     Myket rejected release 1.0.7 over the account section's Telegram bot referral and changelog mention, so
+     `PoshtetgarmStore/myket` clients temporarily hid Telegram (`TelegramService`, `BillingService.rewardOffers`,
+     `InAppPrompts`) until the owner reversed this rule in 209.
 
 200. **Muse (Meta AI) is an MCP client too (2026-11-23).** The owner asked to connect his own Muse to the
      Poshtetgarm MCP server («این رو هم نصب کن برای اپ خودمه») and then to fix the connection error himself
@@ -1098,7 +1092,7 @@ contain`). Works on the web, the PWA and the current Android shell without a new
 203. **Android update notice per store, Bazaar first (2026-11-23).** Store users never saw the update notice: requests
      through the service worker lose the shell's user agent, so the customer app sends the shell markers in
      `X-Aio-Shell` and the api reads them with `withShellMarkers`. Every server check of the store build (in-app
-     notices, local reminder devices, Telegram for Myket (199), store billing) reads `@ShellUserAgent()`
+     notices, local reminder devices, store billing) reads `@ShellUserAgent()`
      (`apps/api/src/shell-user-agent.ts`), never `@Headers('user-agent')` alone. The owner asked to send the update notice to Myket
      users only once Myket publishes the version («بازار منتشر شده ولی مایکت هنوز در انتظاره»، «اول بازار») and not to
      hand Myket users our own APK: `ANDROID_SHELL_LATEST_VERSION_<BAZAAR|MYKET|DIRECT_APK>` overrides the shared value per
@@ -1158,3 +1152,12 @@ contain`). Works on the web, the PWA and the current Android shell without a new
      `apps/vpn/src/app/app.service.ts` raises the panel request timeout to 10 s, and `all-in-one-vpn-vpn-1` on
      `flashcard` was recreated with those proxy settings and verified reconciling all three invited accounts in
      ~0.7 s total without errors.
+
+209. **Myket gets all Telegram features on parity with other clients (2026-11-28).**
+     The owner reversed directive 199 in the Poshtetgarm channel (message `850ef1fa-42e5-40b4-8a13-b5e765731efb`,
+     «تو مایکت نیاز نیس پنهان باشه. کل محدودیت های مایکت رو بردار»): clients carrying `PoshtetgarmStore/myket` in
+     their user agent get the same Telegram features as Cafe Bazaar, direct APK and web clients (`TelegramService.status`,
+     `createLink`, `claimChannelWeek`, the `TELEGRAM_JOIN` reward offer and request in `BillingService`, the Telegram
+     in-app prompt in `InAppPrompts`, the review-end and notification-failure `TelegramOffer`, and the account Telegram
+     section), and Myket release changelogs may mention Telegram again. Myket in-app store billing (directive 120) and
+     per-store Android update notices (directive 203) remain unchanged.

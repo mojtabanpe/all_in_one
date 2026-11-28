@@ -514,13 +514,9 @@ export class BillingService {
   async rewardOffers(
     userId: string,
     now = new Date(),
-    store?: 'bazaar' | 'myket' | null,
   ): Promise<BillingRewardOffer[]> {
     const offers = SOCIAL_OFFERS.filter(
-      ({ flag, campaign }) =>
-        this.config.get(flag) === 'true' &&
-        // The Myket build never offers the Telegram week (directive 199).
-        !(store === 'myket' && campaign === 'TELEGRAM_JOIN'),
+      ({ flag }) => this.config.get(flag) === 'true',
     );
     // Every confirmed customer can earn each week once, from signup on (directive 108); the week is
     // queued after the trial, paid time and earlier rewards.
@@ -588,9 +584,8 @@ export class BillingService {
     userId: string,
     input: BillingRewardRequestInput,
     now = new Date(),
-    store?: 'bazaar' | 'myket' | null,
   ) {
-    const eligible = (await this.rewardOffers(userId, now, store)).find(
+    const eligible = (await this.rewardOffers(userId, now)).find(
       // The request schema only takes the social campaigns; SECOND_CONTACT is never requested.
       ({ campaign }) => campaign === input.campaign,
     );
@@ -616,7 +611,7 @@ export class BillingService {
         skipDuplicates: true,
       });
     });
-    return this.rewardOffers(userId, now, store);
+    return this.rewardOffers(userId, now);
   }
 
   async pendingRewards(): Promise<BillingPendingReward[]> {

@@ -119,11 +119,7 @@ export class InAppNotificationsService {
       data: { expiresAt: now },
     });
     if (eligible) {
-      const offers = await this.billing.rewardOffers(
-        userId,
-        now,
-        storeFromUserAgent(userAgent),
-      );
+      const offers = await this.billing.rewardOffers(userId, now);
       const canEarn = offers.some(
         (o) =>
           (o.campaign === 'TELEGRAM_JOIN' ||
@@ -180,12 +176,7 @@ export class InAppNotificationsService {
       });
     }
     // Last: a hard step done in the sheet, only when no other notice is waiting (one sheet at a time).
-    await this.prompts?.offer(
-      userId,
-      now,
-      () => this.activeDays(userId),
-      storeFromUserAgent(userAgent),
-    );
+    await this.prompts?.offer(userId, now, () => this.activeDays(userId));
     const rows = await this.db.inAppNotification.findMany({
       where: { userId, dismissedAt: null, expiresAt: { gt: now } },
       orderBy: { createdAt: 'asc' },
